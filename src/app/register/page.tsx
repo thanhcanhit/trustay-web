@@ -5,107 +5,177 @@ import { useRouter } from "next/navigation"
 import { useUserStore } from "@/stores/user-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Image from "next/image"
 
 export default function RegisterPage() {
   const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [userType, setUserType] = useState("tenant") // tenant hoặc landlord
   const { login } = useUserStore()
   const router = useRouter()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (password !== confirmPassword) {
       alert("Mật khẩu không khớp!")
       return
     }
-    
+
     // Demo register - trong thực tế sẽ gọi API
-    if (name && email && password) {
+    if (name && phone && password) {
       const newUser = {
         id: Date.now().toString(),
         name: name,
-        email: email,
+        email: phone,
         avatar: undefined
       }
-      
+
       login(newUser)
       router.push("/")
     }
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[calc(100vh-4rem)]">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Đăng ký</CardTitle>
-          <CardDescription>
-            Tạo tài khoản mới để bắt đầu sử dụng dịch vụ
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium">
-                Họ và tên
-              </label>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-2">
+      <div className="flex justify-between max-w-4xl w-full">
+        {/* Left Card - Register Form */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 w-96">
+          <div className="text-center mb-8">
+            {/* Logo */}
+            <div className="mx-auto h-16 w-30 rounded-xl flex items-center justify-center mb-1">
+              <Image
+                src="/logo.png"
+                alt="Trustay Logo"
+                width={200}
+                height={100}
+              />
+            </div>
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">ĐĂNG KÝ</h2>
+            <p className="text-gray-600 text-sm">Tạo tài khoản mới để bắt đầu</p>
+          </div>
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div>
               <Input
                 id="name"
+                name="name"
                 type="text"
-                placeholder="Nguyễn Văn A"
+                placeholder="Họ và tên"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
             </div>
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
+
+            <div>
               <Input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="phone"
+                name="phone"
+                type="tel"
+                placeholder="Số điện thoại"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
             </div>
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
-                Mật khẩu
-              </label>
+
+            <div>
               <Input
                 id="password"
+                name="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Mật khẩu"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
             </div>
-            <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="text-sm font-medium">
-                Xác nhận mật khẩu
-              </label>
+
+            <div>
               <Input
                 id="confirmPassword"
+                name="confirmPassword"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Xác nhận mật khẩu"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
             </div>
-            <Button type="submit" className="w-full">
-              Đăng ký
-            </Button>
+
+            <div>
+              <select
+                id="userType"
+                name="userType"
+                value={userType}
+                onChange={(e) => setUserType(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
+              >
+                <option value="tenant">Người thuê trọ</option>
+                <option value="landlord">Chủ nhà trọ</option>
+              </select>
+            </div>
+
+            <div className="pt-2">
+              <Button
+                type="submit"
+                className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors"
+              >
+                ĐĂNG KÝ
+              </Button>
+            </div>
+
+            <div className="text-center space-y-1 pt-4">
+              <p className="text-sm">
+                Đã có tài khoản?  &nbsp;
+                <a href="/login" className="text-green-600 hover:text-green-500">
+                   Đăng nhập
+                </a>
+              </p>
+            </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Right Card - Branding (giống y hệt trang login) */}
+        <div className="flex flex-col justify-center items-center w-70">
+          {/* Logo với biểu tượng map trắng */}
+          <div className="rounded-2xl shadow-lg bg-green-500 bg-opacity-20 flex items-center justify-center mb-6 h-80 px-4">
+            <Image
+              src="/logo-slogan-white.png"
+              alt="Trustay Logo"
+              width={300}
+              height={300}
+              className="object-contain"
+            />
+          </div>
+          <div className="space-y-3 text-sm text-center">
+            <div className="flex items-center space-x-3">
+              <div className="w-2 h-2 rounded-full flex-shrink-0 bg-green-500"></div>
+              <span>Tìm kiếm nhà trọ dễ dàng</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-2 h-2 rounded-full flex-shrink-0 bg-green-500"></div>
+              <span>Kết nối với người cùng phòng</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-2 h-2 rounded-full flex-shrink-0 bg-green-500"></div>
+              <span>Quản lý tài chính minh bạch</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-2 h-2 rounded-full flex-shrink-0 bg-green-500"></div>
+              <span>Liên hệ qua Zalo tiện lợi</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

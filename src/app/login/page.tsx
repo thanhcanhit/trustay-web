@@ -90,7 +90,7 @@ export default function LoginPage() {
             <div className="text-center space-y-1 pt-4">
               <p className="text-sm">
                 Chưa có tài khoản?  &nbsp;
-                <a href="#" className="text-green-600 hover:text-green-500">
+                <a href="/register" className="text-green-600 hover:text-green-500">
                    Đăng ký ngay
                 </a>
               </p>
