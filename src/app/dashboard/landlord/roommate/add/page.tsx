@@ -66,7 +66,7 @@ export default function AddRoommatePostPage() {
     setFormData(prev => ({
       ...prev,
       [parent]: {
-        ...prev[parent as keyof CreateRoommatePostData],
+        ...(prev[parent as keyof CreateRoommatePostData] as Record<string, any> || {}),
         [field]: value
       }
     }))
@@ -444,7 +444,11 @@ export default function AddRoommatePostPage() {
               </CardHeader>
               <CardContent>
                 <ImageUpload
-                  value={formData.images || []}
+                  value={formData.images?.map(file => ({
+                    file,
+                    preview: URL.createObjectURL(file),
+                    id: Math.random().toString(36).substr(2, 9)
+                  })) || []}
                   onChange={(files) => updateFormData('images', files)}
                   maxFiles={5}
                 />
