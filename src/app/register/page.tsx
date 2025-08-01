@@ -30,11 +30,17 @@ export default function RegisterPage() {
         id: Date.now().toString(),
         name: name,
         email: phone,
-        avatar: undefined
+        avatar: undefined,
+        userType: userType as 'tenant' | 'landlord'
       }
 
       login(newUser)
-      router.push("/")
+      // Điều hướng đến dashboard phù hợp
+      if (userType === 'tenant') {
+        router.push("/dashboard/tenant")
+      } else {
+        router.push("/dashboard/landlord")
+      }
     }
   }
 

@@ -27,7 +27,7 @@ import Image from "next/image"
 
 export function Navigation() {
   const pathname = usePathname()
-  const { user, isAuthenticated, logout } = useUserStore()
+  const { user, isAuthenticated, logout, switchRole } = useUserStore()
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -38,6 +38,20 @@ export function Navigation() {
   const handleLogout = () => {
     logout()
     setShowUserDropdown(false)
+  }
+
+  const handleRoleSwitch = () => {
+    if (!user) return
+    const newRole = user.userType === 'tenant' ? 'landlord' : 'tenant'
+    switchRole(newRole)
+    setShowUserDropdown(false)
+    // Redirect to appropriate dashboard
+    window.location.href = newRole === 'tenant' ? '/dashboard/tenant' : '/dashboard/landlord'
+  }
+
+  const getDashboardLink = () => {
+    if (!user) return "/login"
+    return user.userType === 'tenant' ? '/dashboard/tenant' : '/dashboard/landlord'
   }
 
   // Close dropdown when clicking outside
@@ -93,7 +107,18 @@ export function Navigation() {
             {/* Right Section - Login/Signup or User Menu */}
             <div className="flex items-center space-x-3">
               {isAuthenticated && user ? (
-                <div className="relative" ref={dropdownRef}>
+                <>
+                  {/* Role Switch Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRoleSwitch}
+                    className="text-sm border-green-500 text-green-600 hover:bg-green-50"
+                  >
+                    {user.userType === 'tenant' ? 'Quản cáo trọ' : 'Chế độ thuê trọ'}
+                  </Button>
+
+                  <div className="relative" ref={dropdownRef}>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -109,14 +134,14 @@ export function Navigation() {
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-50">
                       <div className="py-1">
                         <div className="px-4 py-2 text-sm text-gray-700 border-b">
-                          Quản lý phòng trọ
+                          {user?.userType === 'tenant' ? 'Quản lý lưu trú' : 'Quản lý phòng trọ'}
                         </div>
                         <Link
-                          href="/profile"
+                          href={getDashboardLink()}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           onClick={() => setShowUserDropdown(false)}
                         >
-                          Yêu cầu thuê của tôi
+                          {user?.userType === 'tenant' ? 'Dashboard người thuê' : 'Dashboard chủ trọ'}
                         </Link>
                         <button
                           onClick={handleLogout}
@@ -128,7 +153,8 @@ export function Navigation() {
                       </div>
                     </div>
                   )}
-                </div>
+                  </div>
+                </>
               ) : (
                 <div className="flex items-center space-x-2">
                   <Button variant="ghost" size="sm" asChild>
@@ -186,17 +212,31 @@ export function Navigation() {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
 
+                {isAuthenticated && user && (
+                  <NavigationMenuItem>
+                    <NavigationMenuLink asChild>
+                      <Link
+                        href={getDashboardLink()}
+                        className="text-gray-600 hover:text-gray-700 font-medium px-3 py-2 rounded-md hover:bg-gray-50 flex flex-row items-center"
+                      >
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        <div>{user.userType === 'tenant' ? 'Dashboard' : 'Quản lý'}</div>
+                      </Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                )}
+
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 font-medium">
                     <BarChart3 className="h-4 w-4 mr-2" />
-                    Quản lý
+                    Dịch vụ
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <ul className="grid w-[200px] gap-3 p-4">
                       <li>
                         <NavigationMenuLink asChild>
                           <Link href="#" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                            <div className="text-sm font-medium leading-none">Quản lý phòng trọ</div>
+                            <div className="text-sm font-medium leading-none">Tìm phòng trọ</div>
                           </Link>
                         </NavigationMenuLink>
                       </li>

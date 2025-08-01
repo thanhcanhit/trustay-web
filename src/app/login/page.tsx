@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useUserStore } from "@/stores/user-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { getDemoUser } from "@/data/demo-users"
 import Image from "next/image"
 
 export default function LoginPage() {
@@ -18,15 +19,19 @@ export default function LoginPage() {
 
     // Demo login - trong thực tế sẽ gọi API
     if (phone && password) {
-      const demoUser = {
-        id: "1",
-        name: "Demo User",
-        email: phone,
-        avatar: undefined
-      }
+      const demoUser = getDemoUser(phone)
 
-      login(demoUser)
-      router.push("/")
+      if (demoUser) {
+        login(demoUser)
+        // Điều hướng đến dashboard phù hợp
+        if (demoUser.userType === 'tenant') {
+          router.push("/dashboard/tenant")
+        } else {
+          router.push("/dashboard/landlord")
+        }
+      } else {
+        alert("Tài khoản không tồn tại! Sử dụng: tenant@demo.com hoặc landlord@demo.com")
+      }
     }
   }
 
@@ -88,6 +93,13 @@ export default function LoginPage() {
             </div>
 
             <div className="text-center space-y-1 pt-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <p className="text-xs text-blue-800 font-medium mb-2">Tài khoản demo:</p>
+                <p className="text-xs text-blue-700">Người thuê: tenant@demo.com</p>
+                <p className="text-xs text-blue-700">Chủ trọ: landlord@demo.com</p>
+                <p className="text-xs text-blue-600">Mật khẩu: bất kỳ</p>
+              </div>
+
               <p className="text-sm">
                 Chưa có tài khoản?  &nbsp;
                 <a href="/register" className="text-green-600 hover:text-green-500">

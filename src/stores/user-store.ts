@@ -6,6 +6,7 @@ export interface User {
 	name: string;
 	email: string;
 	avatar?: string;
+	userType: 'tenant' | 'landlord';
 }
 
 interface UserState {
@@ -13,6 +14,7 @@ interface UserState {
 	isAuthenticated: boolean;
 	login: (user: User) => void;
 	logout: () => void;
+	switchRole: (newRole: 'tenant' | 'landlord') => void;
 }
 
 export const useUserStore = create<UserState>()(
@@ -22,6 +24,10 @@ export const useUserStore = create<UserState>()(
 			isAuthenticated: false,
 			login: (user: User) => set({ user, isAuthenticated: true }),
 			logout: () => set({ user: null, isAuthenticated: false }),
+			switchRole: (newRole: 'tenant' | 'landlord') =>
+				set((state) => ({
+					user: state.user ? { ...state.user, userType: newRole } : null,
+				})),
 		}),
 		{
 			name: 'user-storage',
