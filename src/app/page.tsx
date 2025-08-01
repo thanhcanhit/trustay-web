@@ -18,7 +18,7 @@ export default function Home() {
           <div className="w-full h-full bg-gradient-to-br from-white/10 to-transparent"></div>
         </div>
 
-        <div className="container mx-auto px-4 py-12 relative z-10">
+        <div className="container mx-auto px-4 py-12 relative z-0">
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             {/* Left Content */}
             <div className="text-white space-y-6">
@@ -42,7 +42,7 @@ export default function Home() {
                   alt="House illustration"
                   width={400}
                   height={300}
-                  className="relative z-10 drop-shadow-2xl"
+                  className="relative z-0 drop-shadow-2xl"
                 />
               </div>
             </div>
@@ -52,7 +52,7 @@ export default function Home() {
       </div>
 
       {/* Search Section */}
-      <div className="container mx-auto px-9 relative -top-17">
+      <div className="container mx-auto px-9 relative -top-17 z-0">
           {/* Category Tabs */}
           <div className="flex flex-wrap gap-1">
             <button
