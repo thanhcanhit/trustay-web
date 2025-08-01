@@ -5,6 +5,8 @@ import Image from "next/image"
 import { Search, MapPin, DollarSign, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { FeaturedProperties } from "@/components/featured-properties"
+import { FeaturedRoommates } from "@/components/featured-roommates"
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("all")
@@ -173,6 +175,12 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Featured Properties Section */}
+      <FeaturedProperties />
+
+      {/* Featured Roommates Section */}
+      <FeaturedRoommates />
     </div>
   );
 }
