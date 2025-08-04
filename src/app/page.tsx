@@ -36,15 +36,29 @@ export default function Home() {
             </div>
 
             {/* Right Image */}
-            <div className="hidden lg:flex justify-center items-center">
+            <div className="hidden lg:flex justify-center items-right">
               <div className="relative">
-                <div className="w-80 h-80 bg-gradient-to-br from-green-400 to-green-600 rounded-full opacity-20 absolute -top-10 -right-10"></div>
-                <Image
+                <div className=" -z-2 w-80 h-80 bg-gradient-to-br from-green-400 to-green-600 rounded-full opacity-20 absolute -top-20 -right-10"></div>
+                 {/*<Image
                   src="/banner.png"
                   alt="House illustration"
-                  width={400}
-                  height={300}
-                  className="relative z-0 drop-shadow-2xl"
+                  width={300}
+                  height={200}
+                  className="relative z-0 drop-shadow-2xl -right-7"
+                /> */}
+                <Image
+                  src="/banner1.png"
+                  alt="House illustration"
+                  width={300}
+                  height={200}
+                  className="relative z-0 drop-shadow-2xl rounded-full -left-20"
+                />
+                <Image
+                  src="/banner2.png"
+                  alt="House illustration"
+                  width={300}
+                  height={200}
+                  className="-z-1 drop-shadow-2xl rounded-full absolute -bottom-5 left-30"
                 />
               </div>
             </div>

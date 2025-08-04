@@ -2,35 +2,54 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useUserStore } from "@/stores/user-store"
+import { useUserStore } from "@/stores/userStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { getDemoUser } from "@/data/demo-users"
+import { ApiStatus } from "@/components/api-status"
 import Image from "next/image"
 
 export default function LoginPage() {
-  const [phone, setPhone] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const { login } = useUserStore()
+  const { login, isLoading, error, clearError } = useUserStore()
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    clearError()
 
-    // Demo login - trong thực tế sẽ gọi API
-    if (phone && password) {
-      const demoUser = getDemoUser(phone)
+    if (!email || !password) {
+      return
+    }
 
-      if (demoUser) {
-        login(demoUser)
+    console.log('Attempting login with:', { email, apiUrl: process.env.NEXT_PUBLIC_API_URL })
+
+    try {
+      await login({ email, password })
+
+      // Get updated user data to determine redirect
+      const { user } = useUserStore.getState()
+
+      if (user) {
+        console.log('Login successful, user:', user)
         // Điều hướng đến dashboard phù hợp
-        if (demoUser.userType === 'tenant') {
+        if (user.role === 'tenant') {
           router.push("/dashboard/tenant")
         } else {
           router.push("/dashboard/landlord")
         }
-      } else {
-        alert("Tài khoản không tồn tại! Sử dụng: tenant@demo.com hoặc landlord@demo.com")
+      }
+    } catch (error) {
+      // Error is already handled in the store
+      console.error('Login failed:', error)
+
+      // Additional debug info
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        })
       }
     }
   }
@@ -57,16 +76,25 @@ export default function LoginPage() {
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
+            <ApiStatus />
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            )}
+
             <div>
               <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                placeholder="Số điện thoại"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                disabled={isLoading}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
               />
             </div>
 
@@ -79,25 +107,27 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                disabled={isLoading}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
               />
             </div>
 
             <div className="pt-2">
               <Button
                 type="submit"
-                className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors"
+                disabled={isLoading || !email || !password}
+                className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                ĐĂNG NHẬP
+                {isLoading ? "ĐANG ĐĂNG NHẬP..." : "ĐĂNG NHẬP"}
               </Button>
             </div>
 
             <div className="text-center space-y-1 pt-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                 <p className="text-xs text-blue-800 font-medium mb-2">Tài khoản demo:</p>
-                <p className="text-xs text-blue-700">Người thuê: tenant@demo.com</p>
-                <p className="text-xs text-blue-700">Chủ trọ: landlord@demo.com</p>
-                <p className="text-xs text-blue-600">Mật khẩu: bất kỳ</p>
+                <p className="text-xs text-blue-700">Email: test@trustay.life</p>
+                <p className="text-xs text-blue-700">Mật khẩu: TrustayTest123!</p>
+                <p className="text-xs text-blue-600">Hoặc đăng ký tài khoản mới</p>
               </div>
 
               <p className="text-sm">
