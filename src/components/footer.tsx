@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function Footer() {
@@ -8,20 +9,9 @@ export function Footer() {
           {/* Logo và slogan */}
           <div className="col-span-1 md:col-span-1">
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-white"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+              <div className="rounded-lg flex items-center justify-center">
+                <Image src="/logo.png" alt="Trustay" width={140} height={140} />
               </div>
-              <span className="text-xl font-bold text-gray-900">Trustay</span>
             </div>
             <p className="text-sm text-gray-600 leading-relaxed">
               Nền tảng chia sẻ mã xem tin tức, kết nối với
