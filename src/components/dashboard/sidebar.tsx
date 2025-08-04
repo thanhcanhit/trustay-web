@@ -3,12 +3,10 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { 
-  Home, 
-  User, 
-  Settings, 
-  Bell, 
-  FileText,
+import {
+  Home,
+  User,
+  Bell,
   BarChart3,
   Building,
   Users,
@@ -16,7 +14,7 @@ import {
   Heart,
   LogOut
 } from "lucide-react"
-import { useUserStore } from "@/stores/user-store"
+import { useUserStore } from "@/stores/userStore"
 
 interface SidebarItem {
   title: string
@@ -39,11 +37,6 @@ const tenantItems: SidebarItem[] = [
     title: "Thông tin lưu trú",
     href: "/dashboard/tenant/accommodation",
     icon: Home
-  },
-  {
-    title: "Quản lý đánh giá",
-    href: "/dashboard/tenant/reviews",
-    icon: FileText
   },
   {
     title: "Lưu trú",
@@ -84,9 +77,9 @@ const landlordItems: SidebarItem[] = [
     icon: Heart
   },
   {
-    title: "Nhân viên hỗ trợ",
-    href: "/dashboard/landlord/support",
-    icon: User
+    title: "Thông báo",
+    href: "/dashboard/landlord/notifications",
+    icon: Bell
   }
 ]
 
@@ -105,7 +98,7 @@ export function Sidebar({ userType }: SidebarProps) {
             <User className="h-5 w-5 text-green-600" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+            <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
             <p className="text-xs text-gray-500">
               {userType === 'tenant' ? 'Người thuê trọ' : 'Chủ nhà trọ'}
             </p>
