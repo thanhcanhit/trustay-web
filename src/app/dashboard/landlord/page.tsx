@@ -8,14 +8,12 @@ import {
   Users,
   DollarSign,
   TrendingUp,
-  Home,
   Plus,
   Eye,
-  Phone,
   MapPin,
   Calendar
 } from "lucide-react"
-import { mockProperties, mockRooms, mockBookings } from "@/data/mock-data"
+import { mockProperties, mockBookings } from "@/data/mock-data"
 import Link from "next/link"
 
 export default function LandlordDashboard() {
@@ -166,7 +164,7 @@ export default function LandlordDashboard() {
 
           {/* Support Contact */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Hỗ trợ khách hàng</h3>
+            {/* <h3 className="font-semibold text-gray-900 mb-4">Hỗ trợ khách hàng</h3>
             <div className="space-y-4">
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-medium text-gray-900 mb-2">Nhân viên hỗ trợ</h4>
@@ -197,7 +195,7 @@ export default function LandlordDashboard() {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

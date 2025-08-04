@@ -6,12 +6,11 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormField, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
-import { CreateRoommatePostData, Address, ContactInfo } from "@/types/property"
-import { Users, MapPin, Phone, DollarSign, Calendar, User, Heart } from "lucide-react"
+import { CreateRoommatePostData, ImageFile } from "@/types/property"
+import { Users, MapPin, Phone, Heart } from "lucide-react"
 
 export default function AddRoommatePostPage() {
   const router = useRouter()
@@ -48,7 +47,7 @@ export default function AddRoommatePostPage() {
     expiresAt: ''
   })
 
-  const updateFormData = (field: string, value: any) => {
+  const updateFormData = (field: string, value: unknown) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -62,11 +61,11 @@ export default function AddRoommatePostPage() {
     }
   }
 
-  const updateNestedFormData = (parent: string, field: string, value: any) => {
+  const updateNestedFormData = (parent: string, field: string, value: unknown) => {
     setFormData(prev => ({
       ...prev,
       [parent]: {
-        ...(prev[parent as keyof CreateRoommatePostData] as Record<string, any> || {}),
+        ...(prev[parent as keyof CreateRoommatePostData] as Record<string, unknown> || {}),
         [field]: value
       }
     }))
@@ -444,11 +443,7 @@ export default function AddRoommatePostPage() {
               </CardHeader>
               <CardContent>
                 <ImageUpload
-                  value={formData.images?.map(file => ({
-                    file,
-                    preview: URL.createObjectURL(file),
-                    id: Math.random().toString(36).substr(2, 9)
-                  })) || []}
+                  value={formData.images || []}
                   onChange={(files) => updateFormData('images', files)}
                   maxFiles={5}
                 />

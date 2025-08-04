@@ -9,11 +9,9 @@ import {
   Heart,
   FileText,
   MapPin,
-  Calendar,
   DollarSign
 } from "lucide-react"
 import { getSavedPropertiesByTenant, getReviewsByTenant } from "@/data/mock-data"
-import Image from "next/image"
 
 export default function TenantDashboard() {
   // Get mock data for current tenant

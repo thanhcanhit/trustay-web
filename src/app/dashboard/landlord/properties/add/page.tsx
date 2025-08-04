@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { MultiStepForm, StepContent, StepNavigation } from "@/components/ui/multi-step-form"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { FormField, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -12,8 +12,8 @@ import { Button } from "@/components/ui/button"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { AMENITIES_BY_CATEGORY } from "@/data/amenities"
-import { CreateBlockData, Address, ContactInfo, PropertyRule } from "@/types/property"
-import { Building, MapPin, Phone, Image, FileText, Settings, Check } from "lucide-react"
+import { CreateBlockData, PropertyRule } from "@/types/property"
+import { Building, Phone, Image, FileText, Settings, Check } from "lucide-react"
 
 const STEPS = [
   {
@@ -75,7 +75,7 @@ export default function AddPropertyPage() {
     }
   })
 
-  const updateFormData = (field: string, value: any) => {
+  const updateFormData = (field: string, value: unknown) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -89,14 +89,21 @@ export default function AddPropertyPage() {
     }
   }
 
-  const updateNestedFormData = (parent: string, field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [parent]: {
-        ...prev[parent as keyof CreateBlockData],
-        [field]: value
-      }
-    }))
+  const updateNestedFormData = (parent: string, field: string, value: unknown) => {
+    setFormData(prev => {
+      const parentValue = prev[parent as keyof CreateBlockData];
+      const parentObj = (typeof parentValue === 'object' && parentValue !== null && !Array.isArray(parentValue))
+        ? (parentValue as unknown as Record<string, unknown>)
+        : {};
+
+      return {
+        ...prev,
+        [parent]: {
+          ...parentObj,
+          [field]: value
+        }
+      };
+    })
     // Clear error when user starts typing
     const errorKey = `${parent}.${field}`
     if (errors[errorKey]) {
@@ -204,7 +211,7 @@ export default function AddPropertyPage() {
     updateFormData('rules', [...(formData.rules || []), newRule])
   }
 
-  const updateRule = (index: number, field: keyof PropertyRule, value: any) => {
+  const updateRule = (index: number, field: keyof PropertyRule, value: unknown) => {
     const newRules = [...(formData.rules || [])]
     newRules[index] = { ...newRules[index], [field]: value }
     updateFormData('rules', newRules)

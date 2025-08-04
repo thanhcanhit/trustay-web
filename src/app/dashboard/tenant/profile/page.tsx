@@ -3,8 +3,8 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useUserStore } from "@/stores/user-store"
-import { User, Phone, Mail, MapPin, Calendar } from "lucide-react"
+import { useUserStore } from "@/stores/userStore"
+import { User } from "lucide-react"
 
 export default function TenantProfile() {
   const { user } = useUserStore()
@@ -25,7 +25,7 @@ export default function TenantProfile() {
                 <User className="h-10 w-10 text-green-600" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">{user?.name}</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{user?.firstName + " " + user?.lastName}</h2>
                 <p className="text-gray-600">Người thuê trọ</p>
                 <Button variant="outline" size="sm" className="mt-2">
                   Thay đổi ảnh
@@ -42,7 +42,7 @@ export default function TenantProfile() {
                   </label>
                   <Input
                     type="text"
-                    defaultValue={user?.name}
+                    defaultValue={user?.firstName + " " + user?.lastName}
                     className="w-full"
                   />
                 </div>

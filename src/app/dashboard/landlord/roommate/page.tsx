@@ -2,7 +2,7 @@
 
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Users, Plus, Search, Filter, MapPin, Calendar, DollarSign, Eye } from "lucide-react"
 import { mockRoommatePosts } from "@/data/mock-data"
 import Link from "next/link"
