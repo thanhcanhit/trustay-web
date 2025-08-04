@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
-import { useUserStore } from "@/stores/user-store"
+import { useUserStore } from "@/stores/userStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -35,14 +35,22 @@ export function Navigation() {
   // Check if current page is login or register
   const isAuthPage = pathname === '/login' || pathname === '/register'
 
-  const handleLogout = () => {
-    logout()
-    setShowUserDropdown(false)
+  const handleLogout = async () => {
+    try {
+      await logout()
+      setShowUserDropdown(false)
+      window.location.href = '/'
+    } catch (error) {
+      console.error('Logout failed:', error)
+      // Still redirect even if logout API fails
+      setShowUserDropdown(false)
+      window.location.href = '/'
+    }
   }
 
   const handleRoleSwitch = () => {
     if (!user) return
-    const newRole = user.userType === 'tenant' ? 'landlord' : 'tenant'
+    const newRole = user.role === 'tenant' ? 'landlord' : 'tenant'
     switchRole(newRole)
     setShowUserDropdown(false)
     // Redirect to appropriate dashboard
@@ -51,7 +59,7 @@ export function Navigation() {
 
   const getDashboardLink = () => {
     if (!user) return "/login"
-    return user.userType === 'tenant' ? '/dashboard/tenant' : '/dashboard/landlord'
+    return user.role === 'tenant' ? '/dashboard/tenant' : '/dashboard/landlord'
   }
 
   // Close dropdown when clicking outside
@@ -115,7 +123,7 @@ export function Navigation() {
                     onClick={handleRoleSwitch}
                     className="text-sm border-green-500 text-green-600 hover:bg-green-50"
                   >
-                    {user.userType === 'tenant' ? 'Quản cáo trọ' : 'Chế độ thuê trọ'}
+                    {user.role === 'tenant' ? 'Quản cáo trọ' : 'Chế độ thuê trọ'}
                   </Button>
 
                   <div className="relative" ref={dropdownRef}>
@@ -126,7 +134,7 @@ export function Navigation() {
                     className="flex items-center space-x-2 text-gray-700 hover:text-gray-900"
                   >
                     <User className="h-4 w-4" />
-                    <span className="hidden sm:inline-block">{user.name}</span>
+                    <span className="hidden sm:inline-block">{user.firstName} {user.lastName}</span>
                     <ChevronDown className="h-3 w-3" />
                   </Button>
 
@@ -134,14 +142,14 @@ export function Navigation() {
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-50">
                       <div className="py-1">
                         <div className="px-4 py-2 text-sm text-gray-700 border-b">
-                          {user?.userType === 'tenant' ? 'Quản lý lưu trú' : 'Quản lý phòng trọ'}
+                          {user?.role === 'tenant' ? 'Quản lý lưu trú' : 'Quản lý phòng trọ'}
                         </div>
                         <Link
                           href={getDashboardLink()}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           onClick={() => setShowUserDropdown(false)}
                         >
-                          {user?.userType === 'tenant' ? 'Dashboard người thuê' : 'Dashboard chủ trọ'}
+                          {user?.role === 'tenant' ? 'Dashboard người thuê' : 'Dashboard chủ trọ'}
                         </Link>
                         <button
                           onClick={handleLogout}
@@ -220,7 +228,7 @@ export function Navigation() {
                         className="text-gray-600 hover:text-gray-700 font-medium px-3 py-2 rounded-md hover:bg-gray-50 flex flex-row items-center"
                       >
                         <BarChart3 className="h-4 w-4 mr-2" />
-                        <div>{user.userType === 'tenant' ? 'Dashboard' : 'Quản lý'}</div>
+                        <div>{user.role === 'tenant' ? 'Dashboard' : 'Quản lý'}</div>
                       </Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
