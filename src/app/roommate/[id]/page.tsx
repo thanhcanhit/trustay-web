@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useParams } from "next/navigation"
 import Image from "next/image"
-import { ArrowLeft, Heart, Share2, MapPin, User, Calendar, DollarSign, Phone, Mail, MessageCircle } from "lucide-react"
+import { ArrowLeft, Heart, Share2, MapPin, User, Calendar, DollarSign, Phone, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { mockRoommatePosts } from "@/data/mock-data"
 
@@ -215,17 +215,10 @@ export default function RoommateDetailPage() {
               </div>
 
               <div className="space-y-3 mb-6">
-                <Button className="w-full" size="lg">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Nhắn tin
+                <Button variant="outline" className="w-full" size="lg">
+                  <Phone className="h-4 w-4 mr-2" />
+                  Liên hệ qua Zalo
                 </Button>
-                
-                {post.contactInfo.phone && (
-                  <Button variant="outline" className="w-full" size="lg">
-                    <Phone className="h-4 w-4 mr-2" />
-                    Gọi điện
-                  </Button>
-                )}
                 
                 {post.contactInfo.email && (
                   <Button variant="outline" className="w-full" size="lg">

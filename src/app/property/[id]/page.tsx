@@ -35,7 +35,7 @@ export default function PropertyDetailPage() {
     return new Intl.NumberFormat('vi-VN').format(price)
   }
 
-  const amenityIcons: { [key: string]: any } = {
+  const amenityIcons: { [key: string]: React.ComponentType } = {
     'WiFi miễn phí': Wifi,
     'WiFi': Wifi,
     'Gửi xe miễn phí': Car,
@@ -172,7 +172,7 @@ export default function PropertyDetailPage() {
                     const IconComponent = amenityIcons[amenity] || Wifi
                     return (
                       <div key={index} className="flex items-center">
-                        <IconComponent className="h-4 w-4 text-green-500 mr-2" />
+                        <IconComponent />
                         <span className="text-gray-700">{amenity}</span>
                       </div>
                     )
