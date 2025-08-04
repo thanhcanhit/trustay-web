@@ -1,4 +1,4 @@
-import { User } from '@/stores/user-store';
+import { User } from '@/stores/userStore';
 
 export const demoUsers: User[] = [
 	{
