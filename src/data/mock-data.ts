@@ -41,8 +41,12 @@ export interface RoommatePost {
 	requirements: string[];
 	images: string[];
 	createdAt: string;
-	status: 'active' | 'inactive';
+	status: 'active' | 'inactive' | 'expired' | 'found';
 	isHot?: boolean;
+	views: number;
+	responses: number;
+	expiresAt?: string;
+	updatedAt: string;
 }
 
 export interface Room {
@@ -106,7 +110,7 @@ export const mockProperties: Property[] = [
 		totalRooms: 12,
 		occupiedRooms: 10,
 		monthlyRevenue: 25000000,
-		images: ['/images/room1.jpg', '/images/room1-2.jpg'],
+		images: ['/images/room1.png', '/images/room1.png'],
 		description: 'Nhà trọ, phòng trọ',
 		amenities: ['WiFi miễn phí', 'Điều hòa', 'Thang máy', 'Bảo vệ 24/7'],
 		createdAt: '2024-01-15',
@@ -124,7 +128,7 @@ export const mockProperties: Property[] = [
 		totalRooms: 8,
 		occupiedRooms: 6,
 		monthlyRevenue: 18000000,
-		images: ['/images/room2.jpg'],
+		images: ['/images/room2.png'],
 		description: 'Căn hộ',
 		amenities: ['WiFi', 'Máy giặt chung', 'Bếp chung', 'Gửi xe miễn phí'],
 		createdAt: '2024-02-01',
@@ -142,7 +146,7 @@ export const mockProperties: Property[] = [
 		totalRooms: 20,
 		occupiedRooms: 15,
 		monthlyRevenue: 35000000,
-		images: ['/images/room3.jpg'],
+		images: ['/images/room3.png'],
 		description: 'Nhà trọ, phòng trọ',
 		amenities: ['WiFi tốc độ cao', 'Gym', 'Sân thượng', 'Căng tin'],
 		createdAt: '2024-01-10',
@@ -160,7 +164,7 @@ export const mockProperties: Property[] = [
 		totalRooms: 15,
 		occupiedRooms: 12,
 		monthlyRevenue: 28000000,
-		images: ['/images/room4.jpg'],
+		images: ['/images/room4.png'],
 		description: 'Nhà trọ, phòng trọ',
 		amenities: ['WiFi miễn phí', 'Điều hòa', 'Máy giặt', 'Bảo vệ'],
 		createdAt: '2024-01-20',
@@ -180,7 +184,7 @@ export const mockRooms: Room[] = [
 		price: 2500000,
 		area: 25,
 		status: 'available',
-		images: ['/images/room1.jpg'],
+		images: ['/images/room1.png'],
 		amenities: ['Điều hòa', 'Tủ lạnh', 'Giường', 'Tủ quần áo'],
 	},
 	{
@@ -190,7 +194,7 @@ export const mockRooms: Room[] = [
 		price: 7500000,
 		area: 35,
 		status: 'available',
-		images: ['/images/room2.jpg'],
+		images: ['/images/room2.png'],
 		amenities: ['Điều hòa', 'Tủ lạnh', 'Giường', 'Tủ quần áo', 'Ban công'],
 	},
 	{
@@ -200,7 +204,7 @@ export const mockRooms: Room[] = [
 		price: 3700000,
 		area: 20,
 		status: 'available',
-		images: ['/images/room3.jpg'],
+		images: ['/images/room3.png'],
 		amenities: ['Điều hòa', 'Giường', 'Tủ quần áo'],
 	},
 	{
@@ -210,7 +214,7 @@ export const mockRooms: Room[] = [
 		price: 2000000,
 		area: 20,
 		status: 'available',
-		images: ['/images/room4.jpg'],
+		images: ['/images/room4.png'],
 		amenities: ['Điều hòa', 'Giường', 'Tủ quần áo', 'WiFi'],
 	},
 ];
@@ -236,10 +240,14 @@ export const mockRoommatePosts: RoommatePost[] = [
 			facebook: 'mai.nguyen',
 		},
 		requirements: ['Không hút thuốc', 'Sạch sẽ', 'Sinh viên'],
-		images: ['/images/roommate1.jpg'],
+		images: ['/images/roommate1.png'],
 		createdAt: '2024-02-15',
 		status: 'active',
 		isHot: true,
+		views: 100,
+		responses: 20,
+		expiresAt: '2024-03-15',
+		updatedAt: '2024-02-20',
 	},
 	{
 		id: 'roommate-2',
@@ -258,10 +266,14 @@ export const mockRoommatePosts: RoommatePost[] = [
 			email: 'nam.tran@email.com',
 		},
 		requirements: ['Sinh viên', 'Không ồn ào', 'Chia sẻ chi phí'],
-		images: ['/images/roommate2.jpg'],
+		images: ['/images/roommate2.png'],
 		createdAt: '2024-02-20',
 		status: 'active',
 		isHot: true,
+		views: 150,
+		responses: 30,
+		expiresAt: '2024-03-20',
+		updatedAt: '2024-02-25',
 	},
 	{
 		id: 'roommate-3',
@@ -279,10 +291,14 @@ export const mockRoommatePosts: RoommatePost[] = [
 			phone: '0369852147',
 		},
 		requirements: ['Đi làm', 'Chia sẻ việc nhà', 'Thân thiện'],
-		images: ['/images/roommate3.jpg'],
+		images: ['/images/roommate3.png'],
 		createdAt: '2024-02-25',
 		status: 'active',
 		isHot: true,
+		views: 200,
+		responses: 40,
+		expiresAt: '2024-03-25',
+		updatedAt: '2024-02-30',
 	},
 	{
 		id: 'roommate-4',
@@ -301,10 +317,14 @@ export const mockRoommatePosts: RoommatePost[] = [
 			email: 'lan.pham@email.com',
 		},
 		requirements: ['Yên tĩnh', 'Không mang bạn về', 'Chia sẻ chi phí'],
-		images: ['/images/roommate4.jpg'],
+		images: ['/images/roommate1.png'],
 		createdAt: '2024-02-28',
 		status: 'active',
 		isHot: true,
+		views: 180,
+		responses: 35,
+		expiresAt: '2024-03-28',
+		updatedAt: '2024-03-01',
 	},
 ];
 
@@ -382,6 +402,7 @@ export const mockReviews: Review[] = [
 // Helper functions
 export const getPropertiesByOwner = (ownerId: string): Property[] => {
 	// In real app, filter by ownerId
+	console.log('Getting properties for owner:', ownerId);
 	return mockProperties;
 };
 

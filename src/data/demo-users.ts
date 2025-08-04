@@ -3,17 +3,23 @@ import { User } from '@/stores/user-store';
 export const demoUsers: User[] = [
 	{
 		id: 'tenant-1',
-		name: 'Nguyễn Văn An',
+		firstName: 'Văn An',
+		lastName: 'Nguyễn',
 		email: 'tenant@demo.com',
+		phone: '+84901234567',
+		gender: 'male',
+		role: 'tenant',
 		avatar: undefined,
-		userType: 'tenant',
 	},
 	{
 		id: 'landlord-1',
-		name: 'Trần Thị Bình',
+		firstName: 'Thị Bình',
+		lastName: 'Trần',
 		email: 'landlord@demo.com',
+		phone: '+84987654321',
+		gender: 'female',
+		role: 'landlord',
 		avatar: undefined,
-		userType: 'landlord',
 	},
 ];
 
@@ -21,10 +27,10 @@ export const getDemoUser = (email: string): User | null => {
 	return demoUsers.find((user) => user.email === email) || null;
 };
 
-export const getDemoUserByType = (userType: 'tenant' | 'landlord'): User => {
-	const user = demoUsers.find((user) => user.userType === userType);
+export const getDemoUserByType = (role: 'tenant' | 'landlord'): User => {
+	const user = demoUsers.find((user) => user.role === role);
 	if (!user) {
-		throw new Error(`Demo user with type ${userType} not found`);
+		throw new Error(`Demo user with role ${role} not found`);
 	}
 	return user;
 };
