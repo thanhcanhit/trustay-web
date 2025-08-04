@@ -161,12 +161,19 @@ export interface RoommatePost {
 	updatedAt: string;
 }
 
+// Image file type for uploads
+export interface ImageFile {
+	file: File;
+	preview: string;
+	id: string;
+}
+
 // Form data types for creating/editing
 export interface CreateBlockData {
 	name: string;
 	address: Address;
 	description?: string;
-	images: File[];
+	images: ImageFile[];
 	amenities: string[];
 	rules: Omit<PropertyRule, 'id'>[];
 	contactInfo: ContactInfo;
@@ -186,7 +193,7 @@ export interface CreateRoomData {
 	cleaningCost?: number;
 	parkingCost?: number;
 	maxOccupants: number;
-	images: File[];
+	images: ImageFile[];
 	amenities: string[];
 	description: string;
 	availableFrom?: string;
@@ -197,7 +204,7 @@ export interface CreatePropertyPostData {
 	roomId: string;
 	title: string;
 	description: string;
-	images: File[];
+	images: ImageFile[];
 	isPriority?: boolean;
 	expiresAt?: string;
 }
@@ -222,6 +229,6 @@ export interface CreateRoommatePostData {
 	requirements: string[];
 	lifestyle: string[];
 	contactInfo: ContactInfo;
-	images?: File[];
+	images?: ImageFile[];
 	expiresAt?: string;
 }
