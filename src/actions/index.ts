@@ -9,9 +9,6 @@ export {
 	TokenManager,
 } from '../lib/api-client';
 
-// Export client-side API utilities
-export { clientApi } from '../lib/client-api';
-
 // Export types (prefer types.ts for ApiResponse)
 export * from '../types/types';
 

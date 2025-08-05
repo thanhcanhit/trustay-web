@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { useUserStore } from "@/stores/userStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ApiStatus } from "@/components/api-status"
 import Image from "next/image"
 
 export default function LoginPage() {
@@ -76,8 +75,6 @@ export default function LoginPage() {
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
-            <ApiStatus />
-
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
                 <p className="text-sm text-red-800">{error}</p>

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
-import { CreateRoommatePostData, ImageFile } from "@/types/property"
+import { CreateRoommatePostData} from "@/types/property"
 import { Users, MapPin, Phone, Heart } from "lucide-react"
 
 export default function AddRoommatePostPage() {
