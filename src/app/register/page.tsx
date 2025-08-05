@@ -41,6 +41,34 @@ export default function RegisterPage() {
   const [error, setError] = useState("")
   const [isDevelopmentMode, setIsDevelopmentMode] = useState(false)
 
+  // Password strength calculation
+  const calculatePasswordStrength = (password: string) => {
+    let strength = 0
+    if (password.length >= 8) strength += 25
+    if (/[a-z]/.test(password)) strength += 25
+    if (/[A-Z]/.test(password)) strength += 25
+    if (/[0-9]/.test(password)) strength += 25
+    if (/[^A-Za-z0-9]/.test(password)) strength += 25
+    return Math.min(strength, 100)
+  }
+
+  const getPasswordStrengthText = (strength: number) => {
+    if (strength < 25) return 'Rất yếu'
+    if (strength < 50) return 'Yếu'
+    if (strength < 75) return 'Trung bình'
+    if (strength < 100) return 'Mạnh'
+    return 'Rất mạnh'
+  }
+
+  const getPasswordStrengthColor = (strength: number) => {
+    if (strength < 25) return 'bg-red-500'
+    if (strength < 50) return 'bg-orange-500'
+    if (strength < 75) return 'bg-yellow-500'
+    if (strength < 100) return 'bg-blue-500'
+    return 'bg-green-500'
+  }
+
+  const passwordStrength = calculatePasswordStrength(password)
 
   const router = useRouter()
 
@@ -215,38 +243,49 @@ export default function RegisterPage() {
 
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-2">
-      <div className="flex justify-between max-w-4xl w-full">
-        {/* Left Card - Register Form */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 w-96">
-          <div className="text-center mb-8">
-            {/* Logo */}
-            <div className="mx-auto h-16 w-30 rounded-xl flex items-center justify-center mb-1">
-              <Image
-                src="/logo.png"
-                alt="Trustay Logo"
-                width={200}
-                height={100}
-              />
-            </div>
+    <div className="min-h-screen flex">
+      <div className="flex w-full">
+        {/* Left Side - Image */}
+        <div className="w-2/5 px-6 hidden lg:flex overflow-hidden">
+          <Image
+            src="/goal.png"
+            alt="Goal"
+            width={1500}
+            height={1500}
+          />
+        </div>
 
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {currentStep === 'verification'
-                ? 'XÁC THỰC EMAIL'
-                : currentStep === 'profile-update'
-                ? 'CẬP NHẬT THÔNG TIN'
-                : 'ĐĂNG KÝ'
-              }
-            </h2>
-            <p className="text-gray-600 text-sm">
-              {currentStep === 'verification'
-                ? `Nhập mã xác thực đã gửi đến ${email}`
-                : currentStep === 'profile-update'
-                ? 'Hoàn thiện thông tin cá nhân của bạn'
-                : 'Tạo tài khoản mới để bắt đầu'
-              }
-            </p>
-          </div>
+        {/* Right Side - Registration Form */}
+        <div className="w-3/5 bg-white flex items-center justify-center p-8">
+          <div className="w-full max-w-lg">
+            <div className="text-center mb-4">
+              {/* Logo */}
+              <div className="mx-auto rounded-xl flex items-center justify-center mb-4">
+                <Image
+                  src="/logo.png"
+                  alt="Trustay Logo"
+                  width={200}
+                  height={100}
+                />
+              </div>
+
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                {currentStep === 'verification'
+                  ? 'XÁC THỰC EMAIL'
+                  : currentStep === 'profile-update'
+                  ? 'CẬP NHẬT THÔNG TIN'
+                  : 'ĐĂNG KÝ'
+                }
+              </h2>
+              <p className="text-gray-600 text-sm">
+                {currentStep === 'verification'
+                  ? `Nhập mã xác thực đã gửi đến ${email}`
+                  : currentStep === 'profile-update'
+                  ? 'Hoàn thiện thông tin cá nhân của bạn'
+                  : 'Tạo tài khoản mới để bắt đầu'
+                }
+              </p>
+            </div>
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
@@ -257,36 +296,39 @@ export default function RegisterPage() {
           {currentStep === 'form' ? (
             <form className="space-y-4" onSubmit={handleFormSubmit}>
               {/* Role Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Vai trò
+              <div className="grid grid-cols-2 gap-3">
+                <label className={`flex items-center h-11 px-4 border rounded-lg cursor-pointer transition-colors ${
+                  role === 'tenant'
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-300 hover:border-green-300 bg-white'
+                }`}>
+                  <input
+                    type="radio"
+                    name="role"
+                    value="tenant"
+                    checked={role === 'tenant'}
+                    onChange={(e) => setRole(e.target.value as 'tenant' | 'landlord')}
+                    className="mr-3 text-green-600 focus:ring-green-500"
+                    disabled={isLoading}
+                  />
+                  <span className="text-sm text-gray-700">Người thuê trọ</span>
                 </label>
-                <div className="flex gap-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="role"
-                      value="tenant"
-                      checked={role === 'tenant'}
-                      onChange={(e) => setRole(e.target.value as 'tenant' | 'landlord')}
-                      className="mr-2 text-green-600 focus:ring-green-500"
-                      disabled={isLoading}
-                    />
-                    <span className="text-sm text-gray-700">Người thuê trọ</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="role"
-                      value="landlord"
-                      checked={role === 'landlord'}
-                      onChange={(e) => setRole(e.target.value as 'tenant' | 'landlord')}
-                      className="mr-2 text-green-600 focus:ring-green-500"
-                      disabled={isLoading}
-                    />
-                    <span className="text-sm text-gray-700">Chủ trọ</span>
-                  </label>
-                </div>
+                <label className={`flex items-center h-11 px-4 border rounded-lg cursor-pointer transition-colors ${
+                  role === 'landlord'
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-300 hover:border-green-300 bg-white'
+                }`}>
+                  <input
+                    type="radio"
+                    name="role"
+                    value="landlord"
+                    checked={role === 'landlord'}
+                    onChange={(e) => setRole(e.target.value as 'tenant' | 'landlord')}
+                    className="mr-3 text-green-600 focus:ring-green-500"
+                    disabled={isLoading}
+                  />
+                  <span className="text-sm text-gray-700">Chủ trọ</span>
+                </label>
               </div>
 
               {/* First Name and Last Name */}
@@ -300,7 +342,7 @@ export default function RegisterPage() {
                   onChange={(e) => setFirstName(e.target.value)}
                   required
                   disabled={isLoading}
-                  className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
+                  className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
                 />
                 <Input
                   id="lastName"
@@ -311,27 +353,25 @@ export default function RegisterPage() {
                   onChange={(e) => setLastName(e.target.value)}
                   required
                   disabled={isLoading}
-                  className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
+                  className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
                 />
               </div>
 
               {/* Email */}
-              <div>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={isLoading}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
-                />
-              </div>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+                className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
+              />
 
-              {/* Phone */}
-              <div>
+              {/* Phone and Gender */}
+              <div className="grid grid-cols-2 gap-3">
                 <Input
                   id="phone"
                   name="phone"
@@ -341,8 +381,19 @@ export default function RegisterPage() {
                   onChange={(e) => setPhone(e.target.value)}
                   required
                   disabled={isLoading}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
+                  className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
                 />
+                <select
+                  id="gender"
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value as 'male' | 'female' | 'other')}
+                  disabled={isLoading}
+                  className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50 bg-white"
+                >
+                  <option value="male">Nam</option>
+                  <option value="female">Nữ</option>
+                  <option value="other">Khác</option>
+                </select>
               </div>
 
               {/* Password */}
@@ -353,35 +404,54 @@ export default function RegisterPage() {
                   type="password"
                   placeholder="Mật khẩu"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    setConfirmPassword(e.target.value) // Auto-match confirm password
+                  }}
                   required
                   disabled={isLoading}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
+                  className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
                 />
+
+                {/* Password Strength Indicator */}
+                {password && (
+                  <div className="mt-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs text-gray-600">Độ mạnh mật khẩu:</span>
+                      <span className="text-xs font-medium text-gray-700">
+                        {getPasswordStrengthText(passwordStrength)}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor(passwordStrength)}`}
+                        style={{ width: `${passwordStrength}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Confirm Password */}
-              <div>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  placeholder="Xác nhận mật khẩu"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  disabled={isLoading}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
-                />
-              </div>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                placeholder="Xác nhận mật khẩu"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                disabled={isLoading}
+                className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
+              />
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 <input
                   type="checkbox"
                   id="developmentMode"
                   checked={isDevelopmentMode}
                   onChange={(e) => setIsDevelopmentMode(e.target.checked)}
-                  className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                  className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 focus:ring-2"
                 />
                 <label htmlFor="developmentMode" className="text-sm text-gray-600">
                   Chế độ phát triển (bỏ qua xác thực email)
@@ -392,9 +462,31 @@ export default function RegisterPage() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-11 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? "ĐANG XỬ LÝ..." : "ĐĂNG KÝ"}
+                </Button>
+              </div>
+
+              {/* OR Divider */}
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">OR</span>
+                </div>
+              </div>
+
+              {/* Zalo Registration */}
+              <div className="text-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full py-3 px-4 border border-blue-500 text-blue-500 hover:bg-blue-50 font-medium rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  <span>📱</span>
+                  <span>Đăng ký bằng Zalo</span>
                 </Button>
               </div>
 
@@ -532,37 +624,6 @@ export default function RegisterPage() {
               </div>
             </form>
           )}
-        </div>
-
-        {/* Right Card - Branding (giống y hệt trang login) */}
-        <div className="flex flex-col justify-center items-center w-70">
-          {/* Logo với biểu tượng map trắng */}
-          <div className="rounded-2xl shadow-lg bg-green-500 bg-opacity-20 flex items-center justify-center mb-6 h-80 px-4">
-            <Image
-              src="/logo-slogan-white.png"
-              alt="Trustay Logo"
-              width={300}
-              height={300}
-              className="object-contain"
-            />
-          </div>
-          <div className="space-y-3 text-sm text-center">
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full flex-shrink-0 bg-green-500"></div>
-              <span>Tìm kiếm nhà trọ dễ dàng</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full flex-shrink-0 bg-green-500"></div>
-              <span>Kết nối với người cùng phòng</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full flex-shrink-0 bg-green-500"></div>
-              <span>Quản lý tài chính minh bạch</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full flex-shrink-0 bg-green-500"></div>
-              <span>Liên hệ qua Zalo tiện lợi</span>
-            </div>
           </div>
         </div>
       </div>
