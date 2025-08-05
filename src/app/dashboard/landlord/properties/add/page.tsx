@@ -360,7 +360,7 @@ export default function AddPropertyPage() {
               <StepContent step={2}>
                 <div className="space-y-6">
                   <div className="flex items-center space-x-2 mb-4">
-                    <Image className="h-5 w-5 text-primary" />
+                    <Image className="h-5 w-5 text-primary"/>
                     <h3 className="text-lg font-semibold">Hình ảnh nhà trọ</h3>
                   </div>
 

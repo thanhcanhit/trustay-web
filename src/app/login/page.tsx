@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [passwordErrors, setPasswordErrors] = useState<string[]>([])
   const [showPassword, setShowPassword] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { login, isLoading, error, clearError } = useUserStore()
   const router = useRouter()
 
