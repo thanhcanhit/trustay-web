@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import { ArrowLeft, Heart, Share2, MapPin, Loader2 } from "lucide-react"
+import { ArrowLeft,
+  // Heart, Share2, 
+  MapPin, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRoomStore } from "@/stores/roomStore"
 import { AmenitySelector } from "@/components/ui/amenity-selector"
@@ -17,12 +19,12 @@ export default function PropertyDetailPage() {
     currentRoom: roomDetail,
     roomLoading: isLoading,
     roomError: error,
-    savedRooms,
+    //savedRooms,
     loadRoomDetail,
-    toggleSaveRoom
+    //toggleSaveRoom
   } = useRoomStore()
 
-  const isSaved = roomDetail ? savedRooms.includes(roomDetail.id) : false
+  //const isSaved = roomDetail ? savedRooms.includes(roomDetail.id) : false
 
   // Load room detail from API using store - only once
   useEffect(() => {
@@ -69,7 +71,7 @@ export default function PropertyDetailPage() {
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center">
             <Button 
               variant="ghost" 
               onClick={() => window.history.back()}
@@ -79,7 +81,7 @@ export default function PropertyDetailPage() {
               Quay lại
             </Button>
             
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
@@ -92,7 +94,7 @@ export default function PropertyDetailPage() {
                 <Share2 className="h-4 w-4 mr-2" />
                 Chia sẻ
               </Button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -111,19 +113,6 @@ export default function PropertyDetailPage() {
 
             {/* Room Info */}
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">
-                {roomDetail.name}
-              </h1>
-
-              <div className="flex items-center mb-4">
-                <MapPin className="h-5 w-5 text-gray-500 mr-2" />
-                <span className="text-gray-700">
-                  {roomDetail.address}, {roomDetail.location.wardName}, {roomDetail.location.districtName}, {roomDetail.location.provinceName}
-                </span>
-              </div>
-
-
-
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
                   <span className="text-gray-500">Tòa nhà:</span>
@@ -168,8 +157,8 @@ export default function PropertyDetailPage() {
                   <h3 className="font-semibold text-gray-900 mb-3">Chi phí phát sinh</h3>
                   <div className="grid grid-cols-2 gap-4">
                     {roomDetail.costs.map(cost => (
-                      <div key={cost.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <span className="text-gray-700">{cost.name}</span>
+                      <div key={cost.id} className="flex gap-3 items-center p-3">
+                        <span className="text-gray-700">{cost.name}:</span>
                         <span className="font-medium">{new Intl.NumberFormat('vi-VN').format(parseInt(cost.value))}đ</span>
                       </div>
                     ))}
@@ -181,9 +170,9 @@ export default function PropertyDetailPage() {
               {roomDetail.rules && roomDetail.rules.length > 0 && (
                 <div className="mb-6">
                   <h3 className="font-semibold text-gray-900 mb-3">Quy định</h3>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-3">
                     {roomDetail.rules.map(rule => (
-                      <div key={rule.id} className="flex items-center p-3 bg-gray-50 rounded-lg">
+                      <div key={rule.id} className="flex items-center p-3">
                         <span className={`inline-block w-2 h-2 rounded-full mr-3 ${
                           rule.type === 'required' ? 'bg-green-500' :
                           rule.type === 'forbidden' ? 'bg-red-500' :
@@ -202,8 +191,16 @@ export default function PropertyDetailPage() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
-              <div className="text-3xl font-bold text-red-600 mb-4">
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-3 sticky top-6">
+              <h3 className="font-semibold text-gray-900 mb-3">{roomDetail.name}</h3>
+              <div className="flex items-center mb-4">
+                <MapPin className="h-5 w-5 text-gray-500 mr-2" />
+                <span className="text-gray-700 text-xsm">
+                  {roomDetail.address}, {roomDetail.location.wardName}, {roomDetail.location.districtName}, {roomDetail.location.provinceName}
+                </span>
+              </div>
+
+              <div className="text-2xl font-bold text-red-600 mb-4">
                 {formatPrice(parseInt(roomDetail.pricing.basePriceMonthly))} VNĐ/tháng
               </div>
 
