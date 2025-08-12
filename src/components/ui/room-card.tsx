@@ -2,8 +2,13 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Heart, MapPin, Wifi, Zap, Droplets, Users } from 'lucide-react';
+import { 
+  //Heart, 
+  MapPin, 
+  Users, 
+  Wifi} from 'lucide-react';
 import type { RoomListing } from '@/actions/listings.action';
+import { Badge } from './badge';
 
 interface RoomCardProps {
   room: RoomListing;
@@ -15,8 +20,8 @@ interface RoomCardProps {
 
 export function RoomCard({
   room,
-  onSaveToggle,
-  isSaved = false,
+  //onSaveToggle,
+  //isSaved = false,
   onClick,
   className = ''
 }: RoomCardProps) {
@@ -60,12 +65,12 @@ export function RoomCard({
     }
   };
 
-  const handleSaveClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onSaveToggle) {
-      onSaveToggle(room.id);
-    }
-  };
+  // const handleSaveClick = (e: React.MouseEvent) => {
+  //   e.stopPropagation();
+  //   if (onSaveToggle) {
+  //     onSaveToggle(room.id);
+  //   }
+  // };
 
   const { electricityCost, waterCost } = getElectricityWaterCost();
   const wifiAvailable = hasWifi();
@@ -94,17 +99,16 @@ export function RoomCard({
             </span>
           </div>
         )}
+        {/* Price */}
+        <div className="absolute bottom-2 left-2">
+          <Badge
+            className="bg-white text-green-600 font-bold border border-green-200"
+          >
+            {formatPrice(room.pricing.basePriceMonthly)}tr/tháng
+          </Badge>
+        </div>
 
-        {/* WiFi Icon */}
-        {wifiAvailable && (
-          <div className="absolute top-2 right-12">
-            <div className="bg-white/90 rounded-full p-1">
-              <Wifi className="h-4 w-4 text-green-600" />
-            </div>
-          </div>
-        )}
-
-        {/* Save Button */}
+        {/* Save Button
         {onSaveToggle && (
           <button
             onClick={handleSaveClick}
@@ -114,7 +118,7 @@ export function RoomCard({
               className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
             />
           </button>
-        )}
+        )} */}
       </div>
 
       {/* Content */}
@@ -122,49 +126,58 @@ export function RoomCard({
         <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
           {room.name}
         </h3>
-
-        {/* Price */}
-        <div className="text-red-600 font-bold text-lg mb-2">
-          {formatPrice(room.pricing.basePriceMonthly)} triệu/tháng
+        {/* Location */}
+        <div className="flex items-center text-xsm text-gray-500">
+          <MapPin className="h-4 w-4 mr-1" />
+          <span>{room.location.districtName}, {room.location.provinceName}</span>
         </div>
 
+        
+
         {/* Room Type & Building */}
-        <div className="text-sm text-gray-600 mb-2">
+        <div className="flex text-xsm text-gray-600 mb-2 gap-1">
+          <span className="inline-flex items-center gap-1">
+            <Users className="h-3 w-3" />
+            {room.maxOccupancy} người
+          </span>
+          <span className="text-gray-400">•</span>
           {room.roomType === 'boarding_house' ? 'Nhà trọ' : room.roomType}
-          {room.maxOccupancy > 1 && (
-            <>
-              {' • '}
-              <span className="inline-flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                {room.maxOccupancy} người
-              </span>
-            </>
-          )}
+          
         </div>
 
         {/* Electricity & Water Costs */}
         {(electricityCost || waterCost) && (
-          <div className="flex items-center gap-3 text-xs text-gray-600 mb-2">
-            {electricityCost && (
-              <div className="flex items-center gap-1">
-                <Zap className="h-3 w-3" />
-                <span>{new Intl.NumberFormat('vi-VN').format(parseInt(electricityCost.value))}đ</span>
-              </div>
-            )}
-            {waterCost && (
-              <div className="flex items-center gap-1">
-                <Droplets className="h-3 w-3" />
-                <span>{new Intl.NumberFormat('vi-VN').format(parseInt(waterCost.value))}đ</span>
-              </div>
-            )}
+          <div className="flex items-center justify-between gap-3 text-xs text-gray-600 mb-2">
+            <div className="flex items-center gap-1 min-w-[50px]">
+              {wifiAvailable && 
+                <Badge
+                  className="bg-green-100 text-green-700 font-bold border border-green-200"
+                >
+                  <Wifi className="h-3 w-3" />
+                  Wifi
+                </Badge>}
+
+              {}
+            </div>
+            <div className='flex flex-col gap-1 '>
+              {electricityCost && (
+                <div className="flex items-center gap-1">
+                  <span>Tiền điện:</span>
+                  <span>{new Intl.NumberFormat('vi-VN').format(parseInt(electricityCost.value))}đ</span>
+                </div>
+              )}
+              {waterCost && (
+                <div className="flex items-center gap-1">
+                  <span>Tiền nước:</span>
+                  <span>{new Intl.NumberFormat('vi-VN').format(parseInt(waterCost.value))}đ</span>
+                </div>
+              )}
+            </div>
+            
           </div>
         )}
 
-        {/* Location */}
-        <div className="flex items-center text-sm text-gray-600">
-          <MapPin className="h-4 w-4 mr-1" />
-          <span>{room.location.districtName}, {room.location.provinceName}</span>
-        </div>
+        
       </div>
     </div>
   );
