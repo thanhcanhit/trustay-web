@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "biome check --write . && eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
+    "lint": "biome check --write . && eslint \"{src,app,components}/**/*.ts\" --fix"
   },
   "dependencies": {
     "@ckeditor/ckeditor5-react": "^11.0.0",
@@ -40,6 +40,7 @@
     "react-day-picker": "^9.8.1",
     "react-dom": "^19.1.0",
     "sonner": "^2.0.7",
+    "swiper": "^11.2.10",
     "tailwind-merge": "^3.3.1",
     "zustand": "^5.0.6"
   },
