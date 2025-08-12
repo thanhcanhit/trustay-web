@@ -5,19 +5,19 @@ import { useParams } from "next/navigation"
 import Image from "next/image"
 import { ArrowLeft, Heart, Share2, MapPin, User, Calendar, DollarSign, Phone, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { mockRoommatePosts } from "@/data/mock-data"
+import { getRoommatePostById } from "@/data/mock-data"
+import { ImageSwiper } from "@/components/ui/image-swiper"
 
 export default function RoommateDetailPage() {
   const params = useParams()
   const postId = params.id as string
   const [isSaved, setIsSaved] = useState(false)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
-  const post = mockRoommatePosts.find(p => p.id === postId)
-  
+  const post = getRoommatePostById(postId)
+
   if (!post) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 pt-20">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy bài đăng</h1>
           <Button onClick={() => window.history.back()}>
@@ -46,23 +46,23 @@ export default function RoommateDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-16">
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => window.history.back()}
               className="flex items-center"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Quay lại
             </Button>
-            
+
             <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => setIsSaved(!isSaved)}
               >
@@ -83,48 +83,12 @@ export default function RoommateDetailPage() {
           {/* Main Content */}
           <div className="lg:col-span-2">
             {/* Image Gallery */}
-            {post.images.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
-                <div className="relative h-96">
-                  <Image
-                    src={post.images[currentImageIndex] || "/placeholder-roommate.jpg"}
-                    alt={post.title}
-                    fill
-                    className="object-cover"
-                  />
-                  {post.isHot && (
-                    <div className="absolute top-4 left-4">
-                      <span className="bg-orange-500 text-white text-sm font-bold px-3 py-1 rounded">
-                        HOT
-                      </span>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Image Thumbnails */}
-                {post.images.length > 1 && (
-                  <div className="flex gap-2 p-4 overflow-x-auto">
-                    {post.images.map((image, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentImageIndex(index)}
-                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                          currentImageIndex === index ? 'border-blue-500' : 'border-gray-200'
-                        }`}
-                      >
-                        <Image
-                          src={image}
-                          alt={`${post.title} ${index + 1}`}
-                          width={80}
-                          height={80}
-                          className="object-cover w-full h-full"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            <ImageSwiper
+              images={post.images || []}
+              title={post.title}
+              className="mb-6"
+              isHot={post.isHot}
+            />
 
             {/* Post Info */}
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -187,6 +151,23 @@ export default function RoommateDetailPage() {
                 </div>
               )}
 
+              {/* Preferences */}
+              {post.preferences.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-3">Sở thích</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {post.preferences.map((preference, index) => (
+                      <span
+                        key={index}
+                        className="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full"
+                      >
+                        {preference}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="text-sm text-gray-500">
                 Đăng ngày: {formatDate(post.createdAt)}
               </div>
@@ -198,10 +179,10 @@ export default function RoommateDetailPage() {
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
               <div className="text-center mb-6">
                 <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center">
-                  {post.authorAvatar ? (
+                  {post.authorAvatar && typeof post.authorAvatar === 'string' && post.authorAvatar.trim() !== "" ? (
                     <Image
                       src={post.authorAvatar}
-                      alt={post.authorName}
+                      alt={post.authorName || "Author avatar"}
                       width={64}
                       height={64}
                       className="rounded-full"
@@ -219,7 +200,7 @@ export default function RoommateDetailPage() {
                   <Phone className="h-4 w-4 mr-2" />
                   Liên hệ qua Zalo
                 </Button>
-                
+
                 {post.contactInfo.email && (
                   <Button variant="outline" className="w-full" size="lg">
                     <Mail className="h-4 w-4 mr-2" />
