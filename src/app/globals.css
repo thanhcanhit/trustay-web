@@ -47,6 +47,7 @@
 :root {
   --radius: 0.625rem;
   --padding-top-basic: 50px;
+  --text-xsm: 13px;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -139,5 +140,9 @@
   /* Global padding-top for all pages to prevent header overlap */
   .page-content {
     padding-top: var(--padding-top-basic);
+  }
+  .text-xsm {
+    font-size: var(--text-xsm);
+    line-height: 1.25rem;
   }
 }
