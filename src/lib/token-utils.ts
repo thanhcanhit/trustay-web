@@ -3,7 +3,7 @@ export const TokenUtils = {
 	getAccessToken: (): string | null => {
 		if (typeof document === 'undefined') return null;
 
-		// Try to read from cookies first
+		// Try to read from cookies first (non-httpOnly cookies only)
 		const cookies = document.cookie.split(';');
 		const accessTokenCookie = cookies.find((cookie) => cookie.trim().startsWith('accessToken='));
 
