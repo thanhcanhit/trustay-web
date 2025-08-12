@@ -4,8 +4,13 @@ import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
 import { useUserStore } from "@/stores/userStore"
+import { useSearchFilters } from "@/hooks/use-search-filters"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { AmenityFilter } from "@/components/ui/amenity-filter"
+import { PriceFilter } from "@/components/ui/price-filter"
+import { LocationFilter } from "@/components/ui/location-filter"
+import { AreaFilter } from "@/components/ui/area-filter"
+import { SearchInputWithFilters } from "@/components/ui/search-input-with-filters"
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -15,10 +20,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu"
 import {
-  Home,
-  Search,
   Plus,
-  BarChart3,
   User,
   LogOut,
   ChevronDown
@@ -29,8 +31,28 @@ export function Navigation() {
   const pathname = usePathname()
   const { user, isAuthenticated, logout, switchRole } = useUserStore()
   const [showUserDropdown, setShowUserDropdown] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Use search filters hook
+  const {
+    searchQuery,
+    setSearchQuery,
+    getActiveFilters,
+    addFilterValue,
+    removeFilterValue,
+    removeFilter,
+    applyFilters
+  } = useSearchFilters()
+
+  // Get active filters for display
+  const activeFiltersList = getActiveFilters()
+
+  // Handle search
+  const handleSearch = () => {
+    applyFilters()
+  }
+
+
 
   // Check if current page is login or register
   const isAuthPage = pathname === '/login' || pathname === '/register'
@@ -77,7 +99,7 @@ export function Navigation() {
   }, [])
 
   return (
-    <nav className="border-b bg-white shadow-sm relative z-50">
+    <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
       {/* First Row: Logo, Search, Login/Signup */}
       <div className={isAuthPage ? "" : "border-b border-gray-200"}>
         <div className="container mx-auto px-4">
@@ -89,25 +111,35 @@ export function Navigation() {
 
             {/* Search Bar - Hidden on auth pages */}
             {!isAuthPage && (
-              <div className="flex-1 max-w-2xl mx-8">
+              <div className="flex-1 max-w-4xl mx-8">
                 <div className="flex space-x-2">
-                  <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      type="text"
-                      placeholder="What are you looking for?"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  {/* Search Input with Selected Filters */}
+                  <div className="flex-1">
+                    <SearchInputWithFilters
+                      searchQuery={searchQuery}
+                      onSearchChange={setSearchQuery}
+                      onSearch={handleSearch}
+                      selectedAmenities={activeFiltersList.find(af => af.id === 'amenities')?.values || []}
+                      selectedPrices={activeFiltersList.find(af => af.id === 'price')?.values || []}
+                      selectedLocation={activeFiltersList.find(af => af.id === 'location')?.values?.[0] || ''}
+                      selectedAreas={activeFiltersList.find(af => af.id === 'area')?.values || []}
+                      onRemoveFilter={(type, value) => {
+                        if (type === 'location') {
+                          removeFilter('location');
+                        } else {
+                          removeFilterValue(type === 'amenity' ? 'amenities' : type, value);
+                        }
+                      }}
                     />
                   </div>
-                  <div className="">
-                    <Button
-                      className="bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors"
-                    >
-                      Tìm kiếm
-                    </Button>
-                  </div>
+
+                  {/* Search Button */}
+                  <Button
+                    onClick={handleSearch}
+                    className="bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors px-6 self-center"
+                  >
+                    Tìm kiếm
+                  </Button>
                 </div>
               </div>
             )}
@@ -139,18 +171,23 @@ export function Navigation() {
                   </Button>
 
                   {showUserDropdown && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-50">
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border z-50">
                       <div className="py-1">
-                        <div className="px-4 py-2 text-sm text-gray-700 border-b">
-                          {user?.role === 'tenant' ? 'Quản lý lưu trú' : 'Quản lý phòng trọ'}
-                        </div>
+                        <Link
+                          href="/profile"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setShowUserDropdown(false)}
+                        >
+                          Quản lý cá nhân
+                        </Link>
                         <Link
                           href={getDashboardLink()}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           onClick={() => setShowUserDropdown(false)}
                         >
-                          {user?.role === 'tenant' ? 'Dashboard người thuê' : 'Dashboard chủ trọ'}
+                          {user?.role === 'tenant' ? 'Dashboard' : 'Dashboard trọ'}
                         </Link>
+                        <hr className="border-gray-200" />
                         <button
                           onClick={handleLogout}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -180,78 +217,37 @@ export function Navigation() {
         </div>
       </div>
 
-      {/* Second Row: Navigation Menu - Hidden on auth pages */}
+      {/* Second Row: Filter Bar - Hidden on auth pages */}
       {!isAuthPage && (
         <div className="container mx-auto px-4">
-          <div className="flex h-12 items-center justify-center">
+          <div className="flex h-12 items-center gap-15">
+            {/* Post Button */}
             <NavigationMenu viewport={false}>
-              <NavigationMenuList className="flex space-x-8">
+              <NavigationMenuList>
                 <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link href="/" className="text-green-600 hover:text-green-700 font-medium px-3 py-2 rounded-md hover:bg-green-50 bg-green-50 flex flex-row items-center">
-                      <Home className="h-4 w-4 mr-2" />
-                      <div>Trang chủ</div>
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 font-medium">
+                  <NavigationMenuTrigger className="text-white bg-green-600 hover:bg-green-700 font-medium px-4 py-2 rounded-md">
                     <Plus className="h-4 w-4 mr-2" />
-                    Đăng tin
+                    Đăng bài
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid w-[200px] gap-3 p-4">
-                      <li>
+                    <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
+                      <li className="row-span-3">
                         <NavigationMenuLink asChild>
-                          <Link href="#" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                            <div className="text-sm font-medium leading-none">Đăng tin tìm trọ</div>
+                          <Link href="/dashboard/landlord/properties/add" className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md">
+                            <Plus className="h-6 w-6" />
+                            <div className="mb-2 mt-4 text-lg font-medium">
+                              Đăng tin cho thuê
+                            </div>
+                            <p className="text-sm leading-tight text-muted-foreground">
+                              Đăng tin cho thuê phòng trọ, nhà trọ của bạn
+                            </p>
                           </Link>
                         </NavigationMenuLink>
                       </li>
                       <li>
                         <NavigationMenuLink asChild>
-                          <Link href="#" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                          <Link href="/dashboard/landlord/roommate/add" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
                             <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-
-                {isAuthenticated && user && (
-                  <NavigationMenuItem>
-                    <NavigationMenuLink asChild>
-                      <Link
-                        href={getDashboardLink()}
-                        className="text-gray-600 hover:text-gray-700 font-medium px-3 py-2 rounded-md hover:bg-gray-50 flex flex-row items-center"
-                      >
-                        <BarChart3 className="h-4 w-4 mr-2" />
-                        <div>{user.role === 'tenant' ? 'Dashboard' : 'Quản lý'}</div>
-                      </Link>
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                )}
-
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 font-medium">
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    Dịch vụ
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[200px] gap-3 p-4">
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link href="#" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                            <div className="text-sm font-medium leading-none">Tìm phòng trọ</div>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link href="#" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                            <div className="text-sm font-medium leading-none">Yêu cầu thuê của tôi</div>
                           </Link>
                         </NavigationMenuLink>
                       </li>
@@ -260,6 +256,73 @@ export function Navigation() {
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
+
+            {/* Filter Buttons */}
+            <div className="flex items-center space-x-5 flex-wrap">
+              <LocationFilter
+                selectedLocation={activeFiltersList.find(af => af.id === 'location')?.values?.[0] || ''}
+                onLocationChange={(location) => {
+                  // Clear existing location filter
+                  removeFilter('location');
+                  // Add new location filter if not empty
+                  if (location) {
+                    addFilterValue('location', location);
+                  }
+                }}
+              />
+
+              <AreaFilter
+                selectedAreas={activeFiltersList.find(af => af.id === 'area')?.values || []}
+                onSelectionChange={(areas) => {
+                  // Clear existing area filters
+                  const currentAreaFilter = activeFiltersList.find(af => af.id === 'area');
+                  if (currentAreaFilter) {
+                    currentAreaFilter.values.forEach(value => {
+                      removeFilterValue('area', value);
+                    });
+                  }
+                  // Add new area filters
+                  areas.forEach(area => {
+                    addFilterValue('area', area);
+                  });
+                }}
+              />
+
+              <PriceFilter
+                selectedPrices={activeFiltersList.find(af => af.id === 'price')?.values || []}
+                onSelectionChange={(prices) => {
+                  // Clear existing price filters
+                  const currentPriceFilter = activeFiltersList.find(af => af.id === 'price');
+                  if (currentPriceFilter) {
+                    currentPriceFilter.values.forEach(value => {
+                      removeFilterValue('price', value);
+                    });
+                  }
+                  // Add new price filters
+                  prices.forEach(price => {
+                    addFilterValue('price', price);
+                  });
+                }}
+              />
+
+              <AmenityFilter
+                selectedAmenities={activeFiltersList.find(af => af.id === 'amenities')?.values || []}
+                onSelectionChange={(amenityIds) => {
+                  // Clear existing amenity filters
+                  const currentAmenityFilter = activeFiltersList.find(af => af.id === 'amenities');
+                  if (currentAmenityFilter) {
+                    currentAmenityFilter.values.forEach(value => {
+                      removeFilterValue('amenities', value);
+                    });
+                  }
+                  // Add new amenity filters
+                  amenityIds.forEach(amenityId => {
+                    addFilterValue('amenities', amenityId);
+                  });
+                }}
+              />
+            </div>
+
           </div>
         </div>
       )}
