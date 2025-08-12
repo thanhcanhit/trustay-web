@@ -56,7 +56,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex pt-16">
       <Sidebar userType={userType} />
       <main className="flex-1 overflow-auto">
         {children}

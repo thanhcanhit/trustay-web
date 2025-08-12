@@ -88,23 +88,27 @@ export interface UpdateProfileRequest {
 
 // Location Types
 export interface Province {
-	id: string;
+	id: number;
 	name: string;
+	nameEn: string | null;
 	code: string;
 }
 
 export interface District {
-	id: string;
+	id: number;
 	name: string;
+	nameEn: string | null;
 	code: string;
-	provinceId: string;
+	provinceId: number;
 }
 
 export interface Ward {
-	id: string;
+	id: number;
 	name: string;
+	nameEn: string | null;
 	code: string;
-	districtId: string;
+	level: string;
+	districtId: number;
 }
 
 // API Response wrapper

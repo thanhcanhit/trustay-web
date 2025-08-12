@@ -16,7 +16,7 @@ const mockSavedProperties = [
     area: 25,
     rating: 4.5,
     reviewCount: 12,
-    images: ["/placeholder-room.jpg"],
+    images: ["/images/roommate1.png"],
     amenities: ["Wifi", "Điều hòa", "Máy giặt"],
     savedDate: "2024-01-15",
     available: true
@@ -29,7 +29,7 @@ const mockSavedProperties = [
     area: 30,
     rating: 4.8,
     reviewCount: 25,
-    images: ["/placeholder-room.jpg"],
+    images: ["/images/roommate1.png"],
     amenities: ["Wifi", "Điều hòa", "Thang máy", "Bảo vệ 24/7"],
     savedDate: "2024-01-10",
     available: true
@@ -42,7 +42,7 @@ const mockSavedProperties = [
     area: 20,
     rating: 4.2,
     reviewCount: 8,
-    images: ["/placeholder-room.jpg"],
+    images: ["/images/roommate1.png"],
     amenities: ["Wifi", "Máy giặt chung"],
     savedDate: "2024-01-05",
     available: false

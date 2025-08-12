@@ -12,15 +12,15 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("all")
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pt-16">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-green-900 via-green-800 to-green-600 min-h-[350px] overflow-hidden">
+      <div className="relative bg-gradient-to-br from-green-900 via-green-800 to-green-600 min-h-[300px] overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-20">
           <div className="w-full h-full bg-gradient-to-br from-white/10 to-transparent"></div>
         </div>
 
-        <div className="container mx-auto px-4 py-12 relative z-0">
+        <div className="container mx-auto px-4 py-8 relative z-0">
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             {/* Left Content */}
             <div className="text-white space-y-6">
@@ -68,7 +68,7 @@ export default function Home() {
       </div>
 
       {/* Search Section */}
-      <div className="container mx-auto px-9 relative -top-17 z-0">
+      <div className="container mx-auto px-9 relative -top-15 z-0">
           {/* Category Tabs */}
           <div className="flex flex-wrap gap-1">
             <button
