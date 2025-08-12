@@ -12,15 +12,15 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("all")
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pt-16">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-green-900 via-green-800 to-green-600 min-h-[350px] overflow-hidden">
+      <div className="relative bg-gradient-to-br from-green-900 via-green-800 to-green-600 min-h-[300px] overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-20">
           <div className="w-full h-full bg-gradient-to-br from-white/10 to-transparent"></div>
         </div>
 
-        <div className="container mx-auto px-4 py-12 relative z-0">
+        <div className="container mx-auto px-4 py-8 relative z-0">
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             {/* Left Content */}
             <div className="text-white space-y-6">
@@ -36,15 +36,29 @@ export default function Home() {
             </div>
 
             {/* Right Image */}
-            <div className="hidden lg:flex justify-center items-center">
+            <div className="hidden lg:flex justify-center items-right">
               <div className="relative">
-                <div className="w-80 h-80 bg-gradient-to-br from-green-400 to-green-600 rounded-full opacity-20 absolute -top-10 -right-10"></div>
-                <Image
+                <div className=" -z-2 w-80 h-80 bg-gradient-to-br from-green-400 to-green-600 rounded-full opacity-20 absolute -top-20 -right-10"></div>
+                 {/*<Image
                   src="/banner.png"
                   alt="House illustration"
-                  width={400}
-                  height={300}
-                  className="relative z-0 drop-shadow-2xl"
+                  width={300}
+                  height={200}
+                  className="relative z-0 drop-shadow-2xl -right-7"
+                /> */}
+                <Image
+                  src="/banner1.png"
+                  alt="House illustration"
+                  width={300}
+                  height={200}
+                  className="relative z-0 drop-shadow-2xl rounded-full -left-20"
+                />
+                <Image
+                  src="/banner2.png"
+                  alt="House illustration"
+                  width={300}
+                  height={200}
+                  className="-z-1 drop-shadow-2xl rounded-full absolute -bottom-5 left-30"
                 />
               </div>
             </div>
@@ -54,7 +68,7 @@ export default function Home() {
       </div>
 
       {/* Search Section */}
-      <div className="container mx-auto px-9 relative -top-17 z-0">
+      <div className="container mx-auto px-9 relative -top-15 z-0">
           {/* Category Tabs */}
           <div className="flex flex-wrap gap-1">
             <button

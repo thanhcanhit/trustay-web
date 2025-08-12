@@ -1,25 +1,59 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import Image from "next/image"
-import { ArrowLeft, Heart, Share2, MapPin, Star, Wifi, Car, Shield, Zap } from "lucide-react"
+import { ArrowLeft,
+  // Heart, Share2, 
+  MapPin, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { getPropertyWithRoom, mockReviews } from "@/data/mock-data"
+import { useRoomStore } from "@/stores/roomStore"
+import { AmenitySelector } from "@/components/ui/amenity-selector"
+import { ImageSwiper } from "@/components/ui/image-swiper"
 
 export default function PropertyDetailPage() {
   const params = useParams()
-  const propertyId = params.id as string
-  const [isSaved, setIsSaved] = useState(false)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const roomSlug = params.id as string
+  const [hasLoaded, setHasLoaded] = useState(false)
 
-  const propertyWithRoom = getPropertyWithRoom(propertyId)
-  
-  if (!propertyWithRoom) {
+  const {
+    currentRoom: roomDetail,
+    roomLoading: isLoading,
+    roomError: error,
+    //savedRooms,
+    loadRoomDetail,
+    //toggleSaveRoom
+  } = useRoomStore()
+
+  //const isSaved = roomDetail ? savedRooms.includes(roomDetail.id) : false
+
+  // Load room detail from API using store - only once
+  useEffect(() => {
+    if (roomSlug && !hasLoaded) {
+      loadRoomDetail(roomSlug);
+      setHasLoaded(true);
+    }
+  }, [roomSlug, hasLoaded, loadRoomDetail])
+
+  // Loading state
+  if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-green-600" />
+          <p className="text-gray-600 mt-2">Đang tải thông tin phòng...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error || !roomDetail) {
+    return (
+      <div className="container mx-auto px-4 py-8 pt-20">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy phòng trọ</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            {error || 'Không tìm thấy phòng trọ'}
+          </h1>
           <Button onClick={() => window.history.back()}>
             Quay lại
           </Button>
@@ -28,28 +62,16 @@ export default function PropertyDetailPage() {
     )
   }
 
-  const { room, ...property } = propertyWithRoom
-  const propertyReviews = mockReviews.filter(review => review.propertyId === propertyId)
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN').format(price)
   }
 
-  const amenityIcons: { [key: string]: any } = {
-    'WiFi miễn phí': Wifi,
-    'WiFi': Wifi,
-    'Gửi xe miễn phí': Car,
-    'Bảo vệ 24/7': Shield,
-    'Bảo vệ': Shield,
-    'Điều hòa': Zap,
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-16">
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center">
             <Button 
               variant="ghost" 
               onClick={() => window.history.back()}
@@ -59,11 +81,11 @@ export default function PropertyDetailPage() {
               Quay lại
             </Button>
             
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
+            {/* <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
                 size="sm"
-                onClick={() => setIsSaved(!isSaved)}
+                onClick={() => roomDetail && toggleSaveRoom(roomDetail.id)}
               >
                 <Heart className={`h-4 w-4 mr-2 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
                 {isSaved ? 'Đã lưu' : 'Lưu'}
@@ -72,7 +94,7 @@ export default function PropertyDetailPage() {
                 <Share2 className="h-4 w-4 mr-2" />
                 Chia sẻ
               </Button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -82,143 +104,113 @@ export default function PropertyDetailPage() {
           {/* Main Content */}
           <div className="lg:col-span-2">
             {/* Image Gallery */}
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
-              <div className="relative h-96">
-                <Image
-                  src={property.images[currentImageIndex] || "/placeholder-room.jpg"}
-                  alt={property.name}
-                  fill
-                  className="object-cover"
-                />
-                {property.isHot && (
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded">
-                      HOT
-                    </span>
-                  </div>
-                )}
-              </div>
-              
-              {/* Image Thumbnails */}
-              {property.images.length > 1 && (
-                <div className="flex gap-2 p-4 overflow-x-auto">
-                  {property.images.map((image, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentImageIndex(index)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                        currentImageIndex === index ? 'border-blue-500' : 'border-gray-200'
-                      }`}
-                    >
-                      <Image
-                        src={image}
-                        alt={`${property.name} ${index + 1}`}
-                        width={80}
-                        height={80}
-                        className="object-cover w-full h-full"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <ImageSwiper
+              images={roomDetail.images || []}
+              title={roomDetail.name}
+              className="mb-6"
+              isVerified={roomDetail.isVerified}
+            />
 
-            {/* Property Info */}
+            {/* Room Info */}
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">
-                {property.name}
-              </h1>
-
-              <div className="flex items-center mb-4">
-                <MapPin className="h-5 w-5 text-gray-500 mr-2" />
-                <span className="text-gray-700">
-                  {property.address}, {property.district}, {property.city}
-                </span>
-              </div>
-
-              {property.rating && (
-                <div className="flex items-center mb-4">
-                  <Star className="h-5 w-5 text-yellow-500 mr-2" />
-                  <span className="font-medium">{property.rating}</span>
-                  <span className="text-gray-500 ml-2">
-                    ({property.reviewCount} đánh giá)
-                  </span>
-                </div>
-              )}
-
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
-                  <span className="text-gray-500">Diện tích:</span>
-                  <span className="font-medium ml-2">{room.area}m²</span>
+                  <span className="text-gray-500">Tòa nhà:</span>
+                  <span className="font-medium ml-2">{roomDetail.buildingName}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Sức chứa:</span>
+                  <span className="font-medium ml-2">{roomDetail.maxOccupancy} người</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Loại phòng:</span>
+                  <span className="font-medium ml-2">
+                    {roomDetail.roomType === 'boarding_house' ? 'Nhà trọ' : roomDetail.roomType}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-500">Trạng thái:</span>
                   <span className="font-medium ml-2 text-green-600">
-                    {room.status === 'available' ? 'Còn trống' : 'Đã thuê'}
+                    {roomDetail.isVerified ? 'Đã xác minh' : 'Chưa xác minh'}
                   </span>
                 </div>
               </div>
 
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-900 mb-3">Mô tả</h3>
-                <p className="text-gray-700">{property.description}</p>
+                <div className="text-gray-700 whitespace-pre-line">{roomDetail.description}</div>
               </div>
 
               {/* Amenities */}
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-900 mb-3">Tiện nghi</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {property.amenities.map((amenity, index) => {
-                    const IconComponent = amenityIcons[amenity] || Wifi
-                    return (
-                      <div key={index} className="flex items-center">
-                        <IconComponent className="h-4 w-4 text-green-500 mr-2" />
-                        <span className="text-gray-700">{amenity}</span>
-                      </div>
-                    )
-                  })}
-                </div>
+                <AmenitySelector
+                  selectedAmenities={roomDetail.amenities.map(a => a.id)}
+                  onSelectionChange={() => {}} // Read-only
+                  mode="display"
+                />
               </div>
+
+              {/* Cost Types */}
+              {roomDetail.costs && roomDetail.costs.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-3">Chi phí phát sinh</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {roomDetail.costs.map(cost => (
+                      <div key={cost.id} className="flex gap-3 items-center p-3">
+                        <span className="text-gray-700">{cost.name}:</span>
+                        <span className="font-medium">{new Intl.NumberFormat('vi-VN').format(parseInt(cost.value))}đ</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Rules */}
+              {roomDetail.rules && roomDetail.rules.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-3">Quy định</h3>
+                  <div className="grid grid-cols-3">
+                    {roomDetail.rules.map(rule => (
+                      <div key={rule.id} className="flex items-center p-3">
+                        <span className={`inline-block w-2 h-2 rounded-full mr-3 ${
+                          rule.type === 'required' ? 'bg-green-500' :
+                          rule.type === 'forbidden' ? 'bg-red-500' :
+                          rule.type === 'allowed' ? 'bg-blue-500' : 'bg-yellow-500'
+                        }`}></span>
+                        <span className="text-gray-700">{rule.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Reviews */}
-            {propertyReviews.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">
-                  Đánh giá ({propertyReviews.length})
-                </h3>
-                <div className="space-y-4">
-                  {propertyReviews.map((review) => (
-                    <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0">
-                      <div className="flex items-center mb-2">
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-4 w-4 ${
-                                i < review.rating ? 'text-yellow-500 fill-current' : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="font-medium ml-2">{review.tenantName}</span>
-                        <span className="text-gray-500 ml-2 text-sm">
-                          {new Date(review.createdAt).toLocaleDateString('vi-VN')}
-                        </span>
-                      </div>
-                      <p className="text-gray-700">{review.comment}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+
           </div>
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
-              <div className="text-3xl font-bold text-red-600 mb-4">
-                {formatPrice(room.price)} VNĐ/tháng
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-3 sticky top-6">
+              <h3 className="font-semibold text-gray-900 mb-3">{roomDetail.name}</h3>
+              <div className="flex items-center mb-4">
+                <MapPin className="h-5 w-5 text-gray-500 mr-2" />
+                <span className="text-gray-700 text-xsm">
+                  {roomDetail.address}, {roomDetail.location.wardName}, {roomDetail.location.districtName}, {roomDetail.location.provinceName}
+                </span>
+              </div>
+
+              <div className="text-2xl font-bold text-red-600 mb-4">
+                {formatPrice(parseInt(roomDetail.pricing.basePriceMonthly))} VNĐ/tháng
+              </div>
+
+              <div className="mb-4">
+                <div className="text-sm text-gray-600">
+                  Tiền cọc: {formatPrice(parseInt(roomDetail.pricing.depositAmount))} VNĐ
+                </div>
+                <div className="text-sm text-gray-600">
+                  {roomDetail.pricing.utilityIncluded ? 'Đã bao gồm tiện ích' : 'Chưa bao gồm tiện ích'}
+                </div>
               </div>
 
               <div className="space-y-4 mb-6">
@@ -231,11 +223,28 @@ export default function PropertyDetailPage() {
               </div>
 
               <div className="border-t pt-4">
-                <h4 className="font-semibold text-gray-900 mb-3">Thông tin liên hệ</h4>
+                <h4 className="font-semibold text-gray-900 mb-3">Thông tin chủ trọ</h4>
                 <div className="space-y-2 text-sm text-gray-600">
-                  <div>Chủ trọ: Nguyễn Văn A</div>
-                  <div>Điện thoại: 0123 456 789</div>
-                  <div>Email: contact@example.com</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">
+                      {roomDetail.owner.firstName} {roomDetail.owner.lastName}
+                    </span>
+                    {roomDetail.owner.isVerifiedIdentity && (
+                      <span className="text-green-600 text-xs">✓ Đã xác minh</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>Điện thoại: {roomDetail.owner.phone}</span>
+                    {roomDetail.owner.isVerifiedPhone && (
+                      <span className="text-green-600 text-xs">✓ Đã xác minh</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>Email: </span>
+                    {roomDetail.owner.isVerifiedEmail && (
+                      <span className="text-green-600 text-xs">✓ Đã xác minh</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

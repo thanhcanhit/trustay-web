@@ -2,27 +2,38 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useState } from "react"
 import { cn } from "@/lib/utils"
-import { 
-  Home, 
-  User, 
-  Settings, 
-  Bell, 
-  FileText,
+import {
+  Home,
+  User,
+  Bell,
   BarChart3,
   Building,
   Users,
   Search,
   Heart,
-  LogOut
+  LogOut,
+  ChevronDown,
+  ChevronRight,
+  Key,
+  Receipt,
+  Send
 } from "lucide-react"
-import { useUserStore } from "@/stores/user-store"
+import { useUserStore } from "@/stores/userStore"
 
-interface SidebarItem {
+interface SidebarSubItem {
   title: string
   href: string
   icon: React.ComponentType<{ className?: string }>
+}
+
+interface SidebarItem {
+  title: string
+  href?: string
+  icon: React.ComponentType<{ className?: string }>
   badge?: string
+  subItems?: SidebarSubItem[]
 }
 
 interface SidebarProps {
@@ -31,22 +42,44 @@ interface SidebarProps {
 
 const tenantItems: SidebarItem[] = [
   {
-    title: "Thông tin cá nhân",
-    href: "/dashboard/tenant/profile",
-    icon: User
+    title: "Quản lý cá nhân",
+    icon: User,
+    subItems: [
+      {
+        title: "Thông tin cơ bản",
+        href: "/dashboard/tenant?tab=profile",
+        icon: User
+      },
+      {
+        title: "Bảo mật",
+        href: "/dashboard/tenant?tab=security",
+        icon: Key
+      }
+    ]
   },
   {
-    title: "Thông tin lưu trú",
-    href: "/dashboard/tenant/accommodation",
-    icon: Home
+    title: "Quản lý lưu trú",
+    icon: Home,
+    subItems: [
+      {
+        title: "Trọ của tôi",
+        href: "/dashboard/tenant?tab=accommodation",
+        icon: Home
+      },
+      {
+        title: "Hóa đơn",
+        href: "/dashboard/tenant?tab=bills",
+        icon: Receipt
+      }
+    ]
   },
   {
-    title: "Quản lý đánh giá",
-    href: "/dashboard/tenant/reviews",
-    icon: FileText
+    title: "Yêu cầu thuê",
+    href: "/dashboard/tenant/requests",
+    icon: Send
   },
   {
-    title: "Lưu trú",
+    title: "Trọ đã lưu",
     href: "/dashboard/tenant/saved",
     icon: Heart
   },
@@ -84,17 +117,26 @@ const landlordItems: SidebarItem[] = [
     icon: Heart
   },
   {
-    title: "Nhân viên hỗ trợ",
-    href: "/dashboard/landlord/support",
-    icon: User
+    title: "Thông báo",
+    href: "/dashboard/landlord/notifications",
+    icon: Bell
   }
 ]
 
 export function Sidebar({ userType }: SidebarProps) {
   const pathname = usePathname()
   const { user, logout } = useUserStore()
-  
+  const [expandedItems, setExpandedItems] = useState<string[]>([])
+
   const items = userType === 'tenant' ? tenantItems : landlordItems
+
+  const toggleExpanded = (itemTitle: string) => {
+    setExpandedItems(prev =>
+      prev.includes(itemTitle)
+        ? prev.filter(title => title !== itemTitle)
+        : [...prev, itemTitle]
+    )
+  }
 
   return (
     <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200">
@@ -105,7 +147,7 @@ export function Sidebar({ userType }: SidebarProps) {
             <User className="h-5 w-5 text-green-600" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+            <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
             <p className="text-xs text-gray-500">
               {userType === 'tenant' ? 'Người thuê trọ' : 'Chủ nhà trọ'}
             </p>
@@ -117,27 +159,76 @@ export function Sidebar({ userType }: SidebarProps) {
       <nav className="flex-1 p-4 space-y-1">
         {items.map((item) => {
           const Icon = item.icon
-          const isActive = pathname === item.href
-          
+          const isExpanded = expandedItems.includes(item.title)
+          const hasSubItems = item.subItems && item.subItems.length > 0
+
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-green-50 text-green-700 border-r-2 border-green-500"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            <div key={item.title}>
+              {/* Main Item */}
+              {hasSubItems ? (
+                <button
+                  onClick={() => toggleExpanded(item.title)}
+                  className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Icon className="h-5 w-5" />
+                    <span>{item.title}</span>
+                  </div>
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </button>
+              ) : (
+                <Link
+                  href={item.href!}
+                  className={cn(
+                    "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    pathname === item.href
+                      ? "bg-green-50 text-green-700 border-r-2 border-green-500"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>{item.title}</span>
+                  {item.badge && (
+                    <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
               )}
-            >
-              <Icon className="h-5 w-5" />
-              <span>{item.title}</span>
-              {item.badge && (
-                <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
-                  {item.badge}
-                </span>
+
+              {/* Sub Items */}
+              {hasSubItems && isExpanded && (
+                <div className="ml-6 mt-1 space-y-1">
+                  {item.subItems!.map((subItem) => {
+                    const SubIcon = subItem.icon
+                    const isSubActive = pathname.includes(subItem.href) ||
+                      (subItem.href.includes('?tab=') &&
+                       typeof window !== 'undefined' &&
+                       window.location.search.includes(subItem.href.split('?tab=')[1]))
+
+                    return (
+                      <Link
+                        key={subItem.href}
+                        href={subItem.href}
+                        className={cn(
+                          "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                          isSubActive
+                            ? "bg-green-50 text-green-700 border-r-2 border-green-500"
+                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                        )}
+                      >
+                        <SubIcon className="h-4 w-4" />
+                        <span>{subItem.title}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
               )}
-            </Link>
+            </div>
           )
         })}
       </nav>

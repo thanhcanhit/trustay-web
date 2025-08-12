@@ -53,7 +53,10 @@ function FormMessage({ children, type = "error", className, ...props }: FormMess
   )
 }
 
-interface FormDescriptionProps extends React.ComponentProps<"p"> {}
+type FormDescriptionProps = React.ComponentProps<"p"> & {
+  // Form description component props
+  variant?: 'default' | 'muted';
+}
 
 function FormDescription({ children, className, ...props }: FormDescriptionProps) {
   return (

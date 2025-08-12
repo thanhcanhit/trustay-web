@@ -25,6 +25,7 @@ export function RichTextEditor({
   error = false
 }: RichTextEditorProps) {
   const [isLoading, setIsLoading] = useState(true)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [ClassicEditor, setClassicEditor] = useState<any>(null)
   const [hasError, setHasError] = useState(false)
 
@@ -174,7 +175,7 @@ export function RichTextEditor({
             ]
           }
         }}
-        onChange={(event: any, editor: any) => {
+        onChange={(_event: unknown, editor: { getData: () => string }) => {
           const data = editor.getData()
           onChange?.(data)
         }}

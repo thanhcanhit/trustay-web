@@ -1,9 +1,10 @@
 "use client"
 
 import React, { useCallback, useState } from 'react'
-import { Upload, X, Image as ImageIcon, Plus } from 'lucide-react'
+import { Upload, X, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from './button'
+import Image from 'next/image'
 
 interface ImageFile {
   file: File
@@ -117,7 +118,7 @@ export function ImageUpload({
         URL.revokeObjectURL(file.preview)
       })
     }
-  }, [])
+  }, [value])
 
   const canAddMore = value.length < maxFiles && !disabled
 
@@ -170,7 +171,7 @@ export function ImageUpload({
               key={imageFile.id}
               className="relative group aspect-square rounded-lg overflow-hidden border bg-muted"
             >
-              <img
+              <Image
                 src={imageFile.preview}
                 alt={`Preview ${index + 1}`}
                 className="absolute inset-0 w-full h-full object-cover"

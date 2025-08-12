@@ -29,7 +29,7 @@ export default function TenantAccommodation() {
                   <MapPin className="h-4 w-4 mr-1" />
                   {currentProperty.address}, {currentProperty.district}, {currentProperty.city}
                 </p>
-                <p className="text-sm text-gray-500 mt-1">Phòng {currentRoom.roomNumber}</p>
+                <p className="text-sm text-gray-500 mt-1">Phòng {currentRoom.number}</p>
               </div>
               <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">
                 Đang thuê

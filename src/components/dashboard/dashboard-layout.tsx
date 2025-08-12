@@ -1,6 +1,6 @@
 "use client"
 
-import { useUserStore } from "@/stores/user-store"
+import { useUserStore } from "@/stores/userStore"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { Sidebar } from "./sidebar"
@@ -11,26 +11,40 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
-  const { user, isAuthenticated } = useUserStore()
+  const { user, isAuthenticated, isLoading, hasHydrated } = useUserStore()
   const router = useRouter()
 
   useEffect(() => {
+    console.log('DashboardLayout state:', {
+      hasHydrated,
+      isLoading,
+      isAuthenticated,
+      user: user ? { id: user.id, role: user.role } : null,
+      userType
+    })
+
+    // Don't redirect while loading or before hydration
+    if (isLoading || !hasHydrated) return
+
     if (!isAuthenticated || !user) {
+      console.log('Redirecting to login: not authenticated or no user')
       router.push('/login')
       return
     }
 
-    // Kiểm tra userType có khớp không
-    if (user.userType !== userType) {
-      if (user.userType === 'tenant') {
+    // Kiểm tra role có khớp không
+    if (user.role !== userType) {
+      console.log('Role mismatch, redirecting:', { userRole: user.role, expectedType: userType })
+      if (user.role === 'tenant') {
         router.push('/dashboard/tenant')
       } else {
         router.push('/dashboard/landlord')
       }
     }
-  }, [isAuthenticated, user, userType, router])
+  }, [isAuthenticated, user, userType, router, isLoading, hasHydrated])
 
-  if (!isAuthenticated || !user || user.userType !== userType) {
+  // Show loading while authenticating, hydrating, or if user data doesn't match
+  if (!hasHydrated || isLoading || !isAuthenticated || !user || user.role !== userType) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -42,7 +56,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex pt-16">
       <Sidebar userType={userType} />
       <main className="flex-1 overflow-auto">
         {children}

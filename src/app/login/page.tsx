@@ -2,148 +2,235 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useUserStore } from "@/stores/user-store"
+import { useUserStore } from "@/stores/userStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { getDemoUser } from "@/data/demo-users"
+import { toast } from "sonner"
 import Image from "next/image"
+import { validatePassword, getPasswordValidationErrors } from "@/utils/passwordValidation"
+import { translateAuthError } from "@/utils/errorTranslation"
 
 export default function LoginPage() {
-  const [phone, setPhone] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const { login } = useUserStore()
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([])
+  const [showPassword, setShowPassword] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { login, isLoading, error, clearError } = useUserStore()
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Handle password change with validation
+  const handlePasswordChange = (newPassword: string) => {
+    setPassword(newPassword)
+
+    // Only show validation errors if password is not empty
+    if (newPassword.trim()) {
+      const errors = getPasswordValidationErrors(newPassword)
+      setPasswordErrors(errors)
+    } else {
+      setPasswordErrors([])
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    clearError()
 
-    // Demo login - trong thực tế sẽ gọi API
-    if (phone && password) {
-      const demoUser = getDemoUser(phone)
+    if (!email || !password) {
+      toast.error("Vui lòng nhập đầy đủ email và mật khẩu")
+      return
+    }
 
-      if (demoUser) {
-        login(demoUser)
-        // Điều hướng đến dashboard phù hợp
-        if (demoUser.userType === 'tenant') {
-          router.push("/dashboard/tenant")
-        } else {
-          router.push("/dashboard/landlord")
-        }
-      } else {
-        alert("Tài khoản không tồn tại! Sử dụng: tenant@demo.com hoặc landlord@demo.com")
+    // Validate password format before attempting login
+    if (!validatePassword(password)) {
+      const errors = getPasswordValidationErrors(password)
+      // You can choose to show this as a warning or just proceed with login
+      // For now, we'll just proceed since this is login, not registration
+      console.warn('Password format validation failed:', errors)
+    }
+
+    console.log('Attempting login with:', { email, apiUrl: process.env.NEXT_PUBLIC_API_URL })
+
+    try {
+      await login({ email, password })
+
+      // Get updated user data to determine redirect
+      const { user } = useUserStore.getState()
+
+      if (user) {
+        console.log('Login successful, user:', user)
+
+        // Show success toast
+        toast.success(`Đăng nhập thành công! Chào mừng ${user.firstName} ${user.lastName}`, {
+          duration: 3000,
+        })
+
+        // Điều hướng đến dashboard phù hợp sau 1.5 giây
+        setTimeout(() => {
+          if (user.role === 'tenant') {
+            router.push("/dashboard/tenant")
+          } else {
+            router.push("/dashboard/landlord")
+          }
+        }, 1500)
       }
+    } catch (error) {
+      // Error is already handled in the store
+      console.error('Login failed:', error)
+
+      // Show error toast with specific message
+      let errorMessage = 'Đăng nhập thất bại'
+      if (error instanceof Error) {
+        errorMessage = translateAuthError(error.message)
+
+        console.error('Error details:', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        })
+      }
+
+      toast.error(errorMessage, {
+        duration: 4000,
+      })
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-2">
-      <div className="flex justify-between max-w-4xl w-full">
-        {/* Left Card - Login Form */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 w-96">
-          <div className="text-center mb-8">
-            {/* Logo - thay thế biểu tượng map bằng logo-slogan-white.png */}
-            <div className="mx-auto h-16 w-30 rounded-xl flex items-center justify-center mb-1">
-              
-              <Image
-                src="/logo.png"
-                alt="Trustay Logo"
-                width={200}
-                height={100}
-              />
-            </div>
-
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">ĐĂNG NHẬP</h2>
-            <p className="text-gray-600 text-sm">Chào mừng bạn quay trở lại Trustay</p>
-          </div>
-
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div>
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                placeholder="Số điện thoại"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
-
-            <div>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Mật khẩu"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
-
-            <div className="pt-2">
-              <Button
-                type="submit"
-                className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors"
-              >
-                ĐĂNG NHẬP
-              </Button>
-            </div>
-
-            <div className="text-center space-y-1 pt-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                <p className="text-xs text-blue-800 font-medium mb-2">Tài khoản demo:</p>
-                <p className="text-xs text-blue-700">Người thuê: tenant@demo.com</p>
-                <p className="text-xs text-blue-700">Chủ trọ: landlord@demo.com</p>
-                <p className="text-xs text-blue-600">Mật khẩu: bất kỳ</p>
-              </div>
-
-              <p className="text-sm">
-                Chưa có tài khoản?  &nbsp;
-                <a href="/register" className="text-green-600 hover:text-green-500">
-                   Đăng ký ngay
-                </a>
-              </p>
-              <p className="text-sm">
-                <a href="#" className="text-gray-600 hover:text-gray-500">
-                  Quên mật khẩu?
-                </a>
-              </p>
-            </div>
-          </form>
+    <div className="min-h-screen flex">
+      <div className="flex w-full">
+        {/* Left Side - Image */}
+        <div className="w-2/5 px-6 hidden lg:flex overflow-hidden">
+          <Image
+            src="/goal.png"
+            alt="Goal"
+            width={1500}
+            height={1500}
+          />
         </div>
 
-        {/* Right Card - Branding */}
-        <div className="flex flex-col justify-center items-center w-70">
-          {/* Logo với biểu tượng map trắng */}
-          <div className="rounded-2xl shadow-lg bg-green-500 bg-opacity-20 flex items-center justify-center mb-6 h-80 px-4">
-            <Image
-              src="/logo-slogan-white.png"
-              alt="Trustay Logo"
-              width={300}
-              height={300}
-              className="object-contain"
-            />
-          </div>
-          <div className="space-y-3 text-sm text-center">
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full flex-shrink-0 bg-green-500"></div>
-              <span>Tìm kiếm nhà trọ dễ dàng</span>
+        {/* Right Side - Login Form */}
+        <div className="w-3/5 bg-white flex items-center justify-center p-8">
+          <div className="w-full max-w-lg">
+            <div className="text-center mb-4">
+              {/* Logo */}
+              <div className="mx-auto rounded-xl flex items-center justify-center mb-4">
+                <Image
+                  src="/logo.png"
+                  alt="Trustay Logo"
+                  width={200}
+                  height={100}
+                />
+              </div>
+
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">ĐĂNG NHẬP</h2>
+              <p className="text-gray-600 text-sm">Chào mừng bạn quay trở lại Trustay</p>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full flex-shrink-0 bg-green-500"></div>
-              <span>Kết nối với người cùng phòng</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full flex-shrink-0 bg-green-500"></div>
-              <span>Quản lý tài chính minh bạch</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full flex-shrink-0 bg-green-500"></div>
-              <span>Liên hệ qua Zalo tiện lợi</span>
-            </div>
+
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+                className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
+              />
+
+              <div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Mật khẩu"
+                    value={password}
+                    onChange={(e) => handlePasswordChange(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    className="w-full h-11 px-4 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    disabled={isLoading}
+                  >
+                    {showPassword ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+
+                {/* Password Validation Errors */}
+                {passwordErrors.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {passwordErrors.map((error, index) => (
+                      <p key={index} className="text-xs text-red-600 flex items-center">
+                        <span className="mr-1">•</span>
+                        {error}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  disabled={isLoading || !email || !password}
+                  className="w-full h-11 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? "ĐANG ĐĂNG NHẬP..." : "ĐĂNG NHẬP"}
+                </Button>
+              </div>
+
+              {/* OR Divider */}
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">OR</span>
+                </div>
+              </div>
+
+              {/* Zalo Login */}
+              <div className="text-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full py-3 px-4 border border-blue-500 text-blue-500 hover:bg-blue-50 font-medium rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  <span>📱</span>
+                  <span>Đăng nhập bằng Zalo</span>
+                </Button>
+              </div>
+
+              <div className="text-center space-y-1 pt-4">
+                <p className="text-sm">
+                  Chưa có tài khoản?  &nbsp;
+                  <a href="/register" className="text-green-600 hover:text-green-500">
+                     Đăng ký ngay
+                  </a>
+                </p>
+                <p className="text-sm">
+                  <a href="#" className="text-gray-600 hover:text-gray-500">
+                    Quên mật khẩu?
+                  </a>
+                </p>
+              </div>
+            </form>
           </div>
         </div>
       </div>

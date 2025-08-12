@@ -2,7 +2,7 @@
 
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
-import { Eye, Plus, TrendingUp, Users, Calendar } from "lucide-react"
+import { Eye, Plus, TrendingUp, Users } from "lucide-react"
 
 export default function LandlordAdvertising() {
   return (

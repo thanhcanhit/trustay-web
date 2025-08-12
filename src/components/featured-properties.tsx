@@ -1,30 +1,32 @@
 "use client"
 
-import { useState } from "react"
-import Image from "next/image"
-import { Heart, MapPin, Star } from "lucide-react"
+import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { getHotProperties, getPropertyWithRoom } from "@/data/mock-data"
+import { useRoomStore } from "@/stores/roomStore"
+import { RoomCard } from "@/components/ui/room-card"
 
 export function FeaturedProperties() {
-  const [savedProperties, setSavedProperties] = useState<string[]>([])
-  const hotProperties = getHotProperties()
+  const {
+    featuredRooms,
+    featuredLoading: isLoading,
+    featuredError: error,
+    savedRooms,
+    loadFeaturedRooms,
+    toggleSaveRoom
+  } = useRoomStore()
 
-  const toggleSave = (propertyId: string) => {
-    setSavedProperties(prev => 
-      prev.includes(propertyId) 
-        ? prev.filter(id => id !== propertyId)
-        : [...prev, propertyId]
-    )
-  }
+  // Load featured rooms on component mount
+  useEffect(() => {
+    if (featuredRooms.length === 0 && !isLoading) {
+      loadFeaturedRooms(4)
+    }
+  }, [featuredRooms.length, isLoading, loadFeaturedRooms])
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN').format(price / 1000000)
-  }
 
-  const handlePropertyClick = (propertyId: string) => {
-    // Navigate to property detail page
-    window.location.href = `/property/${propertyId}`
+
+  const handleRoomClick = (slug: string) => {
+    // Navigate to room detail page using slug
+    window.location.href = `/property/${slug}`
   }
 
   return (
@@ -39,89 +41,42 @@ export function FeaturedProperties() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {hotProperties.map((property) => {
-            const propertyWithRoom = getPropertyWithRoom(property.id)
-            const room = propertyWithRoom?.room
-            const isSaved = savedProperties.includes(property.id)
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+            <p className="text-gray-600 mt-2">Đang tải phòng nổi bật...</p>
+          </div>
+        )}
 
-            return (
-              <div 
-                key={property.id} 
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => handlePropertyClick(property.id)}
-              >
-                {/* Image Container */}
-                <div className="relative h-48">
-                  <Image
-                    src={property.images[0] || "/placeholder-room.jpg"}
-                    alt={property.name}
-                    fill
-                    className="object-cover"
-                  />
-                  
-                  {/* HOT Badge */}
-                  <div className="absolute top-2 left-2">
-                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                      HOT
-                    </span>
-                  </div>
+        {/* Error State */}
+        {error && (
+          <div className="text-center py-8">
+            <p className="text-red-600">Lỗi: {error}</p>
+            <Button
+              variant="outline"
+              onClick={() => window.location.reload()}
+              className="mt-2"
+            >
+              Thử lại
+            </Button>
+          </div>
+        )}
 
-                  {/* Save Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggleSave(property.id)
-                    }}
-                    className="absolute top-2 right-2 p-2 bg-white/80 rounded-full hover:bg-white transition-colors"
-                  >
-                    <Heart 
-                      className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} 
-                    />
-                  </button>
-
-                  {/* Review Badge */}
-                  {property.rating && (
-                    <div className="absolute bottom-2 right-2 bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
-                      <Star className="h-3 w-3 inline mr-1" />
-                      Review
-                    </div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                    {property.name}
-                  </h3>
-
-                  {/* Price */}
-                  <div className="text-red-600 font-bold text-lg mb-2">
-                    {room ? `${formatPrice(room.price)} triệu/tháng` : 'Liên hệ'}
-                  </div>
-
-                  {/* Property Type */}
-                  <div className="text-sm text-gray-600 mb-2">
-                    {property.description}
-                  </div>
-
-                  {/* Area */}
-                  {room && (
-                    <div className="text-sm text-gray-600 mb-2">
-                      {room.area}m²
-                    </div>
-                  )}
-
-                  {/* Location */}
-                  <div className="flex items-center text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    <span>{property.district}, {property.city}</span>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        {/* Featured Rooms Grid */}
+        {!isLoading && !error && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredRooms.map((room) => (
+              <RoomCard
+                key={room.id}
+                room={room}
+                isSaved={savedRooms.includes(room.id)}
+                onSaveToggle={toggleSaveRoom}
+                onClick={handleRoomClick}
+              />
+            ))}
+          </div>
+        )}
 
         {/* View More Button */}
         <div className="text-center mt-8">
