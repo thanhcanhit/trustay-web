@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { MultiStepForm, StepContent, StepNavigation } from "@/components/ui/multi-step-form"
@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
-import { AMENITIES_BY_CATEGORY } from "@/data/amenities"
+import { useReferenceStore } from "@/stores/referenceStore"
 import { CreateBlockData, PropertyRule } from "@/types/property"
 import { Building, Phone, Image, FileText, Settings, Check } from "lucide-react"
 
@@ -54,6 +54,9 @@ export default function AddPropertyPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // Reference store for amenities
+  const { amenities, getAmenitiesByCategory, loadReferenceData, isLoading: isLoadingAmenities } = useReferenceStore()
+
   // Form data
   const [formData, setFormData] = useState<Partial<CreateBlockData>>({
     name: '',
@@ -74,6 +77,13 @@ export default function AddPropertyPage() {
       zalo: ''
     }
   })
+
+  // Load reference data on component mount
+  useEffect(() => {
+    if (amenities.length === 0) {
+      loadReferenceData()
+    }
+  }, [amenities.length, loadReferenceData])
 
   const updateFormData = (field: string, value: unknown) => {
     setFormData(prev => ({
@@ -252,7 +262,6 @@ export default function AddPropertyPage() {
                       placeholder="VD: Nhà trọ ABC, Khu trọ sinh viên..."
                       value={formData.name || ''}
                       onChange={(e) => updateFormData('name', e.target.value)}
-                      error={!!errors.name}
                     />
                     <FormMessage>{errors.name}</FormMessage>
                   </FormField>
@@ -264,7 +273,6 @@ export default function AddPropertyPage() {
                         placeholder="Số nhà, tên đường"
                         value={formData.address?.street || ''}
                         onChange={(e) => updateNestedFormData('address', 'street', e.target.value)}
-                        error={!!errors['address.street']}
                       />
                       <FormMessage>{errors['address.street']}</FormMessage>
                     </FormField>
@@ -275,7 +283,6 @@ export default function AddPropertyPage() {
                         placeholder="Phường/Xã"
                         value={formData.address?.ward || ''}
                         onChange={(e) => updateNestedFormData('address', 'ward', e.target.value)}
-                        error={!!errors['address.ward']}
                       />
                       <FormMessage>{errors['address.ward']}</FormMessage>
                     </FormField>
@@ -286,7 +293,6 @@ export default function AddPropertyPage() {
                         placeholder="Quận/Huyện"
                         value={formData.address?.district || ''}
                         onChange={(e) => updateNestedFormData('address', 'district', e.target.value)}
-                        error={!!errors['address.district']}
                       />
                       <FormMessage>{errors['address.district']}</FormMessage>
                     </FormField>
@@ -297,7 +303,6 @@ export default function AddPropertyPage() {
                         placeholder="Tỉnh/Thành phố"
                         value={formData.address?.city || ''}
                         onChange={(e) => updateNestedFormData('address', 'city', e.target.value)}
-                        error={!!errors['address.city']}
                       />
                       <FormMessage>{errors['address.city']}</FormMessage>
                     </FormField>
@@ -320,7 +325,6 @@ export default function AddPropertyPage() {
                         placeholder="0123456789"
                         value={formData.contactInfo?.phone || ''}
                         onChange={(e) => updateNestedFormData('contactInfo', 'phone', e.target.value)}
-                        error={!!errors['contactInfo.phone']}
                       />
                       <FormMessage>{errors['contactInfo.phone']}</FormMessage>
                     </FormField>
@@ -360,6 +364,7 @@ export default function AddPropertyPage() {
               <StepContent step={2}>
                 <div className="space-y-6">
                   <div className="flex items-center space-x-2 mb-4">
+                    {/* eslint-disable-next-line jsx-a11y/alt-text */}
                     <Image className="h-5 w-5 text-primary"/>
                     <h3 className="text-lg font-semibold">Hình ảnh nhà trọ</h3>
                   </div>
@@ -370,7 +375,6 @@ export default function AddPropertyPage() {
                       value={formData.images || []}
                       onChange={(files) => updateFormData('images', files)}
                       maxFiles={10}
-                      error={!!errors.images}
                     />
                     <FormMessage>{errors.images}</FormMessage>
                   </FormField>
@@ -385,43 +389,54 @@ export default function AddPropertyPage() {
                     <h3 className="text-lg font-semibold">Tiện nghi</h3>
                   </div>
 
-                  {Object.entries(AMENITIES_BY_CATEGORY).map(([category, amenities]) => (
-                    <div key={category} className="space-y-3">
-                      <h4 className="font-medium text-sm text-gray-700 capitalize">
-                        {category === 'basic' && 'Tiện ích cơ bản'}
-                        {category === 'furniture' && 'Nội thất'}
-                        {category === 'appliance' && 'Thiết bị điện'}
-                        {category === 'service' && 'Dịch vụ'}
-                        {category === 'security' && 'An ninh'}
-                      </h4>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                        {amenities.map((amenity) => (
-                          <label
-                            key={amenity.id}
-                            className={`
-                              flex items-center space-x-2 p-3 rounded-lg border cursor-pointer transition-colors
-                              ${(formData.amenities || []).includes(amenity.id)
-                                ? 'border-primary bg-primary/5 text-primary'
-                                : 'border-gray-200 hover:border-gray-300'
-                              }
-                            `}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={(formData.amenities || []).includes(amenity.id)}
-                              onChange={() => toggleAmenity(amenity.id)}
-                              className="sr-only"
-                            />
-                            <span className="text-lg">{amenity.icon}</span>
-                            <span className="text-sm font-medium">{amenity.name}</span>
-                            {(formData.amenities || []).includes(amenity.id) && (
-                              <Check className="h-4 w-4 ml-auto" />
-                            )}
-                          </label>
-                        ))}
-                      </div>
+                  {isLoadingAmenities ? (
+                    <div className="text-center py-8">
+                      <div className="text-gray-500">Đang tải tiện ích...</div>
                     </div>
-                  ))}
+                  ) : (
+                    ['basic', 'furniture', 'appliance', 'service', 'security'].map((category) => {
+                      const categoryAmenities = getAmenitiesByCategory(category);
+                      if (categoryAmenities.length === 0) return null;
+
+                      return (
+                        <div key={category} className="space-y-3">
+                          <h4 className="font-medium text-sm text-gray-700 capitalize">
+                            {category === 'basic' && 'Tiện ích cơ bản'}
+                            {category === 'furniture' && 'Nội thất'}
+                            {category === 'appliance' && 'Thiết bị điện'}
+                            {category === 'service' && 'Dịch vụ'}
+                            {category === 'security' && 'An ninh'}
+                          </h4>
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                            {categoryAmenities.map((amenity) => (
+                              <label
+                                key={amenity.id}
+                                className={`
+                                  flex items-center space-x-2 p-3 rounded-lg border cursor-pointer transition-colors
+                                  ${(formData.amenities || []).includes(amenity.id)
+                                    ? 'border-primary bg-primary/5 text-primary'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                  }
+                                `}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={(formData.amenities || []).includes(amenity.id)}
+                                  onChange={() => toggleAmenity(amenity.id)}
+                                  className="sr-only"
+                                />
+                                <span className="text-lg">{amenity.icon || '🏠'}</span>
+                                <span className="text-sm font-medium">{amenity.name}</span>
+                                {(formData.amenities || []).includes(amenity.id) && (
+                                  <Check className="h-4 w-4 ml-auto" />
+                                )}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </StepContent>
 
@@ -499,7 +514,6 @@ export default function AddPropertyPage() {
                       value={formData.description || ''}
                       onChange={(value) => updateFormData('description', value)}
                       placeholder="Mô tả chi tiết về nhà trọ, vị trí, tiện ích xung quanh..."
-                      error={!!errors.description}
                     />
                     <FormMessage>{errors.description}</FormMessage>
                   </FormField>

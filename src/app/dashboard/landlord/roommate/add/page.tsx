@@ -193,7 +193,6 @@ export default function AddRoommatePostPage() {
                     placeholder="VD: Tìm bạn nữ ở ghép quận 1, gần trường ĐH..."
                     value={formData.title || ''}
                     onChange={(e) => updateFormData('title', e.target.value)}
-                    error={!!errors.title}
                   />
                   <FormMessage>{errors.title}</FormMessage>
                 </FormField>
@@ -204,7 +203,6 @@ export default function AddRoommatePostPage() {
                     value={formData.description || ''}
                     onChange={(value) => updateFormData('description', value)}
                     placeholder="Mô tả về bản thân, yêu cầu về bạn cùng phòng..."
-                    error={!!errors.description}
                   />
                   <FormMessage>{errors.description}</FormMessage>
                 </FormField>
@@ -266,7 +264,6 @@ export default function AddRoommatePostPage() {
                       placeholder="2500000"
                       value={formData.budget || ''}
                       onChange={(e) => updateFormData('budget', parseInt(e.target.value) || 0)}
-                      error={!!errors.budget}
                     />
                     <FormMessage>{errors.budget}</FormMessage>
                   </FormField>
@@ -277,7 +274,6 @@ export default function AddRoommatePostPage() {
                       type="date"
                       value={formData.moveInDate || ''}
                       onChange={(e) => updateFormData('moveInDate', e.target.value)}
-                      error={!!errors.moveInDate}
                     />
                     <FormMessage>{errors.moveInDate}</FormMessage>
                   </FormField>
@@ -289,7 +285,6 @@ export default function AddRoommatePostPage() {
                     placeholder="VD: Gần trường ĐH Kinh tế, gần bến xe..."
                     value={formData.location || ''}
                     onChange={(e) => updateFormData('location', e.target.value)}
-                    error={!!errors.location}
                   />
                   <FormMessage>{errors.location}</FormMessage>
                 </FormField>
@@ -301,7 +296,6 @@ export default function AddRoommatePostPage() {
                       placeholder="Quận 1"
                       value={formData.address?.district || ''}
                       onChange={(e) => updateNestedFormData('address', 'district', e.target.value)}
-                      error={!!errors['address.district']}
                     />
                     <FormMessage>{errors['address.district']}</FormMessage>
                   </FormField>
@@ -312,7 +306,6 @@ export default function AddRoommatePostPage() {
                       placeholder="TP.HCM"
                       value={formData.address?.city || ''}
                       onChange={(e) => updateNestedFormData('address', 'city', e.target.value)}
-                      error={!!errors['address.city']}
                     />
                     <FormMessage>{errors['address.city']}</FormMessage>
                   </FormField>
@@ -399,7 +392,6 @@ export default function AddRoommatePostPage() {
                       placeholder="0123456789"
                       value={formData.contactInfo?.phone || ''}
                       onChange={(e) => updateNestedFormData('contactInfo', 'phone', e.target.value)}
-                      error={!!errors['contactInfo.phone']}
                     />
                     <FormMessage>{errors['contactInfo.phone']}</FormMessage>
                   </FormField>

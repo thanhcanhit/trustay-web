@@ -2,21 +2,31 @@
 
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Bell,
   CheckCircle,
-  Home,
   MessageSquare,
   AlertCircle,
   Info,
   Settings
 } from "lucide-react"
 
+// Notification type definition
+interface Notification {
+  id: string;
+  type: 'rental_approved' | 'rental_rejected' | 'payment_reminder' | 'message' | 'system';
+  title: string;
+  message: string;
+  timestamp: string;
+  isRead: boolean;
+  actionUrl: string | null;
+}
+
 // Mock data for notifications
-const mockNotifications = [
+const mockNotifications: Notification[] = [
   {
     id: "notif-1",
     type: "rental_approved",
@@ -121,7 +131,7 @@ export default function TenantNotifications() {
     return date.toLocaleDateString('vi-VN')
   }
 
-  const NotificationCard = ({ notification, showAsUnread = false }: { notification: any, showAsUnread?: boolean }) => (
+  const NotificationCard = ({ notification, showAsUnread = false }: { notification: Notification, showAsUnread?: boolean }) => (
     <Card className={`${getNotificationColor(notification.type)} ${!notification.isRead || showAsUnread ? 'ring-2 ring-blue-200' : ''}`}>
       <CardContent className="p-4">
         <div className="flex items-start space-x-3">

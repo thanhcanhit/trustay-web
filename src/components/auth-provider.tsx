@@ -4,17 +4,21 @@ import { useEffect } from 'react'
 import { useUserStore } from '@/stores/userStore'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { loadUser, isAuthenticated, user, hasHydrated } = useUserStore()
+  const { isAuthenticated, user, hasHydrated } = useUserStore()
 
   useEffect(() => {
     console.log('AuthProvider state:', { hasHydrated, isAuthenticated, user: user ? { id: user.id } : null })
 
-    // Only load user after hydration is complete and if not already authenticated
-    if (hasHydrated && !isAuthenticated && !user) {
-      console.log('Loading user from AuthProvider')
-      loadUser()
+    // After hydration, if we have user data in persisted state, we're good to go
+    // No need to call loadUser() which would try to read httpOnly cookies from client-side
+    if (hasHydrated) {
+      if (user && isAuthenticated) {
+        console.log('User found in persisted state, authentication restored')
+      } else {
+        console.log('No user in persisted state, user needs to login')
+      }
     }
-  }, [loadUser, isAuthenticated, user, hasHydrated])
+  }, [isAuthenticated, user, hasHydrated])
 
   return <>{children}</>
 }
