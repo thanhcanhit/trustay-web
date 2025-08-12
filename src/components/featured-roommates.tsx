@@ -65,8 +65,8 @@ export function FeaturedRoommates() {
                 {/* Image Container */}
                 <div className="relative h-48">
                   <Image
-                    src={post.images[0] || "/placeholder-roommate.jpg"}
-                    alt={post.title}
+                    src={post.images?.[0] && typeof post.images[0] === 'string' && post.images[0].trim() !== "" ? post.images[0] : "/images/roommate1.png"}
+                    alt={post.title || "Roommate post image"}
                     fill
                     className="object-cover"
                   />
