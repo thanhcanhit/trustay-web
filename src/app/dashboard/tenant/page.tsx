@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -159,7 +159,7 @@ function BillsContent() {
   )
 }
 
-export default function TenantPersonalManagement() {
+function TenantPersonalManagementContent() {
   const { user } = useUserStore()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState("profile")
@@ -202,6 +202,23 @@ export default function TenantPersonalManagement() {
         </div>
       </div>
     </DashboardLayout>
+  )
+}
+
+export default function TenantPersonalManagement() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout userType="tenant">
+        <div className="p-6">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Đang tải...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    }>
+      <TenantPersonalManagementContent />
+    </Suspense>
   )
 }
 

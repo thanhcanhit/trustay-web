@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { AuthProvider } from "@/components/auth-provider";
+import { AppInitializer } from "@/components/app-initializer";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -32,15 +34,25 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <AuthProvider>
-          <Navigation />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <Toaster
-            position="top-center"
-            expand={true}
-            richColors
-            closeButton
-          />
+          <AppInitializer>
+            <Suspense fallback={
+              <div className="bg-white shadow-sm">
+                <div className="container mx-auto px-4 py-4">
+                  <div className="animate-pulse h-8 bg-gray-200 rounded"></div>
+                </div>
+              </div>
+            }>
+              <Navigation />
+            </Suspense>
+            <main className="flex-1 page-content">{children}</main>
+            <Footer />
+            <Toaster
+              position="top-center"
+              expand={true}
+              richColors
+              closeButton
+            />
+          </AppInitializer>
         </AuthProvider>
       </body>
     </html>

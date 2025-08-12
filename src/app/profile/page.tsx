@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -96,8 +96,6 @@ function ProfileContent({ user }: { user: UserType | null }) {
     </div>
   )
 }
-
-
 
 function AccommodationContent() {
   return (
@@ -264,7 +262,7 @@ function NotificationsContent() {
   )
 }
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const { user, isAuthenticated, isLoading } = useUserStore()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState("profile")
@@ -320,7 +318,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex pt-16">
       {/* Sidebar */}
       <div className="flex h-screen w-64 flex-col bg-white border-r border-gray-200">
         {/* User Info */}
@@ -444,5 +442,20 @@ export default function ProfilePage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Đang tải...</p>
+        </div>
+      </div>
+    }>
+      <ProfilePageContent />
+    </Suspense>
   )
 }

@@ -25,12 +25,31 @@ export {
 	skipProfileUpdate,
 	verifyEmailCode,
 } from './auth.action';
+// Export listings actions
+export {
+	getFeaturedRoomListings,
+	getRoomBySlug,
+	searchRoomListings,
+} from './listings.action';
 // Export location actions (excluding ApiError)
 export {
 	getDistrictsByProvince,
 	getProvinces,
 	getWardsByDistrict,
 } from './location.action';
+// Export reference data actions
+export {
+	getAmenities,
+	getAppEnums,
+	getCostTypes,
+	getRules,
+} from './reference.action';
+// Export upload actions
+export {
+	getImageUrl,
+	uploadBulkImages,
+	uploadSingleImage,
+} from './upload.action';
 // Export user actions (prefer user-actions updateUserProfile, exclude ApiError)
 export {
 	getUserProfile,
