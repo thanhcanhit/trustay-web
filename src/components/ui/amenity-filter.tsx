@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useReferenceStore } from '@/stores/referenceStore';
 import { getAmenityIcon } from '@/utils/icon-mapping';
@@ -114,7 +113,6 @@ export function AmenityFilter({
             <span className="ml-1 text-green-600 font-medium">({selectedCount})</span>
           )}
         </span>
-        <ChevronDown className={`h-4 w-4 ml-2 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Dropdown Content */}

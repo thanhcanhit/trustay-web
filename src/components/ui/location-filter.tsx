@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDown, MapPin, Search } from 'lucide-react';
+import { MapPin, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useLocationStore } from '@/stores/locationStore';
@@ -101,7 +101,6 @@ export function LocationFilter({
             <span className="ml-1 text-green-600 font-medium">(1)</span>
           )}
         </span>
-        <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Dropdown Content */}
