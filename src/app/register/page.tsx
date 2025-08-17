@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { REGEXP_ONLY_DIGITS } from "input-otp"
 import { useRouter } from "next/navigation"
 import { useUserStore } from "@/stores/userStore"
 import { Button } from "@/components/ui/button"
@@ -10,24 +11,24 @@ import {
   sendEmailVerification,
   verifyEmailCode,
   registerWithVerification,
-  registerDirect,
-  updateUserProfile,
-  completeRegistration,
-  skipProfileUpdate
+  completeRegistration
 } from "@/actions"
 import Image from "next/image"
 import {
   validatePassword,
-  getPasswordValidationErrors,
   calculatePasswordStrength,
   getPasswordStrengthText,
-  getPasswordStrengthColor
+  getPasswordStrengthColor,
+  getPasswordValidationErrors
 } from "@/utils/passwordValidation"
 import { translateRegistrationError, translateVerificationError } from "@/utils/errorTranslation"
+import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp"
 
-type RegistrationStep = 'form' | 'verification' | 'profile-update'
+type RegistrationStep = 'form' | 'verification'
 
 export default function RegisterPage() {
+  const router = useRouter()
+  
   // Form data
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -38,32 +39,27 @@ export default function RegisterPage() {
   const [gender, setGender] = useState<'male' | 'female' | 'other'>('male')
   const [role, setRole] = useState<'tenant' | 'landlord'>('tenant')
 
-  // Profile update data
-  const [bio, setBio] = useState("")
-  const [dateOfBirth, setDateOfBirth] = useState("")
 
   // UI state
   const [currentStep, setCurrentStep] = useState<RegistrationStep>('form')
   const [verificationCode, setVerificationCode] = useState("")
 
   const [isLoading, setIsLoading] = useState(false)
+  
+  // OTP countdown state
+  const [countdown, setCountdown] = useState(0)
+  const [canResend, setCanResend] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState("")
-  const [isDevelopmentMode, setIsDevelopmentMode] = useState(false)
 
   // Password validation state
-  const [passwordErrors, setPasswordErrors] = useState<string[]>([])
-  const [showPasteWarning, setShowPasteWarning] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [passwordStrength, setPasswordStrength] = useState(0)
 
   // Update password validation when password changes
   const handlePasswordChange = (newPassword: string) => {
-    setPassword(newPassword)
-
-    // Get validation errors
-    const errors = getPasswordValidationErrors(newPassword)
-    setPasswordErrors(errors)
+    setPassword(newPassword);
   }
 
   // Handle confirm password change with copy-paste prevention
@@ -71,33 +67,58 @@ export default function RegisterPage() {
     setConfirmPassword(newConfirmPassword)
   }
 
-  // Prevent copy-paste in confirm password field
-  const handleConfirmPasswordPaste = (e: React.ClipboardEvent) => {
-    e.preventDefault()
-    // Show warning message
-    setShowPasteWarning(true)
-    // Hide warning after 3 seconds
-    setTimeout(() => setShowPasteWarning(false), 3000)
-  }
-
-  // Prevent keyboard shortcuts for copy/paste/cut
-  const handleConfirmPasswordKeyDown = (e: React.KeyboardEvent) => {
-    // Prevent Ctrl+V, Ctrl+C, Ctrl+X, Ctrl+A
-    if (e.ctrlKey && (e.key === 'v' || e.key === 'c' || e.key === 'x' || e.key === 'a')) {
-      e.preventDefault()
-      setShowPasteWarning(true)
-      setTimeout(() => setShowPasteWarning(false), 3000)
-    }
-  }
-
   // Prevent right-click context menu
   const handleConfirmPasswordContextMenu = (e: React.MouseEvent) => {
     e.preventDefault()
   }
 
-  const passwordStrength = calculatePasswordStrength(password)
+  // Calculate password strength when password changes
+  useEffect(() => {
+    const calculateStrength = async () => {
+      if (password) {
+        try {
+          const strength = await calculatePasswordStrength(password)
+          setPasswordStrength(strength)
+        } catch (error) {
+          console.error('Error calculating password strength:', error)
+          setPasswordStrength(0)
+        }
+      } else {
+        setPasswordStrength(0)
+      }
+    }
+    
+    calculateStrength()
+  }, [password])
 
-  const router = useRouter()
+  // OTP countdown effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null
+    
+    if (countdown > 0) {
+      interval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            setCanResend(true)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [countdown])
+
+  // Start countdown when moving to verification step
+  useEffect(() => {
+    if (currentStep === 'verification') {
+      setCountdown(300) // 5 minutes countdown (300 seconds)
+      setCanResend(false)
+    }
+  }, [currentStep])
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -131,57 +152,12 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      if (isDevelopmentMode) {
-        // Direct registration for development
-        const authResponse = await registerDirect({
-          email,
-          password,
-          firstName,
-          lastName,
-          phone,
-          gender,
-          role,
-        })
-
-        // Convert to user store format and login
-        const user = {
-          id: authResponse.user.id,
-          firstName: authResponse.user.firstName,
-          lastName: authResponse.user.lastName,
-          email: authResponse.user.email,
-          phone: authResponse.user.phone,
-          gender: authResponse.user.gender,
-          role: authResponse.user.role,
-          bio: authResponse.user.bio,
-          dateOfBirth: authResponse.user.dateOfBirth,
-          avatar: authResponse.user.avatar,
-          createdAt: authResponse.user.createdAt,
-          updatedAt: authResponse.user.updatedAt,
-        }
-
-        useUserStore.setState({ user, isAuthenticated: true })
-
-        // Show success toast
-        toast.success(`Đăng ký thành công! Chào mừng ${user.firstName} ${user.lastName} đến với Trustay`, {
-          duration: 3000,
-        })
-
-        // Redirect to dashboard after a short delay
-        setTimeout(() => {
-          if (role === 'tenant') {
-            router.push("/dashboard/tenant")
-          } else {
-            router.push("/dashboard/landlord")
-          }
-        }, 1500)
-      } else {
-        // Send verification email
-        await sendEmailVerification(email)
-        toast.success(`Mã xác thực đã được gửi đến email: ${email}. Vui lòng kiểm tra hộp thư của bạn.`, {
-          duration: 4000,
-        })
-        setCurrentStep('verification')
-      }
+      // Send verification email
+      await sendEmailVerification(email)
+      toast.success(`Mã xác thực đã được gửi đến email: ${email}. Vui lòng kiểm tra hộp thư của bạn.`, {
+        duration: 4000,
+      })
+      setCurrentStep('verification')
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? translateRegistrationError(error.message) : 'Đăng ký thất bại';
       setError(errorMessage);
@@ -241,12 +217,14 @@ export default function RegisterPage() {
         useUserStore.setState({ user, isAuthenticated: true })
 
         // Show success toast for email verification
-        toast.success('Xác thực email thành công! Vui lòng hoàn thiện thông tin cá nhân.', {
+        toast.success('Xác thực email thành công! Chào mừng bạn đến với Trustay!', {
           duration: 3000,
         })
 
-        // Move to profile update step instead of redirecting directly
-        setCurrentStep('profile-update')
+        // Redirect to profile page after a short delay
+        setTimeout(() => {
+          router.push('/profile')
+        }, 1500)
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? translateVerificationError(error.message) : 'Xác thực thất bại';
@@ -259,58 +237,10 @@ export default function RegisterPage() {
     }
   }
 
-  const handleProfileUpdate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    try {
-      // Update profile with additional information
-      await updateUserProfile({
-        firstName,
-        lastName,
-        phone,
-        gender,
-        bio,
-        dateOfBirth,
-      })
-
-      // Show success toast
-      toast.success('Cập nhật thông tin thành công! Chào mừng bạn đến với Trustay!', {
-        duration: 3000,
-      })
-
-      // Use server action for navigation after a short delay
-      setTimeout(async () => {
-        const formData = new FormData()
-        formData.append('role', role)
-        await completeRegistration(formData)
-      }, 1500)
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? translateRegistrationError(error.message) : 'Cập nhật thông tin thất bại';
-      setError(errorMessage);
-      toast.error(errorMessage, {
-        duration: 4000,
-      });
-      setIsLoading(false)
-    }
-  }
-
-  const handleSkipProfileUpdate = async () => {
-    // Show confirmation toast
-    const confirmed = confirm('Bạn có chắc muốn bỏ qua cập nhật thông tin? Bạn có thể cập nhật sau trong trang cá nhân.')
-
-    if (confirmed) {
-      toast.success('Đăng ký thành công! Chào mừng bạn đến với Trustay!', {
-        duration: 3000,
-      })
-      // Use server action for navigation after a short delay
-      setTimeout(async () => {
-        await skipProfileUpdate()
-      }, 1500)
-    }
-  }
 
   const resendVerification = async () => {
+    if (!canResend || isLoading) return
+    
     setIsLoading(true)
     setError("")
 
@@ -319,6 +249,10 @@ export default function RegisterPage() {
       toast.success(`Mã xác thực mới đã được gửi đến email: ${email}. Vui lòng kiểm tra hộp thư của bạn.`, {
         duration: 4000,
       })
+      // Reset countdown
+      setCountdown(300) // 5 minutes
+      setCanResend(false)
+      setVerificationCode("") // Clear previous code
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? translateVerificationError(error.message) : 'Gửi lại mã thất bại';
       setError(errorMessage);
@@ -331,6 +265,13 @@ export default function RegisterPage() {
   }
 
 
+
+  // Format seconds as MM:SS
+  function formatTime(remainingTime: number): React.ReactNode {
+    const minutes = Math.floor(remainingTime / 60)
+    const seconds = remainingTime % 60
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -363,16 +304,12 @@ export default function RegisterPage() {
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
                 {currentStep === 'verification'
                   ? 'XÁC THỰC EMAIL'
-                  : currentStep === 'profile-update'
-                  ? 'CẬP NHẬT THÔNG TIN'
                   : 'ĐĂNG KÝ'
                 }
               </h2>
               <p className="text-gray-600 text-sm">
                 {currentStep === 'verification'
                   ? `Nhập mã xác thực đã gửi đến ${email}`
-                  : currentStep === 'profile-update'
-                  ? 'Hoàn thiện thông tin cá nhân của bạn'
                   : 'Tạo tài khoản mới để bắt đầu'
                 }
               </p>
@@ -529,18 +466,6 @@ export default function RegisterPage() {
                         style={{ width: `${passwordStrength}%` }}
                       ></div>
                     </div>
-
-                    {/* Password Validation Errors */}
-                    {passwordErrors.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {passwordErrors.map((error, index) => (
-                          <p key={index} className="text-xs text-red-600 flex items-center">
-                            <span className="mr-1">•</span>
-                            {error}
-                          </p>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -555,10 +480,6 @@ export default function RegisterPage() {
                     placeholder="Xác nhận mật khẩu"
                     value={confirmPassword}
                     onChange={(e) => handleConfirmPasswordChange(e.target.value)}
-                    onPaste={handleConfirmPasswordPaste}
-                    onCopy={(e) => e.preventDefault()}
-                    onCut={(e) => e.preventDefault()}
-                    onKeyDown={handleConfirmPasswordKeyDown}
                     onContextMenu={handleConfirmPasswordContextMenu}
                     required
                     disabled={isLoading}
@@ -583,16 +504,6 @@ export default function RegisterPage() {
                   </button>
                 </div>
 
-                {/* Paste Warning */}
-                {showPasteWarning && (
-                  <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-xs text-yellow-800 flex items-center">
-                      <span className="mr-1">⚠️</span>
-                      Vui lòng nhập lại mật khẩu thay vì copy-paste để đảm bảo chính xác
-                    </p>
-                  </div>
-                )}
-
                 {/* Password Match Indicator */}
                 {confirmPassword && password && (
                   <div className="mt-2">
@@ -609,19 +520,6 @@ export default function RegisterPage() {
                     )}
                   </div>
                 )}
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  id="developmentMode"
-                  checked={isDevelopmentMode}
-                  onChange={(e) => setIsDevelopmentMode(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 focus:ring-2"
-                />
-                <label htmlFor="developmentMode" className="text-sm text-gray-600">
-                  Chế độ phát triển (bỏ qua xác thực email)
-                </label>
               </div>
 
               <div className="pt-2">
@@ -667,19 +565,34 @@ export default function RegisterPage() {
             </form>
           ) : currentStep === 'verification' ? (
             <form className="space-y-4" onSubmit={handleVerificationSubmit}>
-              <div>
-                <Input
-                  id="verificationCode"
-                  name="verificationCode"
-                  type="text"
-                  placeholder="Nhập mã xác thực 6 số"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  required
-                  disabled={isLoading}
-                  maxLength={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50 text-center text-lg tracking-widest"
-                />
+              <div className="flex justify-center">
+                <InputOTP maxLength={6} pattern={REGEXP_ONLY_DIGITS} value={verificationCode} onChange={setVerificationCode}>
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} className="border border-gray-300 focus:border-green-500 mr-1" />
+                    <InputOTPSlot index={1} className="border border-gray-300 focus:border-green-500 mr-1" />
+                    <InputOTPSlot index={2} className="border border-gray-300 focus:border-green-500" />
+                    <InputOTPSeparator/>
+                    <InputOTPSlot index={3} className="border border-gray-300 focus:border-green-500 mr-1" />
+                    <InputOTPSlot index={4} className="border border-gray-300 focus:border-green-500 mr-1" />
+                    <InputOTPSlot index={5} className="border border-gray-300 focus:border-green-500 mr-1" />
+                  </InputOTPGroup>
+                 </InputOTP>
+              </div>
+              <div className="text-center space-y-2">
+                {countdown > 0 ? (
+                  <p className="text-sm text-gray-600">
+                    Thời gian còn lại: <span className="font-semibold text-red-500">{formatTime(countdown)}</span>
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={resendVerification}
+                    disabled={isLoading}
+                    className="text-sm text-green-600 hover:text-green-500 disabled:opacity-50 font-medium"
+                  >
+                    Gửi lại mã?
+                  </button>
+                )}
               </div>
 
               <div className="pt-2">
@@ -715,81 +628,7 @@ export default function RegisterPage() {
                 </button>
               </div>
             </form>
-          ) : (
-            /* Profile Update Form */
-            <form className="space-y-4" onSubmit={handleProfileUpdate}>
-              {/* Bio */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Giới thiệu bản thân
-                </label>
-                <textarea
-                  id="bio"
-                  name="bio"
-                  placeholder="Viết vài dòng giới thiệu về bản thân..."
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  disabled={isLoading}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50 resize-none"
-                />
-              </div>
-
-              {/* Date of Birth and Gender */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ngày sinh
-                  </label>
-                  <Input
-                    id="dateOfBirth"
-                    name="dateOfBirth"
-                    type="date"
-                    value={dateOfBirth}
-                    onChange={(e) => setDateOfBirth(e.target.value)}
-                    disabled={isLoading}
-                    className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Giới tính
-                  </label>
-                  <select
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value as 'male' | 'female' | 'other')}
-                    disabled={isLoading}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
-                  >
-                    <option value="male">Nam</option>
-                    <option value="female">Nữ</option>
-                    <option value="other">Khác</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? 'Đang cập nhật...' : 'Cập nhật thông tin'}
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleSkipProfileUpdate}
-                  disabled={isLoading}
-                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Bỏ qua, cập nhật sau
-                </Button>
-              </div>
-            </form>
-          )}
+          ) : null}
           </div>
         </div>
       </div>
