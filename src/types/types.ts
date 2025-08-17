@@ -33,6 +33,13 @@ export interface ChangePasswordRequest {
 	newPassword: string;
 }
 
+export interface CheckPassword {
+	isValid: boolean;
+	errors: Array<string>;
+	score: number;
+	level: string;
+}
+
 export interface RefreshTokenRequest {
 	refreshToken: string;
 }
@@ -73,6 +80,9 @@ export interface UserProfile {
 	bio?: string;
 	dateOfBirth?: string;
 	avatar?: string;
+	idCardNumber?: string;
+	bankAccount?: string;
+	bankName?: string;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -84,6 +94,10 @@ export interface UpdateProfileRequest {
 	gender?: 'male' | 'female' | 'other';
 	bio?: string;
 	dateOfBirth?: string;
+	avatarUrl?: string;
+	idCardNumber?: string;
+	bankAccount?: string;
+	bankName?: string;
 }
 
 // Location Types
