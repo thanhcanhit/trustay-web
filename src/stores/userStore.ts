@@ -16,6 +16,11 @@ export interface User {
 	bio?: string;
 	dateOfBirth?: string;
 	avatar?: string;
+	idCardNumber?: string;
+	bankAccount?: string;
+	bankName?: string;
+	idCardFront?: string;
+	idCardBack?: string;
 	createdAt?: string;
 	updatedAt?: string;
 }
@@ -31,6 +36,7 @@ interface UserState {
 	login: (credentials: LoginRequest) => Promise<void>;
 	logout: () => Promise<void>;
 	loadUser: () => Promise<void>;
+	fetchUser: () => Promise<void>;
 	clearError: () => void;
 	switchRole: (newRole: 'tenant' | 'landlord') => void;
 	setHasHydrated: (state: boolean) => void;
@@ -48,6 +54,9 @@ const convertUserProfile = (profile: UserProfile): User => ({
 	bio: profile.bio,
 	dateOfBirth: profile.dateOfBirth,
 	avatar: profile.avatar,
+	idCardNumber: profile.idCardNumber,
+	bankAccount: profile.bankAccount,
+	bankName: profile.bankName,
 	createdAt: profile.createdAt,
 	updatedAt: profile.updatedAt,
 });
@@ -140,6 +149,20 @@ export const useUserStore = create<UserState>()(
 						isLoading: false,
 						error: isTokenExpired ? null : errorObj.message || 'Failed to load user',
 					});
+				}
+			},
+
+			fetchUser: async () => {
+				try {
+					const userProfile = await getCurrentUser();
+					const user = convertUserProfile(userProfile);
+
+					set((state) => ({
+						...state,
+						user,
+					}));
+				} catch (error: unknown) {
+					console.error('Failed to fetch user:', error);
 				}
 			},
 

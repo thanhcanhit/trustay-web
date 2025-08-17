@@ -25,6 +25,7 @@ interface RoomState {
 		totalPages: number;
 		hasNext: boolean;
 		hasPrev: boolean;
+		itemCount: number;
 	} | null;
 
 	// Room detail
@@ -86,6 +87,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 	// Search rooms with filters
 	searchRooms: async (params: RoomSearchParams, append = false) => {
 		const currentState = get();
+		console.log('Store searchRooms called with:', params, 'append:', append);
 
 		if (!append) {
 			set({ searchLoading: true, searchError: null });
@@ -93,10 +95,15 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 
 		try {
 			const response = await searchRoomListings(params);
+			console.log('API response:', {
+				dataLength: response.data.length,
+				meta: response.meta,
+				currentResultsLength: currentState.searchResults.length,
+			});
 
 			set({
 				searchResults: append ? [...currentState.searchResults, ...response.data] : response.data,
-				searchPagination: response.pagination,
+				searchPagination: response.meta,
 				searchLoading: false,
 				searchError: null,
 			});
