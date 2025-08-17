@@ -60,13 +60,14 @@ export interface RoomListing {
 
 export interface RoomListingsResponse {
 	data: RoomListing[];
-	pagination: {
+	meta: {
 		page: number;
 		limit: number;
 		total: number;
 		totalPages: number;
 		hasNext: boolean;
 		hasPrev: boolean;
+		itemCount: number;
 	};
 }
 
@@ -181,9 +182,15 @@ export async function searchRoomListings(
 		});
 
 		const endpoint = `/api/listings/rooms${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+		console.log('Calling API endpoint:', endpoint);
 
 		const response = await serverApiCall<RoomListingsResponse>(endpoint, {
 			method: 'GET',
+		});
+
+		console.log('API response received:', {
+			dataLength: response.data?.length || 'no data property',
+			meta: response.meta,
 		});
 
 		return response;

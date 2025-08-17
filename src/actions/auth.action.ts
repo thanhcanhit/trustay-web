@@ -173,6 +173,20 @@ export const refreshToken = async (): Promise<AuthResponse> => {
 	}
 };
 
+//Check password strength
+
+export const checkPasswordStrength = async (password: string): Promise<number> => {
+	try {
+		const response = await apiClient.post<{ score: number }>('/api/auth/check-password-strength', {
+			password,
+		});
+		return response.data.score;
+	} catch (error: unknown) {
+		handleApiError(error, 'Failed to check password strength');
+		return 0;
+	}
+};
+
 // Update user profile
 export const updateUserProfile = async (
 	profileData: Record<string, unknown>,
@@ -195,8 +209,11 @@ export const logout = async (): Promise<void> => {
 // Complete registration and redirect
 export async function completeRegistration(formData: FormData) {
 	const role = formData.get('role') as string;
+	const showProfileModal = formData.get('showProfileModal') as string;
 
-	if (role === 'tenant') {
+	if (showProfileModal === 'true') {
+		redirect('/profile?showModal=true');
+	} else if (role === 'tenant') {
 		redirect('/dashboard/tenant');
 	} else if (role === 'landlord') {
 		redirect('/dashboard/landlord');
