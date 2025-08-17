@@ -2,6 +2,8 @@
  * Password validation utilities
  */
 
+import { checkPasswordStrength } from '@/actions/auth.action';
+
 // Regex pattern for password validation
 // At least 6 characters, must contain:
 // - At least one lowercase letter
@@ -52,25 +54,29 @@ export const getPasswordValidationErrors = (password: string): string[] => {
 };
 
 /**
- * Enhanced password strength calculation
+ * Enhanced password strength calculation using backend endpoint
  * @param password - The password to evaluate
- * @returns number - Strength score from 0 to 100
+ * @returns Promise<number> - Strength score from 0 to 100
  */
-export const calculatePasswordStrength = (password: string): number => {
-	let strength = 0;
+export const calculatePasswordStrength = async (password: string): Promise<number> => {
+	if (!password) return 0;
 
-	// Length check (more points for longer passwords)
-	if (password.length >= 6) strength += 20;
-	if (password.length >= 8) strength += 10;
-	if (password.length >= 12) strength += 10;
-
-	// Character type checks
-	if (/[a-z]/.test(password)) strength += 15;
-	if (/[A-Z]/.test(password)) strength += 15;
-	if (/[0-9]/.test(password)) strength += 15;
-	if (/[@$!%*?&]/.test(password)) strength += 15;
-
-	return Math.min(strength, 100);
+	try {
+		const score = await checkPasswordStrength(password);
+		return Math.min(score, 100);
+	} catch (error) {
+		console.error('Error calculating password strength:', error);
+		// Fallback to simple calculation if backend fails
+		let strength = 0;
+		if (password.length >= 6) strength += 20;
+		if (password.length >= 8) strength += 10;
+		if (password.length >= 12) strength += 10;
+		if (/[a-z]/.test(password)) strength += 15;
+		if (/[A-Z]/.test(password)) strength += 15;
+		if (/\d/.test(password)) strength += 15;
+		if (/[@$!%*?&]/.test(password)) strength += 15;
+		return Math.min(strength, 100);
+	}
 };
 
 /**
