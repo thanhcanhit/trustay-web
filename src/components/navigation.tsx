@@ -230,15 +230,12 @@ export function Navigation() {
                     Đăng bài
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                      <li className="row-span-3">
+                    <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px]">
+                      <li>
                         <NavigationMenuLink asChild>
-                          <Link href="/dashboard/landlord/properties/add" className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md">
-                            <Plus className="h-6 w-6" />
-                            <div className="mb-2 mt-4 text-lg font-medium">
-                              Đăng tin cho thuê
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
+                          <Link href="/dashboard/landlord/properties/add" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                            <div className="text-sm font-medium leading-none">Đăng tin cho thuê</div>
+                            <p className="text-xs leading-tight text-muted-foreground">
                               Đăng tin cho thuê phòng trọ, nhà trọ của bạn
                             </p>
                           </Link>
@@ -246,8 +243,21 @@ export function Navigation() {
                       </li>
                       <li>
                         <NavigationMenuLink asChild>
-                          <Link href="/dashboard/landlord/roommate/add" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                          <Link href="/dashboard/tenant/find-rental" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                            <div className="text-sm font-medium leading-none">Đăng tin tìm chỗ thuê</div>
+                            <p className="text-xs leading-tight text-muted-foreground">
+                              Đăng tin tìm kiếm phòng trọ, nhà trọ
+                            </p>
+                          </Link>
+                        </NavigationMenuLink>
+                      </li>
+                      <li>
+                        <NavigationMenuLink asChild>
+                          <Link href="/dashboard/tenant/find-roommate" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
                             <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
+                            <p className="text-xs leading-tight text-muted-foreground">
+                              Tìm bạn cùng phòng, người ở ghép
+                            </p>
                           </Link>
                         </NavigationMenuLink>
                       </li>
