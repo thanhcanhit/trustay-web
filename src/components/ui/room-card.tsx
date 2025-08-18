@@ -9,6 +9,7 @@ import {
   Wifi} from 'lucide-react';
 import type { RoomListing } from '@/actions/listings.action';
 import { Badge } from './badge';
+import { getOptimizedImageUrl } from '@/lib/utils';
 
 interface RoomCardProps {
   room: RoomListing;
@@ -83,7 +84,7 @@ export function RoomCard({
       {/* Image Container */}
       <div className="relative h-48">
         <Image
-          src={imageError ? "/images/roommate1.png" : (room.images?.[0]?.url)}
+          src={imageError ? "/images/roommate1.png" : getOptimizedImageUrl(room.images?.[0]?.url || '', 'listing')}
           alt={room.name || "Room image"}
           fill
           className="object-cover"

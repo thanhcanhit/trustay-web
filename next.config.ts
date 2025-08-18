@@ -9,6 +9,24 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/images/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'trustay.life',
+        port: '3000',
+        pathname: '/images/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.trustay.life',
+        port: '',
+        pathname: '/images/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+        pathname: '/images/**',
+      },
     ],
   },
 };
