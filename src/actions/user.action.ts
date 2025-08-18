@@ -8,17 +8,21 @@ import { ChangePasswordRequest, UpdateProfileRequest, UserProfile } from '../typ
 // Helper function to get token from cookies
 const getTokenFromCookies = async (): Promise<string | null> => {
 	const cookieStore = await cookies();
-	return cookieStore.get('accessToken')?.value || null;
+	const token = cookieStore.get('accessToken')?.value || null;
+	console.log('Token from cookies:', token ? 'Found' : 'Not found');
+	return token;
 };
 
-// Create API call function for server actions
+// Create server API call function
 const apiCall = createServerApiCall(getTokenFromCookies);
 
 // Get user profile
 export const getUserProfile = async (): Promise<UserProfile> => {
-	return await apiCall<UserProfile>('/api/users/profile', {
+	const result = await apiCall<UserProfile>('/api/users/profile', {
 		method: 'GET',
 	});
+	console.log('getUserProfile raw result:', result);
+	return result;
 };
 
 // Update user profile
@@ -49,8 +53,5 @@ export const uploadAvatar = async (file: File): Promise<{ avatarUrl: string }> =
 	return await apiCall<{ avatarUrl: string }>('/api/users/avatar', {
 		method: 'PUT',
 		data: formData,
-		headers: {
-			'Content-Type': 'multipart/form-data',
-		},
 	});
 };
