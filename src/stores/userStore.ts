@@ -5,6 +5,8 @@ import { login as apiLogin, logout as apiLogout, getCurrentUser } from '@/action
 import { TokenUtils } from '@/lib/token-utils';
 import { UserProfile as User } from '@/types/types';
 
+export type { User };
+
 interface UserState {
 	user: User | null;
 	isAuthenticated: boolean;

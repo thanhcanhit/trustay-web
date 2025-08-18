@@ -201,13 +201,6 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
     setPendingAvatarPreview(previewUrl)
   }
 
-  const handleFileUpload = (field: keyof typeof profileData, file: File) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      setProfileData(prev => ({ ...prev, [field]: reader.result as string }))
-    }
-    reader.readAsDataURL(file)
-  }
 
   const handleSave = async () => {
     setIsLoading(true)
@@ -228,7 +221,7 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
       }
 
       // Only send changed fields
-      const updateData: any = {}
+      const updateData: Record<string, unknown> = {}
       
       if (profileData.firstName !== originalData.firstName) {
         updateData.firstName = profileData.firstName
@@ -287,7 +280,7 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
           updatedAt: updatedUser.updatedAt,
         }
         
-        const { user: currentUser, ...storeState } = useUserStore.getState()
+        const storeState = useUserStore.getState()
         useUserStore.setState({
           ...storeState,
           user: convertedUser,
