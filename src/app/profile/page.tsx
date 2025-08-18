@@ -5,14 +5,13 @@ import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useUserStore, type User as UserType } from "@/stores/userStore"
-import { updateUserProfile } from "@/actions/auth.action"
-import { changePassword, uploadAvatar } from "@/actions/user.action"
+import { useUserStore } from "@/stores/userStore"
+import { UserProfile } from "@/actions"
+import { changePassword, uploadAvatar, updateUserProfile } from "@/actions/user.action"
 import { toast } from "sonner"
 import {
   User,
   Home,
-  Edit,
   Key,
   Receipt,
   Send,
@@ -21,6 +20,8 @@ import {
   LogOut
 } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
+import { SizingImage } from "@/components/sizing-image"
 
 
 // Content Components
@@ -128,12 +129,14 @@ function ChangePasswordCard() {
   )
 }
 
-function ProfileContent({ user }: { user: UserType | null }) {
+function ProfileContent({ user }: { user: UserProfile | null }) {
+  console.log('ProfileContent user data:', user)
+  console.log('user?.avatarUrl:', user?.avatarUrl)
   const [isEditing, setIsEditing] = useState(false)
   const [profileData, setProfileData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
-    avatarUrl: user?.avatar || '',
+    avatarUrl: user?.avatarUrl || '',
     dateOfBirth: user?.dateOfBirth || '',
     gender: user?.gender || '',
     role: user?.role || 'tenant',
@@ -141,31 +144,61 @@ function ProfileContent({ user }: { user: UserType | null }) {
     idCardNumber: user?.idCardNumber || '',
     bankAccount: user?.bankAccount || '',
     bankName: user?.bankName || '',
-    idCardFront: user?.idCardFront || '',
-    idCardBack: user?.idCardBack || '',
+    // idCardFront: user?.idCardFront || '',
+    // idCardBack: user?.idCardBack || '',
+  })
+  const [originalData, setOriginalData] = useState({
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    avatarUrl: user?.avatarUrl || '',
+    dateOfBirth: user?.dateOfBirth || '',
+    gender: user?.gender || '',
+    role: user?.role || 'tenant',
+    bio: user?.bio || '',
+    idCardNumber: user?.idCardNumber || '',
+    bankAccount: user?.bankAccount || '',
+    bankName: user?.bankName || '',
+    // idCardFront: user?.idCardFront || '',
+    // idCardBack: user?.idCardBack || '',
   })
   const [isLoading, setIsLoading] = useState(false)
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null)
+  const [pendingAvatarPreview, setPendingAvatarPreview] = useState<string | null>(null)
 
   const handleInputChange = (field: string, value: string) => {
     setProfileData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleAvatarUpload = async (file: File) => {
-    setIsUploadingAvatar(true)
-    try {
-      const response = await uploadAvatar(file)
-      setProfileData(prev => ({ ...prev, avatarUrl: response.avatarUrl }))
-      toast.success("Tải ảnh đại diện thành công!")
-      
-      // Update user store with new avatar
-      const { fetchUser } = useUserStore.getState()
-      await fetchUser()
-    } catch (error) {
-      toast.error("Lỗi khi tải ảnh: " + (error instanceof Error ? error.message : "Unknown error"))
-    } finally {
-      setIsUploadingAvatar(false)
+  // Check if there are any changes
+  const hasChanges = () => {
+    if (pendingAvatarFile) return true
+    return Object.keys(profileData).some(key => 
+      profileData[key as keyof typeof profileData] !== originalData[key as keyof typeof originalData]
+    )
+  }
+
+  const handleAvatarFileSelect = (file: File) => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file ảnh!')
+      return
     }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Kích thước file không được vượt quá 5MB!')
+      return
+    }
+
+    // Clean up previous preview
+    if (pendingAvatarPreview) {
+      URL.revokeObjectURL(pendingAvatarPreview)
+    }
+
+    // Create preview URL and store file
+    const previewUrl = URL.createObjectURL(file)
+    setPendingAvatarFile(file)
+    setPendingAvatarPreview(previewUrl)
   }
 
   const handleFileUpload = (field: keyof typeof profileData, file: File) => {
@@ -179,24 +212,128 @@ function ProfileContent({ user }: { user: UserType | null }) {
   const handleSave = async () => {
     setIsLoading(true)
     try {
-      await updateUserProfile({
-        firstName: profileData.firstName,
-        lastName: profileData.lastName,
-        avatarUrl: profileData.avatarUrl,
-        dateOfBirth: profileData.dateOfBirth,
-        gender: profileData.gender,
-        role: profileData.role as 'tenant' | 'landlord',
-        bio: profileData.bio,
-        idCardNumber: profileData.idCardNumber,
-        bankAccount: profileData.bankAccount,
-        bankName: profileData.bankName,
-      })
-      const { fetchUser } = useUserStore.getState()
-      await fetchUser()
+      // Upload avatar first if there's a pending file
+      let finalAvatarUrl = profileData.avatarUrl
+      if (pendingAvatarFile && pendingAvatarFile instanceof File && pendingAvatarFile.size > 0) {
+        console.log('Uploading avatar:', pendingAvatarFile.name, pendingAvatarFile.size)
+        try {
+          const response = await uploadAvatar(pendingAvatarFile)
+          finalAvatarUrl = response.avatarUrl
+          console.log('Avatar uploaded successfully:', finalAvatarUrl)
+        } catch (avatarError) {
+          console.error('Avatar upload failed:', avatarError)
+          toast.error("Lỗi upload avatar: " + (avatarError instanceof Error ? avatarError.message : "Unknown error"))
+          return // Don't continue if avatar upload fails
+        }
+      }
+
+      // Only send changed fields
+      const updateData: any = {}
+      
+      if (profileData.firstName !== originalData.firstName) {
+        updateData.firstName = profileData.firstName
+      }
+      if (profileData.lastName !== originalData.lastName) {
+        updateData.lastName = profileData.lastName
+      }
+      if (finalAvatarUrl !== originalData.avatarUrl) {
+        updateData.avatarUrl = finalAvatarUrl
+      }
+      if (profileData.dateOfBirth !== originalData.dateOfBirth) {
+        updateData.dateOfBirth = profileData.dateOfBirth
+      }
+      if (profileData.gender !== originalData.gender) {
+        updateData.gender = profileData.gender as 'male' | 'female' | 'other'
+      }
+      if (profileData.bio !== originalData.bio) {
+        updateData.bio = profileData.bio
+      }
+      if (profileData.idCardNumber !== originalData.idCardNumber) {
+        updateData.idCardNumber = profileData.idCardNumber
+      }
+      if (profileData.bankAccount !== originalData.bankAccount) {
+        updateData.bankAccount = profileData.bankAccount
+      }
+      if (profileData.bankName !== originalData.bankName) {
+        updateData.bankName = profileData.bankName
+      }
+
+      // Only call API if there are changes
+      let updatedUser = null
+      if (Object.keys(updateData).length > 0) {
+        console.log('Sending updateData to API:', updateData)
+        updatedUser = await updateUserProfile(updateData)
+        console.log('Received updatedUser from API:', updatedUser)
+        console.log('updatedUser.avatarUrl:', updatedUser?.avatarUrl)
+      }
+
+      // Update store with fresh data from API
+      if (updatedUser) {
+        const convertedUser = {
+          id: updatedUser.id,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          email: updatedUser.email,
+          phone: updatedUser.phone,
+          gender: updatedUser.gender,
+          role: updatedUser.role,
+          bio: updatedUser.bio,
+          dateOfBirth: updatedUser.dateOfBirth,
+          avatarUrl: updatedUser.avatarUrl,
+          idCardNumber: updatedUser.idCardNumber,
+          bankAccount: updatedUser.bankAccount,
+          bankName: updatedUser.bankName,
+          createdAt: updatedUser.createdAt,
+          updatedAt: updatedUser.updatedAt,
+        }
+        
+        const { user: currentUser, ...storeState } = useUserStore.getState()
+        useUserStore.setState({
+          ...storeState,
+          user: convertedUser,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        })
+
+        // Update local state with fresh data
+        setProfileData({
+          firstName: convertedUser.firstName,
+          lastName: convertedUser.lastName,
+          avatarUrl: convertedUser.avatarUrl || '',
+          dateOfBirth: convertedUser.dateOfBirth || '',
+          gender: convertedUser.gender || '',
+          role: convertedUser.role || 'tenant',
+          bio: convertedUser.bio || '',
+          idCardNumber: convertedUser.idCardNumber || '',
+          bankAccount: convertedUser.bankAccount || '',
+          bankName: convertedUser.bankName || '',
+        })
+        setOriginalData({
+          firstName: convertedUser.firstName,
+          lastName: convertedUser.lastName,
+          avatarUrl: convertedUser.avatarUrl || '',
+          dateOfBirth: convertedUser.dateOfBirth || '',
+          gender: convertedUser.gender || '',
+          role: convertedUser.role || 'tenant',
+          bio: convertedUser.bio || '',
+          idCardNumber: convertedUser.idCardNumber || '',
+          bankAccount: convertedUser.bankAccount || '',
+          bankName: convertedUser.bankName || '',
+        })
+      }
+
+      // Clean up pending avatar data
+      if (pendingAvatarPreview) {
+        URL.revokeObjectURL(pendingAvatarPreview)
+        setPendingAvatarPreview(null)
+      }
+      setPendingAvatarFile(null)
       toast.success("Cập nhật thông tin thành công!")
       setIsEditing(false)
     } catch (error) {
-      toast.error("Lỗi: " + (error instanceof Error ? error.message : "Unknown error"))
+      console.error('Profile update error:', error)
+      toast.error("Lỗi cập nhật profile: " + (error instanceof Error ? error.message : "Unknown error"))
     } finally {
       setIsLoading(false)
     }
@@ -206,9 +343,15 @@ function ProfileContent({ user }: { user: UserType | null }) {
     return (
       <Card className="p-8 space-y-6">
         <div className="flex items-center space-x-6">
-          <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200">
-            {user?.avatar ? (
-              <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+          <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 relative">
+            {user?.avatarUrl ? (
+              <SizingImage 
+                src={user.avatarUrl.replace(/^\/images\//, '').replace(/^\//, '')} 
+                srcSize="256x256" 
+                alt="Avatar" 
+                className="object-cover" 
+                fill
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">Avatar</div>
             )}
@@ -230,7 +373,15 @@ function ProfileContent({ user }: { user: UserType | null }) {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Giới tính</label>
-            <p>{profileData.gender || 'Chưa cập nhật'}</p>
+            <p>
+              {profileData.gender === ''
+                ? 'Chưa cập nhật'
+                : profileData.gender === 'female'
+                  ? 'Nữ'
+                  : profileData.gender === 'male'
+                    ? 'Nam'
+                    : 'Khác'}
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Ngày sinh</label>
@@ -261,7 +412,10 @@ function ProfileContent({ user }: { user: UserType | null }) {
           </div>
         )}
 
-        <Button onClick={() => setIsEditing(true)} variant="outline">
+        <Button onClick={() => {
+          setIsEditing(true)
+          setOriginalData({...profileData})
+        }} variant="outline">
           Chỉnh sửa thông tin
         </Button>
       </Card>
@@ -277,9 +431,17 @@ function ProfileContent({ user }: { user: UserType | null }) {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Ảnh đại diện</label>
           <div className="flex items-center space-x-4">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 border-2 border-gray-300">
-              {profileData.avatarUrl ? (
-                <img src={profileData.avatarUrl} alt="Avatar preview" className="w-full h-full object-cover" />
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 border-2 border-gray-300 relative">
+              {pendingAvatarPreview ? (
+                <Image src={pendingAvatarPreview} alt="Avatar preview" fill className="object-cover" unoptimized />
+              ) : profileData.avatarUrl ? (
+                <SizingImage 
+                  src={profileData.avatarUrl.replace(/^\/images\//, '').replace(/^\//, '')} 
+                  srcSize="256x256" 
+                  alt="Avatar preview" 
+                  className="object-cover" 
+                  fill
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
                   <User className="h-8 w-8" />
@@ -292,15 +454,19 @@ function ProfileContent({ user }: { user: UserType | null }) {
                 accept="image/*"
                 onChange={(e) => {
                   const file = e.target.files?.[0]
-                  if (file) handleAvatarUpload(file)
+                  if (file) handleAvatarFileSelect(file)
+                  // Reset input để có thể chọn lại file cũ
+                  e.target.value = ''
                 }}
-                disabled={isUploadingAvatar}
+                disabled={isLoading}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg 
                            file:border-0 file:text-sm file:bg-green-50 file:text-green-700 hover:file:bg-green-100
                            disabled:opacity-50 disabled:cursor-not-allowed"
               />
-              {isUploadingAvatar && (
-                <p className="text-sm text-gray-500 mt-1">Đang tải ảnh lên...</p>
+              {pendingAvatarFile && (
+                <p className="text-sm text-green-600 mt-1">
+                  ✓ Đã chọn: {pendingAvatarFile.name}
+                </p>
               )}
               <p className="text-xs text-gray-400 mt-1">
                 Chấp nhận: JPG, PNG, GIF. Tối đa 5MB.
@@ -405,46 +571,50 @@ function ProfileContent({ user }: { user: UserType | null }) {
             <div>
               <p className="text-sm text-gray-600 mb-2">Mặt trước</p>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                {profileData.idCardFront ? (
+                {/* {profileData.idCardFront ? (
                   <div className="space-y-2">
-                    <img src={profileData.idCardFront} alt="CCCD mặt trước" className="w-full h-32 object-cover rounded border mx-auto" />
+                    <Image src={profileData.idCardFront} alt="CCCD mặt trước" width={300} height={128} className="w-full h-32 object-cover rounded border mx-auto" />
                     <input type="file" accept="image/*" onChange={(e) => {
                       const file = e.target.files?.[0]
                       if (file) handleFileUpload('idCardFront', file)
                     }} />
                   </div>
-                ) : (
+                ) : ( */}
                   <div>
                     <p className="text-gray-500 mb-2">Tải lên ảnh CCCD mặt trước</p>
-                    <input type="file" accept="image/*" onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleFileUpload('idCardFront', file)
-                    }} />
+                    <input type="file" accept="image/*" 
+                    // onChange={(e) => {
+                    //   const file = e.target.files?.[0]
+                      // if (file) handleFileUpload('idCardFront', file)
+                    //}} 
+                      />
                   </div>
-                )}
+                {/* )} */}
               </div>
             </div>
             {/* Mặt sau */}
             <div>
               <p className="text-sm text-gray-600 mb-2">Mặt sau</p>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                {profileData.idCardBack ? (
+                {/* {profileData.idCardBack ? (
                   <div className="space-y-2">
-                    <img src={profileData.idCardBack} alt="CCCD mặt sau" className="w-full h-32 object-cover rounded border mx-auto" />
+                    <Image src={profileData.idCardBack} alt="CCCD mặt sau" width={300} height={128} className="w-full h-32 object-cover rounded border mx-auto" />
                     <input type="file" accept="image/*" onChange={(e) => {
                       const file = e.target.files?.[0]
                       if (file) handleFileUpload('idCardBack', file)
                     }} />
                   </div>
-                ) : (
+                ) : ( */}
                   <div>
                     <p className="text-gray-500 mb-2">Tải lên ảnh CCCD mặt sau</p>
-                    <input type="file" accept="image/*" onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleFileUpload('idCardBack', file)
-                    }} />
+                    <input type="file" accept="image/*" 
+                    // onChange={(e) => {
+                    //   const file = e.target.files?.[0]
+                    //   if (file) handleFileUpload('idCardBack', file)
+                    //}} 
+                    />
                   </div>
-                )}
+                {/* )} */}
               </div>
             </div>
           </div>
@@ -455,11 +625,21 @@ function ProfileContent({ user }: { user: UserType | null }) {
           <Button
             onClick={handleSave}
             className="bg-green-600 hover:bg-green-700"
-            disabled={!profileData.firstName || !profileData.lastName || !profileData.gender || !profileData.dateOfBirth || !profileData.idCardNumber || !profileData.bankAccount || !profileData.bankName || isLoading}
+            disabled={!hasChanges() || isLoading}
           >
             {isLoading ? "Đang lưu..." : "Lưu thông tin"}
           </Button>
-          <Button onClick={() => setIsEditing(false)} variant="outline">Hủy</Button>
+          <Button onClick={() => {
+            // Reset to original data
+            setProfileData({...originalData})
+            // Clean up pending avatar data when canceling
+            if (pendingAvatarPreview) {
+              URL.revokeObjectURL(pendingAvatarPreview)
+              setPendingAvatarPreview(null)
+            }
+            setPendingAvatarFile(null)
+            setIsEditing(false)
+          }} variant="outline">Hủy</Button>
         </div>
       </div>
     </Card>
@@ -634,23 +814,15 @@ function NotificationsContent() {
 
 function ProfilePageContent() {
   const { user, isAuthenticated, isLoading } = useUserStore()
+  console.log('ProfilePageContent user from store:', user)
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState("profile")
-  const [showModal, setShowModal] = useState(false)
 
   // Get tab from URL params
   useEffect(() => {
     const tab = searchParams.get('tab')
     if (tab) {
       setActiveTab(tab)
-    }
-  }, [searchParams])
-
-  // Show modal from URL params
-  useEffect(() => {
-    const shouldShowModal = searchParams.get('showModal')
-    if (shouldShowModal === 'true') {
-      setShowModal(true)
     }
   }, [searchParams])
 

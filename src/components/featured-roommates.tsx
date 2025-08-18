@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Heart, MapPin, User, Calendar, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getHotRoommatePosts } from "@/data/mock-data"
+import { getOptimizedImageUrl } from "@/lib/utils"
 
 export function FeaturedRoommates() {
   const [savedPosts, setSavedPosts] = useState<string[]>([])
@@ -65,7 +66,8 @@ export function FeaturedRoommates() {
                 {/* Image Container */}
                 <div className="relative h-48">
                   <Image
-                    src={post.images?.[0] && typeof post.images[0] === 'string' && post.images[0].trim() !== "" ? post.images[0] : "/images/roommate1.png"}
+                    src={post.images?.[0] && typeof post.images[0] === 'string' && post.images[0].trim() !== "" ? 
+                      getOptimizedImageUrl(post.images[0], 'listing') : "/images/roommate1.png"}
                     alt={post.title || "Roommate post image"}
                     fill
                     className="object-cover"

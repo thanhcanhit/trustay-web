@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import { ArrowLeft, MapPin, Loader2, ChevronDown, ChevronUp, Calendar, Home } from "lucide-react"
+import { MapPin, Loader2, ChevronDown, ChevronUp, Calendar, Home } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import {
   Breadcrumb,
@@ -166,6 +167,7 @@ export default function PropertyDetailPage() {
               title={roomDetail.name}
               className="mb-6"
               isVerified={roomDetail.isVerified}
+              imageContext="detail"
             />
 
             {/* Room Basic Info */}
@@ -391,9 +393,11 @@ export default function PropertyDetailPage() {
               {similarPosts.map((post) => (
                 <SwiperSlide key={post.id}>
                   <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                    <img
+                    <Image
                       src={post.images[0]?.url}
                       alt={post.images[0]?.alt}
+                      width={300}
+                      height={192}
                       className="w-full h-48 object-cover"
                     />
                     <div className="p-4">
@@ -438,9 +442,11 @@ export default function PropertyDetailPage() {
                 {ownerOtherPosts.map((post) => (
                   <SwiperSlide key={post.id}>
                     <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                      <img
+                      <Image
                         src={post.images[0]?.url}
                         alt={post.images[0]?.alt}
+                        width={300}
+                        height={192}
                         className="w-full h-48 object-cover"
                       />
                       <div className="p-4">

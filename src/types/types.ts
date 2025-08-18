@@ -79,7 +79,7 @@ export interface UserProfile {
 	role: 'tenant' | 'landlord';
 	bio?: string;
 	dateOfBirth?: string;
-	avatar?: string;
+	avatarUrl?: string; // Fix: API returns avatarUrl, not avatar
 	idCardNumber?: string;
 	bankAccount?: string;
 	bankName?: string;
@@ -92,6 +92,7 @@ export interface UpdateProfileRequest {
 	lastName?: string;
 	phone?: string;
 	gender?: 'male' | 'female' | 'other';
+	role?: 'tenant' | 'landlord';
 	bio?: string;
 	dateOfBirth?: string;
 	avatarUrl?: string;

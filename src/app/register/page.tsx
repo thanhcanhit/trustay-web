@@ -11,7 +11,6 @@ import {
   sendEmailVerification,
   verifyEmailCode,
   registerWithVerification,
-  completeRegistration
 } from "@/actions"
 import Image from "next/image"
 import {
@@ -209,7 +208,7 @@ export default function RegisterPage() {
           role: authResponse.user.role,
           bio: authResponse.user.bio,
           dateOfBirth: authResponse.user.dateOfBirth,
-          avatar: authResponse.user.avatar,
+          avatarUrl: authResponse.user.avatarUrl,
           createdAt: authResponse.user.createdAt,
           updatedAt: authResponse.user.updatedAt,
         }

@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { Button } from './button'
 import Image from 'next/image'
 import { uploadSingleImage, uploadBulkImages, getImageUrl } from '@/actions/upload.action'
+import { getOptimizedImageUrl } from '@/lib/utils'
 
 export interface UploadedImage {
   id: string
@@ -289,7 +290,7 @@ export function ImageUploadWithApi({
           {value.map((image, index) => (
             <div key={image.id} className="relative group aspect-square rounded-lg overflow-hidden border">
               <Image
-                src={image.url || image.preview}
+                src={image.url ? getOptimizedImageUrl(image.url, 'thumbnail') : image.preview}
                 alt={image.altText || `Image ${index + 1}`}
                 fill
                 className="object-cover"

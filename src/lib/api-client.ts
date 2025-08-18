@@ -54,12 +54,30 @@ const axiosInstance: AxiosInstance = axios.create({
 	headers: API_CONFIG.HEADERS,
 });
 
+// Helper function to get token from cookies (client-side)
+const getTokenFromClientCookies = (): string | null => {
+	if (typeof window === 'undefined') return null;
+	const cookies = document.cookie.split(';');
+	const tokenCookie = cookies.find((cookie) => cookie.trim().startsWith('accessToken='));
+	return tokenCookie ? tokenCookie.split('=')[1] : null;
+};
+
 // Request interceptor to add auth token
 axiosInstance.interceptors.request.use(
 	(config) => {
-		// For client-side requests, get token from localStorage
+		// For client-side requests, get token from cookies first, then localStorage
 		if (typeof window !== 'undefined') {
-			const token = TokenManager.getAccessToken();
+			const cookieToken = getTokenFromClientCookies();
+			const localToken = TokenManager.getAccessToken();
+			const token = cookieToken || localToken;
+
+			console.log('Auth Debug:', {
+				cookieToken: cookieToken ? 'Found' : 'Not found',
+				localToken: localToken ? 'Found' : 'Not found',
+				finalToken: token ? 'Using token' : 'No token',
+				url: config.url,
+			});
+
 			if (token) {
 				config.headers.Authorization = `Bearer ${token}`;
 			}
@@ -119,6 +137,15 @@ axiosInstance.interceptors.response.use(
 // Export the axios instance
 export const apiClient = axiosInstance;
 
+// Client-side upload avatar function
+export const uploadAvatarClient = async (file: File): Promise<{ avatarUrl: string }> => {
+	const formData = new FormData();
+	formData.append('file', file);
+
+	const response = await apiClient.put('/api/users/avatar', formData);
+	return response.data;
+};
+
 // Custom ApiError class
 export class ApiError extends Error {
 	constructor(
@@ -136,6 +163,10 @@ export const createServerApiCall = (getToken: () => Promise<string | null> | str
 	return async function apiCall<T>(endpoint: string, options: AxiosRequestConfig = {}): Promise<T> {
 		const token = await getToken();
 
+		// Use server-appropriate URL
+		const serverBaseURL =
+			process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://trustay.life:3000';
+
 		const config: AxiosRequestConfig = {
 			...options,
 			url: endpoint,
@@ -145,9 +176,15 @@ export const createServerApiCall = (getToken: () => Promise<string | null> | str
 			},
 		};
 
+		console.log('Server API Call:', {
+			baseURL: serverBaseURL,
+			endpoint,
+			hasToken: !!token,
+		});
+
 		try {
 			const response = await axios({
-				baseURL: API_CONFIG.BASE_URL,
+				baseURL: serverBaseURL,
 				timeout: API_CONFIG.TIMEOUT,
 				...config,
 			});
@@ -155,16 +192,24 @@ export const createServerApiCall = (getToken: () => Promise<string | null> | str
 			return response.data;
 		} catch (error) {
 			if (axios.isAxiosError(error)) {
-				// Safely extract error message, ensuring it's always a string
-				let message = 'An error occurred';
+				console.error('API Error Details:', {
+					status: error.response?.status,
+					statusText: error.response?.statusText,
+					data: error.response?.data,
+					config: {
+						url: error.config?.url,
+						method: error.config?.method,
+						headers: error.config?.headers,
+					},
+				});
 
+				let message = 'An error occurred';
 				if (error.response?.data) {
 					const data = error.response.data;
 					if (typeof data === 'string') {
 						message = data;
 					} else if (typeof data === 'object') {
 						message = data.message || data.error || data.msg || 'Server error';
-						// Ensure message is a string
 						if (typeof message !== 'string') {
 							message = JSON.stringify(data);
 						}
