@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useUserStore, type User as UserType } from "@/stores/userStore"
@@ -162,7 +162,13 @@ function BillsContent() {
 function TenantPersonalManagementContent() {
   const { user } = useUserStore()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("profile")
+
+  // Redirect to profile page when accessing tenant dashboard
+  useEffect(() => {
+    router.push('/profile')
+  }, [router])
 
   // Get tab from URL params
   useEffect(() => {
