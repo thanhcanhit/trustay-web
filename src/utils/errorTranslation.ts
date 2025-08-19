@@ -393,7 +393,7 @@ export const translateErrorMessage = (
 	const lowerMessage = errorMessage.toLowerCase();
 
 	// Check each error pattern
-	for (const [key, config] of Object.entries(ERROR_PATTERNS)) {
+	for (const [_key, config] of Object.entries(ERROR_PATTERNS)) {
 		if (config.subPatterns) {
 			if (matchesPatternWithSub(lowerMessage, config.patterns, config.subPatterns)) {
 				return config.message;
