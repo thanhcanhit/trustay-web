@@ -99,6 +99,7 @@ export interface RoomDetail {
 		firstName: string;
 		lastName: string;
 		phone: string;
+		avatarUrl: string | null;
 		isVerifiedPhone: boolean;
 		isVerifiedEmail: boolean;
 		isVerifiedIdentity: boolean;

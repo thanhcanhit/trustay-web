@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { MapPin, Loader2, ChevronDown, ChevronUp, Calendar, Home, PhoneCall, Building, Users, CheckCircle, XCircle, AlertCircle, DollarSign, Zap, Droplets, Square, Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { SizingImage } from "@/components/sizing-image"
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -101,6 +102,11 @@ export default function PropertyDetailPage() {
       </div>
     )
   }
+
+  // Debug owner data
+  console.log('Room detail:', roomDetail)
+  console.log('Owner data:', roomDetail.owner)
+  console.log('Owner avatarUrl:', roomDetail.owner?.avatarUrl)
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN').format(price)
@@ -527,10 +533,21 @@ export default function PropertyDetailPage() {
               <div className="p-4 border-b">
                 <div className="flex items-center gap-3 mb-3">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src="/placeholder-avatar.png" alt={`${roomDetail.owner.firstName} ${roomDetail.owner.lastName}`} />
-                    <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
-                      {roomDetail.owner.firstName.charAt(0)}{roomDetail.owner.lastName.charAt(0)}
-                    </AvatarFallback>
+                    {roomDetail.owner?.avatarUrl && roomDetail.owner.avatarUrl.trim() !== '' ? (
+                      <div className="w-full h-full relative">
+                        <SizingImage 
+                          src={roomDetail.owner.avatarUrl} 
+                          srcSize="128x128" 
+                          alt={`${roomDetail.owner.firstName || 'Owner'} ${roomDetail.owner.lastName || 'Name'}`} 
+                          className="object-cover rounded-full"
+                          fill
+                        />
+                      </div>
+                    ) : (
+                      <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
+                        {(roomDetail.owner?.firstName?.charAt(0) || 'U').toUpperCase()}{(roomDetail.owner?.lastName?.charAt(0) || 'S').toUpperCase()}
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
@@ -647,10 +664,21 @@ export default function PropertyDetailPage() {
                       <CardContent className="p-3">
                         <div className="flex items-start gap-2">
                           <Avatar className="h-8 w-8 flex-shrink-0">
-                            <AvatarImage src={review.avatar} alt={review.userName} />
-                            <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                              {review.userName.charAt(0)}
-                            </AvatarFallback>
+                            {review.avatar ? (
+                              <div className="w-full h-full relative">
+                                <SizingImage 
+                                  src={review.avatar} 
+                                  srcSize="128x128" 
+                                  alt={review.userName} 
+                                  className="object-cover rounded-full"
+                                  fill
+                                />
+                              </div>
+                            ) : (
+                              <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                                {review.userName.charAt(0)}
+                              </AvatarFallback>
+                            )}
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
