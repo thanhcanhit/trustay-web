@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface PriceFilterProps {
@@ -66,7 +65,6 @@ export function PriceFilter({
             'Giá cả'
           )}
         </span>
-        <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Dropdown Content */}

@@ -3,99 +3,774 @@
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useUserStore, type User as UserType } from "@/stores/userStore"
+import { useUserStore } from "@/stores/userStore"
+import { UserProfile } from "@/actions"
+import { changePassword, uploadAvatar, updateUserProfile } from "@/actions/user.action"
+import { toast } from "sonner"
 import {
   User,
   Home,
-  Edit,
   Key,
   Receipt,
   Send,
   Heart,
   Bell,
-  LogOut
+  LogOut,
+  ChevronDownIcon,
+  Eye,
+  EyeOff
 } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
+import { SizingImage } from "@/components/sizing-image"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+
 
 // Content Components
-function ProfileContent({ user }: { user: UserType | null }) {
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Thông tin cơ bản */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <User className="h-5 w-5" />
-            <span>Thông tin cơ bản</span>
-          </CardTitle>
-          <CardDescription>
-            Thông tin cá nhân và liên hệ của bạn
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700">Họ</label>
-              <p className="text-gray-900">{user?.firstName}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Tên</label>
-              <p className="text-gray-900">{user?.lastName}</p>
-            </div>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700">Email</label>
-            <p className="text-gray-900">{user?.email}</p>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700">Số điện thoại</label>
-            <p className="text-gray-900">{user?.phone}</p>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700">Giới tính</label>
-            <p className="text-gray-900">
-              {user?.gender === 'male' ? 'Nam' : user?.gender === 'female' ? 'Nữ' : 'Khác'}
-            </p>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700">Vai trò</label>
-            <p className="text-gray-900">
-              {user?.role === 'tenant' ? 'Người thuê trọ' : 'Chủ nhà trọ'}
-            </p>
-          </div>
-          <Button className="w-full">
-            <Edit className="h-4 w-4 mr-2" />
-            Cập nhật thông tin
-          </Button>
-        </CardContent>
-      </Card>
+function ChangePasswordCard() {
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const [showPasswords, setShowPasswords] = useState({
+    currentPassword: false,
+    newPassword: false,
+    confirmPassword: false
+  })
 
-      {/* Đổi mật khẩu */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Key className="h-5 w-5" />
-            <span>Bảo mật</span>
-          </CardTitle>
-          <CardDescription>
-            Quản lý mật khẩu và bảo mật tài khoản
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700">Mật khẩu hiện tại</label>
-            <p className="text-gray-500">••••••••</p>
-          </div>
-          <Button variant="outline" className="w-full">
-            <Key className="h-4 w-4 mr-2" />
+  const handlePasswordChange = (field: string, value: string) => {
+    setPasswordData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const togglePasswordVisibility = (field: keyof typeof showPasswords) => {
+    setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }))
+  }
+
+  const handleChangePassword = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("Mật khẩu mới không khớp!")
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      await changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      })
+      toast.success("Đổi mật khẩu thành công!")
+      setIsChangingPassword(false)
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    } catch (error) {
+      toast.error("Lỗi: " + (error instanceof Error ? error.message : "Unknown error"))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-2">
+          <Key className="h-5 w-5" />
+          <h3 className="text-lg font-medium">Đổi mật khẩu</h3>
+        </div>
+        {!isChangingPassword && (
+          <Button onClick={() => setIsChangingPassword(true)} variant="outline">
             Đổi mật khẩu
           </Button>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+      </div>
+
+      {!isChangingPassword ? (
+        <p className="text-gray-600">Đảm bảo tài khoản của bạn an toàn bằng cách sử dụng mật khẩu mạnh</p>
+      ) : (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Mật khẩu hiện tại *</label>
+            <div className="relative">
+              <Input
+                type={showPasswords.currentPassword ? "text" : "password"}
+                value={passwordData.currentPassword}
+                onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                placeholder="Nhập mật khẩu hiện tại"
+                className="pr-12"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => togglePasswordVisibility('currentPassword')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 hover:text-gray-700"
+              >
+                {showPasswords.currentPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Mật khẩu mới *</label>
+            <div className="relative">
+              <Input
+                type={showPasswords.newPassword ? "text" : "password"}
+                value={passwordData.newPassword}
+                onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                placeholder="Nhập mật khẩu mới"
+                className="pr-12"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => togglePasswordVisibility('newPassword')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 hover:text-gray-700"
+              >
+                {showPasswords.newPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Xác nhận mật khẩu mới *</label>
+            <div className="relative">
+              <Input
+                type={showPasswords.confirmPassword ? "text" : "password"}
+                value={passwordData.confirmPassword}
+                onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                placeholder="Nhập lại mật khẩu mới"
+                className="pr-12"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => togglePasswordVisibility('confirmPassword')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 hover:text-gray-700"
+              >
+                {showPasswords.confirmPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+          <div className="flex space-x-3">
+            <Button
+              onClick={handleChangePassword}
+              className="bg-green-600 hover:bg-green-700"
+              disabled={!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword || isLoading}
+            >
+              {isLoading ? "Đang đổi..." : "Đổi mật khẩu"}
+            </Button>
+            <Button 
+              onClick={() => {
+                setIsChangingPassword(false)
+                setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+              }} 
+              variant="outline"
+            >
+              Hủy
+            </Button>
+          </div>
+        </div>
+      )}
+    </Card>
   )
 }
+
+function ProfileContent({ user }: { user: UserProfile | null }) {
+  console.log('ProfileContent user data:', user)
+  console.log('user?.avatarUrl:', user?.avatarUrl)
+  const [isEditing, setIsEditing] = useState(false)
+  const [profileData, setProfileData] = useState({
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    avatarUrl: user?.avatarUrl || '',
+    dateOfBirth: user?.dateOfBirth || '',
+    gender: user?.gender || '',
+    role: user?.role || 'tenant',
+    bio: user?.bio || '',
+    idCardNumber: user?.idCardNumber || '',
+    bankAccount: user?.bankAccount || '',
+    bankName: user?.bankName || '',
+    // idCardFront: user?.idCardFront || '',
+    // idCardBack: user?.idCardBack || '',
+  })
+  const [originalData, setOriginalData] = useState({
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    avatarUrl: user?.avatarUrl || '',
+    dateOfBirth: user?.dateOfBirth || '',
+    gender: user?.gender || '',
+    role: user?.role || 'tenant',
+    bio: user?.bio || '',
+    idCardNumber: user?.idCardNumber || '',
+    bankAccount: user?.bankAccount || '',
+    bankName: user?.bankName || '',
+    // idCardFront: user?.idCardFront || '',
+    // idCardBack: user?.idCardBack || '',
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null)
+  const [pendingAvatarPreview, setPendingAvatarPreview] = useState<string | null>(null)
+
+  const handleInputChange = (field: string, value: string) => {
+    setProfileData(prev => ({ ...prev, [field]: value }))
+  }
+
+  // Check if there are any changes
+  const hasChanges = () => {
+    if (pendingAvatarFile) return true
+    return Object.keys(profileData).some(key => 
+      profileData[key as keyof typeof profileData] !== originalData[key as keyof typeof originalData]
+    )
+  }
+
+  const handleAvatarFileSelect = (file: File) => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file ảnh!')
+      return
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Kích thước file không được vượt quá 5MB!')
+      return
+    }
+
+    // Clean up previous preview
+    if (pendingAvatarPreview) {
+      URL.revokeObjectURL(pendingAvatarPreview)
+    }
+
+    // Create preview URL and store file
+    const previewUrl = URL.createObjectURL(file)
+    setPendingAvatarFile(file)
+    setPendingAvatarPreview(previewUrl)
+  }
+
+
+  const handleSave = async () => {
+    setIsLoading(true)
+    try {
+      // Upload avatar first if there's a pending file
+      let finalAvatarUrl = profileData.avatarUrl
+      if (pendingAvatarFile && pendingAvatarFile instanceof File && pendingAvatarFile.size > 0) {
+        console.log('Uploading avatar:', pendingAvatarFile.name, pendingAvatarFile.size)
+        try {
+          const response = await uploadAvatar(pendingAvatarFile)
+          finalAvatarUrl = response.avatarUrl
+          console.log('Avatar uploaded successfully:', finalAvatarUrl)
+        } catch (avatarError) {
+          console.error('Avatar upload failed:', avatarError)
+          toast.error("Lỗi upload avatar: " + (avatarError instanceof Error ? avatarError.message : "Unknown error"))
+          return // Don't continue if avatar upload fails
+        }
+      }
+
+      // Only send changed fields
+      const updateData: Record<string, unknown> = {}
+      
+      if (profileData.firstName !== originalData.firstName) {
+        updateData.firstName = profileData.firstName
+      }
+      if (profileData.lastName !== originalData.lastName) {
+        updateData.lastName = profileData.lastName
+      }
+      if (profileData.email !== originalData.email) {
+        updateData.email = profileData.email
+      }
+      if (profileData.phone !== originalData.phone) {
+        updateData.phone = profileData.phone
+      }
+      if (finalAvatarUrl !== originalData.avatarUrl) {
+        updateData.avatarUrl = finalAvatarUrl
+      }
+      if (profileData.dateOfBirth !== originalData.dateOfBirth) {
+        updateData.dateOfBirth = profileData.dateOfBirth
+      }
+      if (profileData.gender !== originalData.gender) {
+        updateData.gender = profileData.gender as 'male' | 'female' | 'other'
+      }
+      if (profileData.bio !== originalData.bio) {
+        updateData.bio = profileData.bio
+      }
+      if (profileData.idCardNumber !== originalData.idCardNumber) {
+        updateData.idCardNumber = profileData.idCardNumber
+      }
+      if (profileData.bankAccount !== originalData.bankAccount) {
+        updateData.bankAccount = profileData.bankAccount
+      }
+      if (profileData.bankName !== originalData.bankName) {
+        updateData.bankName = profileData.bankName
+      }
+
+      // Only call API if there are changes
+      let updatedUser = null
+      if (Object.keys(updateData).length > 0) {
+        console.log('Sending updateData to API:', updateData)
+        updatedUser = await updateUserProfile(updateData)
+        console.log('Received updatedUser from API:', updatedUser)
+        console.log('updatedUser.avatarUrl:', updatedUser?.avatarUrl)
+      }
+
+      // Update store with fresh data from API
+      if (updatedUser) {
+        const convertedUser = {
+          id: updatedUser.id,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          email: updatedUser.email,
+          phone: updatedUser.phone,
+          gender: updatedUser.gender,
+          role: updatedUser.role,
+          bio: updatedUser.bio,
+          dateOfBirth: updatedUser.dateOfBirth,
+          avatarUrl: updatedUser.avatarUrl,
+          idCardNumber: updatedUser.idCardNumber,
+          bankAccount: updatedUser.bankAccount,
+          bankName: updatedUser.bankName,
+          createdAt: updatedUser.createdAt,
+          updatedAt: updatedUser.updatedAt,
+        }
+        
+        const storeState = useUserStore.getState()
+        useUserStore.setState({
+          ...storeState,
+          user: convertedUser,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        })
+
+        // Update local state with fresh data
+        setProfileData({
+          firstName: convertedUser.firstName,
+          lastName: convertedUser.lastName,
+          email: convertedUser.email || '',
+          phone: convertedUser.phone || '',
+          avatarUrl: convertedUser.avatarUrl || '',
+          dateOfBirth: convertedUser.dateOfBirth || '',
+          gender: convertedUser.gender || '',
+          role: convertedUser.role || 'tenant',
+          bio: convertedUser.bio || '',
+          idCardNumber: convertedUser.idCardNumber || '',
+          bankAccount: convertedUser.bankAccount || '',
+          bankName: convertedUser.bankName || '',
+        })
+        setOriginalData({
+          firstName: convertedUser.firstName,
+          lastName: convertedUser.lastName,
+          email: convertedUser.email || '',
+          phone: convertedUser.phone || '',
+          avatarUrl: convertedUser.avatarUrl || '',
+          dateOfBirth: convertedUser.dateOfBirth || '',
+          gender: convertedUser.gender || '',
+          role: convertedUser.role || 'tenant',
+          bio: convertedUser.bio || '',
+          idCardNumber: convertedUser.idCardNumber || '',
+          bankAccount: convertedUser.bankAccount || '',
+          bankName: convertedUser.bankName || '',
+        })
+      }
+
+      // Clean up pending avatar data
+      if (pendingAvatarPreview) {
+        URL.revokeObjectURL(pendingAvatarPreview)
+        setPendingAvatarPreview(null)
+      }
+      setPendingAvatarFile(null)
+      toast.success("Cập nhật thông tin thành công!")
+      setIsEditing(false)
+    } catch (error) {
+      console.error('Profile update error:', error)
+      toast.error("Lỗi cập nhật profile: " + (error instanceof Error ? error.message : "Unknown error"))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (!isEditing) {
+    return (
+      <Card className="p-8 space-y-6">
+        <div className="flex items-center space-x-6">
+          <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 relative">
+            {user?.avatarUrl ? (
+              <SizingImage 
+                src={user.avatarUrl.replace(/^\/images\//, '').replace(/^\//, '')} 
+                srcSize="256x256" 
+                alt="Avatar" 
+                className="object-cover" 
+                fill
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">Avatar</div>
+            )}
+          </div>
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-gray-900">{user?.firstName} {user?.lastName}</h2>
+            <p className="text-gray-600">{user?.email}</p>
+            <p className="text-gray-600">{user?.phone}</p>
+            {profileData.bio && (
+              <div className="mt-3">
+                <p className="text-gray-700 text-sm leading-relaxed">{profileData.bio}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Họ</label>
+            <p className="text-gray-900">{profileData.firstName || 'Chưa cập nhật'}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tên</label>
+            <p className="text-gray-900">{profileData.lastName || 'Chưa cập nhật'}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <p className="text-gray-900">{profileData.email || 'Chưa cập nhật'}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Số điện thoại</label>
+            <p className="text-gray-900">{profileData.phone || 'Chưa cập nhật'}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Giới tính</label>
+            <p className="text-gray-900">
+              {profileData.gender === ''
+                ? 'Chưa cập nhật'
+                : profileData.gender === 'female'
+                  ? 'Nữ'
+                  : profileData.gender === 'male'
+                    ? 'Nam'
+                    : 'Khác'}
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Ngày sinh</label>
+            <p className="text-gray-900">{profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Vai trò</label>
+            <p className="text-gray-900">{profileData.role === 'tenant' ? 'Người thuê trọ' : 'Chủ nhà trọ'}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">CCCD</label>
+            <p className="text-gray-900">{profileData.idCardNumber || 'Chưa cập nhật'}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Số tài khoản ngân hàng</label>
+            <p className="text-gray-900">{profileData.bankAccount || 'Chưa cập nhật'}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tên ngân hàng</label>
+            <p className="text-gray-900">{profileData.bankName || 'Chưa cập nhật'}</p>
+          </div>
+        </div>
+
+        <Button onClick={() => {
+          setIsEditing(true)
+          setOriginalData({...profileData})
+        }} variant="outline">
+          Chỉnh sửa thông tin
+        </Button>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="p-8">
+      <div className="space-y-6">
+        <h2>Cập nhật thông tin cá nhân</h2>
+
+        {/* Avatar */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Ảnh đại diện</label>
+          <div className="flex items-center space-x-4">
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 border-2 border-gray-300 relative">
+              {pendingAvatarPreview ? (
+                <Image src={pendingAvatarPreview} alt="Avatar preview" fill className="object-cover" unoptimized />
+              ) : profileData.avatarUrl ? (
+                <SizingImage 
+                  src={profileData.avatarUrl.replace(/^\/images\//, '').replace(/^\//, '')} 
+                  srcSize="256x256" 
+                  alt="Avatar preview" 
+                  className="object-cover" 
+                  fill
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                  <User className="h-8 w-8" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleAvatarFileSelect(file)
+                  // Reset input để có thể chọn lại file cũ
+                  e.target.value = ''
+                }}
+                disabled={isLoading}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg 
+                           file:border-0 file:text-sm file:bg-green-50 file:text-green-700 hover:file:bg-green-100
+                           disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              {pendingAvatarFile && (
+                <p className="text-sm text-green-600 mt-1">
+                  ✓ Đã chọn: {pendingAvatarFile.name}
+                </p>
+              )}
+              <p className="text-xs text-gray-400 mt-1">
+                Chấp nhận: JPG, PNG, GIF. Tối đa 5MB.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Form fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Họ *</label>
+            <Input
+              value={profileData.firstName}
+              onChange={(e) => handleInputChange('firstName', e.target.value)}
+              placeholder="Nhập họ"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tên *</label>
+            <Input
+              value={profileData.lastName}
+              onChange={(e) => handleInputChange('lastName', e.target.value)}
+              placeholder="Nhập tên"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+            <Input
+              value={profileData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              placeholder="Nhập email"
+              type="email"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Số điện thoại *</label>
+            <Input
+              value={profileData.phone}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
+              placeholder="Nhập số điện thoại"
+              type="tel"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Giới tính *</label>
+            <Select
+              value={profileData.gender}
+              onValueChange={(value) => handleInputChange('gender', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Chọn giới tính" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">Nam</SelectItem>
+                <SelectItem value="female">Nữ</SelectItem>
+                <SelectItem value="other">Khác</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Ngày sinh *</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline" 
+                  className="w-48 justify-between font-normal"
+                >
+                  {profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toLocaleDateString('vi-VN') : "Chọn ngày sinh"}
+                  <ChevronDownIcon className="h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  captionLayout="dropdown"
+                  selected={profileData.dateOfBirth ? new Date(profileData.dateOfBirth) : undefined}
+                  onSelect={(date) => handleInputChange('dateOfBirth', date?.toISOString() || '')}
+                  disabled={(date) =>
+                      date > new Date() || date < new Date("1900-01-01")
+                    }
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Vai trò *</label>
+            <Select
+              value={profileData.role}
+              onValueChange={(value) => handleInputChange('role', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Chọn vai trò" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="tenant">Người thuê trọ</SelectItem>
+                <SelectItem value="landlord">Chủ nhà trọ</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Căn cước công dân *</label>
+            <Input
+              value={profileData.idCardNumber}
+              onChange={(e) => handleInputChange('idCardNumber', e.target.value)}
+              placeholder="Nhập số CCCD"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Số tài khoản ngân hàng *</label>
+            <Input
+              value={profileData.bankAccount}
+              onChange={(e) => handleInputChange('bankAccount', e.target.value)}
+              placeholder="1234567890"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tên ngân hàng *</label>
+            <Input
+              value={profileData.bankName}
+              onChange={(e) => handleInputChange('bankName', e.target.value)}
+              placeholder="Vietcombang"
+            />
+          </div>
+        </div>
+
+        {/* Bio */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Giới thiệu bản thân</label>
+          <Textarea
+            value={profileData.bio}
+            onChange={(e) => handleInputChange('bio', e.target.value)}
+            placeholder="Viết vài dòng giới thiệu về bản thân..."
+            rows={4}
+          />
+        </div>
+
+        {/* CCCD Photos */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-4">Ảnh căn cước công dân *</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Mặt trước */}
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Mặt trước</p>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center flex flex-col items-center justify-center">
+                {/* {profileData.idCardFront ? (
+                  <div className="space-y-2">
+                    <Image src={profileData.idCardFront} alt="CCCD mặt trước" width={300} height={128} className="w-full h-32 object-cover rounded border mx-auto" />
+                    <input type="file" accept="image/*" onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleFileUpload('idCardFront', file)
+                    }} />
+                  </div>
+                ) : ( */}
+                  <div>
+                    <p className="text-gray-500 mb-2">Tải lên ảnh CCCD mặt trước</p>
+                    <input type="file" accept="image/*" 
+                    // onChange={(e) => {
+                    //   const file = e.target.files?.[0]
+                      // if (file) handleFileUpload('idCardFront', file)
+                    //}} 
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg 
+                           file:border-0 file:text-sm file:bg-green-50 file:text-green-700 hover:file:bg-green-100
+                           disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                  </div>
+                {/* )} */}
+              </div>
+            </div>
+            {/* Mặt sau */}
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Mặt sau</p>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center flex flex-col items-center justify-center">
+                {/* {profileData.idCardBack ? (
+                  <div className="space-y-2">
+                    <Image src={profileData.idCardBack} alt="CCCD mặt sau" width={300} height={128} className="w-full h-32 object-cover rounded border mx-auto" />
+                    <input type="file" accept="image/*" onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleFileUpload('idCardBack', file)
+                    }} />
+                  </div>
+                ) : ( */}
+                  <div>
+                    <p className="text-gray-500 mb-2">Tải lên ảnh CCCD mặt sau</p>
+                    <input type="file" accept="image/*" 
+                    // onChange={(e) => {
+                    //   const file = e.target.files?.[0]
+                    //   if (file) handleFileUpload('idCardBack', file)
+                    //}} 
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg 
+                           file:border-0 file:text-sm file:bg-green-50 file:text-green-700 hover:file:bg-green-100
+                           disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                {/* )} */}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex space-x-4">
+          <Button
+            onClick={handleSave}
+            className="bg-green-600 hover:bg-green-700"
+            disabled={!hasChanges() || isLoading}
+          >
+            {isLoading ? "Đang lưu..." : "Lưu thông tin"}
+          </Button>
+          <Button onClick={() => {
+            // Reset to original data
+            setProfileData({...originalData})
+            // Clean up pending avatar data when canceling
+            if (pendingAvatarPreview) {
+              URL.revokeObjectURL(pendingAvatarPreview)
+              setPendingAvatarPreview(null)
+            }
+            setPendingAvatarFile(null)
+            setIsEditing(false)
+          }} variant="outline">Hủy</Button>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
 
 function AccommodationContent() {
   return (
@@ -264,6 +939,7 @@ function NotificationsContent() {
 
 function ProfilePageContent() {
   const { user, isAuthenticated, isLoading } = useUserStore()
+  console.log('ProfilePageContent user from store:', user)
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState("profile")
 
@@ -285,8 +961,9 @@ function ProfilePageContent() {
   const renderContent = () => {
     switch (activeTab) {
       case 'profile':
+        return <ProfileContent user={user}/>
       case 'security':
-        return <ProfileContent user={user} />
+        return <ChangePasswordCard />
       case 'accommodation':
         return <AccommodationContent />
       case 'bills':
@@ -298,7 +975,7 @@ function ProfilePageContent() {
       case 'notifications':
         return <NotificationsContent />
       default:
-        return <ProfileContent user={user} />
+        return <ProfileContent user={user}/>
     }
   }
 
@@ -318,17 +995,19 @@ function ProfilePageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex pt-16">
-      {/* Sidebar */}
+    <>      
+      <div className="min-h-screen bg-gray-50 flex pt-16">
+        {/* Sidebar */}
       <div className="flex h-screen w-64 flex-col bg-white border-r border-gray-200">
         {/* User Info */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-              <User className="h-5 w-5 text-green-600" />
-            </div>
+              <div className="h-10 w-10 rounded-full overflow-hidden bg-green-100 flex items-center justify-center">
+                 <User className="h-5 w-5 text-green-600" />
+             </div>
             <div>
               <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
+              <p className="text-xs text-gray-500">{user?.email}</p>
               <p className="text-xs text-gray-500">
                 {user?.role === 'tenant' ? 'Người thuê trọ' : 'Chủ nhà trọ'}
               </p>
@@ -341,13 +1020,25 @@ function ProfilePageContent() {
           <button
             onClick={() => setActiveTab('profile')}
             className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full text-left ${
-              activeTab === 'profile' || activeTab === 'security'
+              activeTab === 'profile'
                 ? 'bg-green-50 text-green-700 border-r-2 border-green-500'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
             <User className="h-5 w-5" />
             <span>Thông tin cá nhân</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('security')}
+            className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full text-left ${
+              activeTab === 'security'
+                ? 'bg-green-50 text-green-700 border-r-2 border-green-500'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <Key className="h-5 w-5" />
+            <span>Bảo mật</span>
           </button>
 
           <button
@@ -428,11 +1119,13 @@ function ProfilePageContent() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
-        <div className="p-6">
+        <div className="px-6 py-4">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Quản lý cá nhân</h1>
-            <p className="text-gray-600">Xin chào, {user?.firstName} {user?.lastName}</p>
+          <div className="my-4 flex items-center">
+            <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Xin chào, {user?.firstName} {user?.lastName}</h1>
+              <p className="text-gray-600">{user?.email}</p>
+            </div>
           </div>
 
           {/* Content */}
@@ -441,7 +1134,8 @@ function ProfilePageContent() {
           </div>
         </div>
       </main>
-    </div>
+      </div>
+    </>
   )
 }
 
@@ -459,3 +1153,4 @@ export default function ProfilePage() {
     </Suspense>
   )
 }
+

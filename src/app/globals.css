@@ -136,6 +136,13 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 
   /* Global padding-top for all pages to prevent header overlap */
   .page-content {
@@ -145,4 +152,28 @@
     font-size: var(--text-xsm);
     line-height: 1.25rem;
   }
+}
+
+/* Custom Swiper Navigation Styles */
+.similar-posts-swiper {
+  padding: 0 35px; /* Add space for navigation buttons */
+}
+
+.similar-posts-swiper .swiper-pagination {
+  bottom: -35px !important;
+}
+
+.similar-posts-swiper .swiper-pagination-bullet {
+  background: #e5e7eb;
+  opacity: 1;
+}
+
+.similar-posts-swiper .swiper-pagination-bullet-active {
+  background: #3b82f6;
+}
+
+/* Hide default swiper navigation */
+.similar-posts-swiper .swiper-button-next,
+.similar-posts-swiper .swiper-button-prev {
+  display: none;
 }

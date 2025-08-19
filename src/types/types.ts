@@ -33,6 +33,13 @@ export interface ChangePasswordRequest {
 	newPassword: string;
 }
 
+export interface CheckPassword {
+	isValid: boolean;
+	errors: Array<string>;
+	score: number;
+	level: string;
+}
+
 export interface RefreshTokenRequest {
 	refreshToken: string;
 }
@@ -72,7 +79,10 @@ export interface UserProfile {
 	role: 'tenant' | 'landlord';
 	bio?: string;
 	dateOfBirth?: string;
-	avatar?: string;
+	avatarUrl?: string; // Fix: API returns avatarUrl, not avatar
+	idCardNumber?: string;
+	bankAccount?: string;
+	bankName?: string;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -82,8 +92,13 @@ export interface UpdateProfileRequest {
 	lastName?: string;
 	phone?: string;
 	gender?: 'male' | 'female' | 'other';
+	role?: 'tenant' | 'landlord';
 	bio?: string;
 	dateOfBirth?: string;
+	avatarUrl?: string;
+	idCardNumber?: string;
+	bankAccount?: string;
+	bankName?: string;
 }
 
 // Location Types

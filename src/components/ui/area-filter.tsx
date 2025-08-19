@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDown, Ruler } from 'lucide-react';
+import { Ruler } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface AreaFilterProps {
@@ -65,7 +65,6 @@ export function AreaFilter({
             'Diện tích'
           )}
         </span>
-        <ChevronDown className={`h-4 w-4 ml-2 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Dropdown Content */}

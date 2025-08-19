@@ -3,22 +3,9 @@ import { persist } from 'zustand/middleware';
 import type { LoginRequest, UserProfile } from '@/actions';
 import { login as apiLogin, logout as apiLogout, getCurrentUser } from '@/actions';
 import { TokenUtils } from '@/lib/token-utils';
+import { UserProfile as User } from '@/types/types';
 
-// Updated User interface to match API response
-export interface User {
-	id: string;
-	firstName: string;
-	lastName: string;
-	email: string;
-	phone: string;
-	gender: 'male' | 'female' | 'other';
-	role: 'tenant' | 'landlord';
-	bio?: string;
-	dateOfBirth?: string;
-	avatar?: string;
-	createdAt?: string;
-	updatedAt?: string;
-}
+export type { User };
 
 interface UserState {
 	user: User | null;
@@ -31,6 +18,7 @@ interface UserState {
 	login: (credentials: LoginRequest) => Promise<void>;
 	logout: () => Promise<void>;
 	loadUser: () => Promise<void>;
+	fetchUser: () => Promise<void>;
 	clearError: () => void;
 	switchRole: (newRole: 'tenant' | 'landlord') => void;
 	setHasHydrated: (state: boolean) => void;
@@ -47,7 +35,10 @@ const convertUserProfile = (profile: UserProfile): User => ({
 	role: profile.role,
 	bio: profile.bio,
 	dateOfBirth: profile.dateOfBirth,
-	avatar: profile.avatar,
+	avatarUrl: profile.avatarUrl, // Fix: API returns avatarUrl, not avatar
+	idCardNumber: profile.idCardNumber,
+	bankAccount: profile.bankAccount,
+	bankName: profile.bankName,
 	createdAt: profile.createdAt,
 	updatedAt: profile.updatedAt,
 });
@@ -140,6 +131,22 @@ export const useUserStore = create<UserState>()(
 						isLoading: false,
 						error: isTokenExpired ? null : errorObj.message || 'Failed to load user',
 					});
+				}
+			},
+
+			fetchUser: async () => {
+				try {
+					const userProfile = await getCurrentUser();
+					console.log('Raw user profile from API:', userProfile);
+					const user = convertUserProfile(userProfile);
+					console.log('Converted user data:', user);
+
+					set((state) => ({
+						...state,
+						user,
+					}));
+				} catch (error: unknown) {
+					console.error('Failed to fetch user:', error);
 				}
 			},
 

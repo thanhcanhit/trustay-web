@@ -11,6 +11,371 @@ export const containsVietnamese = (text: string): boolean => {
 	);
 };
 
+// Error pattern mappings
+type ErrorPattern = {
+	patterns: string[];
+	message: string;
+	subPatterns?: string[];
+};
+
+const ERROR_PATTERNS: Record<string, ErrorPattern> = {
+	// Authentication errors
+	auth: {
+		patterns: [
+			'invalid credentials',
+			'unauthorized',
+			'wrong password',
+			'incorrect password',
+			'bad credentials',
+			'login failed',
+			'authentication failed',
+		],
+		message: 'Email hoặc mật khẩu không chính xác',
+	},
+	userNotFound: {
+		patterns: ['user not found', 'email not found', 'account not found', 'no user found'],
+		message: 'Tài khoản không tồn tại',
+	},
+	accountLocked: {
+		patterns: [
+			'account locked',
+			'account disabled',
+			'account suspended',
+			'account blocked',
+			'account inactive',
+		],
+		message: 'Tài khoản đã bị khóa',
+	},
+	rateLimit: {
+		patterns: [
+			'too many attempts',
+			'rate limit',
+			'too many requests',
+			'request limit exceeded',
+			'too many verification attempts',
+			'verification limit',
+			'email verification limit',
+			'too many emails sent',
+			'email limit exceeded',
+			'verification attempts exceeded',
+			'cooldown',
+			'wait',
+			'delay',
+			'try again later',
+			'please wait',
+			'retry after',
+			'temporary block',
+		],
+		message: 'Hãy thử lại sau ít phút với email hiện tại hoặc dùng email khác',
+	},
+	network: {
+		patterns: [
+			'network',
+			'connection',
+			'timeout',
+			'connection timeout',
+			'network error',
+			'connection failed',
+			'no internet',
+			'offline',
+		],
+		message: 'Lỗi kết nối mạng. Vui lòng thử lại',
+	},
+	server: {
+		patterns: [
+			'server error',
+			'internal error',
+			'500',
+			'service unavailable',
+			'server down',
+			'maintenance',
+			'temporary error',
+		],
+		message: 'Lỗi máy chủ. Vui lòng thử lại sau',
+	},
+	emailFormat: {
+		patterns: ['email format', 'invalid email', 'malformed email', 'email syntax error'],
+		message: 'Định dạng email không hợp lệ',
+	},
+	passwordRequired: {
+		patterns: ['password'],
+		subPatterns: ['required', 'missing'],
+		message: 'Mật khẩu là bắt buộc',
+	},
+	emailRequired: {
+		patterns: ['email'],
+		subPatterns: ['required', 'missing'],
+		message: 'Email là bắt buộc',
+	},
+	phoneRequired: {
+		patterns: ['phone'],
+		subPatterns: ['required', 'missing'],
+		message: 'Số điện thoại là bắt buộc',
+	},
+	firstNameRequired: {
+		patterns: ['first name'],
+		subPatterns: ['required', 'missing'],
+		message: 'Tên là bắt buộc',
+	},
+	lastNameRequired: {
+		patterns: ['last name'],
+		subPatterns: ['required', 'missing'],
+		message: 'Họ là bắt buộc',
+	},
+	phoneFormat: {
+		patterns: ['invalid phone', 'phone format', 'malformed phone'],
+		message: 'Định dạng số điện thoại không hợp lệ',
+	},
+	passwordLength: {
+		patterns: ['password too short', 'password length', 'minimum length'],
+		message: 'Mật khẩu quá ngắn. Vui lòng nhập ít nhất 8 ký tự',
+	},
+	passwordStrength: {
+		patterns: ['password too weak', 'weak password', 'password strength'],
+		message: 'Mật khẩu quá yếu. Vui lòng sử dụng chữ hoa, chữ thường, số và ký tự đặc biệt',
+	},
+	emailExists: {
+		patterns: [
+			'email already exists',
+			'user already exists',
+			'email taken',
+			'duplicate email',
+			'email in use',
+		],
+		message: 'Email đã được sử dụng',
+	},
+	emailVerified: {
+		patterns: [
+			'email has already been verified',
+			'email already verified',
+			'email is already verified',
+			'email was already verified',
+			'this email has already been verified',
+			'email verification already completed',
+			'email is verified',
+			'email verification done',
+			'please use a different email',
+			'use a different email',
+			'proceed to registration',
+		],
+		message: 'Email này đã được xác thực. Vui lòng sử dụng email khác hoặc tiến hành đăng ký',
+	},
+	emailVerificationNotNeeded: {
+		patterns: [
+			'cannot verify already verified email',
+			'email verification not needed',
+			'verification not required',
+			'email already confirmed',
+			'email confirmation already done',
+			'no need to verify this email',
+			'email verification unnecessary',
+		],
+		message: 'Email này đã được xác thực. Không cần xác thực lại',
+	},
+	phoneExists: {
+		patterns: [
+			'phone already exists',
+			'phone taken',
+			'duplicate phone',
+			'phone in use',
+			'phone number already exists',
+			'phone number taken',
+			'duplicate phone number',
+			'phone number already in use',
+			'phone number in use',
+			'phone number exists',
+			'phone number conflict',
+			'phone is already in use',
+			'phone was already in use',
+			'phone has been used',
+			'phone is used',
+			'phone is taken',
+		],
+		message: 'Số điện thoại đã được sử dụng',
+	},
+	usernameExists: {
+		patterns: ['username already exists', 'username taken', 'duplicate username'],
+		message: 'Tên đăng nhập đã được sử dụng',
+	},
+	registrationFailed: {
+		patterns: [
+			'registration failed',
+			'registration error',
+			'failed to create account',
+			'account creation failed',
+			'user creation failed',
+			'failed to register user',
+			'verification successful but registration failed',
+			'otp verified but registration failed',
+			'code verified but account creation failed',
+		],
+		message: 'Đăng ký thất bại. Vui lòng thử lại sau',
+	},
+	verificationCodeInvalid: {
+		patterns: ['verification code'],
+		subPatterns: ['invalid', 'wrong'],
+		message: 'Mã xác thực không hợp lệ',
+	},
+	verificationCodeExpired: {
+		patterns: ['verification code'],
+		subPatterns: ['expired', 'timeout'],
+		message: 'Mã xác thực đã hết hạn',
+	},
+	verificationFailed: {
+		patterns: ['verification failed', 'verification error', 'code verification failed'],
+		message: 'Xác thực mã thất bại',
+	},
+	otpInvalid: {
+		patterns: ['otp'],
+		subPatterns: ['invalid', 'wrong'],
+		message: 'Mã OTP không hợp lệ',
+	},
+	otpExpired: {
+		patterns: ['otp'],
+		subPatterns: ['expired', 'timeout'],
+		message: 'Mã OTP đã hết hạn',
+	},
+	otpUsed: {
+		patterns: [
+			'otp already used',
+			'otp already consumed',
+			'otp already verified',
+			'otp already validated',
+			'otp has been used',
+			'otp was already used',
+			'verification code already used',
+			'verification code already consumed',
+			'verification code already verified',
+			'code already used',
+			'code already consumed',
+			'code already verified',
+		],
+		message: 'Mã OTP đã được sử dụng. Vui lòng yêu cầu mã mới',
+	},
+	otpError: {
+		patterns: [
+			'otp error',
+			'otp failure',
+			'otp verification failed',
+			'otp verification error',
+			'verification code error',
+			'verification code failure',
+			'cannot resend otp',
+			'otp resend failed',
+			'failed to resend otp',
+			'otp resend error',
+			'cannot resend verification code',
+			'verification code resend failed',
+			'failed to resend verification code',
+			'otp generation failed',
+			'failed to generate otp',
+			'otp generation error',
+			'verification code generation failed',
+			'failed to generate verification code',
+		],
+		message: 'Lỗi xác thực OTP. Vui lòng thử lại hoặc yêu cầu mã mới',
+	},
+	otpNotFound: {
+		patterns: [
+			'no valid verification code found',
+			'no valid code found',
+			'verification code not found',
+			'code not found',
+			'otp not found',
+			'verification code missing',
+			'code missing',
+			'please request a new code',
+			'request a new code',
+			'get a new code',
+		],
+		message: 'Không tìm thấy mã xác thực hợp lệ. Vui lòng yêu cầu mã mới',
+	},
+	permission: {
+		patterns: [
+			'forbidden',
+			'403',
+			'access denied',
+			'permission denied',
+			'insufficient permissions',
+		],
+		message: 'Bạn không có quyền thực hiện hành động này',
+	},
+	notFound: {
+		patterns: ['not found', '404', 'resource not found', 'page not found'],
+		message: 'Không tìm thấy dữ liệu',
+	},
+	tokenExpired: {
+		patterns: ['token expired', 'session expired', 'jwt expired', 'access token expired'],
+		message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại',
+	},
+	tokenInvalid: {
+		patterns: [
+			'invalid token',
+			'malformed token',
+			'token error',
+			'jwt invalid',
+			'refresh token',
+			'token refresh',
+		],
+		message: 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại',
+	},
+	fileUpload: {
+		patterns: [
+			'file too large',
+			'file size exceeded',
+			'upload limit',
+			'invalid file type',
+			'unsupported file',
+			'file format',
+			'upload failed',
+			'upload error',
+		],
+		message: 'Lỗi tải file. Vui lòng kiểm tra kích thước và định dạng file',
+	},
+	database: {
+		patterns: ['database error', 'db error', 'connection failed', 'query failed'],
+		message: 'Lỗi cơ sở dữ liệu. Vui lòng thử lại sau',
+	},
+	generic: {
+		patterns: [
+			'something went wrong',
+			'unexpected error',
+			'unknown error',
+			'error occurred',
+			'bad request',
+			'400',
+			'invalid request',
+			'conflict',
+			'409',
+			'duplicate',
+			'unprocessable',
+			'422',
+			'validation failed',
+		],
+		message: 'Đã xảy ra lỗi. Vui lòng thử lại sau',
+	},
+};
+
+/**
+ * Check if message matches any pattern
+ */
+const matchesPattern = (message: string, pattern: string): boolean => {
+	return message.includes(pattern);
+};
+
+/**
+ * Check if message matches pattern with sub-patterns
+ */
+const matchesPatternWithSub = (
+	message: string,
+	patterns: string[],
+	subPatterns?: string[],
+): boolean => {
+	const hasMainPattern = patterns.some((pattern) => message.includes(pattern));
+	if (!subPatterns) return hasMainPattern;
+	return hasMainPattern && subPatterns.some((subPattern) => message.includes(subPattern));
+};
+
 /**
  * Translate common API error messages to Vietnamese
  */
@@ -25,104 +390,19 @@ export const translateErrorMessage = (
 		return errorMessage;
 	}
 
-	// Translate common English error messages to Vietnamese
 	const lowerMessage = errorMessage.toLowerCase();
 
-	// Authentication errors
-	if (
-		lowerMessage.includes('invalid credentials') ||
-		lowerMessage.includes('unauthorized') ||
-		lowerMessage.includes('wrong password') ||
-		lowerMessage.includes('incorrect password')
-	) {
-		return 'Email hoặc mật khẩu không chính xác';
-	}
-
-	if (lowerMessage.includes('user not found') || lowerMessage.includes('email not found')) {
-		return 'Tài khoản không tồn tại';
-	}
-
-	if (
-		lowerMessage.includes('account locked') ||
-		lowerMessage.includes('account disabled') ||
-		lowerMessage.includes('account suspended')
-	) {
-		return 'Tài khoản đã bị khóa';
-	}
-
-	// Rate limiting
-	if (lowerMessage.includes('too many attempts') || lowerMessage.includes('rate limit')) {
-		return 'Quá nhiều lần thử. Vui lòng thử lại sau';
-	}
-
-	// Network errors
-	if (
-		lowerMessage.includes('network') ||
-		lowerMessage.includes('connection') ||
-		lowerMessage.includes('timeout')
-	) {
-		return 'Lỗi kết nối mạng. Vui lòng thử lại';
-	}
-
-	// Server errors
-	if (
-		lowerMessage.includes('server error') ||
-		lowerMessage.includes('internal error') ||
-		lowerMessage.includes('500')
-	) {
-		return 'Lỗi máy chủ. Vui lòng thử lại sau';
-	}
-
-	// Validation errors
-	if (lowerMessage.includes('email format') || lowerMessage.includes('invalid email')) {
-		return 'Định dạng email không hợp lệ';
-	}
-
-	if (lowerMessage.includes('password') && lowerMessage.includes('required')) {
-		return 'Mật khẩu là bắt buộc';
-	}
-
-	if (lowerMessage.includes('email') && lowerMessage.includes('required')) {
-		return 'Email là bắt buộc';
-	}
-
-	// Registration errors
-	if (
-		lowerMessage.includes('email already exists') ||
-		lowerMessage.includes('user already exists')
-	) {
-		return 'Email đã được sử dụng';
-	}
-
-	if (lowerMessage.includes('phone already exists')) {
-		return 'Số điện thoại đã được sử dụng';
-	}
-
-	// Verification errors
-	if (lowerMessage.includes('verification code') && lowerMessage.includes('invalid')) {
-		return 'Mã xác thực không hợp lệ';
-	}
-
-	if (lowerMessage.includes('verification code') && lowerMessage.includes('expired')) {
-		return 'Mã xác thực đã hết hạn';
-	}
-
-	// Permission errors
-	if (lowerMessage.includes('forbidden') || lowerMessage.includes('403')) {
-		return 'Bạn không có quyền thực hiện hành động này';
-	}
-
-	if (lowerMessage.includes('not found') || lowerMessage.includes('404')) {
-		return 'Không tìm thấy dữ liệu';
-	}
-
-	// Token errors
-	if (lowerMessage.includes('token expired') || lowerMessage.includes('session expired')) {
-		return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại';
-	}
-
-	if (lowerMessage.includes('invalid token')) {
-		return 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại';
+	// Check each error pattern
+	for (const [_key, config] of Object.entries(ERROR_PATTERNS)) {
+		if (config.subPatterns) {
+			if (matchesPatternWithSub(lowerMessage, config.patterns, config.subPatterns)) {
+				return config.message;
+			}
+		} else {
+			if (config.patterns.some((pattern) => matchesPattern(lowerMessage, pattern))) {
+				return config.message;
+			}
+		}
 	}
 
 	// If no translation found, return the original message or default
