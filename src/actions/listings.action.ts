@@ -77,6 +77,7 @@ export interface RoomDetail {
 	name: string;
 	description: string;
 	roomType: string;
+	areaSqm: string;
 	maxOccupancy: number;
 	isVerified: boolean;
 	isActive: boolean;
