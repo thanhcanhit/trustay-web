@@ -151,10 +151,10 @@ export default function Home() {
       </div>
 
       {/* Advertisement Banner */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 py-8">
+      {/* <div className="bg-gradient-to-r from-green-50 to-emerald-50 py-8">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Ad 1 */}
+            
             <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
               <div className="bg-gradient-to-r from-pink-400 to-purple-500 p-6 text-white">
                 <h3 className="font-bold text-lg">Ưu đãi đặc biệt</h3>
@@ -165,7 +165,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Ad 2 */}
+            
             <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
               <div className="bg-gradient-to-r from-blue-400 to-cyan-500 p-6 text-white">
                 <h3 className="font-bold text-lg">GÓI QUẢNG CÁO</h3>
@@ -176,7 +176,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Ad 3 */}
+            
             <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
               <div className="bg-gradient-to-r from-green-400 to-teal-500 p-6 text-white">
                 <h3 className="font-bold text-lg">NẠP TIỀN HÔM NAY</h3>
@@ -188,7 +188,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Featured Properties Section */}
       <FeaturedProperties />

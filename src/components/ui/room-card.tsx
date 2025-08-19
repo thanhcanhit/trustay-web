@@ -3,10 +3,13 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { 
+  Droplet,
+  Droplets,
   //Heart, 
   MapPin, 
   Users, 
-  Wifi} from 'lucide-react';
+  Wifi,
+  Zap} from 'lucide-react';
 import type { RoomListing } from '@/actions/listings.action';
 import { Badge } from './badge';
 import { getOptimizedImageUrl } from '@/lib/utils';
@@ -100,14 +103,7 @@ export function RoomCard({
             </span>
           </div>
         )}
-        {/* Price */}
-        <div className="absolute bottom-2 left-2">
-          <Badge
-            className="bg-white text-green-600 font-bold border border-green-200"
-          >
-            {formatPrice(room.pricing.basePriceMonthly)}tr/tháng
-          </Badge>
-        </div>
+        
 
         {/* Save Button
         {onSaveToggle && (
@@ -149,7 +145,12 @@ export function RoomCard({
         {/* Electricity & Water Costs */}
         {(electricityCost || waterCost) && (
           <div className="flex items-center justify-between gap-3 text-xs text-gray-600 mb-2">
-            <div className="flex items-center gap-1 min-w-[50px]">
+            <div>
+              {/* Price */}
+              <div className="bg-white text-green-600 font-bold text-lg">
+                {formatPrice(room.pricing.basePriceMonthly)}tr/tháng
+              </div>
+              <div className="flex items-center gap-1 min-w-[50px]">
               {wifiAvailable && 
                 <Badge
                   className="bg-green-100 text-green-700 font-bold border border-green-200"
@@ -160,16 +161,19 @@ export function RoomCard({
 
               {}
             </div>
+            
+            </div>
+            
             <div className='flex flex-col gap-1 '>
               {electricityCost && (
                 <div className="flex items-center gap-1">
-                  <span>Tiền điện:</span>
+                  <Zap className="h-3 w-3 text-yellow-600" />
                   <span>{new Intl.NumberFormat('vi-VN').format(parseInt(electricityCost.value))}đ</span>
                 </div>
               )}
               {waterCost && (
                 <div className="flex items-center gap-1">
-                  <span>Tiền nước:</span>
+                  <Droplets className="h-3 w-3 text-blue-600" />
                   <span>{new Intl.NumberFormat('vi-VN').format(parseInt(waterCost.value))}đ</span>
                 </div>
               )}

@@ -685,7 +685,7 @@ export default function PropertyDetailPage() {
 
         {/* Similar Posts - Centered Below Main Content */}
         <div className="container mx-auto py-6">
-          <Card className="mb-6">
+          <Card className="mb-6 ">
             <CardContent className="p-6">
             {/* Header with title and "Xem thêm" button */}
             <div className="flex items-center justify-between mb-4">
@@ -770,6 +770,7 @@ export default function PropertyDetailPage() {
                         isSaved={savedRooms.includes(room.id)}
                         onSaveToggle={toggleSaveRoom}
                         onClick={handleRoomClick}
+                        className="!shadow-none"
                       />
                     </SwiperSlide>
                   ))}

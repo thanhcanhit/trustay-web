@@ -22,6 +22,10 @@ import {
 } from "@/utils/passwordValidation"
 import { translateRegistrationError, translateVerificationError } from "@/utils/errorTranslation"
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Eye, EyeOff } from "lucide-react"
 
 type RegistrationStep = 'form' | 'verification'
 
@@ -317,39 +321,23 @@ export default function RegisterPage() {
           {currentStep === 'form' ? (
             <form className="space-y-4" onSubmit={handleFormSubmit}>
               {/* Role Selection */}
-              <div className="grid grid-cols-2 gap-3">
-                <label className={`flex items-center h-11 px-4 border rounded-lg cursor-pointer transition-colors ${
-                  role === 'tenant'
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-300 hover:border-green-300 bg-white'
-                }`}>
-                  <input
-                    type="radio"
-                    name="role"
-                    value="tenant"
-                    checked={role === 'tenant'}
-                    onChange={(e) => setRole(e.target.value as 'tenant' | 'landlord')}
-                    className="mr-3 text-green-600 focus:ring-green-500"
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-3 block">Vai trò</Label>
+                <RadioGroup 
+                  value={role} 
+                  onValueChange={(value: string) => setRole(value as 'tenant' | 'landlord')}
+                  className="grid grid-cols-2 gap-3"
                     disabled={isLoading}
-                  />
-                  <span className="text-sm text-gray-700">Người thuê trọ</span>
-                </label>
-                <label className={`flex items-center h-11 px-4 border rounded-lg cursor-pointer transition-colors ${
-                  role === 'landlord'
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-300 hover:border-green-300 bg-white'
-                }`}>
-                  <input
-                    type="radio"
-                    name="role"
-                    value="landlord"
-                    checked={role === 'landlord'}
-                    onChange={(e) => setRole(e.target.value as 'tenant' | 'landlord')}
-                    className="mr-3 text-green-600 focus:ring-green-500"
-                    disabled={isLoading}
-                  />
-                  <span className="text-sm text-gray-700">Chủ trọ</span>
-                </label>
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="tenant" id="tenant" />
+                    <Label htmlFor="tenant" className="text-sm text-gray-700 cursor-pointer">Người thuê trọ</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="landlord" id="landlord" />
+                    <Label htmlFor="landlord" className="text-sm text-gray-700 cursor-pointer">Chủ trọ</Label>
+                  </div>
+                </RadioGroup>
               </div>
 
               {/* First Name and Last Name */}
@@ -404,17 +392,20 @@ export default function RegisterPage() {
                   disabled={isLoading}
                   className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
                 />
-                <select
-                  id="gender"
+                <Select
                   value={gender}
-                  onChange={(e) => setGender(e.target.value as 'male' | 'female' | 'other')}
+                  onValueChange={(value: string) => setGender(value as 'male' | 'female' | 'other')}
                   disabled={isLoading}
-                  className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50 bg-white"
                 >
-                  <option value="male">Nam</option>
-                  <option value="female">Nữ</option>
-                  <option value="other">Khác</option>
-                </select>
+                  <SelectTrigger className="w-full h-11">
+                    <SelectValue placeholder="Chọn giới tính" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Nam</SelectItem>
+                    <SelectItem value="female">Nữ</SelectItem>
+                    <SelectItem value="other">Khác</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Password */}
@@ -431,23 +422,20 @@ export default function RegisterPage() {
                     disabled={isLoading}
                     className="w-full h-11 px-4 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 hover:text-gray-700"
                     disabled={isLoading}
                   >
                     {showPassword ? (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                      </svg>
+                      <EyeOff className="h-4 w-4" />
                     ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
+                      <Eye className="h-4 w-4" />
                     )}
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Password Strength Indicator */}
@@ -484,23 +472,20 @@ export default function RegisterPage() {
                     disabled={isLoading}
                     className="w-full h-11 px-4 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 hover:text-gray-700"
                     disabled={isLoading}
                   >
                     {showConfirmPassword ? (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                      </svg>
+                      <EyeOff className="h-4 w-4" />
                     ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
+                      <Eye className="h-4 w-4" />
                     )}
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Password Match Indicator */}
@@ -583,14 +568,15 @@ export default function RegisterPage() {
                     Thời gian còn lại: <span className="font-semibold text-red-500">{formatTime(countdown)}</span>
                   </p>
                 ) : (
-                  <button
+                  <Button
                     type="button"
+                    variant="link"
                     onClick={resendVerification}
                     disabled={isLoading}
-                    className="text-sm text-green-600 hover:text-green-500 disabled:opacity-50 font-medium"
+                    className="text-sm text-green-600 hover:text-green-500 disabled:opacity-50 font-medium h-auto p-0"
                   >
                     Gửi lại mã?
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -608,23 +594,25 @@ export default function RegisterPage() {
                 <p className="text-sm text-gray-600">
                   Không nhận được mã?
                 </p>
-                <button
+                <Button
                   type="button"
+                  variant="link"
                   onClick={resendVerification}
                   disabled={isLoading}
-                  className="text-sm text-green-600 hover:text-green-500 disabled:opacity-50"
+                  className="text-sm text-green-600 hover:text-green-500 disabled:opacity-50 h-auto p-0"
                 >
                   Gửi lại mã xác thực
-                </button>
+                </Button>
                 <br />
-                <button
+                <Button
                   type="button"
+                  variant="link"
                   onClick={() => setCurrentStep('form')}
                   disabled={isLoading}
-                  className="text-sm text-gray-600 hover:text-gray-500 disabled:opacity-50"
+                  className="text-sm text-gray-600 hover:text-gray-500 disabled:opacity-50 h-auto p-0"
                 >
                   ← Quay lại form đăng ký
-                </button>
+                </Button>
               </div>
             </form>
           ) : null}

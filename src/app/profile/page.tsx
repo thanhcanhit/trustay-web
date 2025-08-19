@@ -17,11 +17,16 @@ import {
   Send,
   Heart,
   Bell,
-  LogOut
+  LogOut,
+  ChevronDownIcon
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { SizingImage } from "@/components/sizing-image"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 
 // Content Components
@@ -488,35 +493,59 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Giới tính *</label>
-            <select
+            <Select
               value={profileData.gender}
-              onChange={(e) => handleInputChange('gender', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
+              onValueChange={(value) => handleInputChange('gender', value)}
             >
-              <option value="">Chọn giới tính</option>
-              <option value="male">Nam</option>
-              <option value="female">Nữ</option>
-              <option value="other">Khác</option>
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Chọn giới tính" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">Nam</SelectItem>
+                <SelectItem value="female">Nữ</SelectItem>
+                <SelectItem value="other">Khác</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Ngày sinh *</label>
-            <Input
-              type="date"
-              value={profileData.dateOfBirth}
-              onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline" 
+                  className="w-48 justify-between font-normal"
+                >
+                  {profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toLocaleDateString('vi-VN') : "Chọn ngày sinh"}
+                  <ChevronDownIcon className="h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  captionLayout="dropdown"
+                  selected={profileData.dateOfBirth ? new Date(profileData.dateOfBirth) : undefined}
+                  onSelect={(date) => handleInputChange('dateOfBirth', date?.toISOString() || '')}
+                  disabled={(date) =>
+                      date > new Date() || date < new Date("1900-01-01")
+                    }
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Vai trò *</label>
-            <select
+            <Select
               value={profileData.role}
-              onChange={(e) => handleInputChange('role', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
+              onValueChange={(value) => handleInputChange('role', value)}
             >
-              <option value="tenant">Người thuê trọ</option>
-              <option value="landlord">Chủ nhà trọ</option>
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Chọn vai trò" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="tenant">Người thuê trọ</SelectItem>
+                <SelectItem value="landlord">Chủ nhà trọ</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Căn cước công dân *</label>
@@ -547,11 +576,10 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
         {/* Bio */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Giới thiệu bản thân</label>
-          <textarea
+          <Textarea
             value={profileData.bio}
             onChange={(e) => handleInputChange('bio', e.target.value)}
             placeholder="Viết vài dòng giới thiệu về bản thân..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
             rows={4}
           />
         </div>
@@ -563,7 +591,7 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
             {/* Mặt trước */}
             <div>
               <p className="text-sm text-gray-600 mb-2">Mặt trước</p>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center flex flex-col items-center justify-center">
                 {/* {profileData.idCardFront ? (
                   <div className="space-y-2">
                     <Image src={profileData.idCardFront} alt="CCCD mặt trước" width={300} height={128} className="w-full h-32 object-cover rounded border mx-auto" />
@@ -580,6 +608,9 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
                     //   const file = e.target.files?.[0]
                       // if (file) handleFileUpload('idCardFront', file)
                     //}} 
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg 
+                           file:border-0 file:text-sm file:bg-green-50 file:text-green-700 hover:file:bg-green-100
+                           disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                   </div>
                 {/* )} */}
@@ -588,7 +619,7 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
             {/* Mặt sau */}
             <div>
               <p className="text-sm text-gray-600 mb-2">Mặt sau</p>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center flex flex-col items-center justify-center">
                 {/* {profileData.idCardBack ? (
                   <div className="space-y-2">
                     <Image src={profileData.idCardBack} alt="CCCD mặt sau" width={300} height={128} className="w-full h-32 object-cover rounded border mx-auto" />
@@ -605,6 +636,9 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
                     //   const file = e.target.files?.[0]
                     //   if (file) handleFileUpload('idCardBack', file)
                     //}} 
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg 
+                           file:border-0 file:text-sm file:bg-green-50 file:text-green-700 hover:file:bg-green-100
+                           disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                 {/* )} */}
@@ -986,11 +1020,10 @@ function ProfilePageContent() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
-        <div className="p-6">
+        <div className="px-6 py-4">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Quản lý cá nhân</h1>
-            <p className="text-gray-600">Xin chào, {user?.firstName} {user?.lastName}</p>
+          <div className="my-4 flex items-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Xin chào, {user?.firstName} {user?.lastName}</h1>
           </div>
 
           {/* Content */}
