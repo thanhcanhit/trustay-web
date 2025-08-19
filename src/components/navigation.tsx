@@ -12,6 +12,8 @@ import { PriceFilter } from "@/components/ui/price-filter"
 import { LocationFilter } from "@/components/ui/location-filter"
 import { AreaFilter } from "@/components/ui/area-filter"
 import { SearchInputWithFilters } from "@/components/ui/search-input-with-filters"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { SizingImage } from "@/components/sizing-image"
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -22,7 +24,6 @@ import {
 } from "@/components/ui/navigation-menu"
 import {
   Plus,
-  User,
   LogOut,
   ChevronDown
 } from "lucide-react"
@@ -191,7 +192,23 @@ export function Navigation() {
                     onClick={() => setShowUserDropdown(!showUserDropdown)}
                     className="flex items-center space-x-2 text-gray-700 hover:text-gray-900"
                   >
-                    <User className="h-4 w-4" />
+                    <Avatar className="h-8 w-8">
+                      {user.avatarUrl ? (
+                        <div className="w-full h-full relative">
+                          <SizingImage 
+                            src={user.avatarUrl} 
+                            srcSize="256x256" 
+                            alt={`${user.firstName} ${user.lastName}`} 
+                            className="object-cover rounded-full"
+                            fill
+                          />
+                        </div>
+                      ) : (
+                        <AvatarFallback className="text-sm font-medium bg-green-100 text-green-700">
+                          {user.firstName?.charAt(0)?.toUpperCase()}{user.lastName?.charAt(0)?.toUpperCase()}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
                     <span className="hidden sm:inline-block">{user.firstName} {user.lastName}</span>
                     <ChevronDown className="h-3 w-3" />
                   </Button>
