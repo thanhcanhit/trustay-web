@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
+import { motion, AnimatePresence } from "motion/react"
 import { useUserStore } from "@/stores/userStore"
 import { useSearchFilters } from "@/hooks/use-search-filters"
 import { Button } from "@/components/ui/button"
@@ -31,6 +32,8 @@ export function Navigation() {
   const pathname = usePathname()
   const { user, isAuthenticated, logout, switchRole } = useUserStore()
   const [showUserDropdown, setShowUserDropdown] = useState(false)
+  const [showSecondRow, setShowSecondRow] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Use search filters hook
@@ -83,6 +86,29 @@ export function Navigation() {
     if (!user) return "/login"
     return user.role === 'tenant' ? '/dashboard/tenant' : '/dashboard/landlord'
   }
+
+  // Handle scroll to show/hide second row
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      
+      if (currentScrollY < 10) {
+        // At the top, always show second row
+        setShowSecondRow(true)
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down and past threshold, hide second row
+        setShowSecondRow(false)
+      } else if (currentScrollY < lastScrollY) {
+        // Scrolling up, show second row
+        setShowSecondRow(true)
+      }
+      
+      setLastScrollY(currentScrollY)
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [lastScrollY])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -219,122 +245,138 @@ export function Navigation() {
 
       {/* Second Row: Filter Bar - Hidden on auth pages */}
       {!isAuthPage && (
-        <div className="container mx-auto px-4">
-          <div className="flex h-12 items-center gap-15">
-            {/* Post Button */}
-            <NavigationMenu viewport={false}>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-white bg-green-600 hover:bg-green-700 font-medium px-4 py-2 rounded-md">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Đăng bài
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px]">
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link href="/dashboard/landlord/properties/add" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                            <div className="text-sm font-medium leading-none">Đăng tin cho thuê</div>
-                            <p className="text-xs leading-tight text-muted-foreground">
-                              Đăng tin cho thuê phòng trọ, nhà trọ của bạn
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link href="/dashboard/tenant/find-rental" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                            <div className="text-sm font-medium leading-none">Đăng tin tìm chỗ thuê</div>
-                            <p className="text-xs leading-tight text-muted-foreground">
-                              Đăng tin tìm kiếm phòng trọ, nhà trọ
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link href="/dashboard/tenant/find-roommate" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                            <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
-                            <p className="text-xs leading-tight text-muted-foreground">
-                              Tìm bạn cùng phòng, người ở ghép
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+        <AnimatePresence>
+          {showSecondRow && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ 
+                duration: 0.3, 
+                ease: "easeInOut",
+                opacity: { duration: 0.2 }
+              }}
+              className="overflow-hidden"
+            >
+              <div className="container mx-auto px-4">
+                <div className="flex h-12 items-center gap-15">
+                  {/* Post Button */}
+                  <NavigationMenu viewport={false}>
+                    <NavigationMenuList>
+                      <NavigationMenuItem>
+                        <NavigationMenuTrigger className="text-white bg-green-600 hover:bg-green-700 font-medium px-4 py-2 rounded-md">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Đăng bài
+                        </NavigationMenuTrigger>
+                        <NavigationMenuContent>
+                          <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px]">
+                            <li>
+                              <NavigationMenuLink asChild>
+                                <Link href="/dashboard/landlord/properties/add" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                                  <div className="text-sm font-medium leading-none">Đăng tin cho thuê</div>
+                                  <p className="text-xs leading-tight text-muted-foreground">
+                                    Đăng tin cho thuê phòng trọ, nhà trọ của bạn
+                                  </p>
+                                </Link>
+                              </NavigationMenuLink>
+                            </li>
+                            <li>
+                              <NavigationMenuLink asChild>
+                                <Link href="/dashboard/tenant/find-rental" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                                  <div className="text-sm font-medium leading-none">Đăng tin tìm chỗ thuê</div>
+                                  <p className="text-xs leading-tight text-muted-foreground">
+                                    Đăng tin tìm kiếm phòng trọ, nhà trọ
+                                  </p>
+                                </Link>
+                              </NavigationMenuLink>
+                            </li>
+                            <li>
+                              <NavigationMenuLink asChild>
+                                <Link href="/dashboard/tenant/find-roommate" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                                  <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
+                                  <p className="text-xs leading-tight text-muted-foreground">
+                                    Tìm bạn cùng phòng, người ở ghép
+                                  </p>
+                                </Link>
+                              </NavigationMenuLink>
+                            </li>
+                          </ul>
+                        </NavigationMenuContent>
+                      </NavigationMenuItem>
+                    </NavigationMenuList>
+                  </NavigationMenu>
 
-            {/* Filter Buttons */}
-            <div className="flex items-center space-x-5 flex-wrap">
-              <LocationFilter
-                selectedLocation={activeFiltersList.find(af => af.id === 'location')?.values?.[0] || ''}
-                onLocationChange={(location) => {
-                  // Clear existing location filter
-                  removeFilter('location');
-                  // Add new location filter if not empty
-                  if (location) {
-                    addFilterValue('location', location);
-                  }
-                }}
-              />
+                  {/* Filter Buttons */}
+                  <div className="flex items-center space-x-5 flex-wrap">
+                    <LocationFilter
+                      selectedLocation={activeFiltersList.find(af => af.id === 'location')?.values?.[0] || ''}
+                      onLocationChange={(location) => {
+                        // Clear existing location filter
+                        removeFilter('location');
+                        // Add new location filter if not empty
+                        if (location) {
+                          addFilterValue('location', location);
+                        }
+                      }}
+                    />
 
-              <AreaFilter
-                selectedAreas={activeFiltersList.find(af => af.id === 'area')?.values || []}
-                onSelectionChange={(areas) => {
-                  // Clear existing area filters
-                  const currentAreaFilter = activeFiltersList.find(af => af.id === 'area');
-                  if (currentAreaFilter) {
-                    currentAreaFilter.values.forEach(value => {
-                      removeFilterValue('area', value);
-                    });
-                  }
-                  // Add new area filters
-                  areas.forEach(area => {
-                    addFilterValue('area', area);
-                  });
-                }}
-              />
+                    <AreaFilter
+                      selectedAreas={activeFiltersList.find(af => af.id === 'area')?.values || []}
+                      onSelectionChange={(areas) => {
+                        // Clear existing area filters
+                        const currentAreaFilter = activeFiltersList.find(af => af.id === 'area');
+                        if (currentAreaFilter) {
+                          currentAreaFilter.values.forEach(value => {
+                            removeFilterValue('area', value);
+                          });
+                        }
+                        // Add new area filters
+                        areas.forEach(area => {
+                          addFilterValue('area', area);
+                        });
+                      }}
+                    />
 
-              <PriceFilter
-                selectedPrices={activeFiltersList.find(af => af.id === 'price')?.values || []}
-                onSelectionChange={(prices) => {
-                  // Clear existing price filters
-                  const currentPriceFilter = activeFiltersList.find(af => af.id === 'price');
-                  if (currentPriceFilter) {
-                    currentPriceFilter.values.forEach(value => {
-                      removeFilterValue('price', value);
-                    });
-                  }
-                  // Add new price filters
-                  prices.forEach(price => {
-                    addFilterValue('price', price);
-                  });
-                }}
-              />
+                    <PriceFilter
+                      selectedPrices={activeFiltersList.find(af => af.id === 'price')?.values || []}
+                      onSelectionChange={(prices) => {
+                        // Clear existing price filters
+                        const currentPriceFilter = activeFiltersList.find(af => af.id === 'price');
+                        if (currentPriceFilter) {
+                          currentPriceFilter.values.forEach(value => {
+                            removeFilterValue('price', value);
+                          });
+                        }
+                        // Add new price filters
+                        prices.forEach(price => {
+                          addFilterValue('price', price);
+                        });
+                      }}
+                    />
 
-              <AmenityFilter
-                selectedAmenities={activeFiltersList.find(af => af.id === 'amenities')?.values || []}
-                onSelectionChange={(amenityIds) => {
-                  // Clear existing amenity filters
-                  const currentAmenityFilter = activeFiltersList.find(af => af.id === 'amenities');
-                  if (currentAmenityFilter) {
-                    currentAmenityFilter.values.forEach(value => {
-                      removeFilterValue('amenities', value);
-                    });
-                  }
-                  // Add new amenity filters
-                  amenityIds.forEach(amenityId => {
-                    addFilterValue('amenities', amenityId);
-                  });
-                }}
-              />
-            </div>
+                    <AmenityFilter
+                      selectedAmenities={activeFiltersList.find(af => af.id === 'amenities')?.values || []}
+                      onSelectionChange={(amenityIds) => {
+                        // Clear existing amenity filters
+                        const currentAmenityFilter = activeFiltersList.find(af => af.id === 'amenities');
+                        if (currentAmenityFilter) {
+                          currentAmenityFilter.values.forEach(value => {
+                            removeFilterValue('amenities', value);
+                          });
+                        }
+                        // Add new amenity filters
+                        amenityIds.forEach(amenityId => {
+                          addFilterValue('amenities', amenityId);
+                        });
+                      }}
+                    />
+                  </div>
 
-          </div>
-        </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       )}
     </nav>
   )
