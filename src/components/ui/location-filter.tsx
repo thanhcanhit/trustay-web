@@ -67,6 +67,11 @@ export function LocationFilter({
     }
   };
 
+  // Debug: log when dropdown opens/closes
+  useEffect(() => {
+    console.log('LocationFilter dropdown isOpen:', isOpen);
+  }, [isOpen]);
+
   const handleSelectSubmit = () => {
     if (selectedProvince && selectedDistrict) {
       const province = getProvinceById(selectedProvince);
@@ -88,12 +93,12 @@ export function LocationFilter({
   const availableDistricts = selectedProvince ? getDistrictsByProvinceId(selectedProvince) : [];
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
+    <div className={`relative ${className}`} ref={dropdownRef} style={{ position: 'relative', zIndex: 9999, isolation: 'isolate', overflow: 'visible', transform: 'translateZ(0)' }}>
       {/* Filter Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between px-4 py-2 bg-white  rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 min-w-[120px] text-left"
-      >
+             <button
+         onClick={() => setIsOpen(!isOpen)}
+         className="flex items-center justify-between px-4 py-2 bg-white rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 min-w-[120px] text-left cursor-pointer"
+       >
         <span className="text-sm text-gray-700 flex items-center">
           <MapPin className="h-4 w-4 mr-2" />
           Địa chỉ
@@ -105,7 +110,18 @@ export function LocationFilter({
 
       {/* Dropdown Content */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+        <div 
+          className="absolute top-full left-0 mt-1 w-96 bg-white border-2 border-gray-300 rounded-lg shadow-xl z-[9999]" 
+          style={{ 
+            backgroundColor: 'white', 
+            position: 'absolute',
+            zIndex: 9999,
+            pointerEvents: 'auto',
+            overflow: 'visible',
+            transform: 'translateZ(0)'
+          }}
+          data-testid="location-dropdown"
+        >
           <div className="p-4">
             {/* Tab Headers */}
             <div className="flex border-b border-gray-200 mb-4">
