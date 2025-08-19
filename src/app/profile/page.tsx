@@ -18,7 +18,9 @@ import {
   Heart,
   Bell,
   LogOut,
-  ChevronDownIcon
+  ChevronDownIcon,
+  Eye,
+  EyeOff
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -38,9 +40,18 @@ function ChangePasswordCard() {
     confirmPassword: ''
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [showPasswords, setShowPasswords] = useState({
+    currentPassword: false,
+    newPassword: false,
+    confirmPassword: false
+  })
 
   const handlePasswordChange = (field: string, value: string) => {
     setPasswordData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const togglePasswordVisibility = (field: keyof typeof showPasswords) => {
+    setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }))
   }
 
   const handleChangePassword = async () => {
@@ -85,30 +96,78 @@ function ChangePasswordCard() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Mật khẩu hiện tại *</label>
-            <Input
-              type="password"
-              value={passwordData.currentPassword}
-              onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-              placeholder="Nhập mật khẩu hiện tại"
-            />
+            <div className="relative">
+              <Input
+                type={showPasswords.currentPassword ? "text" : "password"}
+                value={passwordData.currentPassword}
+                onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                placeholder="Nhập mật khẩu hiện tại"
+                className="pr-12"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => togglePasswordVisibility('currentPassword')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 hover:text-gray-700"
+              >
+                {showPasswords.currentPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Mật khẩu mới *</label>
-            <Input
-              type="password"
-              value={passwordData.newPassword}
-              onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-              placeholder="Nhập mật khẩu mới"
-            />
+            <div className="relative">
+              <Input
+                type={showPasswords.newPassword ? "text" : "password"}
+                value={passwordData.newPassword}
+                onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                placeholder="Nhập mật khẩu mới"
+                className="pr-12"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => togglePasswordVisibility('newPassword')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 hover:text-gray-700"
+              >
+                {showPasswords.newPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Xác nhận mật khẩu mới *</label>
-            <Input
-              type="password"
-              value={passwordData.confirmPassword}
-              onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-              placeholder="Nhập lại mật khẩu mới"
-            />
+            <div className="relative">
+              <Input
+                type={showPasswords.confirmPassword ? "text" : "password"}
+                value={passwordData.confirmPassword}
+                onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                placeholder="Nhập lại mật khẩu mới"
+                className="pr-12"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => togglePasswordVisibility('confirmPassword')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 hover:text-gray-700"
+              >
+                {showPasswords.confirmPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
           <div className="flex space-x-3">
             <Button
@@ -141,6 +200,8 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
   const [profileData, setProfileData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
     avatarUrl: user?.avatarUrl || '',
     dateOfBirth: user?.dateOfBirth || '',
     gender: user?.gender || '',
@@ -155,6 +216,8 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
   const [originalData, setOriginalData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
     avatarUrl: user?.avatarUrl || '',
     dateOfBirth: user?.dateOfBirth || '',
     gender: user?.gender || '',
@@ -234,6 +297,12 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
       if (profileData.lastName !== originalData.lastName) {
         updateData.lastName = profileData.lastName
       }
+      if (profileData.email !== originalData.email) {
+        updateData.email = profileData.email
+      }
+      if (profileData.phone !== originalData.phone) {
+        updateData.phone = profileData.phone
+      }
       if (finalAvatarUrl !== originalData.avatarUrl) {
         updateData.avatarUrl = finalAvatarUrl
       }
@@ -298,6 +367,8 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
         setProfileData({
           firstName: convertedUser.firstName,
           lastName: convertedUser.lastName,
+          email: convertedUser.email || '',
+          phone: convertedUser.phone || '',
           avatarUrl: convertedUser.avatarUrl || '',
           dateOfBirth: convertedUser.dateOfBirth || '',
           gender: convertedUser.gender || '',
@@ -310,6 +381,8 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
         setOriginalData({
           firstName: convertedUser.firstName,
           lastName: convertedUser.lastName,
+          email: convertedUser.email || '',
+          phone: convertedUser.phone || '',
           avatarUrl: convertedUser.avatarUrl || '',
           dateOfBirth: convertedUser.dateOfBirth || '',
           gender: convertedUser.gender || '',
@@ -354,24 +427,38 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
               <div className="w-full h-full flex items-center justify-center text-gray-400">Avatar</div>
             )}
           </div>
-          <div>
-            <h2>{user?.firstName} {user?.lastName}</h2>
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-gray-900">{user?.firstName} {user?.lastName}</h2>
+            <p className="text-gray-600">{user?.email}</p>
             <p className="text-gray-600">{user?.phone}</p>
+            {profileData.bio && (
+              <div className="mt-3">
+                <p className="text-gray-700 text-sm leading-relaxed">{profileData.bio}</p>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Họ</label>
-            <p>{profileData.firstName || 'Chưa cập nhật'}</p>
+            <p className="text-gray-900">{profileData.firstName || 'Chưa cập nhật'}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Tên</label>
-            <p>{profileData.lastName || 'Chưa cập nhật'}</p>
+            <p className="text-gray-900">{profileData.lastName || 'Chưa cập nhật'}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <p className="text-gray-900">{profileData.email || 'Chưa cập nhật'}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Số điện thoại</label>
+            <p className="text-gray-900">{profileData.phone || 'Chưa cập nhật'}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Giới tính</label>
-            <p>
+            <p className="text-gray-900">
               {profileData.gender === ''
                 ? 'Chưa cập nhật'
                 : profileData.gender === 'female'
@@ -383,32 +470,25 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Ngày sinh</label>
-            <p>{profileData.dateOfBirth || 'Chưa cập nhật'}</p>
+            <p className="text-gray-900">{profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Vai trò</label>
-            <p>{profileData.role === 'tenant' ? 'Người thuê trọ' : 'Chủ nhà trọ'}</p>
+            <p className="text-gray-900">{profileData.role === 'tenant' ? 'Người thuê trọ' : 'Chủ nhà trọ'}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">CCCD</label>
-            <p>{profileData.idCardNumber || 'Chưa cập nhật'}</p>
+            <p className="text-gray-900">{profileData.idCardNumber || 'Chưa cập nhật'}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Số tài khoản ngân hàng</label>
-            <p>{profileData.bankAccount || 'Chưa cập nhật'}</p>
+            <p className="text-gray-900">{profileData.bankAccount || 'Chưa cập nhật'}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Tên ngân hàng</label>
-            <p>{profileData.bankName || 'Chưa cập nhật'}</p>
+            <p className="text-gray-900">{profileData.bankName || 'Chưa cập nhật'}</p>
           </div>
         </div>
-
-        {profileData.bio && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Giới thiệu</label>
-            <p>{profileData.bio}</p>
-          </div>
-        )}
 
         <Button onClick={() => {
           setIsEditing(true)
@@ -492,6 +572,24 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
             />
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+            <Input
+              value={profileData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              placeholder="Nhập email"
+              type="email"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Số điện thoại *</label>
+            <Input
+              value={profileData.phone}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
+              placeholder="Nhập số điện thoại"
+              type="tel"
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Giới tính *</label>
             <Select
               value={profileData.gender}
@@ -568,7 +666,7 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
             <Input
               value={profileData.bankName}
               onChange={(e) => handleInputChange('bankName', e.target.value)}
-              placeholder="Vietcombank"
+              placeholder="Vietcombang"
             />
           </div>
         </div>
@@ -904,11 +1002,12 @@ function ProfilePageContent() {
         {/* User Info */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-              <User className="h-5 w-5 text-green-600" />
-            </div>
+              <div className="h-10 w-10 rounded-full overflow-hidden bg-green-100 flex items-center justify-center">
+                 <User className="h-5 w-5 text-green-600" />
+             </div>
             <div>
               <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
+              <p className="text-xs text-gray-500">{user?.email}</p>
               <p className="text-xs text-gray-500">
                 {user?.role === 'tenant' ? 'Người thuê trọ' : 'Chủ nhà trọ'}
               </p>
@@ -1023,7 +1122,10 @@ function ProfilePageContent() {
         <div className="px-6 py-4">
           {/* Header */}
           <div className="my-4 flex items-center">
+            <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Xin chào, {user?.firstName} {user?.lastName}</h1>
+              <p className="text-gray-600">{user?.email}</p>
+            </div>
           </div>
 
           {/* Content */}
@@ -1051,3 +1153,4 @@ export default function ProfilePage() {
     </Suspense>
   )
 }
+

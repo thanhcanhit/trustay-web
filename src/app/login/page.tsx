@@ -9,12 +9,11 @@ import { toast } from "sonner"
 import Image from "next/image"
 import { validatePassword, getPasswordValidationErrors } from "@/utils/passwordValidation"
 import { translateAuthError } from "@/utils/errorTranslation"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, PhoneCall } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [passwordErrors, setPasswordErrors] = useState<string[]>([])
   const [showPassword, setShowPassword] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { login, isLoading, error, clearError } = useUserStore()
@@ -23,14 +22,6 @@ export default function LoginPage() {
   // Handle password change with validation
   const handlePasswordChange = (newPassword: string) => {
     setPassword(newPassword)
-
-    // Only show validation errors if password is not empty
-    if (newPassword.trim()) {
-      const errors = getPasswordValidationErrors(newPassword)
-      setPasswordErrors(errors)
-    } else {
-      setPasswordErrors([])
-    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -169,18 +160,6 @@ export default function LoginPage() {
                     )}
                   </Button>
                 </div>
-
-                {/* Password Validation Errors */}
-                {passwordErrors.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    {passwordErrors.map((error, index) => (
-                      <p key={index} className="text-xs text-red-600 flex items-center">
-                        <span className="mr-1">•</span>
-                        {error}
-                      </p>
-                    ))}
-                  </div>
-                )}
               </div>
 
               <div className="pt-2">
@@ -208,9 +187,9 @@ export default function LoginPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full py-3 px-4 border border-blue-500 text-blue-500 hover:bg-blue-50 font-medium rounded-lg transition-colors flex items-center justify-center space-x-2"
+                  className="w-full py-3 px-4 text-white hover:text-white bg-blue-400 hover:bg-blue-500 font-medium rounded-lg transition-colors flex items-center justify-center space-x-2 cursor-pointer"
                 >
-                  <span>📱</span>
+                  <PhoneCall className="h-4 w-4" />
                   <span>Đăng nhập bằng Zalo</span>
                 </Button>
               </div>

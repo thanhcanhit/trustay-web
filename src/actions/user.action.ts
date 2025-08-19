@@ -39,7 +39,7 @@ export const updateUserProfile = async (
 export const changePassword = async (
 	passwordData: ChangePasswordRequest,
 ): Promise<{ message: string }> => {
-	return await apiCall<{ message: string }>('/api/users/change-password', {
+	return await apiCall<{ message: string }>('/api/auth/change-password', {
 		method: 'PUT',
 		data: passwordData,
 	});

@@ -25,7 +25,7 @@ import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/comp
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, PhoneCall } from "lucide-react"
 
 type RegistrationStep = 'form' | 'verification'
 
@@ -59,16 +59,46 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState(0)
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false)
+  const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] = useState(false)
+  // const [hasFinishedTyping, setHasFinishedTyping] = useState(false)
+
+  // Phone number error handling state
+  const [showPhoneErrorDialog, setShowPhoneErrorDialog] = useState(false)
+  const [phoneError, setPhoneError] = useState("")
+  const [verificationToken, setVerificationToken] = useState("")
 
   // Update password validation when password changes
   const handlePasswordChange = (newPassword: string) => {
     setPassword(newPassword);
+    // setHasFinishedTyping(false);
   }
+
+  // Debug effect for phone error dialog
+  useEffect(() => {
+    console.log('showPhoneErrorDialog changed:', showPhoneErrorDialog);
+    if (showPhoneErrorDialog) {
+      console.log('Phone error dialog should be visible now');
+    }
+  }, [showPhoneErrorDialog]);
 
   // Handle confirm password change with copy-paste prevention
   const handleConfirmPasswordChange = (newConfirmPassword: string) => {
     setConfirmPassword(newConfirmPassword)
+    // Check if both passwords are filled to show match indicator
+    // if (newConfirmPassword && password) {
+    //   setHasFinishedTyping(true)
+    // } else {
+    //   setHasFinishedTyping(false)
+    // }
   }
+
+  // Handle when user finishes typing confirm password
+  // const handleConfirmPasswordBlur = () => {
+  //   if (confirmPassword && password) {
+  //     setHasFinishedTyping(true)
+  //   }
+  // }
 
   // Prevent right-click context menu
   const handleConfirmPasswordContextMenu = (e: React.MouseEvent) => {
@@ -152,6 +182,12 @@ export default function RegisterPage() {
       return
     }
 
+    // If we have a verification token, try to register directly
+    if (verificationToken) {
+      await handleFormResubmit()
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -190,44 +226,82 @@ export default function RegisterPage() {
       const verifyResponse = await verifyEmailCode(email, verificationCode)
 
       if (verifyResponse.verificationToken) {
-        // Register with verification token
-        const authResponse = await registerWithVerification({
-          email,
-          password,
-          firstName,
-          lastName,
-          phone,
-          gender,
-          role,
-        }, verifyResponse.verificationToken)
+        // Store verification token for potential retry
+        setVerificationToken(verifyResponse.verificationToken)
+        
+        try {
+          // Register with verification token
+          const authResponse = await registerWithVerification({
+            email,
+            password,
+            firstName,
+            lastName,
+            phone,
+            gender,
+            role,
+          }, verifyResponse.verificationToken)
 
-        // Convert to user store format and login
-        const user = {
-          id: authResponse.user.id,
-          firstName: authResponse.user.firstName,
-          lastName: authResponse.user.lastName,
-          email: authResponse.user.email,
-          phone: authResponse.user.phone,
-          gender: authResponse.user.gender,
-          role: authResponse.user.role,
-          bio: authResponse.user.bio,
-          dateOfBirth: authResponse.user.dateOfBirth,
-          avatarUrl: authResponse.user.avatarUrl,
-          createdAt: authResponse.user.createdAt,
-          updatedAt: authResponse.user.updatedAt,
+          // Convert to user store format and login
+          const user = {
+            id: authResponse.user.id,
+            firstName: authResponse.user.firstName,
+            lastName: authResponse.user.lastName,
+            email: authResponse.user.email,
+            phone: authResponse.user.phone,
+            gender: authResponse.user.gender,
+            role: authResponse.user.role,
+            bio: authResponse.user.bio,
+            dateOfBirth: authResponse.user.dateOfBirth,
+            avatarUrl: authResponse.user.avatarUrl,
+            createdAt: authResponse.user.createdAt,
+            updatedAt: authResponse.user.updatedAt,
+          }
+
+          useUserStore.setState({ user, isAuthenticated: true })
+
+          // Show success toast for email verification
+          toast.success('Xác thực email thành công! Chào mừng bạn đến với Trustay!', {
+            duration: 3000,
+          })
+
+          // Redirect to profile page after a short delay
+          setTimeout(() => {
+            router.push('/profile')
+          }, 1500)
+        } catch (registerError: unknown) {
+          const registerErrorMessage = registerError instanceof Error ? registerError.message : 'Đăng ký thất bại';
+          
+          // Debug logging
+          console.log('Registration error:', registerErrorMessage);
+          
+          // Check if it's a phone number conflict error - expanded to cover more cases
+          const lowerErrorMessage = registerErrorMessage.toLowerCase();
+          console.log('Lower error message:', lowerErrorMessage);
+          
+          if ((lowerErrorMessage.includes('phone') || lowerErrorMessage.includes('số điện thoại')) && 
+              (lowerErrorMessage.includes('already exists') || 
+               lowerErrorMessage.includes('already used') ||
+               lowerErrorMessage.includes('taken') ||
+               lowerErrorMessage.includes('in use') ||
+               lowerErrorMessage.includes('duplicate') ||
+               lowerErrorMessage.includes('exists') ||
+               lowerErrorMessage.includes('conflict'))) {
+            
+            console.log('Phone number conflict detected, showing dialog');
+            setPhoneError(registerErrorMessage)
+            setShowPhoneErrorDialog(true)
+            setCurrentStep('form') // Go back to form
+            return; // Exit early to prevent showing other error messages
+          } else {
+            console.log('Not a phone number conflict, showing regular error');
+            // Other registration errors
+            const errorMessage = translateVerificationError(registerErrorMessage);
+            setError(errorMessage);
+            toast.error(errorMessage, {
+              duration: 4000,
+            });
+          }
         }
-
-        useUserStore.setState({ user, isAuthenticated: true })
-
-        // Show success toast for email verification
-        toast.success('Xác thực email thành công! Chào mừng bạn đến với Trustay!', {
-          duration: 3000,
-        })
-
-        // Redirect to profile page after a short delay
-        setTimeout(() => {
-          router.push('/profile')
-        }, 1500)
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? translateVerificationError(error.message) : 'Xác thực thất bại';
@@ -267,7 +341,127 @@ export default function RegisterPage() {
     }
   }
 
+  // Handle skip phone number option
+  const handleSkipPhone = async () => {
+    if (!verificationToken) {
+      toast.error('Không có token xác thực. Vui lòng thử lại');
+      return;
+    }
 
+    setIsLoading(true)
+    setShowPhoneErrorDialog(false)
+
+    try {
+      // Register without phone number
+      const authResponse = await registerWithVerification({
+        email,
+        password,
+        firstName,
+        lastName,
+        phone: "", // Empty phone number
+        gender,
+        role,
+      }, verificationToken)
+
+      // Convert to user store format and login
+      const user = {
+        id: authResponse.user.id,
+        firstName: authResponse.user.firstName,
+        lastName: authResponse.user.lastName,
+        email: authResponse.user.email,
+        phone: authResponse.user.phone,
+        gender: authResponse.user.gender,
+        role: authResponse.user.role,
+        bio: authResponse.user.bio,
+        dateOfBirth: authResponse.user.dateOfBirth,
+        avatarUrl: authResponse.user.avatarUrl,
+        createdAt: authResponse.user.createdAt,
+        updatedAt: authResponse.user.updatedAt,
+      }
+
+      useUserStore.setState({ user, isAuthenticated: true })
+
+      toast.success('Đăng ký thành công! Chào mừng bạn đến với Trustay!', {
+        duration: 3000,
+      })
+
+      setTimeout(() => {
+        router.push('/profile')
+      }, 1500)
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? translateVerificationError(error.message) : 'Đăng ký thất bại';
+      toast.error(errorMessage, {
+        duration: 4000,
+      });
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Handle edit phone number option
+  const handleEditPhone = () => {
+    setShowPhoneErrorDialog(false)
+    // Clear phone error to show clean form
+    setPhoneError("")
+    // User can now edit the phone number in the form
+    // The form will be re-submitted with the new phone number
+  }
+
+  // Handle form resubmission with new phone number
+  const handleFormResubmit = async () => {
+    if (!verificationToken) {
+      toast.error('Không có token xác thực. Vui lòng thử lại');
+      return;
+    }
+
+    setIsLoading(true)
+
+    try {
+      // Register with new phone number (or empty if user chose to skip)
+      const authResponse = await registerWithVerification({
+        email,
+        password,
+        firstName,
+        lastName,
+        phone: phone || "", // Use new phone number or empty string
+        gender,
+        role,
+      }, verificationToken)
+
+      // Convert to user store format and login
+      const user = {
+        id: authResponse.user.id,
+        firstName: authResponse.user.firstName,
+        lastName: authResponse.user.lastName,
+        email: authResponse.user.email,
+        phone: authResponse.user.phone,
+        gender: authResponse.user.gender,
+        role: authResponse.user.role,
+        bio: authResponse.user.bio,
+        dateOfBirth: authResponse.user.dateOfBirth,
+        avatarUrl: authResponse.user.avatarUrl,
+        createdAt: authResponse.user.createdAt,
+        updatedAt: authResponse.user.updatedAt,
+      }
+
+      useUserStore.setState({ user, isAuthenticated: true })
+
+      toast.success('Đăng ký thành công! Chào mừng bạn đến với Trustay!', {
+        duration: 3000,
+      })
+
+      setTimeout(() => {
+        router.push('/profile')
+      }, 1500)
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? translateVerificationError(error.message) : 'Đăng ký thất bại';
+      toast.error(errorMessage, {
+        duration: 4000,
+      });
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Format seconds as MM:SS
   function formatTime(remainingTime: number): React.ReactNode {
@@ -307,15 +501,31 @@ export default function RegisterPage() {
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
                 {currentStep === 'verification'
                   ? 'XÁC THỰC EMAIL'
-                  : 'ĐĂNG KÝ'
+                  : verificationToken
+                    ? 'HOÀN TẤT ĐĂNG KÝ'
+                    : 'ĐĂNG KÝ'
                 }
               </h2>
               <p className="text-gray-600 text-sm">
                 {currentStep === 'verification'
                   ? `Nhập mã xác thực đã gửi đến ${email}`
-                  : 'Tạo tài khoản mới để bắt đầu'
+                  : verificationToken
+                    ? 'Email đã được xác thực. Vui lòng kiểm tra và hoàn tất thông tin đăng ký'
+                    : 'Tạo tài khoản mới để bắt đầu'
                 }
               </p>
+              
+              {/* Show phone error message if exists */}
+              {phoneError && (
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-700">
+                    <strong>Lỗi trước đó:</strong> {phoneError}
+                  </p>
+                  <p className="text-xs text-red-600 mt-1">
+                    Vui lòng sửa số điện thoại hoặc chọn bỏ qua để tiếp tục
+                  </p>
+                </div>
+              )}
             </div>
 
           {currentStep === 'form' ? (
@@ -327,15 +537,35 @@ export default function RegisterPage() {
                   value={role} 
                   onValueChange={(value: string) => setRole(value as 'tenant' | 'landlord')}
                   className="grid grid-cols-2 gap-3"
-                    disabled={isLoading}
+                  disabled={isLoading}
                 >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="tenant" id="tenant" />
-                    <Label htmlFor="tenant" className="text-sm text-gray-700 cursor-pointer">Người thuê trọ</Label>
+                  <div className={`flex items-center space-x-3 border-2 rounded-lg p-3 cursor-pointer transition-all duration-200 ${
+                    role === 'tenant' 
+                      ? 'border-green-500 bg-green-50' 
+                      : 'border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50'
+                  }`}>
+                    <RadioGroupItem 
+                      value="tenant" 
+                      id="tenant"
+                      className="w-5 h-5 text-green-600 border-2 border-gray-300 data-[state=checked]:border-green-500"
+                    />
+                    <Label htmlFor="tenant" className="text-sm font-medium text-gray-700 cursor-pointer flex-1">
+                      Người thuê trọ
+                    </Label>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="landlord" id="landlord" />
-                    <Label htmlFor="landlord" className="text-sm text-gray-700 cursor-pointer">Chủ trọ</Label>
+                  <div className={`flex items-center space-x-3 border-2 rounded-lg p-3 cursor-pointer transition-all duration-200 ${
+                    role === 'landlord' 
+                      ? 'border-green-500 bg-green-50' 
+                      : 'border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50'
+                  }`}>
+                    <RadioGroupItem 
+                      value="landlord" 
+                      id="landlord"
+                      className="w-5 h-5 text-green-600 border-2 border-gray-300 data-[state=checked]:border-green-500"
+                    />
+                    <Label htmlFor="landlord" className="text-sm font-medium text-gray-700 cursor-pointer flex-1">
+                      Chủ trọ
+                    </Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -381,23 +611,38 @@ export default function RegisterPage() {
 
               {/* Phone and Gender */}
               <div className="grid grid-cols-2 gap-3">
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="Số điện thoại"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                  disabled={isLoading}
-                  className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
-                />
+                <div>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    placeholder={verificationToken ? "Số điện thoại (để trống nếu muốn bỏ qua)" : "Số điện thoại"}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required={!verificationToken} // Not required if we have verification token
+                    disabled={isLoading}
+                    className={`w-full h-11 px-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50 ${
+                      verificationToken && phoneError ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
+                  />
+                  {verificationToken && phoneError && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Vui lòng nhập số điện thoại mới hoặc để trống để bỏ qua
+                    </p>
+                  )}
+                  {verificationToken && !phoneError && (
+                    <p className="text-xs text-green-600 mt-1">
+                      ✓ Email đã xác thực. Bạn có thể để trống số điện thoại nếu muốn
+                    </p>
+                  )}
+                </div>
                 <Select
                   value={gender}
                   onValueChange={(value: string) => setGender(value as 'male' | 'female' | 'other')}
                   disabled={isLoading}
+                  
                 >
-                  <SelectTrigger className="w-full h-11">
+                  <SelectTrigger className="w-full !h-11 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50">
                     <SelectValue placeholder="Chọn giới tính" />
                   </SelectTrigger>
                   <SelectContent>
@@ -418,6 +663,8 @@ export default function RegisterPage() {
                     placeholder="Mật khẩu"
                     value={password}
                     onChange={(e) => handlePasswordChange(e.target.value)}
+                    onFocus={() => setIsPasswordFocused(true)}
+                    onBlur={() => setIsPasswordFocused(false)}
                     required
                     disabled={isLoading}
                     className="w-full h-11 px-4 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
@@ -439,7 +686,7 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Password Strength Indicator */}
-                {password && (
+                {password && (isPasswordFocused || passwordStrength < 85) && (
                   <div className="mt-2">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-xs text-gray-600">Độ mạnh mật khẩu:</span>
@@ -467,6 +714,8 @@ export default function RegisterPage() {
                     placeholder="Xác nhận mật khẩu"
                     value={confirmPassword}
                     onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                    onFocus={() => setIsConfirmPasswordFocused(true)}
+                    onBlur={() => setIsConfirmPasswordFocused(false)}
                     onContextMenu={handleConfirmPasswordContextMenu}
                     required
                     disabled={isLoading}
@@ -489,7 +738,7 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Password Match Indicator */}
-                {confirmPassword && password && (
+                {confirmPassword && password && (isConfirmPasswordFocused || password !== confirmPassword) && (
                   <div className="mt-2">
                     {password === confirmPassword ? (
                       <p className="text-xs text-green-600 flex items-center">
@@ -512,8 +761,18 @@ export default function RegisterPage() {
                   disabled={isLoading}
                   className="w-full h-11 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? "ĐANG XỬ LÝ..." : "ĐĂNG KÝ"}
+                  {isLoading 
+                    ? "ĐANG XỬ LÝ..." 
+                    : verificationToken 
+                      ? "HOÀN TẤT ĐĂNG KÝ" 
+                      : "ĐĂNG KÝ"
+                  }
                 </Button>
+                {verificationToken && (
+                  <p className="text-xs text-gray-600 text-center mt-2">
+                    Nhấn để hoàn tất quá trình đăng ký với email đã xác thực
+                  </p>
+                )}
               </div>
 
               {/* OR Divider */}
@@ -531,9 +790,9 @@ export default function RegisterPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full py-3 px-4 border border-blue-500 text-blue-500 hover:bg-blue-50 font-medium rounded-lg transition-colors flex items-center justify-center space-x-2"
+                  className="w-full py-3 px-4 bg-blue-400 text-white hover:text-white hover:bg-blue-500 font-medium rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
-                  <span>📱</span>
+                  <PhoneCall className="h-4 w-4" />
                   <span>Đăng ký bằng Zalo</span>
                 </Button>
               </div>
@@ -591,19 +850,23 @@ export default function RegisterPage() {
               </div>
 
               <div className="text-center space-y-2 pt-4">
-                <p className="text-sm text-gray-600">
-                  Không nhận được mã?
-                </p>
-                <Button
-                  type="button"
-                  variant="link"
-                  onClick={resendVerification}
-                  disabled={isLoading}
-                  className="text-sm text-green-600 hover:text-green-500 disabled:opacity-50 h-auto p-0"
-                >
-                  Gửi lại mã xác thực
-                </Button>
-                <br />
+                {countdown === 0 && (
+                  <>
+                    <p className="text-sm text-gray-600">
+                      Không nhận được mã?
+                    </p>
+                    <Button
+                      type="button"
+                      variant="link"
+                      onClick={resendVerification}
+                      disabled={isLoading}
+                      className="text-sm text-green-600 hover:text-green-500 disabled:opacity-50 h-auto p-0"
+                    >
+                      Gửi lại mã xác thực
+                    </Button>
+                    <br />
+                  </>
+                )}
                 <Button
                   type="button"
                   variant="link"
@@ -619,6 +882,46 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
+      {/* Phone Number Error Dialog */}
+      {showPhoneErrorDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Số điện thoại đã được sử dụng
+              </h3>
+              <p className="text-sm text-gray-600 mb-6">
+                Số điện thoại <strong>{phone}</strong> đã được sử dụng bởi tài khoản khác. 
+                Email của bạn đã được xác thực, vui lòng chọn một trong hai lựa chọn sau:
+              </p>
+              
+              <div className="space-y-3">
+                <Button
+                  onClick={handleSkipPhone}
+                  disabled={isLoading}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isLoading ? "Đang xử lý..." : "Bỏ qua số điện thoại"}
+                </Button>
+                
+                <Button
+                  onClick={handleEditPhone}
+                  disabled={isLoading}
+                  variant="outline"
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Sửa số điện thoại
+                </Button>
+              </div>
+              
+              <p className="text-xs text-gray-500 mt-4">
+                <strong>Lưu ý:</strong> Nếu chọn &quot;Bỏ qua số điện thoại&quot;, bạn có thể thêm số điện thoại sau trong phần cài đặt tài khoản.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
