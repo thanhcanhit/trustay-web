@@ -102,10 +102,10 @@ export function AmenityFilter({
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       {/* Filter Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between px-4 py-2 bg-white rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 min-w-[120px] text-left"
-      >
+             <button
+         onClick={() => setIsOpen(!isOpen)}
+         className="flex items-center justify-between px-4 py-2 bg-white rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 min-w-[120px] text-left cursor-pointer"
+       >
         <span className="text-sm text-gray-700 flex items-center">
           <span className="mr-2">🏠</span>
           Tiện ích
@@ -117,7 +117,7 @@ export function AmenityFilter({
 
       {/* Dropdown Content */}
       {isOpen && (
-        <div className="absolute top-full -right-50 mt-1 max-w-[600px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-[400px] overflow-y-auto">
+        <div className="absolute top-full -right-50 mt-1 max-w-[600px] bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-[400px] overflow-y-auto">
           <div className="p-3">
             <div className="text-sm font-medium text-gray-900 mb-3">Chọn tiện ích</div>
             

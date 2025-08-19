@@ -126,7 +126,7 @@ export function Navigation() {
   }, [])
 
   return (
-    <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
+    <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-[9998]">
       {/* First Row: Logo, Search, Login/Signup */}
       <div className={isAuthPage ? "" : "border-b border-gray-200"}>
         <div className="container mx-auto px-4">
@@ -163,7 +163,7 @@ export function Navigation() {
                   {/* Search Button */}
                   <Button
                     onClick={handleSearch}
-                    className="bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors px-6 self-center"
+                    className="h-12 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors px-6 cursor-pointer"
                   >
                     Tìm kiếm
                   </Button>
@@ -273,15 +273,15 @@ export function Navigation() {
                 ease: "easeInOut",
                 opacity: { duration: 0.2 }
               }}
-              className="overflow-hidden"
+              className="overflow-visible"
             >
-              <div className="container mx-auto px-4">
-                <div className="flex h-12 items-center gap-15">
+                             <div className="container mx-auto px-4 overflow-visible relative">
+                 <div className="flex h-12 items-center gap-15 overflow-visible relative">
                   {/* Post Button */}
                   <NavigationMenu viewport={false}>
                     <NavigationMenuList>
                       <NavigationMenuItem>
-                        <NavigationMenuTrigger className="text-white bg-green-600 hover:bg-green-700 font-medium px-4 py-2 rounded-md">
+                                                 <NavigationMenuTrigger className="text-white bg-green-600 hover:bg-green-700 font-medium px-4 py-2 rounded-md cursor-pointer">
                           <Plus className="h-4 w-4 mr-2" />
                           Đăng bài
                         </NavigationMenuTrigger>
@@ -323,8 +323,8 @@ export function Navigation() {
                     </NavigationMenuList>
                   </NavigationMenu>
 
-                  {/* Filter Buttons */}
-                  <div className="flex items-center space-x-5 flex-wrap">
+                                     {/* Filter Buttons */}
+                   <div className="flex items-center space-x-5 flex-wrap relative">
                     <LocationFilter
                       selectedLocation={activeFiltersList.find(af => af.id === 'location')?.values?.[0] || ''}
                       onLocationChange={(location) => {
