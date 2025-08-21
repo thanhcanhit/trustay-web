@@ -222,7 +222,7 @@ function SearchPageContent() {
           <div>
             <h1 className="text-2xl font-bold mb-2">Kết quả tìm kiếm</h1>
             <p className="text-gray-600">
-              {!isLoading && rooms.length > 0 && `Tìm thấy ${rooms.length} phòng`}
+              {!isLoading && searchPagination?.total && `Tìm thấy ${searchPagination.total} phòng`}
             </p>
           </div>
           
@@ -313,9 +313,9 @@ function SearchPageContent() {
               )}
 
               {/* End of results */}
-              {!hasMore && rooms.length > 0 && (
+              {!hasMore && searchPagination?.total && (
                 <div className="text-center mt-8">
-                  <p className="text-gray-500">Đã hiển thị tất cả kết quả</p>
+                  <p className="text-gray-500">Đã hiển thị tất cả {searchPagination.total} kết quả</p>
                 </div>
               )}
             </>
