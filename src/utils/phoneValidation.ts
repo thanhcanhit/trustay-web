@@ -4,14 +4,6 @@
 
 // Vietnamese phone number patterns:
 // - 03x, 05x, 07x, 08x, 09x (mobile)
-// - 02x (landline - Hanoi)
-// - 08x (landline - HCMC)
-// - 04x (landline - other provinces)
-// - 06x (landline - other provinces)
-// - 05x (landline - other provinces)
-// - 07x (landline - other provinces)
-// - 08x (landline - other provinces)
-// - 09x (landline - other provinces)
 export const VIETNAMESE_PHONE_REGEX = /^(0(3|5|7|8|9)[0-9]{8}|0[2-9][0-9]{7})$/;
 
 /**
