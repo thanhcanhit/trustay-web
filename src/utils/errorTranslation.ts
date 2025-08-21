@@ -151,6 +151,31 @@ const ERROR_PATTERNS: Record<string, ErrorPattern> = {
 			'email taken',
 			'duplicate email',
 			'email in use',
+			'Email is already registered',
+			'email is already registered',
+			'email already registered',
+			'email is registered',
+			'email was already registered',
+			'email has already been registered',
+		],
+		subPatterns: [
+			'already registered',
+			'already exists',
+			'already in use',
+			'already taken',
+			'is registered',
+			'is already registered',
+			'was already registered',
+			'has already been registered',
+		],
+		message: 'Email đã được sử dụng',
+	},
+	emailAlreadyRegistered: {
+		patterns: [
+			'Email is already registered',
+			'email is already registered',
+			'Email is already registered.',
+			'email is already registered.',
 		],
 		message: 'Email đã được sử dụng',
 	},
@@ -370,7 +395,7 @@ const ERROR_PATTERNS: Record<string, ErrorPattern> = {
  * Check if message matches any pattern
  */
 const matchesPattern = (message: string, pattern: string): boolean => {
-	return message.includes(pattern);
+	return message.toLowerCase().includes(pattern.toLowerCase());
 };
 
 /**
@@ -381,9 +406,14 @@ const matchesPatternWithSub = (
 	patterns: string[],
 	subPatterns?: string[],
 ): boolean => {
-	const hasMainPattern = patterns.some((pattern) => message.includes(pattern));
+	const hasMainPattern = patterns.some((pattern) =>
+		message.toLowerCase().includes(pattern.toLowerCase()),
+	);
 	if (!subPatterns) return hasMainPattern;
-	return hasMainPattern && subPatterns.some((subPattern) => message.includes(subPattern));
+	return (
+		hasMainPattern &&
+		subPatterns.some((subPattern) => message.toLowerCase().includes(subPattern.toLowerCase()))
+	);
 };
 
 /**
@@ -413,6 +443,49 @@ export const translateErrorMessage = (
 				return config.message;
 			}
 		}
+	}
+
+	// Special case for exact matches (case-insensitive)
+	for (const config of Object.values(ERROR_PATTERNS)) {
+		if (
+			config.patterns.some(
+				(pattern) =>
+					errorMessage.toLowerCase() === pattern.toLowerCase() ||
+					errorMessage.toLowerCase().includes(pattern.toLowerCase()),
+			)
+		) {
+			return config.message;
+		}
+	}
+
+	// Special case for "Email is already registered" exact match
+	if (
+		errorMessage.toLowerCase().includes('email') &&
+		errorMessage.toLowerCase().includes('already') &&
+		errorMessage.toLowerCase().includes('registered')
+	) {
+		return 'Email đã được sử dụng';
+	}
+
+	// Special case for email already exists variations
+	if (
+		errorMessage.toLowerCase().includes('email') &&
+		(errorMessage.toLowerCase().includes('already') ||
+			errorMessage.toLowerCase().includes('exists') ||
+			errorMessage.toLowerCase().includes('taken') ||
+			errorMessage.toLowerCase().includes('duplicate'))
+	) {
+		return 'Email đã được sử dụng';
+	}
+
+	// Special case for exact match with "Email is already registered"
+	if (
+		errorMessage === 'Email is already registered' ||
+		errorMessage === 'email is already registered' ||
+		errorMessage === 'Email is already registered.' ||
+		errorMessage === 'email is already registered.'
+	) {
+		return 'Email đã được sử dụng';
 	}
 
 	// If no translation found, return the original message or default

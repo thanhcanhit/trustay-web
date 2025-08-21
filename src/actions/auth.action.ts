@@ -112,6 +112,27 @@ export const registerWithVerification = async (
 	}
 };
 
+// Register with verification but without phone number
+export const registerWithVerificationNoPhone = async (
+	userData: Omit<RegisterRequest, 'phone'>,
+	verificationToken: string,
+): Promise<AuthResponse> => {
+	try {
+		const response = await apiClient.post<AuthResponse>('/api/auth/register', userData, {
+			headers: {
+				'X-Verification-Token': verificationToken,
+			},
+		});
+
+		// Store tokens in cookies
+		await setAuthCookies(response.data.access_token, response.data.refresh_token);
+
+		return response.data;
+	} catch (error: unknown) {
+		return handleApiError(error, 'Failed to register with verification');
+	}
+};
+
 // Register direct (for development)
 export const registerDirect = async (userData: RegisterDirectRequest): Promise<AuthResponse> => {
 	try {

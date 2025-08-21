@@ -21,6 +21,7 @@ export {
 	refreshToken,
 	registerDirect,
 	registerWithVerification,
+	registerWithVerificationNoPhone,
 	sendEmailVerification,
 	skipProfileUpdate,
 	verifyEmailCode,
