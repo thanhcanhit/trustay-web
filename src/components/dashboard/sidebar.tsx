@@ -47,12 +47,12 @@ const tenantItems: SidebarItem[] = [
     subItems: [
       {
         title: "Thông tin cơ bản",
-        href: "/dashboard/tenant?tab=profile",
+        href: "/profile/personal",
         icon: User
       },
       {
         title: "Bảo mật",
-        href: "/dashboard/tenant?tab=security",
+        href: "/profile/security",
         icon: Key
       }
     ]
@@ -63,29 +63,29 @@ const tenantItems: SidebarItem[] = [
     subItems: [
       {
         title: "Trọ của tôi",
-        href: "/dashboard/tenant?tab=accommodation",
+        href: "/profile/accommodation",
         icon: Home
       },
       {
         title: "Hóa đơn",
-        href: "/dashboard/tenant?tab=bills",
+        href: "/profile/bills",
         icon: Receipt
       }
     ]
   },
   {
     title: "Yêu cầu thuê",
-    href: "/dashboard/tenant/requests",
+    href: "/profile/requests",
     icon: Send
   },
   {
     title: "Trọ đã lưu",
-    href: "/dashboard/tenant/saved",
+    href: "/profile/saved",
     icon: Heart
   },
   {
     title: "Thông báo",
-    href: "/dashboard/tenant/notifications",
+    href: "/profile/notifications",
     icon: Bell
   }
 ]
@@ -237,7 +237,7 @@ export function Sidebar({ userType }: SidebarProps) {
       <div className="p-4 border-t border-gray-200">
         <button
           onClick={logout}
-          className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 w-full transition-colors"
+          className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 w-full transition-colors cursor-pointer"
         >
           <LogOut className="h-5 w-5" />
           <span>Đăng xuất</span>
