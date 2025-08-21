@@ -126,6 +126,16 @@ const ERROR_PATTERNS: Record<string, ErrorPattern> = {
 		patterns: ['invalid phone', 'phone format', 'malformed phone'],
 		message: 'Định dạng số điện thoại không hợp lệ',
 	},
+	vietnamesePhoneInvalid: {
+		patterns: [
+			'phone number must be a valid vietnamese phone number',
+			'vietnamese phone number',
+			'phone must be valid vietnamese',
+			'valid vietnamese phone',
+			'phone number must be valid vietnamese',
+		],
+		message: 'Số điện thoại phải là số điện thoại Việt Nam hợp lệ (VD: 0123456789, 0987654321)',
+	},
 	passwordLength: {
 		patterns: ['password too short', 'password length', 'minimum length'],
 		message: 'Mật khẩu quá ngắn. Vui lòng nhập ít nhất 8 ký tự',
