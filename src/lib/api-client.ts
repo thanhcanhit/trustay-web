@@ -164,8 +164,7 @@ export const createServerApiCall = (getToken: () => Promise<string | null> | str
 		const token = await getToken();
 
 		// Use server-appropriate URL
-		const serverBaseURL =
-			process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://trustay.life:3000';
+		const serverBaseURL = process.env.NEXT_PUBLIC_API_URL || 'http://trustay.life:3000';
 
 		const config: AxiosRequestConfig = {
 			...options,
