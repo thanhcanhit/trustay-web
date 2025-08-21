@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // API Configuration
 export const API_CONFIG = {
@@ -89,6 +89,40 @@ axiosInstance.interceptors.request.use(
 	},
 );
 
+// Helper function to handle token refresh
+const handleTokenRefresh = async (originalRequest: AxiosRequestConfig) => {
+	const refreshToken = TokenManager.getRefreshToken();
+	if (!refreshToken) {
+		return null;
+	}
+
+	try {
+		const response = await axios.post(`${API_CONFIG.BASE_URL}/api/auth/refresh`, {
+			refreshToken,
+		});
+
+		const { access_token, refresh_token } = response.data;
+		TokenManager.setAccessToken(access_token);
+		if (refresh_token) {
+			TokenManager.setRefreshToken(refresh_token);
+		}
+
+		// Retry original request with new token
+		if (!originalRequest.headers) {
+			originalRequest.headers = {};
+		}
+		originalRequest.headers.Authorization = `Bearer ${access_token}`;
+		return axiosInstance(originalRequest);
+	} catch (refreshError) {
+		// Refresh failed, clear tokens and redirect to login
+		TokenManager.clearTokens();
+		if (typeof window !== 'undefined') {
+			window.location.href = '/login';
+		}
+		return Promise.reject(refreshError);
+	}
+};
+
 // Response interceptor to handle token refresh
 axiosInstance.interceptors.response.use(
 	(response: AxiosResponse) => {
@@ -96,36 +130,15 @@ axiosInstance.interceptors.response.use(
 	},
 	async (error) => {
 		const originalRequest = error.config;
+		const shouldRetry = error.response?.status === 401 && !originalRequest._retry;
 
-		if (error.response?.status === 401 && !originalRequest._retry) {
+		if (shouldRetry) {
 			originalRequest._retry = true;
 
-			// Try to refresh token (only on client-side)
 			if (typeof window !== 'undefined') {
-				const refreshToken = TokenManager.getRefreshToken();
-				if (refreshToken) {
-					try {
-						const response = await axios.post(`${API_CONFIG.BASE_URL}/api/auth/refresh`, {
-							refreshToken,
-						});
-
-						const { access_token, refresh_token } = response.data;
-						TokenManager.setAccessToken(access_token);
-						if (refresh_token) {
-							TokenManager.setRefreshToken(refresh_token);
-						}
-
-						// Retry original request with new token
-						originalRequest.headers.Authorization = `Bearer ${access_token}`;
-						return axiosInstance(originalRequest);
-					} catch (refreshError) {
-						// Refresh failed, clear tokens and redirect to login
-						TokenManager.clearTokens();
-						if (typeof window !== 'undefined') {
-							window.location.href = '/login';
-						}
-						return Promise.reject(refreshError);
-					}
+				const refreshResult = await handleTokenRefresh(originalRequest);
+				if (refreshResult) {
+					return refreshResult;
 				}
 			}
 		}
@@ -158,12 +171,54 @@ export class ApiError extends Error {
 	}
 }
 
+// Helper function to extract error message from API response
+const extractErrorMessage = (error: AxiosError): string => {
+	if (!error.response?.data) {
+		return error.message || 'An error occurred';
+	}
+
+	const data = error.response.data;
+	if (typeof data === 'string') {
+		return data;
+	}
+
+	if (typeof data === 'object') {
+		const errorData = data as Record<string, unknown>;
+		const message = errorData.message || errorData.error || errorData.msg || 'Server error';
+		return typeof message === 'string' ? message : JSON.stringify(data);
+	}
+
+	return 'An error occurred';
+};
+
+// Helper function to log API error details
+const logApiError = (error: AxiosError): void => {
+	console.error('API Error Details:', {
+		status: error.response?.status,
+		statusText: error.response?.statusText,
+		data: error.response?.data,
+		config: {
+			url: error.config?.url,
+			method: error.config?.method,
+			headers: error.config?.headers,
+		},
+	});
+};
+
+// Helper function to handle server API errors
+const handleServerApiError = (error: unknown): never => {
+	if (axios.isAxiosError(error)) {
+		logApiError(error);
+		const message = extractErrorMessage(error);
+		throw new ApiError(message, error.response?.status || 0);
+	}
+	throw error;
+};
+
 // Helper function for server-side API calls (for use in server actions)
 export const createServerApiCall = (getToken: () => Promise<string | null> | string | null) => {
 	return async function apiCall<T>(endpoint: string, options: AxiosRequestConfig = {}): Promise<T> {
 		const token = await getToken();
-
-		// Use server-appropriate URL
 		const serverBaseURL = process.env.NEXT_PUBLIC_API_URL || 'http://trustay.life:3000';
 
 		const config: AxiosRequestConfig = {
@@ -190,36 +245,7 @@ export const createServerApiCall = (getToken: () => Promise<string | null> | str
 
 			return response.data;
 		} catch (error) {
-			if (axios.isAxiosError(error)) {
-				console.error('API Error Details:', {
-					status: error.response?.status,
-					statusText: error.response?.statusText,
-					data: error.response?.data,
-					config: {
-						url: error.config?.url,
-						method: error.config?.method,
-						headers: error.config?.headers,
-					},
-				});
-
-				let message = 'An error occurred';
-				if (error.response?.data) {
-					const data = error.response.data;
-					if (typeof data === 'string') {
-						message = data;
-					} else if (typeof data === 'object') {
-						message = data.message || data.error || data.msg || 'Server error';
-						if (typeof message !== 'string') {
-							message = JSON.stringify(data);
-						}
-					}
-				} else if (error.message) {
-					message = error.message;
-				}
-
-				throw new ApiError(message, error.response?.status || 0);
-			}
-			throw error;
+			return handleServerApiError(error);
 		}
 	};
 };
