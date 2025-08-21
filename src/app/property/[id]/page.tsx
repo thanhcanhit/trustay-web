@@ -6,14 +6,6 @@ import { MapPin, Loader2, ChevronDown, ChevronUp, Calendar, Home, PhoneCall, Bui
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { SizingImage } from "@/components/sizing-image"
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
 import { useRoomStore } from "@/stores/roomStore"
 import { AmenitySelector } from "@/components/ui/amenity-selector"
 import { ImageSwiper } from "@/components/ui/image-swiper"
@@ -206,7 +198,7 @@ export default function PropertyDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
       {/* Header */}
-      <div className="bg-white shadow-sm">
+      {/*<div className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-2">
           <Breadcrumb>
             <BreadcrumbList>
@@ -227,6 +219,7 @@ export default function PropertyDetailPage() {
           </Breadcrumb>
         </div>
       </div>
+      */}
 
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -236,13 +229,13 @@ export default function PropertyDetailPage() {
             <ImageSwiper
               images={roomDetail.images || []}
               title={roomDetail.name}
-              className="mb-6"
+              className="mb-8"
               isVerified={roomDetail.isVerified}
               imageContext="detail"
             />
 
             {/* Room Basic Info */}
-            <Card className="mb-6">
+            <Card className="mb-8">
               <CardContent className="p-6">
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">{roomDetail.name}</h1>
               
@@ -250,7 +243,6 @@ export default function PropertyDetailPage() {
                 <span className="text-2xl font-bold text-red-600 mr-4">
                   {formatPrice(parseInt(roomDetail.pricing.basePriceMonthly))} VNĐ/tháng
                 </span>
-                <span className="text-gray-600">• Diện tích: {roomDetail.maxOccupancy} người</span>
               </div>
               
               <div className="flex items-center mb-2">
@@ -267,50 +259,8 @@ export default function PropertyDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Description */}
-            <Card className="mb-6">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Mô tả</h3>
-              <div className={`text-gray-700 whitespace-pre-line ${!isDescriptionExpanded ? 'line-clamp-3' : ''}`}>
-                {roomDetail.description}
-              </div>
-              {roomDetail.description.length > 150 && (
-                <button
-                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                  className="mt-2 text-blue-600 hover:text-blue-800 flex items-center text-sm font-medium"
-                >
-                  {isDescriptionExpanded ? (
-                    <>
-                      Thu gọn <ChevronUp className="h-4 w-4 ml-1" />
-                    </>
-                  ) : (
-                    <>
-                      Xem thêm <ChevronDown className="h-4 w-4 ml-1" />
-                    </>
-                  )}
-                </button>
-              )}
-              </CardContent>
-            </Card>
-
-            {/* Area Section */}
-            <Card className="mb-6">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Diện tích</h3>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Square className="h-4 w-4 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Diện tích phòng</p>
-                  <p className="font-semibold text-gray-900">{roomDetail.areaSqm} m²</p>
-                </div>
-              </div>
-              </CardContent>
-            </Card>
-
             {/* Additional Room Info - Compact Version */}
-            <Card className="mb-6">
+            <Card className="mb-8">
               <CardContent className="p-6">
               {/* Basic Info - Horizontal Layout */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
@@ -359,6 +309,17 @@ export default function PropertyDetailPage() {
                     </p>
                   </div>
                 </div>
+              </div>
+              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="bg-orange-100 rounded-lg">
+                  <Square className="h-4 w-4 text-orange-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900">
+                  Diện tích phòng
+                </h3>
+              </div>
+                <p className="text-gray-600">{roomDetail.areaSqm} m²</p>
               </div>
 
               {/* Amenities - Compact */}
@@ -447,8 +408,34 @@ export default function PropertyDetailPage() {
               </CardContent>
             </Card>
 
+            {/* Description */}
+            <Card className="mb-8">
+              <CardContent className="p-6">
+                <h3 className="font-semibold text-gray-900 mb-3">Mô tả</h3>
+              <div className={`text-gray-700 whitespace-pre-line ${!isDescriptionExpanded ? 'line-clamp-3' : ''}`}>
+                {roomDetail.description}
+              </div>
+              {roomDetail.description.length > 150 && (
+                <button
+                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                  className="mt-2 text-blue-600 hover:text-blue-800 flex items-center text-sm font-medium"
+                >
+                  {isDescriptionExpanded ? (
+                    <>
+                      Thu gọn <ChevronUp className="h-4 w-4 ml-1" />
+                    </>
+                  ) : (
+                    <>
+                      Xem thêm <ChevronDown className="h-4 w-4 ml-1" />
+                    </>
+                  )}
+                </button>
+              )}
+              </CardContent>
+            </Card>           
+
             {/* Google Maps */}
-            <Card className="mb-6">
+            <Card className="mb-8">
               <CardContent className="p-6">
                 <h3 className="font-semibold text-gray-900 mb-3">Vị trí</h3>
               <div className="w-full h-64 bg-gray-200 rounded-lg overflow-hidden">
@@ -522,8 +509,6 @@ export default function PropertyDetailPage() {
               </div>
               </CardContent>
             </Card>
-
-
           </div>
 
           {/* Sidebar */}
@@ -586,19 +571,8 @@ export default function PropertyDetailPage() {
                 </Button>
               </div>
 
-              {/* Price Section */}
-              {/* <div className="p-4 border-b">
-                <div className="text-xl font-bold text-red-600 mb-2">
-                  {formatPrice(parseInt(roomDetail.pricing.basePriceMonthly))} VNĐ/tháng
-                </div>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <div>Tiền cọc: {formatPrice(parseInt(roomDetail.pricing.depositAmount))} VNĐ</div>
-                  <div>{roomDetail.pricing.utilityIncluded ? 'Đã bao gồm tiện ích' : 'Chưa bao gồm tiện ích'}</div>
-                </div>
-              </div> */}
-
               {/* Reviews Section */}
-              <div className="p-4">
+              <div className="px-4">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-medium text-gray-900 text-sm">Đánh giá ({mockReviews.length})</h4>
                   <div className="flex items-center gap-1">
@@ -714,7 +688,7 @@ export default function PropertyDetailPage() {
         {/* Similar Posts - Centered Below Main Content */}
         <div className="container mx-auto py-6">
           <Card className="mb-6 ">
-            <CardContent className="p-6">
+            <CardContent>
             {/* Header with title and "Xem thêm" button */}
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">Tin đăng tương tự</h3>
