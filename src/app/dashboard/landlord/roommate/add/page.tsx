@@ -11,6 +11,7 @@ import { ImageUpload } from "@/components/ui/image-upload"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { CreateRoommatePostData} from "@/types/property"
 import { Users, MapPin, Phone, Heart } from "lucide-react"
+import { isValidVietnamesePhone } from '@/utils/phoneValidation'
 
 export default function AddRoommatePostPage() {
   const router = useRouter()
@@ -112,7 +113,7 @@ export default function AddRoommatePostPage() {
 
     if (!formData.contactInfo?.phone?.trim()) {
       newErrors['contactInfo.phone'] = 'Số điện thoại là bắt buộc'
-    } else if (!/^[0-9]{10,11}$/.test(formData.contactInfo.phone.replace(/\s/g, ''))) {
+    } else if (!isValidVietnamesePhone(formData.contactInfo.phone.replace(/\s/g, ''))) {
       newErrors['contactInfo.phone'] = 'Số điện thoại không hợp lệ'
     }
 

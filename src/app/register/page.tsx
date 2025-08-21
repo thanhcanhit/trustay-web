@@ -26,8 +26,20 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Eye, EyeOff, PhoneCall } from "lucide-react"
+import { getPhoneValidationError, isValidVietnamesePhone } from "@/utils/phoneValidation"
 
 type RegistrationStep = 'form' | 'verification'
+
+// Define validation errors interface
+type ValidationErrors = {
+  email?: string
+  password?: string
+  confirmPassword?: string
+  firstName?: string
+  lastName?: string
+  phone?: string
+  general?: string
+}
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -42,7 +54,6 @@ export default function RegisterPage() {
   const [gender, setGender] = useState<'male' | 'female' | 'other'>('male')
   const [role, setRole] = useState<'tenant' | 'landlord'>('tenant')
 
-
   // UI state
   const [currentStep, setCurrentStep] = useState<RegistrationStep>('form')
   const [verificationCode, setVerificationCode] = useState("")
@@ -52,8 +63,6 @@ export default function RegisterPage() {
   // OTP countdown state
   const [countdown, setCountdown] = useState(0)
   const [canResend, setCanResend] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [error, setError] = useState("")
 
   // Password validation state
   const [showPassword, setShowPassword] = useState(false)
@@ -61,17 +70,146 @@ export default function RegisterPage() {
   const [passwordStrength, setPasswordStrength] = useState(0)
   const [isPasswordFocused, setIsPasswordFocused] = useState(false)
   const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] = useState(false)
-  // const [hasFinishedTyping, setHasFinishedTyping] = useState(false)
 
   // Phone number error handling state
   const [showPhoneErrorDialog, setShowPhoneErrorDialog] = useState(false)
-  const [phoneError, setPhoneError] = useState("")
   const [verificationToken, setVerificationToken] = useState("")
+
+  // Validation errors state - now using object to store all errors
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
+
+  // Helper function to set validation error
+  const setValidationError = (field: keyof ValidationErrors, error: string) => {
+    setValidationErrors(prev => ({
+      ...prev,
+      [field]: error
+    }))
+  }
+
+  // Helper function to clear validation error
+  const clearValidationError = (field: keyof ValidationErrors) => {
+    setValidationErrors(prev => {
+      const newErrors = { ...prev }
+      delete newErrors[field]
+      return newErrors
+    })
+  }
+
+  // Helper function to clear all validation errors
+  const clearAllValidationErrors = () => {
+    setValidationErrors({})
+  }
+
+  // Check if form is valid and can be submitted
+  const isFormValid = (): boolean => {
+    // Check required fields
+    if (!email || !password || !firstName || !lastName || !phone) {
+      return false;
+    }
+    // Check if passwords match
+    if (password !== confirmPassword) {
+      return false;
+    }
+    // Check if there are any validation errors
+    if (Object.keys(validationErrors).length > 0) {
+      return false;
+    }
+    // Check if phone is valid
+    if (phone && !isValidVietnamesePhone(phone)) {
+      return false;
+    }
+    
+    return true;
+  }
 
   // Update password validation when password changes
   const handlePasswordChange = (newPassword: string) => {
     setPassword(newPassword);
-    // setHasFinishedTyping(false);
+    // Clear password validation error when user starts typing
+    if (validationErrors.password) {
+      clearValidationError('password')
+    }
+  }
+
+  // Clear errors when user starts typing
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPhone = e.target.value;
+    setPhone(newPhone);
+    
+    // Clear phone validation error when user starts typing
+    if (validationErrors.phone) {
+      clearValidationError('phone')
+    }
+    
+    // Real-time validation for better UX
+    if (newPhone && newPhone.length >= 10) {
+      // Only validate if user has typed enough characters
+      setTimeout(() => {
+        if (newPhone === phone) { // Only validate if phone hasn't changed
+          if (!isValidVietnamesePhone(newPhone)) {
+            const phoneError = getPhoneValidationError(newPhone);
+            setValidationError('phone', phoneError);
+          }
+        }
+      }, 300); // Reduced delay for better responsiveness
+    }
+  }
+
+  // Validate phone number in real-time when user finishes typing
+  const handlePhoneBlur = () => {
+    if (phone && !isValidVietnamesePhone(phone)) {
+      const phoneError = getPhoneValidationError(phone);
+      setValidationError('phone', phoneError);
+    }
+  }
+
+  // Validate phone number on Enter key press
+  const handlePhoneKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && phone) {
+      if (!isValidVietnamesePhone(phone)) {
+        const phoneError = getPhoneValidationError(phone);
+        setValidationError('phone', phoneError);
+      }
+    }
+  }
+
+  // Clear errors when user starts typing in other fields
+  const handleFieldChange = (field: string, value: string) => {
+    // Clear validation errors when user starts typing
+    if (field === 'email' && validationErrors.email) {
+      clearValidationError('email')
+    }
+    if (field === 'firstName' && validationErrors.firstName) {
+      clearValidationError('firstName')
+    }
+    if (field === 'lastName' && validationErrors.lastName) {
+      clearValidationError('lastName')
+    }
+    if (field === 'password' && validationErrors.password) {
+      clearValidationError('password')
+    }
+    if (field === 'confirmPassword' && validationErrors.confirmPassword) {
+      clearValidationError('confirmPassword')
+    }
+    
+    // Update the specific field
+    switch (field) {
+      case 'email':
+        setEmail(value);
+        break;
+      case 'firstName':
+        setFirstName(value);
+        break;
+      case 'lastName':
+        setLastName(value);
+        break;
+      case 'password':
+        handlePasswordChange(value);
+        break;
+      case 'confirmPassword':
+        setConfirmPassword(value);
+        break;
+    }
   }
 
   // Debug effect for phone error dialog
@@ -81,24 +219,6 @@ export default function RegisterPage() {
       console.log('Phone error dialog should be visible now');
     }
   }, [showPhoneErrorDialog]);
-
-  // Handle confirm password change with copy-paste prevention
-  const handleConfirmPasswordChange = (newConfirmPassword: string) => {
-    setConfirmPassword(newConfirmPassword)
-    // Check if both passwords are filled to show match indicator
-    // if (newConfirmPassword && password) {
-    //   setHasFinishedTyping(true)
-    // } else {
-    //   setHasFinishedTyping(false)
-    // }
-  }
-
-  // Handle when user finishes typing confirm password
-  // const handleConfirmPasswordBlur = () => {
-  //   if (confirmPassword && password) {
-  //     setHasFinishedTyping(true)
-  //   }
-  // }
 
   // Prevent right-click context menu
   const handleConfirmPasswordContextMenu = (e: React.MouseEvent) => {
@@ -155,30 +275,58 @@ export default function RegisterPage() {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
+    clearAllValidationErrors()
 
-    if (password !== confirmPassword) {
-      const errorMsg = "Mật khẩu không khớp!"
-      setError(errorMsg)
-      toast.error(errorMsg)
-      return
+    // Validate all fields and collect all errors
+    const errors: ValidationErrors = {}
+
+    // Check required fields
+    if (!email) {
+      errors.email = "Email là bắt buộc!"
+    }
+    if (!password) {
+      errors.password = "Mật khẩu là bắt buộc!"
+    }
+    if (!confirmPassword) {
+      errors.confirmPassword = "Xác nhận mật khẩu là bắt buộc!"
+    }
+    if (!firstName) {
+      errors.firstName = "Tên là bắt buộc!"
+    }
+    if (!lastName) {
+      errors.lastName = "Họ là bắt buộc!"
+    }
+    if (!phone) {
+      errors.phone = "Số điện thoại là bắt buộc!"
     }
 
-    if (!email || !password || !firstName || !lastName || !phone) {
-      const errorMsg = "Vui lòng điền đầy đủ thông tin!"
-      setError(errorMsg)
-      toast.error(errorMsg)
-      return
+    // Check if passwords match
+    if (password && confirmPassword && password !== confirmPassword) {
+      errors.confirmPassword = "Mật khẩu không khớp!"
+    }
+
+    // Validate phone number format
+    if (phone && !isValidVietnamesePhone(phone)) {
+      errors.phone = getPhoneValidationError(phone)
     }
 
     // Validate password strength
-    if (!validatePassword(password)) {
-      const errors = getPasswordValidationErrors(password)
-      const errorMsg = `Mật khẩu không đủ mạnh:\n${errors.join('\n')}`
-      setError(errorMsg)
-      toast.error(`Mật khẩu không đủ mạnh:\n\n${errors.join('\n')}`, {
-        duration: 5000,
-      })
+    if (password && !validatePassword(password)) {
+      const passwordErrors = getPasswordValidationErrors(password)
+      errors.password = `Mật khẩu không đủ mạnh:\n${passwordErrors.join('\n')}`
+    }
+
+    // If there are any errors, display them all and return
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors)
+      
+      // Show toast for the first error
+      const firstError = Object.values(errors)[0]
+      if (firstError) {
+        toast.error(firstError, {
+          duration: 4000,
+        })
+      }
       return
     }
 
@@ -199,7 +347,7 @@ export default function RegisterPage() {
       setCurrentStep('verification')
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? translateRegistrationError(error.message) : 'Đăng ký thất bại';
-      setError(errorMessage);
+      setValidationError('general', errorMessage);
       toast.error(errorMessage, {
         duration: 4000,
       });
@@ -210,12 +358,13 @@ export default function RegisterPage() {
 
   const handleVerificationSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
+    clearAllValidationErrors()
 
     if (!verificationCode) {
-      const errorMsg = "Vui lòng nhập mã xác thực!"
-      setError(errorMsg)
-      toast.error(errorMsg)
+      setValidationError('general', "Vui lòng nhập mã xác thực!")
+      toast.error("Vui lòng nhập mã xác thực!", {
+        duration: 4000,
+      })
       return
     }
 
@@ -275,20 +424,17 @@ export default function RegisterPage() {
           console.log('Registration error:', registerErrorMessage);
           
           // Check if it's a phone number conflict error - expanded to cover more cases
-          const lowerErrorMessage = registerErrorMessage.toLowerCase();
-          console.log('Lower error message:', lowerErrorMessage);
-          
-          if ((lowerErrorMessage.includes('phone') || lowerErrorMessage.includes('số điện thoại')) && 
-              (lowerErrorMessage.includes('already exists') || 
-               lowerErrorMessage.includes('already used') ||
-               lowerErrorMessage.includes('taken') ||
-               lowerErrorMessage.includes('in use') ||
-               lowerErrorMessage.includes('duplicate') ||
-               lowerErrorMessage.includes('exists') ||
-               lowerErrorMessage.includes('conflict'))) {
+          if ((registerErrorMessage.toLowerCase().includes('phone') || registerErrorMessage.toLowerCase().includes('số điện thoại')) && 
+              (registerErrorMessage.toLowerCase().includes('already exists') || 
+               registerErrorMessage.toLowerCase().includes('already used') ||
+               registerErrorMessage.toLowerCase().includes('taken') ||
+               registerErrorMessage.toLowerCase().includes('in use') ||
+               registerErrorMessage.toLowerCase().includes('duplicate') ||
+               registerErrorMessage.toLowerCase().includes('exists') ||
+               registerErrorMessage.toLowerCase().includes('conflict'))) {
             
             console.log('Phone number conflict detected, showing dialog');
-            setPhoneError(registerErrorMessage)
+            setValidationError('phone', registerErrorMessage)
             setShowPhoneErrorDialog(true)
             setCurrentStep('form') // Go back to form
             return; // Exit early to prevent showing other error messages
@@ -296,7 +442,7 @@ export default function RegisterPage() {
             console.log('Not a phone number conflict, showing regular error');
             // Other registration errors
             const errorMessage = translateVerificationError(registerErrorMessage);
-            setError(errorMessage);
+            setValidationError('general', errorMessage);
             toast.error(errorMessage, {
               duration: 4000,
             });
@@ -305,7 +451,7 @@ export default function RegisterPage() {
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? translateVerificationError(error.message) : 'Xác thực thất bại';
-      setError(errorMessage);
+      setValidationError('general', errorMessage);
       toast.error(errorMessage, {
         duration: 4000,
       });
@@ -314,12 +460,11 @@ export default function RegisterPage() {
     }
   }
 
-
   const resendVerification = async () => {
     if (!canResend || isLoading) return
     
     setIsLoading(true)
-    setError("")
+    clearAllValidationErrors()
 
     try {
       await sendEmailVerification(email)
@@ -332,7 +477,7 @@ export default function RegisterPage() {
       setVerificationCode("") // Clear previous code
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? translateVerificationError(error.message) : 'Gửi lại mã thất bại';
-      setError(errorMessage);
+      setValidationError('general', errorMessage);
       toast.error(errorMessage, {
         duration: 4000,
       });
@@ -402,7 +547,7 @@ export default function RegisterPage() {
   const handleEditPhone = () => {
     setShowPhoneErrorDialog(false)
     // Clear phone error to show clean form
-    setPhoneError("")
+    clearValidationError('phone')
     // User can now edit the phone number in the form
     // The form will be re-submitted with the new phone number
   }
@@ -454,8 +599,41 @@ export default function RegisterPage() {
         router.push('/profile')
       }, 1500)
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? translateVerificationError(error.message) : 'Đăng ký thất bại';
-      toast.error(errorMessage, {
+      const errorMessage = error instanceof Error ? error.message : 'Đăng ký thất bại';
+      
+      // Check if it's a phone number validation error
+      const lowerErrorMessage = errorMessage.toLowerCase();
+      
+      if (lowerErrorMessage.includes('vietnamese phone number') || 
+          lowerErrorMessage.includes('phone number must be valid')) {
+        
+        const phoneError = 'Số điện thoại phải là số điện thoại Việt Nam hợp lệ'
+        setValidationError('phone', phoneError)
+        toast.error(phoneError, {
+          duration: 5000,
+        })
+        return; // Stay on form to let user fix the phone number
+      }
+      
+      // Check if it's a phone number conflict error
+      if ((lowerErrorMessage.includes('phone') || lowerErrorMessage.includes('số điện thoại')) && 
+          (lowerErrorMessage.includes('already exists') || 
+           lowerErrorMessage.includes('already used') ||
+           lowerErrorMessage.includes('taken') ||
+           lowerErrorMessage.includes('in use') ||
+           lowerErrorMessage.includes('duplicate') ||
+           lowerErrorMessage.includes('exists') ||
+           lowerErrorMessage.includes('conflict'))) {
+        
+        setValidationError('phone', errorMessage)
+        setShowPhoneErrorDialog(true)
+        return; // Show phone conflict dialog
+      }
+      
+      // Other errors
+      const translatedError = translateVerificationError(errorMessage);
+      setValidationError('general', translatedError);
+      toast.error(translatedError, {
         duration: 4000,
       });
     } finally {
@@ -515,14 +693,23 @@ export default function RegisterPage() {
                 }
               </p>
               
-              {/* Show phone error message if exists */}
-              {phoneError && (
+              {/* Show success message when returning from verification with token */}
+              {verificationToken && !validationErrors.phone && !validationErrors.general && (
+                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-700">
+                    <strong>Email đã được xác thực!</strong>
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    Vui lòng kiểm tra thông tin và hoàn tất đăng ký
+                  </p>
+                </div>
+              )}
+
+              {/* Show general validation errors */}
+              {validationErrors.general && (
                 <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm text-red-700">
-                    <strong>Lỗi trước đó:</strong> {phoneError}
-                  </p>
-                  <p className="text-xs text-red-600 mt-1">
-                    Vui lòng sửa số điện thoại hoặc chọn bỏ qua để tiếp tục
+                    {validationErrors.general}
                   </p>
                 </div>
               )}
@@ -572,42 +759,69 @@ export default function RegisterPage() {
 
               {/* First Name and Last Name */}
               <div className="grid grid-cols-2 gap-3">
-                <Input
-                  id="firstName"
-                  name="firstName"
-                  type="text"
-                  placeholder="Tên"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required
-                  disabled={isLoading}
-                  className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
-                />
-                <Input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  placeholder="Họ"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                  disabled={isLoading}
-                  className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
-                />
+                <div>
+                  <Input
+                    id="firstName"
+                    name="firstName"
+                    type="text"
+                    placeholder="Tên"
+                    value={firstName}
+                    onChange={(e) => handleFieldChange('firstName', e.target.value)}
+                    required
+                    disabled={isLoading}
+                    className={`w-full h-11 px-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50 ${
+                      validationErrors.firstName ? 'border-red-300 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {validationErrors.firstName && (
+                    <p className="text-xs text-red-600 mt-1">
+                      {validationErrors.firstName}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    type="text"
+                    placeholder="Họ"
+                    value={lastName}
+                    onChange={(e) => handleFieldChange('lastName', e.target.value)}
+                    required
+                    disabled={isLoading}
+                    className={`w-full h-11 px-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50 ${
+                      validationErrors.lastName ? 'border-red-300 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {validationErrors.lastName && (
+                    <p className="text-xs text-red-600 mt-1">
+                      {validationErrors.lastName}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Email */}
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-                className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
-              />
+              <div>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => handleFieldChange('email', e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className={`w-full h-11 px-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50 ${
+                    validationErrors.email ? 'border-red-300 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {validationErrors.email && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {validationErrors.email}
+                  </p>
+                )}
+              </div>
 
               {/* Phone and Gender */}
               <div className="grid grid-cols-2 gap-3">
@@ -618,19 +832,22 @@ export default function RegisterPage() {
                     type="tel"
                     placeholder={verificationToken ? "Số điện thoại (để trống nếu muốn bỏ qua)" : "Số điện thoại"}
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={handlePhoneChange}
+                    onBlur={handlePhoneBlur}
+                    onKeyPress={handlePhoneKeyPress}
                     required={!verificationToken} // Not required if we have verification token
                     disabled={isLoading}
                     className={`w-full h-11 px-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50 ${
-                      verificationToken && phoneError ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      validationErrors.phone ? 'border-red-300 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'
                     }`}
                   />
-                  {verificationToken && phoneError && (
-                    <p className="text-xs text-red-600 mt-1">
-                      Vui lòng nhập số điện thoại mới hoặc để trống để bỏ qua
+                  {/* Show phone validation error */}
+                  {validationErrors.phone && (
+                    <p className="text-xs text-red-600 mt-1 flex items-center">
+                      {validationErrors.phone}
                     </p>
                   )}
-                  {verificationToken && !phoneError && (
+                  {verificationToken && !validationErrors.phone && (
                     <p className="text-xs text-green-600 mt-1">
                       ✓ Email đã xác thực. Bạn có thể để trống số điện thoại nếu muốn
                     </p>
@@ -662,12 +879,14 @@ export default function RegisterPage() {
                     type={showPassword ? "text" : "password"}
                     placeholder="Mật khẩu"
                     value={password}
-                    onChange={(e) => handlePasswordChange(e.target.value)}
+                    onChange={(e) => handleFieldChange('password', e.target.value)}
                     onFocus={() => setIsPasswordFocused(true)}
                     onBlur={() => setIsPasswordFocused(false)}
                     required
                     disabled={isLoading}
-                    className="w-full h-11 px-4 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
+                    className={`w-full h-11 px-4 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50 ${
+                      validationErrors.password ? 'border-red-300 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'
+                    }`}
                   />
                   <Button
                     type="button"
@@ -702,6 +921,13 @@ export default function RegisterPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Password validation error */}
+                {validationErrors.password && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {validationErrors.password}
+                  </p>
+                )}
               </div>
 
               {/* Confirm Password */}
@@ -713,13 +939,15 @@ export default function RegisterPage() {
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="Xác nhận mật khẩu"
                     value={confirmPassword}
-                    onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                    onChange={(e) => handleFieldChange('confirmPassword', e.target.value)}
                     onFocus={() => setIsConfirmPasswordFocused(true)}
                     onBlur={() => setIsConfirmPasswordFocused(false)}
                     onContextMenu={handleConfirmPasswordContextMenu}
                     required
                     disabled={isLoading}
-                    className="w-full h-11 px-4 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
+                    className={`w-full h-11 px-4 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50 ${
+                      validationErrors.confirmPassword ? 'border-red-300 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'
+                    }`}
                   />
                   <Button
                     type="button"
@@ -742,24 +970,29 @@ export default function RegisterPage() {
                   <div className="mt-2">
                     {password === confirmPassword ? (
                       <p className="text-xs text-green-600 flex items-center">
-                        <span className="mr-1">✓</span>
-                        Mật khẩu khớp
+                          Mật khẩu khớp
                       </p>
                     ) : (
                       <p className="text-xs text-red-600 flex items-center">
-                        <span className="mr-1">✗</span>
                         Mật khẩu không khớp
                       </p>
                     )}
                   </div>
+                )}
+
+                {/* Confirm password validation error */}
+                {validationErrors.confirmPassword && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {validationErrors.confirmPassword}
+                  </p>
                 )}
               </div>
 
               <div className="pt-2">
                 <Button
                   type="submit"
-                  disabled={isLoading}
-                  className="w-full h-11 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading || !isFormValid()}
+                  className="w-full h-11 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isLoading 
                     ? "ĐANG XỬ LÝ..." 
@@ -790,7 +1023,7 @@ export default function RegisterPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full py-3 px-4 bg-blue-400 text-white hover:text-white hover:bg-blue-500 font-medium rounded-lg transition-colors flex items-center justify-center space-x-2"
+                  className="w-full py-3 px-4 bg-blue-400 text-white hover:text-white hover:bg-blue-500 font-medium rounded-lg transition-colors flex items-center justify-center space-x-2 cursor-pointer"
                 >
                   <PhoneCall className="h-4 w-4" />
                   <span>Đăng ký bằng Zalo</span>

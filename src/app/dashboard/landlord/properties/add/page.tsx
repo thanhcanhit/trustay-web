@@ -14,6 +14,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { useReferenceStore } from "@/stores/referenceStore"
 import { CreateBlockData, PropertyRule } from "@/types/property"
 import { Building, Phone, Image, FileText, Settings, Check } from "lucide-react"
+import { isValidVietnamesePhone } from '@/utils/phoneValidation'
 
 const STEPS = [
   {
@@ -149,7 +150,7 @@ export default function AddPropertyPage() {
       case 1: // Contact
         if (!formData.contactInfo?.phone?.trim()) {
           newErrors['contactInfo.phone'] = 'Số điện thoại là bắt buộc'
-        } else if (!/^[0-9]{10,11}$/.test(formData.contactInfo.phone.replace(/\s/g, ''))) {
+        } else if (!isValidVietnamesePhone(formData.contactInfo.phone.replace(/\s/g, ''))) {
           newErrors['contactInfo.phone'] = 'Số điện thoại không hợp lệ'
         }
         break
