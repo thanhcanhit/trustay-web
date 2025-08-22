@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
+import { ProfileLayout } from "@/components/profile/profile-layout"
 import { MultiStepForm, StepContent, StepNavigation } from "@/components/ui/multi-step-form"
 import { Card, CardContent } from "@/components/ui/card"
 import { FormField, FormLabel, FormMessage } from "@/components/ui/form"
@@ -16,7 +16,7 @@ import { CreateRoommatePostData } from "@/types/property"
 type FormData = Partial<CreateRoommatePostData & { propertyId: string }>
 import { Users, MapPin, Phone, Heart, Building, Check } from "lucide-react"
 import { isValidVietnamesePhone } from '@/utils/phoneValidation'
-import { useUserStore } from "@/stores/userStore"
+//import { useUserStore } from "@/stores/userStore"
 import { mockProperties } from "@/data/mock-data"
 
 const STEPS = [
@@ -44,7 +44,7 @@ const STEPS = [
 
 export default function AddRoommatePostPage() {
   const router = useRouter()
-  const { user } = useUserStore()
+  //const { user } = useUserStore()
   const [currentStep, setCurrentStep] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -202,7 +202,7 @@ export default function AddRoommatePostPage() {
   }
 
   return (
-    <DashboardLayout userType={user?.role === 'tenant' ? 'tenant' : 'landlord'}>
+    <ProfileLayout>
       <div className="p-6 max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Đăng tìm người ở cùng</h1>
@@ -493,6 +493,6 @@ export default function AddRoommatePostPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </ProfileLayout>
   )
 }

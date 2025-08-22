@@ -1,18 +1,18 @@
 "use client"
 
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
+import { ProfileLayout } from "@/components/profile/profile-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Users, Plus, Search, Filter, MapPin, Calendar, DollarSign, Eye } from "lucide-react"
 import { mockRoommatePosts } from "@/data/mock-data"
 import Link from "next/link"
-import { useUserStore } from "@/stores/userStore"
+//import { useUserStore } from "@/stores/userStore"
 
 export default function ProfileRoommatePage() {
-  const { user } = useUserStore()
+  //const { user } = useUserStore()
 
   return (
-    <DashboardLayout userType={user?.role === 'tenant' ? 'tenant' : 'landlord'}>
+    <ProfileLayout>
       <div className="p-6">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -199,6 +199,6 @@ export default function ProfileRoommatePage() {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </ProfileLayout>
   )
 }

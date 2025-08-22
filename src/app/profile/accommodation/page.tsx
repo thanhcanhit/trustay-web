@@ -4,8 +4,8 @@ import { Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Home } from "lucide-react"
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import { useUserStore } from "@/stores/userStore"
+import { ProfileLayout } from "@/components/profile/profile-layout"
+//import { useUserStore } from "@/stores/userStore"
 
 function AccommodationContent() {
   return (
@@ -40,10 +40,10 @@ function AccommodationContent() {
 }
 
 function AccommodationPageContent() {
-  const { user } = useUserStore()
+  //const { user } = useUserStore()
 
   return (
-    <DashboardLayout userType={user?.role === 'tenant' ? 'tenant' : 'landlord'}>
+    <ProfileLayout>
       <div className="p-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Quản lý lưu trú</h1>
@@ -54,7 +54,7 @@ function AccommodationPageContent() {
           <AccommodationContent />
         </div>
       </div>
-    </DashboardLayout>
+    </ProfileLayout>
   )
 }
 
