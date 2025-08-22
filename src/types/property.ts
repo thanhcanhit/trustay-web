@@ -174,8 +174,9 @@ export interface CreateBlockData {
 	address: Address;
 	description?: string;
 	images: ImageFile[];
+	proofDocuments?: ImageFile[];
 	amenities: string[];
-	rules: Omit<PropertyRule, 'id'>[];
+	rules: string[];
 	contactInfo: ContactInfo;
 }
 
