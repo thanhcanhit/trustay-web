@@ -18,7 +18,13 @@ import {
   ChevronRight,
   Key,
   Receipt,
-  Send
+  Send,
+  Building2,
+  FileText,
+  TrendingUp,
+  Wrench,
+  AlertTriangle,
+  Star,
 } from "lucide-react"
 import { useUserStore } from "@/stores/userStore"
 
@@ -74,6 +80,11 @@ const tenantItems: SidebarItem[] = [
     ]
   },
   {
+    title: "Tìm bạn cùng phòng",
+    href: "/profile/roommate",
+    icon: Users
+  },
+  {
     title: "Yêu cầu thuê",
     href: "/profile/requests",
     icon: Send
@@ -98,13 +109,64 @@ const landlordItems: SidebarItem[] = [
   },
   {
     title: "Quản lý Trọ",
-    href: "/dashboard/landlord/properties",
-    icon: Building
-  },
-  {
-    title: "Tìm bạn cùng phòng",
-    href: "/dashboard/landlord/roommate",
-    icon: Users
+    icon: Building,
+    subItems: [
+      {
+        title: "Dãy trọ/Tòa nhà",
+        href: "/dashboard/landlord/properties",
+        icon: Building2
+      },
+      {
+        title: "Quản lý phòng",
+        href: "/dashboard/landlord/properties/rooms",
+        icon: Home
+      },
+      {
+        title: "Yêu cầu thuê trọ",
+        href: "/dashboard/landlord/rental-requests",
+        icon: Send
+      },
+      {
+        title: "Khách thuê",
+        href: "/dashboard/landlord/tenants",
+        icon: Users
+      },
+      {
+        title: "Hợp đồng",
+        href: "/dashboard/landlord/contracts",
+        icon: FileText
+      },
+      {
+        title: "Hóa đơn",
+        href: "/dashboard/landlord/invoices",
+        icon: Receipt
+      },
+      {
+        title: "Thu chi",
+        href: "/dashboard/landlord/revenue",
+        icon: TrendingUp
+      },
+      {
+        title: "Dịch vụ",
+        href: "/dashboard/landlord/services",
+        icon: Wrench
+      },
+      {
+        title: "Báo cáo",
+        href: "/dashboard/landlord/reports",
+        icon: BarChart3
+      },
+      {
+        title: "Phản ánh, sự cố",
+        href: "/dashboard/landlord/feedback",
+        icon: AlertTriangle
+      },
+      {
+        title: "Khách hàng đánh giá",
+        href: "/dashboard/landlord/reviews",
+        icon: Star
+      }
+    ]
   },
   {
     title: "Quảng cáo Trọ",
@@ -117,6 +179,11 @@ const landlordItems: SidebarItem[] = [
     icon: Heart
   },
   {
+    title: "Tìm bạn cùng phòng",
+    href: "/profile/roommate",
+    icon: Users
+  },
+  {
     title: "Thông báo",
     href: "/dashboard/landlord/notifications",
     icon: Bell
@@ -126,7 +193,7 @@ const landlordItems: SidebarItem[] = [
 export function Sidebar({ userType }: SidebarProps) {
   const pathname = usePathname()
   const { user, logout } = useUserStore()
-  const [expandedItems, setExpandedItems] = useState<string[]>([])
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Quản lý Trọ'])
 
   const items = userType === 'tenant' ? tenantItems : landlordItems
 
@@ -136,6 +203,13 @@ export function Sidebar({ userType }: SidebarProps) {
         ? prev.filter(title => title !== itemTitle)
         : [...prev, itemTitle]
     )
+  }
+
+  const isActiveRoute = (href: string) => {
+    if (href === '/dashboard/landlord/properties') {
+      return pathname.startsWith('/dashboard/landlord/properties')
+    }
+    return pathname === href
   }
 
   return (
@@ -205,23 +279,30 @@ export function Sidebar({ userType }: SidebarProps) {
                 <div className="ml-6 mt-1 space-y-1">
                   {item.subItems!.map((subItem) => {
                     const SubIcon = subItem.icon
-                    const isSubActive = pathname.includes(subItem.href) ||
-                      (subItem.href.includes('?tab=') &&
-                       typeof window !== 'undefined' &&
-                       window.location.search.includes(subItem.href.split('?tab=')[1]))
+                    const isSubActive = isActiveRoute(subItem.href)
 
                     return (
                       <Link
                         key={subItem.href}
                         href={subItem.href}
                         className={cn(
-                          "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                          "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors relative",
                           isSubActive
-                            ? "bg-green-50 text-green-700 border-r-2 border-green-500"
-                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                            ? "text-gray-900 bg-blue-50"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                         )}
                       >
-                        <SubIcon className="h-4 w-4" />
+                        {/* Active indicator */}
+                        {isSubActive && (
+                          <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-blue-600 rounded-r-full" />
+                        )}
+                        
+                        <SubIcon 
+                          className={cn(
+                            "h-5 w-5",
+                            isSubActive ? "text-blue-600" : "text-gray-500"
+                          )} 
+                        />
                         <span>{subItem.title}</span>
                       </Link>
                     )
