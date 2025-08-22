@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
+import { ProfileLayout } from "@/components/profile/profile-layout"
 import { MultiStepForm, StepContent, StepNavigation } from "@/components/ui/multi-step-form"
 import { Card, CardContent } from "@/components/ui/card"
 import { FormField, FormLabel, FormMessage } from "@/components/ui/form"
@@ -13,7 +13,7 @@ import { useReferenceStore } from "@/stores/referenceStore"
 import { CreateBlockData, ImageFile } from "@/types/property"
 import { Building, Phone, ImageIcon, FileText, Settings, Check } from "lucide-react"
 import { isValidVietnamesePhone } from '@/utils/phoneValidation'
-import { useUserStore } from "@/stores/userStore"
+//import { useUserStore } from "@/stores/userStore"
 
 const STEPS = [
   {
@@ -35,7 +35,7 @@ const STEPS = [
 
 export default function AddPropertyPage() {
   const router = useRouter()
-  const { user } = useUserStore()
+  //const { user } = useUserStore()
   const [currentStep, setCurrentStep] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -205,7 +205,7 @@ export default function AddPropertyPage() {
   }
 
   return (
-    <DashboardLayout userType={user?.role === 'tenant' ? 'tenant' : 'landlord'}>
+    <ProfileLayout>
       <div className="p-6 max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Đăng tin tìm trọ</h1>
@@ -558,6 +558,6 @@ export default function AddPropertyPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </ProfileLayout>
   )
 }
