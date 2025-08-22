@@ -29,7 +29,7 @@ function NotificationsContent() {
           <p className="text-gray-600 mb-4">
             Xem tất cả thông báo và cập nhật từ hệ thống
           </p>
-          <Link href="/dashboard/tenant/notifications">
+          <Link href="/profile/notifications">
             <Button>
               <Bell className="h-4 w-4 mr-2" />
               Xem thông báo

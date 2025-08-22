@@ -235,7 +235,7 @@ export async function completeRegistration(formData: FormData) {
 	if (showProfileModal === 'true') {
 		redirect('/profile?showModal=true');
 	} else if (role === 'tenant') {
-		redirect('/dashboard/tenant');
+		redirect('/profile');
 	} else if (role === 'landlord') {
 		redirect('/dashboard/landlord');
 	} else {
