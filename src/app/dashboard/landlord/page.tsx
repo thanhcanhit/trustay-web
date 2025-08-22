@@ -34,15 +34,9 @@ export default function LandlordDashboard() {
           </div>
           <div className="flex space-x-3">
             <Link href="/dashboard/landlord/properties/add">
-              <Button className="bg-blue-500 hover:bg-blue-600">
+              <Button className="bg-blue-500 hover:bg-blue-600 cursor-pointer">
                 <Plus className="h-4 w-4 mr-2" />
                 Thêm trọ mới
-              </Button>
-            </Link>
-            <Link href="/dashboard/landlord/roommate/add">
-              <Button className="bg-green-500 hover:bg-green-600">
-                <Users className="h-4 w-4 mr-2" />
-                Tìm bạn cùng phòng
               </Button>
             </Link>
             <Button className="bg-orange-500 hover:bg-orange-600">

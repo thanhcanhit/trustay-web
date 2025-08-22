@@ -22,6 +22,7 @@ export interface Rule {
 	id: string;
 	name: string;
 	category: string;
+	ruleType: string;
 	description?: string;
 }
 
@@ -260,7 +261,9 @@ export const useReferenceStore = create<ReferenceState>()(
 			getAmenitiesByCategory: (category?: string) => {
 				const { amenities } = get();
 				if (!category) return amenities;
-				return amenities.filter((amenity) => amenity.category === category);
+				// Normalize category to match API response (lowercase)
+				const normalizedCategory = category.toLowerCase();
+				return amenities.filter((amenity) => amenity.category.toLowerCase() === normalizedCategory);
 			},
 
 			// Get cost types by category

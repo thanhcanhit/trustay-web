@@ -60,7 +60,7 @@ export default function LoginPage() {
         // Điều hướng đến dashboard phù hợp sau 1.5 giây
         setTimeout(() => {
           if (user.role === 'tenant') {
-            router.push("/dashboard/tenant")
+            router.push("/profile")
           } else {
             router.push("/dashboard/landlord")
           }
