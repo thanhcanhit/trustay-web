@@ -27,7 +27,6 @@ interface RoomState {
 		hasPrev: boolean;
 		itemCount: number;
 	} | null;
-	lastSearchParams?: string; // Track last search parameters to prevent duplicates
 
 	// Room detail
 	currentRoom: RoomDetail | null;
@@ -90,13 +89,6 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 		const currentState = get();
 		console.log('Store searchRooms called with:', params, 'append:', append);
 
-		// Prevent duplicate API calls for the same parameters
-		const paramsKey = JSON.stringify(params);
-		if (currentState.lastSearchParams === paramsKey && !append) {
-			console.log('Skipping duplicate search request for:', paramsKey);
-			return;
-		}
-
 		if (!append) {
 			set({ searchLoading: true, searchError: null });
 		}
@@ -114,7 +106,6 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 				searchPagination: response.meta,
 				searchLoading: false,
 				searchError: null,
-				lastSearchParams: paramsKey,
 			});
 		} catch (error: unknown) {
 			const errorMessage = error instanceof Error ? error.message : 'Failed to search rooms';

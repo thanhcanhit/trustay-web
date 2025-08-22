@@ -6,7 +6,7 @@ import { Loader2, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { useRoomStore } from '@/stores/roomStore';
-import { type RoomSearchParams } from '@/actions/listings.action';
+//import { type RoomSearchParams } from '@/actions/listings.action';
 import { RoomCard } from '@/components/ui/room-card';
 
 function SearchPageContent() {
@@ -38,32 +38,30 @@ function SearchPageContent() {
   });
 
   // Memoize search parameters to prevent unnecessary re-renders
-  const searchParamsMemo = useMemo(() => ({
-    search: searchParams.get('search') || undefined,
-    provinceId: searchParams.get('provinceId') ? parseInt(searchParams.get('provinceId')!) : undefined,
-    districtId: searchParams.get('districtId') ? parseInt(searchParams.get('districtId')!) : undefined,
-    wardId: searchParams.get('wardId') ? parseInt(searchParams.get('wardId')!) : undefined,
-    roomType: searchParams.get('roomType') || undefined,
-    minPrice: searchParams.get('minPrice') ? parseInt(searchParams.get('minPrice')!) : undefined,
-    maxPrice: searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!) : undefined,
-    minArea: searchParams.get('minArea') ? parseInt(searchParams.get('minArea')!) : undefined,
-    maxArea: searchParams.get('maxArea') ? parseInt(searchParams.get('maxArea')!) : undefined,
-    amenities: searchParams.get('amenities') || undefined,
-    maxOccupancy: searchParams.get('maxOccupancy') ? parseInt(searchParams.get('maxOccupancy')!) : undefined,
-    isVerified: searchParams.get('isVerified') === 'true' ? true : undefined,
-    sortBy: (searchParams.get('sortBy') as 'price' | 'area' | 'createdAt') || 'createdAt',
-    sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
-    limit: 20
-  }), [searchParams]);
+  const searchParamsMemo = useMemo(() => {
+    const params = {
+      search: searchParams.get('search') || undefined,
+      provinceId: searchParams.get('provinceId') ? parseInt(searchParams.get('provinceId')!) : undefined,
+      districtId: searchParams.get('districtId') ? parseInt(searchParams.get('districtId')!) : undefined,
+      wardId: searchParams.get('wardId') ? parseInt(searchParams.get('wardId')!) : undefined,
+      roomType: searchParams.get('roomType') || undefined,
+      minPrice: searchParams.get('minPrice') ? parseInt(searchParams.get('minPrice')!) : undefined,
+      maxPrice: searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!) : undefined,
+      minArea: searchParams.get('minArea') ? parseInt(searchParams.get('minArea')!) : undefined,
+      maxArea: searchParams.get('maxArea') ? parseInt(searchParams.get('maxArea')!) : undefined,
+      amenities: searchParams.get('amenities') || undefined,
+      maxOccupancy: searchParams.get('maxOccupancy') ? parseInt(searchParams.get('maxOccupancy')!) : undefined,
+      isVerified: searchParams.get('isVerified') === 'true' ? true : undefined,
+      sortBy: (searchParams.get('sortBy') as 'price' | 'area' | 'createdAt') || 'createdAt',
+      sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
+      limit: 20
+    };
+    console.log('Search params memoized:', params);
+    return params;
+  }, [searchParams]);
 
   // Load initial results - memoized to prevent recreation
   const loadRooms = useCallback(async (page: number = 1, append: boolean = false) => {
-    // Prevent multiple simultaneous API calls
-    if (isLoading && !append) {
-      console.log('Skipping loadRooms call - already loading');
-      return;
-    }
-
     try {
       if (page === 1 && !append) {
         clearSearchResults();
@@ -84,7 +82,7 @@ function SearchPageContent() {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [searchParamsMemo, searchRooms, clearSearchResults, isLoading]);
+  }, [searchParamsMemo, searchRooms, clearSearchResults]);
 
   // Load more rooms for infinite scroll
   const loadMore = useCallback(() => {
@@ -93,22 +91,17 @@ function SearchPageContent() {
     }
   }, [currentPage, hasMore, isLoadingMore, loadRooms]);
 
+  // Debug: Log when component mounts
+  useEffect(() => {
+    console.log('SearchPageContent mounted, searchParams:', searchParams.toString());
+    console.log('Initial searchParamsMemo:', searchParamsMemo);
+  }, [searchParams, searchParamsMemo]);
+
   // Initial load and reload when search params change
   useEffect(() => {
-    let isMounted = true;
-    
-    // Prevent multiple API calls during initial render
-    const timeoutId = setTimeout(() => {
-      if (isMounted) {
-        setCurrentPage(1);
-        loadRooms(1, false);
-      }
-    }, 0);
-    
-    return () => {
-      isMounted = false;
-      clearTimeout(timeoutId);
-    };
+    console.log('Search params changed, triggering search:', searchParamsMemo);
+    setCurrentPage(1);
+    loadRooms(1, false);
   }, [searchParamsMemo, loadRooms]);
 
   // Infinite scroll handler
@@ -128,12 +121,17 @@ function SearchPageContent() {
 
   // toggleSave is now handled by store (toggleSaveRoom)
 
-  const handleRoomClick = (slug: string) => {
+  const handleRoomClick = useCallback((slug: string) => {
     window.location.href = `/property/${slug}`;
-  };
+  }, []);
+
+  // Mobile Filter Toggle
+  const handleMobileFilterToggle = useCallback(() => {
+    setShowFilters(!showFilters);
+  }, [showFilters]);
 
   // Handle sorting changes
-  const handleSortChange = (sortBy: string, sortOrder: string) => {
+  const handleSortChange = useCallback((sortBy: string, sortOrder: string) => {
     const current = new URLSearchParams(Array.from(searchParams.entries()));
     current.set('sortBy', sortBy);
     current.set('sortOrder', sortOrder);
@@ -141,10 +139,10 @@ function SearchPageContent() {
     const search = current.toString();
     const query = search ? `?${search}` : '';
     router.push(`/search${query}`);
-  };
+  }, [searchParams, router]);
 
   // Sorting Sidebar Component
-  const SortingSidebar = () => {
+  const SortingSidebar = useCallback(() => {
     const currentSortBy = searchParams.get('sortBy') || 'createdAt';
     const currentSortOrder = searchParams.get('sortOrder') || 'desc';
 
@@ -228,7 +226,7 @@ function SearchPageContent() {
         </CardContent>
       </Card>
     );
-  };
+  }, [searchParams, handleSortChange]);
 
   return (
     <div className="container mx-auto px-4 py-8 pt-20">
@@ -242,17 +240,17 @@ function SearchPageContent() {
             </p>
           </div>
           
-          {/* Mobile Filter Toggle */}
-          <div className="lg:hidden">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <SlidersHorizontal className="h-4 w-4 mr-2" />
-              Sắp xếp
-            </Button>
-          </div>
+                     {/* Mobile Filter Toggle */}
+           <div className="lg:hidden">
+             <Button
+               variant="outline"
+               size="sm"
+               onClick={handleMobileFilterToggle}
+             >
+               <SlidersHorizontal className="h-4 w-4 mr-2" />
+               Sắp xếp
+             </Button>
+           </div>
         </div>
       </div>
 
