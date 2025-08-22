@@ -206,9 +206,11 @@ export function Sidebar({ userType }: SidebarProps) {
   }
 
   const isActiveRoute = (href: string) => {
+    // Chỉ highlight mục "Dãy trọ/Tòa nhà" khi đang ở trang properties chính
     if (href === '/dashboard/landlord/properties') {
-      return pathname.startsWith('/dashboard/landlord/properties')
+      return pathname === '/dashboard/landlord/properties'
     }
+    // Các mục khác highlight chính xác theo pathname
     return pathname === href
   }
 
