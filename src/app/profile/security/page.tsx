@@ -7,8 +7,8 @@ import { Card } from "@/components/ui/card"
 import { changePassword } from "@/actions/user.action"
 import { toast } from "sonner"
 import { Key, Eye, EyeOff } from "lucide-react"
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import { useUserStore } from "@/stores/userStore"
+import { ProfileLayout } from "@/components/profile/profile-layout"
+//import { useUserStore } from "@/stores/userStore"
 
 function ChangePasswordCard() {
   const [isChangingPassword, setIsChangingPassword] = useState(false)
@@ -172,10 +172,10 @@ function ChangePasswordCard() {
 }
 
 function SecurityContent() {
-  const { user } = useUserStore()
+  //const { user } = useUserStore()
 
   return (
-    <DashboardLayout userType={user?.role === 'tenant' ? 'tenant' : 'landlord'}>
+    <ProfileLayout>
       <div className="p-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Bảo mật</h1>
@@ -186,7 +186,7 @@ function SecurityContent() {
           <ChangePasswordCard />
         </div>
       </div>
-    </DashboardLayout>
+    </ProfileLayout>
   )
 }
 

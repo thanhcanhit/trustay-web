@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Heart } from "lucide-react"
 import Link from "next/link"
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import { useUserStore } from "@/stores/userStore"
+import { ProfileLayout } from "@/components/profile/profile-layout"
+//import { useUserStore } from "@/stores/userStore"
 
 function SavedContent() {
   return (
@@ -42,10 +42,10 @@ function SavedContent() {
 }
 
 function SavedPageContent() {
-  const { user } = useUserStore()
+  //const { user } = useUserStore()
 
   return (
-    <DashboardLayout userType={user?.role === 'tenant' ? 'tenant' : 'landlord'}>
+    <ProfileLayout>
       <div className="p-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Trọ đã lưu</h1>
@@ -56,7 +56,7 @@ function SavedPageContent() {
           <SavedContent />
         </div>
       </div>
-    </DashboardLayout>
+    </ProfileLayout>
   )
 }
 
