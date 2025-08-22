@@ -80,12 +80,12 @@ export function Navigation() {
     switchRole(newRole)
     setShowUserDropdown(false)
     // Redirect to appropriate dashboard
-    window.location.href = newRole === 'tenant' ? '/dashboard/tenant' : '/dashboard/landlord'
+    window.location.href = newRole === 'tenant' ? '/profile' : '/dashboard/landlord'
   }
 
   // const getDashboardLink = () => {
   //   if (!user) return "/login"
-  //   return user.role === 'tenant' ? '/dashboard/tenant' : '/dashboard/landlord'
+  //   return user.role === 'tenant' ? '/profile' : '/dashboard/landlord'
   // }
 
   // Handle scroll to show/hide second row
@@ -302,7 +302,7 @@ export function Navigation() {
                             </li>
                             <li>
                               <NavigationMenuLink asChild>
-                                <Link href="/dashboard/tenant/find-rental" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                                <Link href="/profile/find-rental" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
                                   <div className="text-sm font-medium leading-none">Đăng tin tìm chỗ thuê</div>
                                   <p className="text-xs leading-tight text-muted-foreground">
                                     Đăng tin tìm kiếm phòng trọ, nhà trọ
@@ -312,7 +312,7 @@ export function Navigation() {
                             </li>
                             <li>
                               <NavigationMenuLink asChild>
-                                <Link href="/dashboard/tenant/find-roommate" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                                <Link href="/profile/find-roommate" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
                                   <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
                                   <p className="text-xs leading-tight text-muted-foreground">
                                     Tìm bạn cùng phòng, người ở ghép

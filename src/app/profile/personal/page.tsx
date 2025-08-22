@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
+import Link from "next/link"
+import { Users, Building2 } from "lucide-react"
 
 function ProfileContent({ user }: { user: UserProfile | null }) {
   const [isEditing, setIsEditing] = useState(false)
@@ -506,9 +508,25 @@ function PersonalProfileContent() {
   return (
     <DashboardLayout userType={user?.role === 'tenant' ? 'tenant' : 'landlord'}>
       <div className="p-6">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Thông tin cá nhân</h1>
-          <p className="text-gray-600">Quản lý thông tin cá nhân của bạn</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Thông tin cá nhân</h1>
+            <p className="text-gray-600">Quản lý thông tin cá nhân của bạn</p>
+          </div>
+          <div className="flex space-x-3">
+            <Link href="/profile/roommate/add">
+              <Button className="bg-green-500 hover:bg-green-600">
+                <Users className="h-4 w-4 mr-2" />
+                Đăng tin tìm bạn cùng phòng
+              </Button>
+            </Link>
+            <Link href="/profile/property/add">
+              <Button className="bg-blue-500 hover:bg-blue-600">
+                <Building2 className="h-4 w-4 mr-2" />
+                Đăng tin tìm trọ
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="space-y-6">

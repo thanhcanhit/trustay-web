@@ -7,84 +7,111 @@ import { MultiStepForm, StepContent, StepNavigation } from "@/components/ui/mult
 import { Card, CardContent } from "@/components/ui/card"
 import { FormField, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { useReferenceStore } from "@/stores/referenceStore"
-import { CreateBlockData, PropertyRule } from "@/types/property"
-import { Building, Phone, Image, FileText, Settings, Check } from "lucide-react"
-import { isValidVietnamesePhone } from '@/utils/phoneValidation'
+import { useUserStore } from "@/stores/userStore"
+import { CreateRoomData, ImageFile } from "@/types/property"
+import { Phone, Camera, FileText, Settings, Check, Home, Zap, Droplets, Wifi, Wrench, DollarSign } from "lucide-react"
+import { getAmenityIcon } from "@/utils/icon-mapping"
 
 const STEPS = [
   {
     id: 'basic-info',
     title: 'Thông tin cơ bản',
-    description: 'Tên và địa chỉ nhà trọ'
+    description: 'Thông tin phòng và chi phí'
   },
   {
-    id: 'contact',
-    title: 'Thông tin liên hệ',
-    description: 'Cách thức liên hệ với bạn'
+    id: 'images-proof',
+    title: 'Hình ảnh & Minh chứng',
+    description: 'Ảnh phòng và các minh chứng'
   },
   {
-    id: 'images',
-    title: 'Hình ảnh',
-    description: 'Ảnh nhà trọ và tiện ích'
-  },
-  {
-    id: 'amenities',
-    title: 'Tiện nghi',
-    description: 'Các tiện ích có sẵn'
-  },
-  {
-    id: 'rules',
-    title: 'Nội quy',
-    description: 'Quy định của nhà trọ'
+    id: 'amenities-rules',
+    title: 'Tiện nghi & Nội quy',
+    description: 'Tiện ích và quy định phòng'
   },
   {
     id: 'description',
     title: 'Mô tả',
-    description: 'Mô tả chi tiết về nhà trọ'
+    description: 'Mô tả chi tiết về phòng'
   }
 ]
 
-export default function AddPropertyPage() {
+// Room types
+const ROOM_TYPES = [
+  { value: 'single', label: 'Phòng đơn' },
+  { value: 'double', label: 'Phòng đôi' },
+  { value: 'triple', label: 'Phòng ba' },
+  { value: 'studio', label: 'Studio' },
+  { value: 'apartment', label: 'Căn hộ mini' }
+]
+
+export default function AddRoomPage() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Reference store for amenities
-  const { amenities, getAmenitiesByCategory, loadReferenceData, isLoading: isLoadingAmenities } = useReferenceStore()
+  // Reference store for amenities and rules
+  const { amenities, rules, loadReferenceData, isLoading: isLoadingReferences } = useReferenceStore()
+  
+  // User store for contact info
+  const { user } = useUserStore()
 
-  // Form data
-  const [formData, setFormData] = useState<Partial<CreateBlockData>>({
+  // Form data for room
+  const [formData, setFormData] = useState<Partial<CreateRoomData> & { roomType?: string, roomCount?: number }>({
+    roomNumber: '',
     name: '',
-    address: {
-      street: '',
-      ward: '',
-      district: '',
-      city: ''
-    },
-    description: '',
-    images: [],
+    area: 0,
+    price: 0,
+    deposit: 0,
+    electricityCost: 0,
+    waterCost: 0,
+    internetCost: 0,
+    cleaningCost: 0,
+    parkingCost: 0,
+    maxOccupants: 1,
+    images: [] as ImageFile[],
     amenities: [],
-    rules: [],
-    contactInfo: {
-      phone: '',
-      email: '',
-      facebook: '',
-      zalo: ''
-    }
+    description: '',
+    roomType: '',
+    roomCount: 1
   })
+
+  // Mock data for buildings and floors (in real app, this would come from API)
+  const [buildings] = useState([
+    { id: '1', name: 'Toà A - 123 Đường ABC' },
+    { id: '2', name: 'Toà B - 456 Đường XYZ' },
+    { id: '3', name: 'Toà C - 789 Đường DEF' }
+  ])
+
+  const [floors] = useState([
+    { id: '1', buildingId: '1', floorNumber: 1, name: 'Tầng 1' },
+    { id: '2', buildingId: '1', floorNumber: 2, name: 'Tầng 2' },
+    { id: '3', buildingId: '1', floorNumber: 3, name: 'Tầng 3' },
+    { id: '4', buildingId: '2', floorNumber: 1, name: 'Tầng 1' },
+    { id: '5', buildingId: '2', floorNumber: 2, name: 'Tầng 2' }
+  ])
+
+  const [selectedBuilding, setSelectedBuilding] = useState('')
+  const [selectedFloor, setSelectedFloor] = useState('')
 
   // Load reference data on component mount
   useEffect(() => {
-    if (amenities.length === 0) {
+    if (amenities.length === 0 || rules.length === 0) {
       loadReferenceData()
     }
-  }, [amenities.length, loadReferenceData])
+  }, [amenities.length, rules.length, loadReferenceData])
+
+  // Auto-fill contact info from user data
+  useEffect(() => {
+    if (user) {
+      // Contact info will be automatically filled from user data
+      console.log('User data loaded:', user)
+    }
+  }, [user])
 
   const updateFormData = (field: string, value: unknown) => {
     setFormData(prev => ({
@@ -100,74 +127,44 @@ export default function AddPropertyPage() {
     }
   }
 
-  const updateNestedFormData = (parent: string, field: string, value: unknown) => {
-    setFormData(prev => {
-      const parentValue = prev[parent as keyof CreateBlockData];
-      const parentObj = (typeof parentValue === 'object' && parentValue !== null && !Array.isArray(parentValue))
-        ? (parentValue as unknown as Record<string, unknown>)
-        : {};
-
-      return {
-        ...prev,
-        [parent]: {
-          ...parentObj,
-          [field]: value
-        }
-      };
-    })
-    // Clear error when user starts typing
-    const errorKey = `${parent}.${field}`
-    if (errors[errorKey]) {
-      setErrors(prev => ({
-        ...prev,
-        [errorKey]: ''
-      }))
-    }
-  }
-
   const validateStep = (step: number): boolean => {
     const newErrors: Record<string, string> = {}
 
     switch (step) {
       case 0: // Basic info
+        if (!formData.roomCount || formData.roomCount <= 0) {
+          newErrors.roomCount = 'Số lượng phòng là bắt buộc và phải lớn hơn 0'
+        }
         if (!formData.name?.trim()) {
-          newErrors.name = 'Tên nhà trọ là bắt buộc'
+          newErrors.name = 'Tên phòng là bắt buộc'
         }
-        if (!formData.address?.street?.trim()) {
-          newErrors['address.street'] = 'Địa chỉ là bắt buộc'
+        if (!selectedBuilding) {
+          newErrors.building = 'Vui lòng chọn toà nhà'
         }
-        if (!formData.address?.ward?.trim()) {
-          newErrors['address.ward'] = 'Phường/Xã là bắt buộc'
+        if (!selectedFloor) {
+          newErrors.floor = 'Vui lòng chọn tầng'
         }
-        if (!formData.address?.district?.trim()) {
-          newErrors['address.district'] = 'Quận/Huyện là bắt buộc'
+        if (!formData.area || formData.area <= 0) {
+          newErrors.area = 'Diện tích phải lớn hơn 0'
         }
-        if (!formData.address?.city?.trim()) {
-          newErrors['address.city'] = 'Tỉnh/Thành phố là bắt buộc'
+        if (!formData.maxOccupants || formData.maxOccupants <= 0) {
+          newErrors.maxOccupants = 'Sức chứa phải lớn hơn 0'
         }
-        break
-
-      case 1: // Contact
-        if (!formData.contactInfo?.phone?.trim()) {
-          newErrors['contactInfo.phone'] = 'Số điện thoại là bắt buộc'
-        } else if (!isValidVietnamesePhone(formData.contactInfo.phone.replace(/\s/g, ''))) {
-          newErrors['contactInfo.phone'] = 'Số điện thoại không hợp lệ'
+        if (!formData.price || formData.price <= 0) {
+          newErrors.price = 'Tiền thuê phải lớn hơn 0'
         }
         break
 
-      case 2: // Images
+      case 1: // Images
         if (!formData.images || formData.images.length === 0) {
           newErrors.images = 'Cần ít nhất 1 hình ảnh'
         }
         break
 
-      case 3: // Amenities - optional
+      case 2: // Amenities + Rules - optional
         break
 
-      case 4: // Rules - optional
-        break
-
-      case 5: // Description
+      case 3: // Description
         if (!formData.description?.trim()) {
           newErrors.description = 'Mô tả là bắt buộc'
         }
@@ -189,8 +186,12 @@ export default function AddPropertyPage() {
 
     setIsLoading(true)
     try {
-      // TODO: Call API to create property
-      console.log('Creating property:', formData)
+      // TODO: Call API to create room
+      console.log('Creating room:', {
+        ...formData,
+        buildingId: selectedBuilding,
+        floorId: selectedFloor
+      })
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000))
@@ -198,7 +199,7 @@ export default function AddPropertyPage() {
       // Redirect to properties list
       router.push('/dashboard/landlord/properties')
     } catch (error) {
-      console.error('Error creating property:', error)
+      console.error('Error creating room:', error)
     } finally {
       setIsLoading(false)
     }
@@ -213,33 +214,15 @@ export default function AddPropertyPage() {
     updateFormData('amenities', newAmenities)
   }
 
-  const addRule = () => {
-    const newRule: Omit<PropertyRule, 'id'> = {
-      title: '',
-      description: '',
-      type: 'allowed'
-    }
-    updateFormData('rules', [...(formData.rules || []), newRule])
-  }
-
-  const updateRule = (index: number, field: keyof PropertyRule, value: unknown) => {
-    const newRules = [...(formData.rules || [])]
-    newRules[index] = { ...newRules[index], [field]: value }
-    updateFormData('rules', newRules)
-  }
-
-  const removeRule = (index: number) => {
-    const newRules = [...(formData.rules || [])]
-    newRules.splice(index, 1)
-    updateFormData('rules', newRules)
-  }
+  // Filter floors based on selected building
+  const availableFloors = floors.filter(floor => floor.buildingId === selectedBuilding)
 
   return (
     <DashboardLayout userType="landlord">
       <div className="p-6 max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Thêm nhà trọ mới</h1>
-          <p className="text-gray-600">Tạo thông tin nhà trọ để bắt đầu cho thuê</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Thêm phòng mới</h1>
+          <p className="text-gray-600">Tạo thông tin phòng để bắt đầu cho thuê</p>
         </div>
 
         <Card>
@@ -251,262 +234,348 @@ export default function AddPropertyPage() {
             >
               {/* Step 1: Basic Info */}
               <StepContent step={0}>
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Building className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Thông tin cơ bản</h3>
+                <div className="space-y-8">
+                  {/* Basic Info Section */}
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Home className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Thông tin cơ bản</h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField>
+                        <FormLabel required>Số lượng phòng</FormLabel>
+                        <Input
+                          type="number"
+                          placeholder="VD: 5"
+                          value={formData.roomCount || ''}
+                          onChange={(e) => updateFormData('roomCount', parseInt(e.target.value) || 1)}
+                        />
+                        <FormMessage>{errors.roomCount}</FormMessage>
+                      </FormField>
+
+                      <FormField>
+                        <FormLabel required>Tên phòng</FormLabel>
+                        <Input
+                          placeholder="VD: Phòng đơn view đẹp, Studio cao cấp..."
+                          value={formData.name || ''}
+                          onChange={(e) => updateFormData('name', e.target.value)}
+                        />
+                        <FormMessage>{errors.name}</FormMessage>
+                      </FormField>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField>
+                        <FormLabel required>Loại phòng</FormLabel>
+                        <Select
+                          value={formData.roomType || ''}
+                          onValueChange={(value) => updateFormData('roomType', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn loại phòng" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ROOM_TYPES.map((type) => (
+                              <SelectItem key={type.value} value={type.value}>
+                                {type.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormField>
+
+                      <FormField>
+                        <FormLabel required>Toà nhà</FormLabel>
+                        <Select
+                          value={selectedBuilding}
+                          onValueChange={setSelectedBuilding}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn toà nhà" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {buildings.map((building) => (
+                              <SelectItem key={building.id} value={building.id}>
+                                {building.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage>{errors.building}</FormMessage>
+                      </FormField>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField>
+                        <FormLabel required>Tầng</FormLabel>
+                        <Select
+                          value={selectedFloor}
+                          onValueChange={setSelectedFloor}
+                          disabled={!selectedBuilding}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn tầng" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableFloors.map((floor) => (
+                              <SelectItem key={floor.id} value={floor.id}>
+                                {floor.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage>{errors.floor}</FormMessage>
+                      </FormField>
+
+                      <FormField>
+                        <FormLabel required>Diện tích (m²)</FormLabel>
+                        <Input
+                          type="number"
+                          placeholder="VD: 25"
+                          value={formData.area || ''}
+                          onChange={(e) => updateFormData('area', parseFloat(e.target.value) || 0)}
+                        />
+                        <FormMessage>{errors.area}</FormMessage>
+                      </FormField>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField>
+                        <FormLabel required>Sức chứa tối đa</FormLabel>
+                        <Input
+                          type="number"
+                          placeholder="VD: 2"
+                          value={formData.maxOccupants || ''}
+                          onChange={(e) => updateFormData('maxOccupants', parseInt(e.target.value) || 1)}
+                        />
+                        <FormMessage>{errors.maxOccupants}</FormMessage>
+                      </FormField>
+
+                      <FormField>
+                        <FormLabel required>Tiền thuê (VNĐ/tháng)</FormLabel>
+                        <Input
+                          type="number"
+                          placeholder="VD: 3000000"
+                          value={formData.price || ''}
+                          onChange={(e) => updateFormData('price', parseFloat(e.target.value) || 0)}
+                        />
+                        <FormMessage>{errors.price}</FormMessage>
+                      </FormField>
+                    </div>
                   </div>
 
-                  <FormField>
-                    <FormLabel required>Tên nhà trọ</FormLabel>
-                    <Input
-                      placeholder="VD: Nhà trọ ABC, Khu trọ sinh viên..."
-                      value={formData.name || ''}
-                      onChange={(e) => updateFormData('name', e.target.value)}
-                    />
-                    <FormMessage>{errors.name}</FormMessage>
-                  </FormField>
+                  {/* Cost Section */}
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <DollarSign className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Chi phí dịch vụ</h3>
+                    </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField>
-                      <FormLabel required>Địa chỉ</FormLabel>
-                      <Input
-                        placeholder="Số nhà, tên đường"
-                        value={formData.address?.street || ''}
-                        onChange={(e) => updateNestedFormData('address', 'street', e.target.value)}
-                      />
-                      <FormMessage>{errors['address.street']}</FormMessage>
-                    </FormField>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField>
+                        <FormLabel>Tiền điện (VNĐ/kWh)</FormLabel>
+                        <div className="relative">
+                          <Zap className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            type="number"
+                            placeholder="VD: 3500"
+                            className="pl-10"
+                            value={formData.electricityCost || ''}
+                            onChange={(e) => updateFormData('electricityCost', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </FormField>
 
-                    <FormField>
-                      <FormLabel required>Phường/Xã</FormLabel>
-                      <Input
-                        placeholder="Phường/Xã"
-                        value={formData.address?.ward || ''}
-                        onChange={(e) => updateNestedFormData('address', 'ward', e.target.value)}
-                      />
-                      <FormMessage>{errors['address.ward']}</FormMessage>
-                    </FormField>
+                      <FormField>
+                        <FormLabel>Tiền nước (VNĐ/m³)</FormLabel>
+                        <div className="relative">
+                          <Droplets className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            type="number"
+                            placeholder="VD: 15000"
+                            className="pl-10"
+                            value={formData.waterCost || ''}
+                            onChange={(e) => updateFormData('waterCost', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </FormField>
+                    </div>
 
-                    <FormField>
-                      <FormLabel required>Quận/Huyện</FormLabel>
-                      <Input
-                        placeholder="Quận/Huyện"
-                        value={formData.address?.district || ''}
-                        onChange={(e) => updateNestedFormData('address', 'district', e.target.value)}
-                      />
-                      <FormMessage>{errors['address.district']}</FormMessage>
-                    </FormField>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField>
+                        <FormLabel>Tiền internet (VNĐ/tháng)</FormLabel>
+                        <div className="relative">
+                          <Wifi className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            type="number"
+                            placeholder="VD: 200000"
+                            className="pl-10"
+                            value={formData.internetCost || ''}
+                            onChange={(e) => updateFormData('internetCost', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </FormField>
 
-                    <FormField>
-                      <FormLabel required>Tỉnh/Thành phố</FormLabel>
-                      <Input
-                        placeholder="Tỉnh/Thành phố"
-                        value={formData.address?.city || ''}
-                        onChange={(e) => updateNestedFormData('address', 'city', e.target.value)}
-                      />
-                      <FormMessage>{errors['address.city']}</FormMessage>
-                    </FormField>
+                      <FormField>
+                        <FormLabel>Tiền dịch vụ (VNĐ/tháng)</FormLabel>
+                        <div className="relative">
+                          <Wrench className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            type="number"
+                            placeholder="VD: 100000"
+                            className="pl-10"
+                            value={formData.cleaningCost || ''}
+                            onChange={(e) => updateFormData('cleaningCost', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      </FormField>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField>
+                        <FormLabel>Tiền cọc (VNĐ)</FormLabel>
+                        <Input
+                          type="number"
+                          placeholder="VD: 3000000"
+                          value={formData.deposit || ''}
+                          onChange={(e) => updateFormData('deposit', parseFloat(e.target.value) || 0)}
+                        />
+                      </FormField>
+
+                      <FormField>
+                        <FormLabel>Phí gửi xe (VNĐ/tháng)</FormLabel>
+                        <Input
+                          type="number"
+                          placeholder="VD: 100000"
+                          value={formData.parkingCost || ''}
+                          onChange={(e) => updateFormData('parkingCost', parseFloat(e.target.value) || 0)}
+                        />
+                      </FormField>
+                    </div>
+                  </div>
+
+                  {/* Contact Info Section - Auto-filled from user data */}
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Phone className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Thông tin liên hệ</h3>
+                      <span className="text-sm text-gray-500">(Tự động từ thông tin người dùng)</span>
+                    </div>
+
+                    {user ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField>
+                          <FormLabel>Số điện thoại</FormLabel>
+                          <Input
+                            value={user.phone || ''}
+                            disabled
+                            className="bg-gray-50"
+                          />
+                        </FormField>
+
+                        <FormField>
+                          <FormLabel>Email</FormLabel>
+                          <Input
+                            value={user.email || ''}
+                            disabled
+                            className="bg-gray-50"
+                          />
+                        </FormField>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 text-gray-500">
+                        Đang tải thông tin người dùng...
+                      </div>
+                    )}
                   </div>
                 </div>
               </StepContent>
 
-              {/* Step 2: Contact Info */}
+              {/* Step 2: Images */}
               <StepContent step={1}>
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Phone className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Thông tin liên hệ</h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField>
-                      <FormLabel required>Số điện thoại</FormLabel>
-                      <Input
-                        placeholder="0123456789"
-                        value={formData.contactInfo?.phone || ''}
-                        onChange={(e) => updateNestedFormData('contactInfo', 'phone', e.target.value)}
-                      />
-                      <FormMessage>{errors['contactInfo.phone']}</FormMessage>
-                    </FormField>
+                <div className="space-y-8">
+                  {/* Images Section */}
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Camera className="h-5 w-5 text-primary"/>
+                      <h3 className="text-lg font-semibold">Hình ảnh phòng</h3>
+                    </div>
 
                     <FormField>
-                      <FormLabel>Email</FormLabel>
-                      <Input
-                        type="email"
-                        placeholder="email@example.com"
-                        value={formData.contactInfo?.email || ''}
-                        onChange={(e) => updateNestedFormData('contactInfo', 'email', e.target.value)}
+                      <FormLabel required>Ảnh phòng</FormLabel>
+                      <ImageUpload
+                        value={formData.images || []}
+                        onChange={(files) => updateFormData('images', files)}
+                        maxFiles={10}
                       />
-                    </FormField>
-
-                    <FormField>
-                      <FormLabel>Facebook</FormLabel>
-                      <Input
-                        placeholder="facebook.com/username"
-                        value={formData.contactInfo?.facebook || ''}
-                        onChange={(e) => updateNestedFormData('contactInfo', 'facebook', e.target.value)}
-                      />
-                    </FormField>
-
-                    <FormField>
-                      <FormLabel>Zalo</FormLabel>
-                      <Input
-                        placeholder="Số Zalo"
-                        value={formData.contactInfo?.zalo || ''}
-                        onChange={(e) => updateNestedFormData('contactInfo', 'zalo', e.target.value)}
-                      />
+                      <FormMessage>{errors.images}</FormMessage>
                     </FormField>
                   </div>
                 </div>
               </StepContent>
 
-              {/* Step 3: Images */}
+              {/* Step 3: Amenities + Rules */}
               <StepContent step={2}>
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-2 mb-4">
-                    {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                    <Image className="h-5 w-5 text-primary"/>
-                    <h3 className="text-lg font-semibold">Hình ảnh nhà trọ</h3>
+                <div className="space-y-8">
+                  {/* Amenities Section */}
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Settings className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Tiện nghi</h3>
+                    </div>
+
+                    {isLoadingReferences ? (
+                      <div className="text-center py-8">
+                        <div className="text-gray-500">Đang tải tiện ích...</div>
+                      </div>
+                    ) : amenities.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="text-gray-500">Không có tiện ích nào</div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {amenities.map((amenity) => {
+                          const IconComponent = getAmenityIcon(amenity.name)
+                          return (
+                            <label
+                              key={amenity.id}
+                              className={`
+                                flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors
+                                ${(formData.amenities || []).includes(amenity.id)
+                                  ? 'border-primary bg-primary/5 text-primary'
+                                  : 'border-gray-200 hover:border-gray-300 bg-gray-50'
+                                }
+                              `}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={(formData.amenities || []).includes(amenity.id)}
+                                onChange={() => toggleAmenity(amenity.id)}
+                                className="sr-only"
+                              />
+                              <IconComponent className="h-5 w-5 text-gray-600" />
+                              <span className="text-sm font-medium text-gray-700">{amenity.name}</span>
+                              {(formData.amenities || []).includes(amenity.id) && (
+                                <Check className="h-4 w-4 ml-auto text-primary" />
+                              )}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
 
-                  <FormField>
-                    <FormLabel required>Ảnh nhà trọ</FormLabel>
-                    <ImageUpload
-                      value={formData.images || []}
-                      onChange={(files) => updateFormData('images', files)}
-                      maxFiles={10}
-                    />
-                    <FormMessage>{errors.images}</FormMessage>
-                  </FormField>
+                  {/* Rules Section - Removed since Room type doesn't have rules */}
                 </div>
               </StepContent>
 
-              {/* Step 4: Amenities */}
+              {/* Step 4: Description */}
               <StepContent step={3}>
                 <div className="space-y-6">
                   <div className="flex items-center space-x-2 mb-4">
-                    <Settings className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Tiện nghi</h3>
-                  </div>
-
-                  {isLoadingAmenities ? (
-                    <div className="text-center py-8">
-                      <div className="text-gray-500">Đang tải tiện ích...</div>
-                    </div>
-                  ) : (
-                    ['basic', 'furniture', 'appliance', 'service', 'security'].map((category) => {
-                      const categoryAmenities = getAmenitiesByCategory(category);
-                      if (categoryAmenities.length === 0) return null;
-
-                      return (
-                        <div key={category} className="space-y-3">
-                          <h4 className="font-medium text-sm text-gray-700 capitalize">
-                            {category === 'basic' && 'Tiện ích cơ bản'}
-                            {category === 'furniture' && 'Nội thất'}
-                            {category === 'appliance' && 'Thiết bị điện'}
-                            {category === 'service' && 'Dịch vụ'}
-                            {category === 'security' && 'An ninh'}
-                          </h4>
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                            {categoryAmenities.map((amenity) => (
-                              <label
-                                key={amenity.id}
-                                className={`
-                                  flex items-center space-x-2 p-3 rounded-lg border cursor-pointer transition-colors
-                                  ${(formData.amenities || []).includes(amenity.id)
-                                    ? 'border-primary bg-primary/5 text-primary'
-                                    : 'border-gray-200 hover:border-gray-300'
-                                  }
-                                `}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={(formData.amenities || []).includes(amenity.id)}
-                                  onChange={() => toggleAmenity(amenity.id)}
-                                  className="sr-only"
-                                />
-                                <span className="text-lg">{amenity.icon || '🏠'}</span>
-                                <span className="text-sm font-medium">{amenity.name}</span>
-                                {(formData.amenities || []).includes(amenity.id) && (
-                                  <Check className="h-4 w-4 ml-auto" />
-                                )}
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </StepContent>
-
-              {/* Step 5: Rules */}
-              <StepContent step={4}>
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <FileText className="h-5 w-5 text-primary" />
-                      <h3 className="text-lg font-semibold">Nội quy nhà trọ</h3>
-                    </div>
-                    <Button type="button" variant="outline" onClick={addRule}>
-                      Thêm quy định
-                    </Button>
-                  </div>
-
-                  {(formData.rules || []).length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                      <p>Chưa có quy định nào</p>
-                      <p className="text-sm">Thêm các quy định để khách thuê biết rõ</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {(formData.rules || []).map((rule, index) => (
-                        <div key={index} className="border rounded-lg p-4 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <select
-                              value={rule.type}
-                              onChange={(e) => updateRule(index, 'type', e.target.value)}
-                              className="px-3 py-1 border rounded text-sm"
-                            >
-                              <option value="allowed">Được phép</option>
-                              <option value="forbidden">Không được phép</option>
-                              <option value="required">Bắt buộc</option>
-                            </select>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => removeRule(index)}
-                            >
-                              Xóa
-                            </Button>
-                          </div>
-                          <Input
-                            placeholder="Tiêu đề quy định"
-                            value={rule.title}
-                            onChange={(e) => updateRule(index, 'title', e.target.value)}
-                          />
-                          <Textarea
-                            placeholder="Mô tả chi tiết"
-                            value={rule.description}
-                            onChange={(e) => updateRule(index, 'description', e.target.value)}
-                            rows={2}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </StepContent>
-
-              {/* Step 6: Description */}
-              <StepContent step={5}>
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-2 mb-4">
                     <FileText className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Mô tả nhà trọ</h3>
+                    <h3 className="text-lg font-semibold">Mô tả phòng</h3>
                   </div>
 
                   <FormField>
@@ -514,7 +583,7 @@ export default function AddPropertyPage() {
                     <RichTextEditor
                       value={formData.description || ''}
                       onChange={(value) => updateFormData('description', value)}
-                      placeholder="Mô tả chi tiết về nhà trọ, vị trí, tiện ích xung quanh..."
+                      placeholder="Mô tả chi tiết về phòng, vị trí, tiện ích xung quanh..."
                     />
                     <FormMessage>{errors.description}</FormMessage>
                   </FormField>
