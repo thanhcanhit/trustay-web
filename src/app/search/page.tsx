@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense, useRef, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ function SearchPageContent() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
+  const isRequestInProgress = useRef(false);
 
   const {
     searchResults: rooms,
@@ -37,8 +38,8 @@ function SearchPageContent() {
     isLoadingMore
   });
 
-  // Get search parameters from URL
-  const getSearchParams = useCallback((): RoomSearchParams => {
+  // Get search parameters from URL - use useMemo for stable reference
+  const currentSearchParams = useMemo((): RoomSearchParams => {
     return {
       search: searchParams.get('search') || undefined,
       provinceId: searchParams.get('provinceId') ? parseInt(searchParams.get('provinceId')!) : undefined,
@@ -58,9 +59,19 @@ function SearchPageContent() {
     };
   }, [searchParams]);
 
-  // Load initial results
-  const loadRooms = useCallback(async (page: number = 1, append: boolean = false) => {
+  // Load initial results - stable function without dependencies
+  const loadRoomsRef = useRef<(page?: number, append?: boolean) => Promise<void>>(async () => {});
+  
+  loadRoomsRef.current = async (page: number = 1, append: boolean = false) => {
     try {
+      // Prevent multiple simultaneous requests using ref
+      if (isRequestInProgress.current) {
+        console.log('Request already in progress, skipping');
+        return;
+      }
+
+      isRequestInProgress.current = true;
+
       if (page === 1 && !append) {
         clearSearchResults();
       }
@@ -69,31 +80,46 @@ function SearchPageContent() {
         setIsLoadingMore(true);
       }
 
-      const params = getSearchParams();
-      console.log('Loading rooms with params:', { ...params, page }, 'append:', append);
+      console.log('Loading rooms with params:', { ...currentSearchParams, page }, 'append:', append);
 
       // Call store action which uses server action
-      await searchRooms({ ...params, page }, append);
+      await searchRooms({ ...currentSearchParams, page }, append);
       setCurrentPage(page);
     } catch (err: unknown) {
       console.error('Failed to load rooms:', err);
     } finally {
       setIsLoadingMore(false);
+      isRequestInProgress.current = false;
     }
-  }, [getSearchParams, searchRooms, clearSearchResults]);
+  };
+
+  const loadRooms = useCallback((page: number = 1, append: boolean = false) => {
+    return loadRoomsRef.current!(page, append);
+  }, []);
 
   // Load more rooms for infinite scroll
   const loadMore = useCallback(() => {
-    if (!isLoadingMore && hasMore) {
+    if (!isLoadingMore && hasMore && !isRequestInProgress.current) {
       loadRooms(currentPage + 1, true);
     }
   }, [currentPage, hasMore, isLoadingMore, loadRooms]);
 
+  // Create a stable key from search params to prevent unnecessary re-renders
+  const searchParamsKey = useMemo(() => {
+    return searchParams.toString();
+  }, [searchParams]);
+
   // Initial load and reload when search params change
   useEffect(() => {
-    setCurrentPage(1);
-    loadRooms(1, false);
-  }, [searchParams, loadRooms]);
+    const timeoutId = setTimeout(() => {
+      if (!isRequestInProgress.current) {
+        setCurrentPage(1);
+        loadRooms(1, false);
+      }
+    }, 100); // Small debounce to prevent rapid successive calls
+
+    return () => clearTimeout(timeoutId);
+  }, [searchParamsKey, loadRooms]);
 
   // Infinite scroll handler
   useEffect(() => {
