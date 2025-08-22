@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
+import { ProfileLayout } from "@/components/profile/profile-layout"
 import Link from "next/link"
 import { Users, Building2 } from "lucide-react"
 
@@ -506,7 +506,7 @@ function PersonalProfileContent() {
   const { user } = useUserStore()
 
   return (
-    <DashboardLayout userType={user?.role === 'tenant' ? 'tenant' : 'landlord'}>
+    <ProfileLayout>
       <div className="p-6">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -533,7 +533,7 @@ function PersonalProfileContent() {
           <ProfileContent user={user} />
         </div>
       </div>
-    </DashboardLayout>
+    </ProfileLayout>
   )
 }
 
