@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -37,29 +37,33 @@ function SearchPageContent() {
     isLoadingMore
   });
 
-  // Get search parameters from URL
-  const getSearchParams = useCallback((): RoomSearchParams => {
-    return {
-      search: searchParams.get('search') || undefined,
-      provinceId: searchParams.get('provinceId') ? parseInt(searchParams.get('provinceId')!) : undefined,
-      districtId: searchParams.get('districtId') ? parseInt(searchParams.get('districtId')!) : undefined,
-      wardId: searchParams.get('wardId') ? parseInt(searchParams.get('wardId')!) : undefined,
-      roomType: searchParams.get('roomType') || undefined,
-      minPrice: searchParams.get('minPrice') ? parseInt(searchParams.get('minPrice')!) : undefined,
-      maxPrice: searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!) : undefined,
-      minArea: searchParams.get('minArea') ? parseInt(searchParams.get('minArea')!) : undefined,
-      maxArea: searchParams.get('maxArea') ? parseInt(searchParams.get('maxArea')!) : undefined,
-      amenities: searchParams.get('amenities') || undefined,
-      maxOccupancy: searchParams.get('maxOccupancy') ? parseInt(searchParams.get('maxOccupancy')!) : undefined,
-      isVerified: searchParams.get('isVerified') === 'true' ? true : undefined,
-      sortBy: (searchParams.get('sortBy') as 'price' | 'area' | 'createdAt') || 'createdAt',
-      sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
-      limit: 20
-    };
-  }, [searchParams]);
+  // Memoize search parameters to prevent unnecessary re-renders
+  const searchParamsMemo = useMemo(() => ({
+    search: searchParams.get('search') || undefined,
+    provinceId: searchParams.get('provinceId') ? parseInt(searchParams.get('provinceId')!) : undefined,
+    districtId: searchParams.get('districtId') ? parseInt(searchParams.get('districtId')!) : undefined,
+    wardId: searchParams.get('wardId') ? parseInt(searchParams.get('wardId')!) : undefined,
+    roomType: searchParams.get('roomType') || undefined,
+    minPrice: searchParams.get('minPrice') ? parseInt(searchParams.get('minPrice')!) : undefined,
+    maxPrice: searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!) : undefined,
+    minArea: searchParams.get('minArea') ? parseInt(searchParams.get('minArea')!) : undefined,
+    maxArea: searchParams.get('maxArea') ? parseInt(searchParams.get('maxArea')!) : undefined,
+    amenities: searchParams.get('amenities') || undefined,
+    maxOccupancy: searchParams.get('maxOccupancy') ? parseInt(searchParams.get('maxOccupancy')!) : undefined,
+    isVerified: searchParams.get('isVerified') === 'true' ? true : undefined,
+    sortBy: (searchParams.get('sortBy') as 'price' | 'area' | 'createdAt') || 'createdAt',
+    sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
+    limit: 20
+  }), [searchParams]);
 
-  // Load initial results
+  // Load initial results - memoized to prevent recreation
   const loadRooms = useCallback(async (page: number = 1, append: boolean = false) => {
+    // Prevent multiple simultaneous API calls
+    if (isLoading && !append) {
+      console.log('Skipping loadRooms call - already loading');
+      return;
+    }
+
     try {
       if (page === 1 && !append) {
         clearSearchResults();
@@ -69,18 +73,18 @@ function SearchPageContent() {
         setIsLoadingMore(true);
       }
 
-      const params = getSearchParams();
-      console.log('Loading rooms with params:', { ...params, page }, 'append:', append);
+      const params = { ...searchParamsMemo, page };
+      console.log('Loading rooms with params:', params, 'append:', append);
 
       // Call store action which uses server action
-      await searchRooms({ ...params, page }, append);
+      await searchRooms(params, append);
       setCurrentPage(page);
     } catch (err: unknown) {
       console.error('Failed to load rooms:', err);
     } finally {
       setIsLoadingMore(false);
     }
-  }, [getSearchParams, searchRooms, clearSearchResults]);
+  }, [searchParamsMemo, searchRooms, clearSearchResults, isLoading]);
 
   // Load more rooms for infinite scroll
   const loadMore = useCallback(() => {
@@ -91,9 +95,21 @@ function SearchPageContent() {
 
   // Initial load and reload when search params change
   useEffect(() => {
-    setCurrentPage(1);
-    loadRooms(1, false);
-  }, [searchParams, loadRooms]);
+    let isMounted = true;
+    
+    // Prevent multiple API calls during initial render
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+        setCurrentPage(1);
+        loadRooms(1, false);
+      }
+    }, 0);
+    
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [searchParamsMemo, loadRooms]);
 
   // Infinite scroll handler
   useEffect(() => {
