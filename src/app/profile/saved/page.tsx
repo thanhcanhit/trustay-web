@@ -29,7 +29,7 @@ function SavedContent() {
           <p className="text-gray-600 mb-4">
             Xem và quản lý tất cả bài viết trọ bạn đã lưu
           </p>
-          <Link href="/dashboard/tenant/saved">
+          <Link href="/profile/saved">
             <Button>
               <Heart className="h-4 w-4 mr-2" />
               Xem trọ đã lưu

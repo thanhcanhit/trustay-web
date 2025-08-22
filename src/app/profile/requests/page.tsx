@@ -29,7 +29,7 @@ function RequestsContent() {
           <p className="text-gray-600 mb-4">
             Xem và quản lý tất cả yêu cầu thuê trọ của bạn
           </p>
-          <Link href="/dashboard/tenant/requests">
+          <Link href="/profile/requests">
             <Button>
               <Send className="h-4 w-4 mr-2" />
               Xem yêu cầu thuê
