@@ -20,26 +20,86 @@ import {
 //   return cookieStore.get('accessToken')?.value || null;
 // };
 
-// Helper function to handle API errors and extract meaningful messages
-const handleApiError = (error: unknown, defaultMessage: string): never => {
+// Types for error handling
+interface ApiErrorResult {
+	success: false;
+	error: string;
+	status?: number;
+}
+
+interface ApiSuccessResult<T> {
+	success: true;
+	data: T;
+}
+
+type ApiResult<T> = ApiSuccessResult<T> | ApiErrorResult;
+
+// Helper function to extract error message from API response
+const extractErrorMessage = (error: unknown, defaultMessage: string): string => {
+	console.error('API Error Debug:', error);
+
 	if (error instanceof AxiosError) {
-		if (error.response?.data?.message) {
-			const apiMessage = error.response.data.message;
-			if (typeof apiMessage === 'object' && apiMessage.message) {
-				throw new Error(apiMessage.message);
-			} else if (typeof apiMessage === 'string') {
-				throw new Error(apiMessage);
+		const status = error.response?.status;
+		const data = error.response?.data;
+
+		console.error('AxiosError Details:', {
+			status,
+			data,
+			message: error.message,
+			config: {
+				url: error.config?.url,
+				method: error.config?.method,
+				baseURL: error.config?.baseURL,
+			},
+		});
+
+		// Handle specific error response formats
+		if (data) {
+			// If data is a string, use it directly
+			if (typeof data === 'string') {
+				return data;
 			}
-		} else if (error.response?.data?.error) {
-			throw new Error(error.response.data.error);
+
+			// If data is an object, try different message fields
+			if (typeof data === 'object') {
+				const errorMessage = data.message || data.error || data.msg;
+
+				if (typeof errorMessage === 'string') {
+					return errorMessage;
+				}
+
+				if (typeof errorMessage === 'object' && errorMessage.message) {
+					return errorMessage.message;
+				}
+			}
+		}
+
+		// Handle by status code if no specific message
+		switch (status) {
+			case 400:
+				return 'Dữ liệu gửi lên không hợp lệ';
+			case 409:
+				return 'Dữ liệu đã tồn tại';
+			case 422:
+				return 'Dữ liệu không hợp lệ';
+			case 500:
+				return 'Lỗi máy chủ. Vui lòng thử lại sau';
+			default:
+				return error.message || defaultMessage;
 		}
 	}
 
 	if (error instanceof Error) {
-		throw new Error(error.message);
+		return error.message;
 	}
 
-	throw new Error(defaultMessage);
+	return defaultMessage;
+};
+
+// Helper function to handle API errors and return error result instead of throwing
+const handleApiError = (error: unknown, defaultMessage: string): never => {
+	const errorMessage = extractErrorMessage(error, defaultMessage);
+	throw new Error(errorMessage);
 };
 
 // Helper function to set auth cookies
@@ -95,7 +155,7 @@ export const verifyEmailCode = async (
 export const registerWithVerification = async (
 	userData: RegisterRequest,
 	verificationToken: string,
-): Promise<AuthResponse> => {
+): Promise<ApiResult<AuthResponse>> => {
 	try {
 		const response = await apiClient.post<AuthResponse>('/api/auth/register', userData, {
 			headers: {
@@ -106,9 +166,14 @@ export const registerWithVerification = async (
 		// Store tokens in cookies
 		await setAuthCookies(response.data.access_token, response.data.refresh_token);
 
-		return response.data;
+		return { success: true, data: response.data };
 	} catch (error: unknown) {
-		return handleApiError(error, 'Failed to register with verification');
+		const errorMessage = extractErrorMessage(error, 'Failed to register with verification');
+		return {
+			success: false,
+			error: errorMessage,
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
 	}
 };
 
@@ -116,7 +181,7 @@ export const registerWithVerification = async (
 export const registerWithVerificationNoPhone = async (
 	userData: Omit<RegisterRequest, 'phone'>,
 	verificationToken: string,
-): Promise<AuthResponse> => {
+): Promise<ApiResult<AuthResponse>> => {
 	try {
 		const response = await apiClient.post<AuthResponse>('/api/auth/register', userData, {
 			headers: {
@@ -127,9 +192,14 @@ export const registerWithVerificationNoPhone = async (
 		// Store tokens in cookies
 		await setAuthCookies(response.data.access_token, response.data.refresh_token);
 
-		return response.data;
+		return { success: true, data: response.data };
 	} catch (error: unknown) {
-		return handleApiError(error, 'Failed to register with verification');
+		const errorMessage = extractErrorMessage(error, 'Failed to register with verification');
+		return {
+			success: false,
+			error: errorMessage,
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
 	}
 };
 
