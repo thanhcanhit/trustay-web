@@ -90,6 +90,10 @@ const ERROR_PATTERNS: Record<string, ErrorPattern> = {
 			'server down',
 			'maintenance',
 			'temporary error',
+			'lỗi máy chủ',
+			'internal server error',
+			'http error 500',
+			'status code 500',
 		],
 		message: 'Lỗi máy chủ. Vui lòng thử lại sau',
 	},
@@ -353,6 +357,16 @@ const ERROR_PATTERNS: Record<string, ErrorPattern> = {
 			'token refresh',
 		],
 		message: 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại',
+	},
+	verificationTokenInvalid: {
+		patterns: [
+			'invalid or expired verification token',
+			'verification token expired',
+			'verification token invalid',
+			'expired verification token',
+			'invalid verification token',
+		],
+		message: 'Mã xác thực đã hết hạn hoặc không hợp lệ. Vui lòng xác thực email lại',
 	},
 	fileUpload: {
 		patterns: [
