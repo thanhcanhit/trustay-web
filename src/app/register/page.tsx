@@ -334,7 +334,20 @@ export default function RegisterPage() {
 
     try {
       // Send verification email
-      await sendEmailVerification(email)
+      const emailResult = await sendEmailVerification(email)
+      
+      if (!emailResult.success) {
+        // Handle API error with specific message
+        console.error('Send email verification failed:', emailResult.error)
+        const mockError = new Error(emailResult.error)
+        const { message } = errorHandler.handleServerError(mockError, 'registration')
+        syncErrors()
+        toast.error(message, {
+          duration: 4000,
+        })
+        return
+      }
+
       toast.success(`Mã xác thực đã được gửi đến email: ${email}. Vui lòng kiểm tra hộp thư của bạn.`, {
         duration: 4000,
       })
@@ -368,8 +381,21 @@ export default function RegisterPage() {
 
     try {
       // Verify email code
-      const verifyResponse = await verifyEmailCode(email, verificationCode)
+      const verifyResult = await verifyEmailCode(email, verificationCode)
 
+      if (!verifyResult.success) {
+        // Handle API error with specific message
+        console.error('Email verification failed:', verifyResult.error)
+        const mockError = new Error(verifyResult.error)
+        const { message } = errorHandler.handleServerError(mockError, 'verification')
+        syncErrors()
+        toast.error(message, {
+          duration: 4000,
+        })
+        return
+      }
+
+      const verifyResponse = verifyResult.data
       if (verifyResponse.verificationToken) {
         // Store verification token for potential retry
         setVerificationToken(verifyResponse.verificationToken)
@@ -480,7 +506,20 @@ export default function RegisterPage() {
     clearAllValidationErrors()
 
     try {
-      await sendEmailVerification(email)
+      const emailResult = await sendEmailVerification(email)
+      
+      if (!emailResult.success) {
+        // Handle API error with specific message
+        console.error('Resend email verification failed:', emailResult.error)
+        const mockError = new Error(emailResult.error)
+        const { message } = errorHandler.handleServerError(mockError, 'verification')
+        syncErrors()
+        toast.error(message, {
+          duration: 4000,
+        })
+        return
+      }
+
       toast.success(`Mã xác thực mới đã được gửi đến email: ${email}. Vui lòng kiểm tra hộp thư của bạn.`, {
         duration: 4000,
       })
@@ -1185,14 +1224,14 @@ export default function RegisterPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full py-3 px-4 bg-blue-400 text-white hover:text-white hover:bg-blue-500 font-medium rounded-lg transition-colors flex items-center justify-center space-x-2 cursor-pointer"
+                  className="w-full h-11 py-3 px-4 bg-blue-400 text-white hover:text-white hover:bg-blue-500 font-medium rounded-lg transition-colors flex items-center justify-center space-x-2 cursor-pointer"
                 >
                   <PhoneCall className="h-4 w-4" />
                   <span>Đăng ký bằng Zalo</span>
                 </Button>
               </div>
 
-              <div className="text-center space-y-1 pt-4">
+              <div className="text-center space-y-1">
                 <p className="text-sm">
                   Đã có tài khoản?  &nbsp;
                   <a href="/login" className="text-green-600 hover:text-green-500">
@@ -1238,7 +1277,7 @@ export default function RegisterPage() {
                 <Button
                   type="submit"
                   disabled={isLoading || verificationCode.length !== 6}
-                  className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isLoading ? "ĐANG XÁC THỰC..." : "XÁC THỰC"}
                 </Button>
@@ -1328,19 +1367,9 @@ export default function RegisterPage() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-11 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-11 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isLoading ? "ĐANG XỬ LÝ..." : "HOÀN TẤT ĐĂNG KÝ"}
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCurrentStep('verification')}
-                  disabled={isLoading}
-                  className="w-full h-11 border-gray-300 text-gray-700 hover:bg-gray-50 font-medium rounded-lg transition-colors disabled:opacity-50"
-                >
-                  ← Quay lại xác thực
                 </Button>
               </div>
             </form>
@@ -1366,7 +1395,7 @@ export default function RegisterPage() {
                 <Button
                   onClick={handleSkipPhone}
                   disabled={isLoading}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+                  className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {isLoading ? "Đang xử lý..." : "Bỏ qua số điện thoại và hoàn tất đăng ký"}
                 </Button>
@@ -1375,7 +1404,7 @@ export default function RegisterPage() {
                   onClick={handleEditPhone}
                   disabled={isLoading}
                   variant="outline"
-                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   Dùng số điện thoại khác
                 </Button>
