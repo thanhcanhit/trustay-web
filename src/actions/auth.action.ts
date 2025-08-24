@@ -122,15 +122,22 @@ async function setAuthCookies(accessToken: string, refreshToken: string) {
 }
 
 // Send email verification code
-export const sendEmailVerification = async (email: string): Promise<VerificationResponse> => {
+export const sendEmailVerification = async (
+	email: string,
+): Promise<ApiResult<VerificationResponse>> => {
 	try {
 		const response = await apiClient.post<VerificationResponse>('/api/verification/send', {
 			type: 'email',
 			email,
 		});
-		return response.data;
+		return { success: true, data: response.data };
 	} catch (error: unknown) {
-		return handleApiError(error, 'Failed to send verification email');
+		const errorMessage = extractErrorMessage(error, 'Failed to send verification email');
+		return {
+			success: false,
+			error: errorMessage,
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
 	}
 };
 
@@ -138,16 +145,21 @@ export const sendEmailVerification = async (email: string): Promise<Verification
 export const verifyEmailCode = async (
 	email: string,
 	code: string,
-): Promise<VerificationResponse> => {
+): Promise<ApiResult<VerificationResponse>> => {
 	try {
 		const response = await apiClient.post<VerificationResponse>('/api/verification/verify', {
 			type: 'email',
 			email,
 			code,
 		});
-		return response.data;
+		return { success: true, data: response.data };
 	} catch (error: unknown) {
-		return handleApiError(error, 'Failed to verify email code');
+		const errorMessage = extractErrorMessage(error, 'Failed to verify email code');
+		return {
+			success: false,
+			error: errorMessage,
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
 	}
 };
 
