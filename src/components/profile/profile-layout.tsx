@@ -3,26 +3,17 @@
 import { useUserStore } from "@/stores/userStore"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { Sidebar } from "./sidebar"
+import { ProfileSidebar } from "./profile-sidebar"
 
-interface DashboardLayoutProps {
+interface ProfileLayoutProps {
   children: React.ReactNode
-  userType: 'tenant' | 'landlord'
 }
 
-export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
+export function ProfileLayout({ children }: ProfileLayoutProps) {
   const { user, isAuthenticated, isLoading, hasHydrated } = useUserStore()
   const router = useRouter()
 
   useEffect(() => {
-    console.log('DashboardLayout state:', {
-      hasHydrated,
-      isLoading,
-      isAuthenticated,
-      user: user ? { id: user.id, role: user.role } : null,
-      userType
-    })
-
     // Don't redirect while loading or before hydration
     if (isLoading || !hasHydrated) return
 
@@ -31,20 +22,10 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
       router.push('/login')
       return
     }
+  }, [isAuthenticated, user, router, isLoading, hasHydrated])
 
-    // Kiểm tra role có khớp không
-    if (user.role !== userType) {
-      console.log('Role mismatch, redirecting:', { userRole: user.role, expectedType: userType })
-      if (user.role === 'tenant') {
-        router.push('/profile')
-      } else {
-        router.push('/dashboard/landlord')
-      }
-    }
-  }, [isAuthenticated, user, userType, router, isLoading, hasHydrated])
-
-  // Show loading while authenticating, hydrating, or if user data doesn't match
-  if (!hasHydrated || isLoading || !isAuthenticated || !user || user.role !== userType) {
+  // Show loading while authenticating or hydrating
+  if (!hasHydrated || isLoading || !isAuthenticated || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -57,7 +38,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex pt-16">
-      <Sidebar userType={userType} />
+      <ProfileSidebar userRole={user.role} />
       <main className="flex-1 overflow-auto">
         {children}
       </main>

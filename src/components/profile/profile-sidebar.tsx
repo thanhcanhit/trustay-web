@@ -5,48 +5,39 @@ import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import {
-  Home,
   User,
   Bell,
-  BarChart3,
-  Building,
+  Home,
   Users,
-  Search,
   Heart,
   LogOut,
   ChevronDown,
   ChevronRight,
-  Key,
   Receipt,
   Send,
-  Building2,
-  FileText,
-  TrendingUp,
-  Wrench,
-  AlertTriangle,
-  Star,
+  Shield,
 } from "lucide-react"
 import { useUserStore } from "@/stores/userStore"
 
-interface SidebarSubItem {
+interface ProfileSidebarSubItem {
   title: string
   href: string
   icon: React.ComponentType<{ className?: string }>
 }
 
-interface SidebarItem {
+interface ProfileSidebarItem {
   title: string
   href?: string
   icon: React.ComponentType<{ className?: string }>
   badge?: string
-  subItems?: SidebarSubItem[]
+  subItems?: ProfileSidebarSubItem[]
 }
 
-interface SidebarProps {
-  userType: 'tenant' | 'landlord'
+interface ProfileSidebarProps {
+  userRole: 'tenant' | 'landlord'
 }
 
-const tenantItems: SidebarItem[] = [
+const profileItems: ProfileSidebarItem[] = [
   {
     title: "Quản lý cá nhân",
     icon: User,
@@ -59,7 +50,7 @@ const tenantItems: SidebarItem[] = [
       {
         title: "Bảo mật",
         href: "/profile/security",
-        icon: Key
+        icon: Shield
       }
     ]
   },
@@ -101,101 +92,10 @@ const tenantItems: SidebarItem[] = [
   }
 ]
 
-const landlordItems: SidebarItem[] = [
-  {
-    title: "Tổng quan",
-    href: "/dashboard/landlord",
-    icon: BarChart3
-  },
-  {
-    title: "Quản lý Trọ",
-    icon: Building,
-    subItems: [
-      {
-        title: "Dãy trọ/Tòa nhà",
-        href: "/dashboard/landlord/properties",
-        icon: Building2
-      },
-      {
-        title: "Quản lý phòng",
-        href: "/dashboard/landlord/properties/rooms",
-        icon: Home
-      },
-      {
-        title: "Yêu cầu thuê trọ",
-        href: "/dashboard/landlord/rental-requests",
-        icon: Send
-      },
-      {
-        title: "Khách thuê",
-        href: "/dashboard/landlord/tenants",
-        icon: Users
-      },
-      {
-        title: "Hợp đồng",
-        href: "/dashboard/landlord/contracts",
-        icon: FileText
-      },
-      {
-        title: "Hóa đơn",
-        href: "/dashboard/landlord/invoices",
-        icon: Receipt
-      },
-      {
-        title: "Thu chi",
-        href: "/dashboard/landlord/revenue",
-        icon: TrendingUp
-      },
-      {
-        title: "Dịch vụ",
-        href: "/dashboard/landlord/services",
-        icon: Wrench
-      },
-      {
-        title: "Báo cáo",
-        href: "/dashboard/landlord/reports",
-        icon: BarChart3
-      },
-      {
-        title: "Phản ánh, sự cố",
-        href: "/dashboard/landlord/feedback",
-        icon: AlertTriangle
-      },
-      {
-        title: "Khách hàng đánh giá",
-        href: "/dashboard/landlord/reviews",
-        icon: Star
-      }
-    ]
-  },
-  {
-    title: "Quảng cáo Trọ",
-    href: "/dashboard/landlord/advertising",
-    icon: Search
-  },
-  {
-    title: "Quản lý cho thuê",
-    href: "/dashboard/landlord/rentals",
-    icon: Heart
-  },
-  {
-    title: "Tìm bạn cùng phòng",
-    href: "/profile/roommate",
-    icon: Users
-  },
-  {
-    title: "Thông báo",
-    href: "/dashboard/landlord/notifications",
-    icon: Bell
-  }
-]
-
-export function Sidebar({ userType }: SidebarProps) {
+export function ProfileSidebar({ userRole }: ProfileSidebarProps) {
   const pathname = usePathname()
   const { user, logout } = useUserStore()
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Quản lý Trọ'])
-
-  const items = userType === 'tenant' ? tenantItems : landlordItems
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Quản lý cá nhân'])
 
   const toggleExpanded = (itemTitle: string) => {
     setExpandedItems(prev =>
@@ -206,11 +106,6 @@ export function Sidebar({ userType }: SidebarProps) {
   }
 
   const isActiveRoute = (href: string) => {
-    // Chỉ highlight mục "Dãy trọ/Tòa nhà" khi đang ở trang properties chính
-    if (href === '/dashboard/landlord/properties') {
-      return pathname === '/dashboard/landlord/properties'
-    }
-    // Các mục khác highlight chính xác theo pathname
     return pathname === href
   }
 
@@ -225,7 +120,7 @@ export function Sidebar({ userType }: SidebarProps) {
           <div>
             <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
             <p className="text-xs text-gray-500">
-              {userType === 'tenant' ? 'Người thuê trọ' : 'Chủ nhà trọ'}
+              {userRole === 'tenant' ? 'Người thuê trọ' : 'Chủ nhà trọ'}
             </p>
           </div>
         </div>
@@ -233,7 +128,7 @@ export function Sidebar({ userType }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1">
-        {items.map((item) => {
+        {profileItems.map((item) => {
           const Icon = item.icon
           const isExpanded = expandedItems.includes(item.title)
           const hasSubItems = item.subItems && item.subItems.length > 0
@@ -290,19 +185,19 @@ export function Sidebar({ userType }: SidebarProps) {
                         className={cn(
                           "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors relative",
                           isSubActive
-                            ? "text-gray-900 bg-blue-50"
+                            ? "text-gray-900 bg-green-50"
                             : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                         )}
                       >
                         {/* Active indicator */}
                         {isSubActive && (
-                          <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-blue-600 rounded-r-full" />
+                          <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-green-600 rounded-r-full" />
                         )}
                         
                         <SubIcon 
                           className={cn(
                             "h-5 w-5",
-                            isSubActive ? "text-blue-600" : "text-gray-500"
+                            isSubActive ? "text-green-600" : "text-gray-500"
                           )} 
                         />
                         <span>{subItem.title}</span>

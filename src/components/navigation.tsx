@@ -80,13 +80,13 @@ export function Navigation() {
     switchRole(newRole)
     setShowUserDropdown(false)
     // Redirect to appropriate dashboard
-    window.location.href = newRole === 'tenant' ? '/dashboard/tenant' : '/dashboard/landlord'
+    window.location.href = newRole === 'tenant' ? '/profile' : '/dashboard/landlord'
   }
 
-  const getDashboardLink = () => {
-    if (!user) return "/login"
-    return user.role === 'tenant' ? '/dashboard/tenant' : '/dashboard/landlord'
-  }
+  // const getDashboardLink = () => {
+  //   if (!user) return "/login"
+  //   return user.role === 'tenant' ? '/profile' : '/dashboard/landlord'
+  // }
 
   // Handle scroll to show/hide second row
   useEffect(() => {
@@ -217,19 +217,22 @@ export function Navigation() {
                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border z-50">
                       <div className="py-1">
                         <Link
-                          href="/profile"
+                          href={"/profile"}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           onClick={() => setShowUserDropdown(false)}
                         >
                           Quản lý cá nhân
                         </Link>
-                        <Link
-                          href={getDashboardLink()}
+                        {user?.role === 'landlord' ? (
+                          <Link
+                          href={"/dashboard/landlord"}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           onClick={() => setShowUserDropdown(false)}
                         >
-                          {user?.role === 'tenant' ? 'Dashboard' : 'Dashboard trọ'}
+                          Quản lý trọ
                         </Link>
+                        ): null}
+                        
                         <hr className="border-gray-200" />
                         <button
                           onClick={handleLogout}
@@ -299,7 +302,7 @@ export function Navigation() {
                             </li>
                             <li>
                               <NavigationMenuLink asChild>
-                                <Link href="/dashboard/tenant/find-rental" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                                <Link href="/profile/find-rental" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
                                   <div className="text-sm font-medium leading-none">Đăng tin tìm chỗ thuê</div>
                                   <p className="text-xs leading-tight text-muted-foreground">
                                     Đăng tin tìm kiếm phòng trọ, nhà trọ
@@ -309,7 +312,7 @@ export function Navigation() {
                             </li>
                             <li>
                               <NavigationMenuLink asChild>
-                                <Link href="/dashboard/tenant/find-roommate" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                                <Link href="/profile/find-roommate" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
                                   <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
                                   <p className="text-xs leading-tight text-muted-foreground">
                                     Tìm bạn cùng phòng, người ở ghép
