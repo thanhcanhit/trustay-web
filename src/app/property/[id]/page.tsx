@@ -241,7 +241,7 @@ export default function PropertyDetailPage() {
               
               <div className="flex items-center mb-2">
                 <span className="text-2xl font-bold text-red-600 mr-4">
-                  {formatPrice(parseInt(roomDetail.pricing.basePriceMonthly))} VNĐ/tháng
+                  {roomDetail.pricing?.basePriceMonthly ? formatPrice(parseInt(roomDetail.pricing.basePriceMonthly)) : 'Liên hệ'} VNĐ/tháng
                 </span>
               </div>
               
@@ -708,7 +708,7 @@ export default function PropertyDetailPage() {
                     searchParams.set('roomType', roomDetail.roomType)
                   }
                   // Add price range based on current room
-                  const currentPrice = parseInt(roomDetail.pricing.basePriceMonthly)
+                  const currentPrice = roomDetail.pricing?.basePriceMonthly ? parseInt(roomDetail.pricing.basePriceMonthly) : 0
                   const minPrice = Math.max(0, currentPrice - 2000000) // -2M VND
                   const maxPrice = currentPrice + 2000000 // +2M VND
                   searchParams.set('minPrice', minPrice.toString())
