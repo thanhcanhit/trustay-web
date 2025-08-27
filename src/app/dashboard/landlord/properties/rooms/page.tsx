@@ -1,81 +1,146 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, Suspense, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, MoreHorizontal } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Eye, Home, ArrowLeft } from "lucide-react"
+import { getRoomsByBuilding, deleteRoom } from "@/actions/room.action"
+import { getBuildings } from "@/actions/building.action"
+import { type Room, type Building } from "@/types/types"
+import Link from "next/link"
+import { toast } from "sonner"
 
-// Mock data for rooms
-const MOCK_ROOMS = [
-  {
-    id: '1',
-    name: 'Phòng đơn view đẹp',
-    roomNumber: 'A101',
-    building: 'Toà A - 123 Đường ABC',
-    floor: 'Tầng 1',
-    area: 25,
-    price: 3000000,
-    status: 'available',
-    tenant: null,
-    lastUpdated: '2024-01-15'
-  },
-  {
-    id: '2',
-    name: 'Studio cao cấp',
-    roomNumber: 'A102',
-    building: 'Toà A - 123 Đường ABC',
-    floor: 'Tầng 1',
-    area: 35,
-    price: 4500000,
-    status: 'occupied',
-    tenant: 'Nguyễn Văn A',
-    lastUpdated: '2024-01-10'
-  },
-  {
-    id: '3',
-    name: 'Phòng đôi tiện nghi',
-    roomNumber: 'A201',
-    building: 'Toà A - 123 Đường ABC',
-    floor: 'Tầng 2',
-    area: 40,
-    price: 5500000,
-    status: 'maintenance',
-    tenant: null,
-    lastUpdated: '2024-01-12'
-  }
-]
 
-const STATUS_COLORS = {
-  available: 'bg-green-100 text-green-800',
-  occupied: 'bg-blue-100 text-blue-800',
-  maintenance: 'bg-yellow-100 text-yellow-800',
-  reserved: 'bg-purple-100 text-purple-800'
+
+
+
+const ROOM_TYPE_LABELS = {
+  boarding_house: 'Nhà trọ',
+  apartment: 'Căn hộ',
+  house: 'Nhà nguyên căn',
+  studio: 'Studio'
 }
 
-const STATUS_LABELS = {
-  available: 'Còn trống',
-  occupied: 'Đã cho thuê',
-  maintenance: 'Bảo trì',
-  reserved: 'Đã đặt trước'
-}
-
-export default function RoomsManagementPage() {
+function RoomsManagementPageContent() {
+  const searchParams = useSearchParams()
+  const selectedBuildingId = searchParams.get('buildingId')
+  
+  const [rooms, setRooms] = useState<Room[]>([])
+  const [buildings, setBuildings] = useState<Building[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [buildingFilter, setBuildingFilter] = useState('all')
+  const [buildingFilter, setBuildingFilter] = useState(selectedBuildingId || 'all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const pageLimit = 12
 
-  const filteredRooms = MOCK_ROOMS.filter(room => {
-    const matchesSearch = room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         room.roomNumber.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || room.status === statusFilter
-    const matchesBuilding = buildingFilter === 'all' || room.building === buildingFilter
+  // Fetch buildings for filter dropdown
+  const fetchBuildings = async () => {
+    try {
+      const response = await getBuildings({ limit: 1000 })
+      console.log('Buildings response:', response)
+      if (response.success && response.data.buildings && Array.isArray(response.data.buildings)) {
+        setBuildings(response.data.buildings)
+      } else {
+        console.error('Buildings fetch failed:', !response.success ? response.error : 'Unknown error')
+        setBuildings([])
+      }
+    } catch (error) {
+      console.error('Error fetching buildings:', error)
+      setBuildings([])
+    }
+  }
+
+  // Fetch rooms based on filters
+  const fetchRooms = useCallback(async () => {
+    try {
+      setLoading(true)
+      
+      if (buildingFilter === 'all') {
+        // If no specific building selected, we need to fetch from all buildings
+        const allRooms: Room[] = []
+        if (buildings && Array.isArray(buildings)) {
+          for (const building of buildings) {
+          try {
+            const response = await getRoomsByBuilding(building.id, {
+              page: 1,
+              limit: 1000
+            })
+            if (response.success && response.data.data && Array.isArray(response.data.data)) {
+              allRooms.push(...response.data.data.map(room => ({ ...room, building })))
+            }
+          } catch (err) {
+            console.error(`Error fetching rooms for building ${building.id}:`, err)
+          }
+        }
+        }
+          setRooms(allRooms)
+      } else {
+        // Fetch rooms for specific building
+        const response = await getRoomsByBuilding(buildingFilter, {
+          page: currentPage,
+          limit: pageLimit
+        })
+        
+        if (response.success && response.data.data && Array.isArray(response.data.data)) {
+          const selectedBuilding = buildings && Array.isArray(buildings) ? buildings.find(b => b.id === buildingFilter) : undefined
+          setRooms(response.data.data.map(room => ({ ...room, building: selectedBuilding })))
+          setTotalPages(response.data.pagination?.totalPages || 1)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching rooms:', error)
+      toast.error('Không thể tải danh sách phòng')
+      setRooms([])
+    } finally {
+      setLoading(false)
+    }
+  }, [buildingFilter, buildings, currentPage, pageLimit])
+
+  useEffect(() => {
+    fetchBuildings()
+  }, [])
+
+  useEffect(() => {
+    if (buildings.length > 0) {
+      fetchRooms()
+    }
+  }, [buildings, fetchRooms])
+
+  // Filter rooms based on search and status
+  const filteredRooms = (rooms && Array.isArray(rooms) ? rooms : []).filter(room => {
+    const matchesSearch = room.name.toLowerCase().includes(searchTerm.toLowerCase())
+    // We'll filter by status when we have room instances data
+    const matchesStatus = statusFilter === 'all' || room.isActive
     
-    return matchesSearch && matchesStatus && matchesBuilding
+    return matchesSearch && matchesStatus
   })
+
+  const handleDeleteRoom = async (roomId: string, roomName: string) => {
+    if (!confirm(`Bạn có chắc chắn muốn xóa loại phòng "${roomName}"?`)) {
+      return
+    }
+
+    try {
+      const response = await deleteRoom(roomId)
+      if (!response.success) {
+        toast.error(response.error)
+        return
+      }
+      
+      toast.success('Xóa loại phòng thành công')
+      fetchRooms() // Refresh list
+    } catch (error) {
+      console.error('Error deleting room:', error)
+      toast.error('Không thể xóa loại phòng. Vui lòng kiểm tra lại.')
+    }
+  }
 
   return (
     <DashboardLayout userType="landlord">
@@ -86,129 +151,238 @@ export default function RoomsManagementPage() {
         </div>
 
         {/* Filters and Actions */}
+        {/* Header Actions */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between">
-          <div className="flex flex-col sm:flex-row gap-4 flex-1">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Tìm kiếm phòng..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="available">Còn trống</SelectItem>
-                <SelectItem value="occupied">Đã cho thuê</SelectItem>
-                <SelectItem value="maintenance">Bảo trì</SelectItem>
-                <SelectItem value="reserved">Đã đặt trước</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={buildingFilter} onValueChange={setBuildingFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Toà nhà" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả toà nhà</SelectItem>
-                <SelectItem value="Toà A - 123 Đường ABC">Toà A</SelectItem>
-                <SelectItem value="Toà B - 456 Đường XYZ">Toà B</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex items-center space-x-4">
+            {selectedBuildingId && (
+              <Link href="/dashboard/landlord/properties">
+                <Button variant="outline" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Quay lại dãy trọ
+                </Button>
+              </Link>
+            )}
           </div>
-
-          <Button className="flex items-center space-x-2">
-            <Plus className="h-4 w-4" />
-            <span>Thêm phòng</span>
-          </Button>
+          
+          <div className="flex gap-2">
+            <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Thêm loại phòng
+              </Button>
+            </Link>
+          </div>
         </div>
+
+        {/* Filters */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Tìm kiếm loại phòng..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả trạng thái</SelectItem>
+              <SelectItem value="active">Đang hoạt động</SelectItem>
+              <SelectItem value="inactive">Tạm dừng</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={buildingFilter} onValueChange={setBuildingFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Dãy trọ" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả dãy trọ</SelectItem>
+              {buildings && Array.isArray(buildings) && buildings.map((building) => (
+                <SelectItem key={building.id} value={building.id}>
+                  {building.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Đang tải danh sách phòng...</p>
+            </div>
+          </div>
+        )}
 
         {/* Rooms Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRooms.map((room) => (
-            <Card key={room.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg mb-1">{room.name}</CardTitle>
-                    <p className="text-sm text-gray-600">{room.roomNumber}</p>
-                  </div>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="pt-0">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Toà nhà:</span>
-                    <span className="font-medium">{room.building}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Tầng:</span>
-                    <span className="font-medium">{room.floor}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Diện tích:</span>
-                    <span className="font-medium">{room.area}m²</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Giá thuê:</span>
-                    <span className="font-medium text-green-600">
-                      {room.price.toLocaleString('vi-VN')} VNĐ
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Trạng thái:</span>
-                    <Badge className={STATUS_COLORS[room.status as keyof typeof STATUS_COLORS]}>
-                      {STATUS_LABELS[room.status as keyof typeof STATUS_LABELS]}
-                    </Badge>
-                  </div>
-                  
-                  {room.tenant && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Người thuê:</span>
-                      <span className="font-medium">{room.tenant}</span>
+        {!loading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredRooms.map((room) => (
+              <Card key={room.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg mb-1">{room.name}</CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline">
+                          {ROOM_TYPE_LABELS[room.roomType as keyof typeof ROOM_TYPE_LABELS]}
+                        </Badge>
+                        <Badge className={room.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                          {room.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                        </Badge>
+                      </div>
                     </div>
-                  )}
-                  
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Cập nhật:</span>
-                    <span className="text-gray-500">{room.lastUpdated}</span>
                   </div>
-                </div>
+                </CardHeader>
                 
-                <div className="mt-4 flex space-x-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    Chỉnh sửa
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    Chi tiết
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Dãy trọ:</span>
+                      <span className="font-medium">{room.building?.name || 'N/A'}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Tầng:</span>
+                      <span className="font-medium">Tầng {room.floorNumber}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Diện tích:</span>
+                      <span className="font-medium">{room.areaSqm}m²</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Sức chứa:</span>
+                      <span className="font-medium">{room.maxOccupancy} người</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Tổng phòng:</span>
+                      <span className="font-medium">{room.totalRooms} phòng</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Giá thuê:</span>
+                      <span className="font-medium text-green-600">
+                        {(room.pricing?.basePriceMonthly || 0).toLocaleString('vi-VN')} VNĐ/tháng
+                      </span>
+                    </div>
+                    
+                    {room.statusCounts && (
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <div className="text-xs text-gray-600 mb-2">Tình trạng phòng:</div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="flex justify-between">
+                            <span>Trống:</span>
+                            <span className="font-medium text-green-600">{room.statusCounts.available}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Đã thuê:</span>
+                            <span className="font-medium text-blue-600">{room.statusCounts.occupied}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Cập nhật:</span>
+                      <span className="text-gray-500">{new Date(room.updatedAt).toLocaleDateString('vi-VN')}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 flex space-x-2">
+                    <Link href={`/dashboard/landlord/properties/rooms/${room.id}`} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full">
+                        <Eye className="h-4 w-4 mr-1" />
+                        Chi tiết
+                      </Button>
+                    </Link>
+                    <Link href={`/dashboard/landlord/properties/rooms/${room.id}/edit`} className="flex-1">
+                      <Button size="sm" className="w-full">
+                        <Edit className="h-4 w-4 mr-1" />
+                        Sửa
+                      </Button>
+                    </Link>
+                  </div>
+                  
+                  <div className="mt-2 flex space-x-2">
+                    <Link href={`/dashboard/landlord/properties/rooms/${room.id}/instances`} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full text-green-600 border-green-300 hover:bg-green-50">
+                        <Home className="h-4 w-4 mr-1" />
+                        Quản lý phòng
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                      onClick={() => handleDeleteRoom(room.id, room.name)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-        {filteredRooms.length === 0 && (
+        {/* Empty State */}
+        {!loading && filteredRooms.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">Không tìm thấy phòng nào</div>
-            <Button variant="outline">Thêm phòng đầu tiên</Button>
+            <div className="text-gray-500 mb-4">
+              {searchTerm ? 'Không tìm thấy loại phòng nào phù hợp' : 'Chưa có loại phòng nào'}
+            </div>
+            <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}>
+              <Button>Thêm loại phòng đầu tiên</Button>
+            </Link>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && filteredRooms.length > 0 && totalPages > 1 && buildingFilter !== 'all' && (
+          <div className="flex justify-center mt-8">
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+              >
+                Trước
+              </Button>
+              <span className="flex items-center px-4 text-sm text-gray-600">
+                Trang {currentPage} / {totalPages}
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Sau
+              </Button>
+            </div>
           </div>
         )}
       </div>
     </DashboardLayout>
+  )
+}
+
+export default function RoomsManagementPage() {
+  return (
+    <Suspense fallback={<DashboardLayout userType="landlord"><div className="p-6">Loading...</div></DashboardLayout>}>
+      <RoomsManagementPageContent />
+    </Suspense>
   )
 }
