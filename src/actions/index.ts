@@ -45,6 +45,16 @@ export {
 	getCostTypes,
 	getRules,
 } from './reference.action';
+// Export room seeking actions
+export {
+	createRoomSeekingPost,
+	deleteRoomSeekingPost,
+	getRoomSeekingPostById,
+	getRoomSeekingPosts,
+	incrementRoomSeekingPostContact,
+	updateRoomSeekingPost,
+	updateRoomSeekingPostStatus,
+} from './room-seeking.action';
 // Export upload actions
 export {
 	getImageUrl,

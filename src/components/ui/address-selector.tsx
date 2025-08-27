@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLocationStore } from '@/stores/locationStore';
@@ -34,6 +34,9 @@ export function AddressSelector({
   const [selectedDistrict, setSelectedDistrict] = useState<number | null>(value?.district?.id || null);
   const [selectedWard, setSelectedWard] = useState<number | null>(value?.ward?.id || null);
   const [street, setStreet] = useState(value?.street || '');
+  
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   // Location store
   const {
@@ -83,8 +86,8 @@ export function AddressSelector({
       province: province || null
     };
 
-    onChange?.(addressData);
-  }, [selectedProvince, selectedDistrict, selectedWard, street, getProvinceById, getDistrictById, getWardById, onChange]);
+    onChangeRef.current?.(addressData);
+  }, [selectedProvince, selectedDistrict, selectedWard, street, getProvinceById, getDistrictById, getWardById]);
 
   const handleProvinceChange = (provinceId: number | null) => {
     setSelectedProvince(provinceId);

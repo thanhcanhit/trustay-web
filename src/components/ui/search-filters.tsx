@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AmenityFilter } from '@/components/ui/amenity-filter';
-import { PriceFilter } from '@/components/ui/price-filter';
+import { PriceFilterDropdown } from '@/components/ui/price-filter';
 import { LocationFilter } from '@/components/ui/location-filter';
 import { AreaFilter } from '@/components/ui/area-filter';
 import { SearchInputWithFilters } from '@/components/ui/search-input-with-filters';
@@ -70,10 +70,10 @@ export function SearchFilters({ className = '' }: SearchFiltersProps) {
           onSelectionChange={setAreaFilter}
         />
 
-        <PriceFilter
-          selectedPrices={priceFilter}
-          onSelectionChange={setPriceFilter}
-        />
+                    <PriceFilterDropdown
+              selectedPrices={priceFilter}
+              onSelectionChange={setPriceFilter}
+            />
 
         <AmenityFilter
           selectedAmenities={amenityFilter}

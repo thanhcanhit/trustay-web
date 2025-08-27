@@ -8,7 +8,7 @@ import { useUserStore } from "@/stores/userStore"
 import { useSearchFilters } from "@/hooks/use-search-filters"
 import { Button } from "@/components/ui/button"
 import { AmenityFilter } from "@/components/ui/amenity-filter"
-import { PriceFilter } from "@/components/ui/price-filter"
+import { PriceFilterDropdown } from "@/components/ui/price-filter"
 import { LocationFilter } from "@/components/ui/location-filter"
 import { AreaFilter } from "@/components/ui/area-filter"
 import { SearchInputWithFilters } from "@/components/ui/search-input-with-filters"
@@ -22,10 +22,11 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu"
+
 import {
-  Plus,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Plus
 } from "lucide-react"
 import Image from "next/image"
 
@@ -284,7 +285,7 @@ export function Navigation() {
                   <NavigationMenu viewport={false}>
                     <NavigationMenuList>
                       <NavigationMenuItem>
-                                                 <NavigationMenuTrigger className="text-white bg-green-600 hover:bg-green-700 font-medium px-4 py-2 rounded-md cursor-pointer">
+                        <NavigationMenuTrigger className="text-white bg-green-600 hover:bg-green-700 font-medium px-4 py-2 rounded-md cursor-pointer">
                           <Plus className="h-4 w-4 mr-2" />
                           Đăng bài
                         </NavigationMenuTrigger>
@@ -292,17 +293,7 @@ export function Navigation() {
                           <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px]">
                             <li>
                               <NavigationMenuLink asChild>
-                                <Link href="/dashboard/landlord/properties/add" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                                  <div className="text-sm font-medium leading-none">Đăng tin cho thuê</div>
-                                  <p className="text-xs leading-tight text-muted-foreground">
-                                    Đăng tin cho thuê phòng trọ, nhà trọ của bạn
-                                  </p>
-                                </Link>
-                              </NavigationMenuLink>
-                            </li>
-                            <li>
-                              <NavigationMenuLink asChild>
-                                <Link href="/profile/find-rental" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                                <Link href="/post?type=room-seeking" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
                                   <div className="text-sm font-medium leading-none">Đăng tin tìm chỗ thuê</div>
                                   <p className="text-xs leading-tight text-muted-foreground">
                                     Đăng tin tìm kiếm phòng trọ, nhà trọ
@@ -312,10 +303,20 @@ export function Navigation() {
                             </li>
                             <li>
                               <NavigationMenuLink asChild>
-                                <Link href="/profile/find-roommate" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                                <Link href="/post?type=roommate" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
                                   <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
                                   <p className="text-xs leading-tight text-muted-foreground">
                                     Tìm bạn cùng phòng, người ở ghép
+                                  </p>
+                                </Link>
+                              </NavigationMenuLink>
+                            </li>
+                            <li>
+                              <NavigationMenuLink asChild>
+                                <Link href="/post?type=rental" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                                  <div className="text-sm font-medium leading-none">Đăng tin cho thuê</div>
+                                  <p className="text-xs leading-tight text-muted-foreground">
+                                    Đăng tin cho thuê phòng trọ, nhà trọ của bạn
                                   </p>
                                 </Link>
                               </NavigationMenuLink>
@@ -357,7 +358,7 @@ export function Navigation() {
                       }}
                     />
 
-                    <PriceFilter
+                    <PriceFilterDropdown
                       selectedPrices={activeFiltersList.find(af => af.id === 'price')?.values || []}
                       onSelectionChange={(prices) => {
                         // Clear existing price filters
