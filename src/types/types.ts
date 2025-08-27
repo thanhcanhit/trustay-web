@@ -258,14 +258,15 @@ export interface Room {
 	id: string;
 	name: string;
 	description?: string;
-	roomType: 'boarding_house' | 'apartment' | 'house' | 'studio';
-	areaSqm: number;
+	roomType: 'boarding_house' | 'dormitory' | 'sleepbox' | 'apartment' | 'whole_house';
+	areaSqm: string | number;
 	maxOccupancy: number;
 	totalRooms: number;
 	floorNumber: number;
-	roomNumberPrefix: string;
-	roomNumberStart: number;
+	roomNumberPrefix?: string;
+	roomNumberStart?: number;
 	isActive: boolean;
+	isVerified?: boolean;
 	slug?: string;
 	buildingId: string;
 	createdAt: string;
@@ -274,12 +275,15 @@ export interface Room {
 	building?: {
 		id: string;
 		name: string;
+		addressLine1?: string;
 	};
-	pricing: RoomPricing;
-	amenities: RoomAmenity[];
-	costs: RoomCost[];
-	rules: RoomRule[];
-	instances?: RoomInstance[];
+	pricing?: RoomPricing;
+	amenities?: RoomAmenity[];
+	costs?: RoomCost[];
+	rules?: RoomRule[];
+	roomInstances?: RoomInstance[];
+	availableInstancesCount?: number;
+	occupiedInstancesCount?: number;
 	statusCounts?: {
 		available: number;
 		occupied: number;
@@ -292,7 +296,7 @@ export interface Room {
 export interface CreateRoomRequest {
 	name: string;
 	description?: string;
-	roomType: 'boarding_house' | 'apartment' | 'house' | 'studio';
+	roomType: 'boarding_house' | 'dormitory' | 'sleepbox' | 'apartment' | 'whole_house';
 	areaSqm: number;
 	maxOccupancy: number;
 	totalRooms: number;
@@ -309,13 +313,11 @@ export interface CreateRoomRequest {
 export type UpdateRoomRequest = Partial<CreateRoomRequest>;
 
 export interface RoomsListResponse {
-	data: Room[];
-	pagination: {
-		page: number;
-		limit: number;
-		total: number;
-		totalPages: number;
-	};
+	rooms: Room[];
+	total: number;
+	page: number;
+	limit: number;
+	totalPages: number;
 }
 
 export interface RoomInstancesResponse {
@@ -346,7 +348,7 @@ export interface BulkUpdateRoomInstancesRequest {
 export type UserRole = 'tenant' | 'landlord';
 export type Gender = 'male' | 'female' | 'other';
 export type VerificationType = 'email' | 'phone';
-export type RoomType = 'boarding_house' | 'apartment' | 'house' | 'studio';
+export type RoomType = 'boarding_house' | 'dormitory' | 'sleepbox' | 'apartment' | 'whole_house';
 export type RoomStatus = 'available' | 'occupied' | 'maintenance' | 'reserved' | 'unavailable';
 export type CostType = 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
 export type BillingCycle = 'monthly' | 'quarterly' | 'yearly';

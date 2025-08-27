@@ -220,8 +220,6 @@ export const getRoomsByBuilding = async (
 			method: 'GET',
 		});
 
-		console.log('Rooms API Response:', response);
-
 		return {
 			success: true,
 			data: response.data, // Extract the actual data object

@@ -15,10 +15,6 @@ import { type Room, type Building } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
 
-
-
-
-
 const ROOM_TYPE_LABELS = {
   boarding_house: 'Nhà trọ',
   apartment: 'Căn hộ',
@@ -38,22 +34,26 @@ function RoomsManagementPageContent() {
   const [buildingFilter, setBuildingFilter] = useState(selectedBuildingId || 'all')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [hasBuildings, setHasBuildings] = useState(false)
   const pageLimit = 12
 
   // Fetch buildings for filter dropdown
   const fetchBuildings = async () => {
     try {
       const response = await getBuildings({ limit: 1000 })
-      console.log('Buildings response:', response)
+      
       if (response.success && response.data.buildings && Array.isArray(response.data.buildings)) {
         setBuildings(response.data.buildings)
+        setHasBuildings(response.data.buildings.length > 0)
       } else {
         console.error('Buildings fetch failed:', !response.success ? response.error : 'Unknown error')
         setBuildings([])
+        setHasBuildings(false)
       }
     } catch (error) {
       console.error('Error fetching buildings:', error)
       setBuildings([])
+      setHasBuildings(false)
     }
   }
 
@@ -67,20 +67,20 @@ function RoomsManagementPageContent() {
         const allRooms: Room[] = []
         if (buildings && Array.isArray(buildings)) {
           for (const building of buildings) {
-          try {
-            const response = await getRoomsByBuilding(building.id, {
-              page: 1,
-              limit: 1000
-            })
-            if (response.success && response.data.data && Array.isArray(response.data.data)) {
-              allRooms.push(...response.data.data.map(room => ({ ...room, building })))
+            try {
+              const response = await getRoomsByBuilding(building.id, {
+                page: 1,
+                limit: 1000
+              })
+              if (response.success && response.data.rooms && Array.isArray(response.data.rooms)) {
+                allRooms.push(...response.data.rooms.map(room => ({ ...room, building })))
+              }
+            } catch (err) {
+              console.error(`Error fetching rooms for building ${building.id}:`, err)
             }
-          } catch (err) {
-            console.error(`Error fetching rooms for building ${building.id}:`, err)
           }
         }
-        }
-          setRooms(allRooms)
+        setRooms(allRooms)
       } else {
         // Fetch rooms for specific building
         const response = await getRoomsByBuilding(buildingFilter, {
@@ -88,10 +88,13 @@ function RoomsManagementPageContent() {
           limit: pageLimit
         })
         
-        if (response.success && response.data.data && Array.isArray(response.data.data)) {
+        if (response.success && response.data.rooms && Array.isArray(response.data.rooms)) {
           const selectedBuilding = buildings && Array.isArray(buildings) ? buildings.find(b => b.id === buildingFilter) : undefined
-          setRooms(response.data.data.map(room => ({ ...room, building: selectedBuilding })))
-          setTotalPages(response.data.pagination?.totalPages || 1)
+          setRooms(response.data.rooms.map(room => ({ ...room, building: selectedBuilding })))
+          setTotalPages(response.data.totalPages || 1)
+        } else {
+          setRooms([])
+          setTotalPages(1)
         }
       }
     } catch (error) {
@@ -110,8 +113,11 @@ function RoomsManagementPageContent() {
   useEffect(() => {
     if (buildings.length > 0) {
       fetchRooms()
+    } else if (hasBuildings === false) {
+      // If we've confirmed there are no buildings, stop loading
+      setLoading(false)
     }
-  }, [buildings, fetchRooms])
+  }, [buildings, fetchRooms, hasBuildings])
 
   // Filter rooms based on search and status
   const filteredRooms = (rooms && Array.isArray(rooms) ? rooms : []).filter(room => {
@@ -252,42 +258,44 @@ function RoomsManagementPageContent() {
                     
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Tầng:</span>
-                      <span className="font-medium">Tầng {room.floorNumber}</span>
+                      <span className="font-medium">Tầng {room.floorNumber || 'Chưa cập nhật'}</span>
                     </div>
                     
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Diện tích:</span>
-                      <span className="font-medium">{room.areaSqm}m²</span>
+                      <span className="font-medium">{room.areaSqm || 'Chưa cập nhật'}m²</span>
                     </div>
                     
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Sức chứa:</span>
-                      <span className="font-medium">{room.maxOccupancy} người</span>
+                      <span className="font-medium">{room.maxOccupancy || 'Chưa cập nhật'} người</span>
                     </div>
                     
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Tổng phòng:</span>
-                      <span className="font-medium">{room.totalRooms} phòng</span>
+                      <span className="font-medium">{room.totalRooms || 'Chưa cập nhật'} phòng</span>
                     </div>
                     
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Giá thuê:</span>
                       <span className="font-medium text-green-600">
-                        {(room.pricing?.basePriceMonthly || 0).toLocaleString('vi-VN')} VNĐ/tháng
+                        {room.pricing?.basePriceMonthly ? 
+                          Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN') : 
+                          'Chưa cập nhật'} VNĐ/tháng
                       </span>
                     </div>
                     
-                    {room.statusCounts && (
+                    {room.availableInstancesCount !== undefined && room.occupiedInstancesCount !== undefined && (
                       <div className="bg-gray-50 p-3 rounded-lg">
                         <div className="text-xs text-gray-600 mb-2">Tình trạng phòng:</div>
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div className="flex justify-between">
                             <span>Trống:</span>
-                            <span className="font-medium text-green-600">{room.statusCounts.available}</span>
+                            <span className="font-medium text-green-600">{room.availableInstancesCount}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Đã thuê:</span>
-                            <span className="font-medium text-blue-600">{room.statusCounts.occupied}</span>
+                            <span className="font-medium text-blue-600">{room.occupiedInstancesCount}</span>
                           </div>
                         </div>
                       </div>
@@ -340,11 +348,18 @@ function RoomsManagementPageContent() {
         {!loading && filteredRooms.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-500 mb-4">
-              {searchTerm ? 'Không tìm thấy loại phòng nào phù hợp' : 'Chưa có loại phòng nào'}
+              {!hasBuildings ? 'Bạn chưa có dãy trọ nào. Vui lòng tạo dãy trọ trước khi thêm phòng.' : 
+               searchTerm ? 'Không tìm thấy loại phòng nào phù hợp' : 'Chưa có loại phòng nào'}
             </div>
-            <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}>
-              <Button>Thêm loại phòng đầu tiên</Button>
-            </Link>
+            {!hasBuildings ? (
+              <Link href="/dashboard/landlord/properties/add">
+                <Button>Tạo dãy trọ đầu tiên</Button>
+              </Link>
+            ) : (
+              <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}>
+                <Button>Thêm loại phòng đầu tiên</Button>
+              </Link>
+            )}
           </div>
         )}
 

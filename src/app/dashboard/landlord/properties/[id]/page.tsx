@@ -45,15 +45,15 @@ export default function BuildingDetailPage() {
       try {
         const roomsResponse = await getRoomsByBuilding(buildingId, { limit: 1000 })
         
-        if (roomsResponse.success && roomsResponse.data.data && Array.isArray(roomsResponse.data.data)) {
-          const totalRooms = roomsResponse.data.data.reduce((sum, room) => sum + (room.totalRooms || 0), 0)
+        if (roomsResponse.success && roomsResponse.data.rooms && Array.isArray(roomsResponse.data.rooms)) {
+          const totalRooms = roomsResponse.data.rooms.reduce((sum: number, room: { totalRooms?: number }) => sum + (room.totalRooms || 0), 0)
           
           // Get status counts for all rooms
           let availableCount = 0
           let occupiedCount = 0
           let maintenanceCount = 0
           
-          for (const room of roomsResponse.data.data) {
+          for (const room of roomsResponse.data.rooms) {
             if (room.statusCounts) {
               availableCount += room.statusCounts.available
               occupiedCount += room.statusCounts.occupied

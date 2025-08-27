@@ -199,7 +199,9 @@ export default function RoomDetailPage() {
                 <div>
                   <p className="text-sm text-gray-600">Giá thuê/tháng</p>
                   <p className="text-xl font-bold text-gray-900">
-                    {room.pricing.basePriceMonthly.toLocaleString('vi-VN')} VNĐ
+                    {room.pricing?.basePriceMonthly ? 
+                      Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN') : 
+                      'Chưa cập nhật'} VNĐ
                   </p>
                 </div>
               </div>
@@ -248,17 +250,17 @@ export default function RoomDetailPage() {
                     
                     <div>
                       <h4 className="font-medium text-gray-900 mb-1">Diện tích</h4>
-                      <p className="text-gray-600">{room.areaSqm} m²</p>
+                      <p className="text-gray-600">{room.areaSqm || 'Chưa cập nhật'} m²</p>
                     </div>
                     
                     <div>
                       <h4 className="font-medium text-gray-900 mb-1">Sức chứa</h4>
-                      <p className="text-gray-600">{room.maxOccupancy} người</p>
+                      <p className="text-gray-600">{room.maxOccupancy || 'Chưa cập nhật'} người</p>
                     </div>
                     
                     <div>
                       <h4 className="font-medium text-gray-900 mb-1">Tầng</h4>
-                      <p className="text-gray-600">Tầng {room.floorNumber}</p>
+                      <p className="text-gray-600">Tầng {room.floorNumber || 'Chưa cập nhật'}</p>
                     </div>
                   </div>
                   
@@ -283,28 +285,30 @@ export default function RoomDetailPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <h4 className="font-medium text-gray-900 mb-1">Số lượng phòng</h4>
-                      <p className="text-gray-600">{room.totalRooms} phòng</p>
+                      <p className="text-gray-600">{room.totalRooms || 'Chưa cập nhật'} phòng</p>
                     </div>
                     
                     <div>
                       <h4 className="font-medium text-gray-900 mb-1">Tiền tố</h4>
-                      <p className="text-gray-600">{room.roomNumberPrefix}</p>
+                      <p className="text-gray-600">{room.roomNumberPrefix || 'Chưa cập nhật'}</p>
                     </div>
                     
                     <div>
                       <h4 className="font-medium text-gray-900 mb-1">Số bắt đầu</h4>
-                      <p className="text-gray-600">{room.roomNumberStart}</p>
+                      <p className="text-gray-600">{room.roomNumberStart || 'Chưa cập nhật'}</p>
                     </div>
                     
                     <div>
                       <h4 className="font-medium text-gray-900 mb-1">Ví dụ số phòng</h4>
                       <p className="text-gray-600">
-                        {room.roomNumberPrefix}{room.roomNumberStart}, {room.roomNumberPrefix}{room.roomNumberStart + 1}, ...
+                        {room.roomNumberPrefix && room.roomNumberStart ? 
+                          `${room.roomNumberPrefix}${room.roomNumberStart}, ${room.roomNumberPrefix}${room.roomNumberStart + 1}, ...` : 
+                          'Chưa cập nhật'}
                       </p>
                     </div>
                   </div>
                   
-                  {room.statusCounts && (
+                  {(room.statusCounts || (room.availableInstancesCount !== undefined && room.occupiedInstancesCount !== undefined)) && (
                     <>
                       <Separator />
                       <div>
@@ -312,20 +316,28 @@ export default function RoomDetailPage() {
                         <div className="space-y-2">
                           <div className="flex justify-between">
                             <span className="text-gray-600">Còn trống:</span>
-                            <span className="font-medium text-green-600">{room.statusCounts.available}</span>
+                            <span className="font-medium text-green-600">
+                              {room.statusCounts?.available || room.availableInstancesCount || 0}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-600">Đã cho thuê:</span>
-                            <span className="font-medium text-blue-600">{room.statusCounts.occupied}</span>
+                            <span className="font-medium text-blue-600">
+                              {room.statusCounts?.occupied || room.occupiedInstancesCount || 0}
+                            </span>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Bảo trì:</span>
-                            <span className="font-medium text-yellow-600">{room.statusCounts.maintenance}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Đã đặt:</span>
-                            <span className="font-medium text-purple-600">{room.statusCounts.reserved}</span>
-                          </div>
+                          {room.statusCounts && (
+                            <>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Bảo trì:</span>
+                                <span className="font-medium text-yellow-600">{room.statusCounts.maintenance}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Đã đặt:</span>
+                                <span className="font-medium text-purple-600">{room.statusCounts.reserved}</span>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </>
@@ -345,44 +357,48 @@ export default function RoomDetailPage() {
                   <div>
                     <h4 className="font-medium text-gray-900 mb-1">Giá thuê hàng tháng</h4>
                     <p className="text-2xl font-bold text-green-600">
-                      {room.pricing.basePriceMonthly.toLocaleString('vi-VN')} VNĐ
+                      {room.pricing?.basePriceMonthly ? 
+                        Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN') : 
+                        'Chưa cập nhật'} VNĐ
                     </p>
                   </div>
                   
                   <div>
                     <h4 className="font-medium text-gray-900 mb-1">Tiền cọc</h4>
                     <p className="text-xl font-bold text-blue-600">
-                      {room.pricing.depositAmount.toLocaleString('vi-VN')} VNĐ
+                      {room.pricing?.depositAmount ? 
+                        Number(room.pricing.depositAmount).toLocaleString('vi-VN') : 
+                        'Chưa cập nhật'} VNĐ
                     </p>
-                    <p className="text-sm text-gray-500">({room.pricing.depositMonths} tháng)</p>
+                    <p className="text-sm text-gray-500">({room.pricing?.depositMonths || 'Chưa cập nhật'} tháng)</p>
                   </div>
                   
                   <div>
                     <h4 className="font-medium text-gray-900 mb-1">Thời gian thuê</h4>
                     <p className="text-gray-600">
-                      {room.pricing.minimumStayMonths} - {room.pricing.maximumStayMonths || '∞'} tháng
+                      {room.pricing?.minimumStayMonths || 'Chưa cập nhật'} - {room.pricing?.maximumStayMonths || '∞'} tháng
                     </p>
                   </div>
                   
-                  {room.pricing.utilityCostMonthly && room.pricing.utilityCostMonthly > 0 && (
+                  {room.pricing?.utilityCostMonthly && Number(room.pricing.utilityCostMonthly) > 0 && (
                     <div>
                       <h4 className="font-medium text-gray-900 mb-1">Chi phí tiện ích</h4>
                       <p className="text-gray-600">
-                        {room.pricing.utilityCostMonthly.toLocaleString('vi-VN')} VNĐ/tháng
+                        {Number(room.pricing.utilityCostMonthly).toLocaleString('vi-VN')} VNĐ/tháng
                       </p>
                     </div>
                   )}
                   
-                  {room.pricing.cleaningFee && room.pricing.cleaningFee > 0 && (
+                  {room.pricing?.cleaningFee && Number(room.pricing.cleaningFee) > 0 && (
                     <div>
                       <h4 className="font-medium text-gray-900 mb-1">Phí vệ sinh</h4>
                       <p className="text-gray-600">
-                        {room.pricing.cleaningFee.toLocaleString('vi-VN')} VNĐ
+                        {Number(room.pricing.cleaningFee).toLocaleString('vi-VN')} VNĐ
                       </p>
                     </div>
                   )}
                   
-                  {room.pricing.serviceFeePercentage && room.pricing.serviceFeePercentage > 0 && (
+                  {room.pricing?.serviceFeePercentage && Number(room.pricing.serviceFeePercentage) > 0 && (
                     <div>
                       <h4 className="font-medium text-gray-900 mb-1">Phí dịch vụ</h4>
                       <p className="text-gray-600">{room.pricing.serviceFeePercentage}%</p>
@@ -391,11 +407,11 @@ export default function RoomDetailPage() {
                 </div>
                 
                 <div className="mt-6 flex flex-wrap gap-4">
-                  <Badge variant={room.pricing.utilityIncluded ? "default" : "secondary"}>
-                    {room.pricing.utilityIncluded ? 'Tiện ích đã bao gồm' : 'Tiện ích tính riêng'}
+                  <Badge variant={room.pricing?.utilityIncluded ? "default" : "secondary"}>
+                    {room.pricing?.utilityIncluded ? 'Tiện ích đã bao gồm' : 'Tiện ích tính riêng'}
                   </Badge>
-                  <Badge variant={room.pricing.priceNegotiable ? "default" : "secondary"}>
-                    {room.pricing.priceNegotiable ? 'Có thể thương lượng' : 'Giá cố định'}
+                  <Badge variant={room.pricing?.priceNegotiable ? "default" : "secondary"}>
+                    {room.pricing?.priceNegotiable ? 'Có thể thương lượng' : 'Giá cố định'}
                   </Badge>
                 </div>
               </CardContent>
@@ -410,7 +426,7 @@ export default function RoomDetailPage() {
                   <CardTitle>Tiện nghi</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {room.amenities.length > 0 ? (
+                  {room.amenities && room.amenities.length > 0 ? (
                     <div className="space-y-3">
                       {room.amenities.map((amenity, index) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -435,7 +451,7 @@ export default function RoomDetailPage() {
                   <CardTitle>Nội quy</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {room.rules.length > 0 ? (
+                  {room.rules && room.rules.length > 0 ? (
                     <div className="space-y-3">
                       {room.rules.map((rule, index) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -459,7 +475,7 @@ export default function RoomDetailPage() {
             </div>
 
             {/* Costs */}
-            {room.costs.length > 0 && (
+            {room.costs && room.costs.length > 0 && (
               <Card className="mt-8">
                 <CardHeader>
                   <CardTitle>Chi phí phát sinh</CardTitle>
@@ -476,7 +492,9 @@ export default function RoomDetailPage() {
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-green-600">
-                            {cost.value.toLocaleString('vi-VN')} VNĐ
+                            {cost.value ? 
+                              Number(cost.value).toLocaleString('vi-VN') : 
+                              'Chưa cập nhật'} VNĐ
                             {cost.unit && `/${cost.unit}`}
                           </p>
                           <div className="flex space-x-2">

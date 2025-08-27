@@ -25,6 +25,7 @@ import {
 import { Building as BuildingIcon, Home, DollarSign, Settings, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { getRoomTypeOptions } from "@/utils/room-types"
 
 const STEPS = [
   {
@@ -50,12 +51,7 @@ const STEPS = [
 ]
 
 // Room types
-const ROOM_TYPES = [
-  { value: 'boarding_house', label: 'Nhà trọ' },
-  { value: 'apartment', label: 'Căn hộ' },
-  { value: 'house', label: 'Nhà nguyên căn' },
-  { value: 'studio', label: 'Studio' }
-]
+const ROOM_TYPES = getRoomTypeOptions()
 
 export default function EditRoomPage() {
   const params = useParams()
@@ -93,7 +89,7 @@ export default function EditRoomPage() {
         name: roomData.name,
         description: roomData.description,
         roomType: roomData.roomType,
-        areaSqm: roomData.areaSqm,
+        areaSqm: typeof roomData.areaSqm === 'string' ? parseFloat(roomData.areaSqm) : roomData.areaSqm,
         maxOccupancy: roomData.maxOccupancy,
         totalRooms: roomData.totalRooms,
         floorNumber: roomData.floorNumber,
