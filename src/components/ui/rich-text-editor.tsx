@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { CKEditor } from '@ckeditor/ckeditor5-react'
 import { cn } from '@/lib/utils'
-import { getPlainTextLength } from '@/utils/textProcessing'
+import { getCleanTextLength } from '@/utils/textProcessing'
 
 // Import CKEditor CSS
 import 'ckeditor5/ckeditor5.css'
@@ -34,8 +34,8 @@ export function RichTextEditor({
   const [ClassicEditor, setClassicEditor] = useState<any>(null)
   const [hasError, setHasError] = useState(false)
 
-  // Calculate character count (strip HTML tags)
-  const charCount = getPlainTextLength(value)
+  // Calculate character count (strip HTML tags and entities)
+  const charCount = getCleanTextLength(value)
   const isOverLimit = maxLength ? charCount > maxLength : false
 
   React.useEffect(() => {
