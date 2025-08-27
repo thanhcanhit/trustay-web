@@ -198,8 +198,7 @@ export async function searchRoomListings(
 		return response;
 	} catch (error: unknown) {
 		console.error('Failed to search room listings:', error);
-		const errorMessage = error instanceof Error ? error.message : 'Failed to search room listings';
-		throw new Error(errorMessage);
+		throw error;
 	}
 }
 
@@ -208,15 +207,14 @@ export async function searchRoomListings(
  */
 export async function getRoomBySlug(slug: string): Promise<RoomDetail> {
 	try {
-		const response = await serverApiCall<RoomDetail>(`/api/rooms/${slug}`, {
+		const response = await serverApiCall<RoomDetail>(`/api/rooms/public/${slug}`, {
 			method: 'GET',
 		});
 
 		return response;
 	} catch (error: unknown) {
 		console.error('Failed to get room detail:', error);
-		const errorMessage = error instanceof Error ? error.message : 'Failed to get room detail';
-		throw new Error(errorMessage);
+		throw error;
 	}
 }
 
@@ -228,15 +226,12 @@ export async function getFeaturedRoomListings(limit: number = 4): Promise<RoomLi
 		const response = await searchRoomListings({
 			sortBy: 'createdAt',
 			sortOrder: 'desc',
-			limit,
 			page: 1,
 		});
 
-		return response.data;
+		return response.data.slice(0, limit);
 	} catch (error: unknown) {
 		console.error('Failed to get featured room listings:', error);
-		const errorMessage =
-			error instanceof Error ? error.message : 'Failed to get featured room listings';
-		throw new Error(errorMessage);
+		throw error;
 	}
 }
