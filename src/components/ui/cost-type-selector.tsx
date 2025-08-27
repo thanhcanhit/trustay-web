@@ -16,9 +16,20 @@ interface SelectedCostType {
   unit: string;
 }
 
+interface RoomCost {
+  systemCostTypeId: string;
+  value: number;
+  costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
+  unit?: string;
+  billingCycle: 'monthly' | 'quarterly' | 'yearly';
+  includedInRent: boolean;
+  isOptional: boolean;
+  notes?: string;
+}
+
 interface CostTypeSelectorProps {
-  selectedCostTypes: SelectedCostType[];
-  onSelectionChange: (costTypes: SelectedCostType[]) => void;
+  selectedCostTypes: SelectedCostType[] | RoomCost[];
+  onSelectionChange: (costTypes: SelectedCostType[] | RoomCost[]) => void;
   category?: string;
   mode?: 'select' | 'display';
   className?: string;
@@ -42,23 +53,49 @@ export function CostTypeSelector({
     }
   }, [costTypes.length, loadReferenceData]);
 
+  // Normalize selected cost types to work with both input types
+  const normalizedSelectedCostTypes = selectedCostTypes.map(item => {
+    if ('systemCostTypeId' in item) {
+      // RoomCost type
+      return {
+        id: item.systemCostTypeId,
+        name: costTypes.find(ct => ct.id === item.systemCostTypeId)?.name || '',
+        amount: item.value,
+        category: costTypes.find(ct => ct.id === item.systemCostTypeId)?.category || '',
+        unit: item.unit || 'VND'
+      };
+    } else {
+      // SelectedCostType
+      return item;
+    }
+  });
+
   // Initialize amounts from selected cost types
   useEffect(() => {
     const initialAmounts: Record<string, number> = {};
-    selectedCostTypes.forEach(costType => {
-      initialAmounts[costType.id] = costType.amount;
+    selectedCostTypes.forEach(item => {
+      const id = 'systemCostTypeId' in item ? item.systemCostTypeId : item.id;
+      const amount = 'value' in item ? item.value : item.amount;
+      initialAmounts[id] = amount;
     });
-    setAmounts(initialAmounts);
+    setAmounts(prev => {
+      // Only update if actually different to prevent infinite loops
+      const hasChanged = Object.keys(initialAmounts).some(key => 
+        prev[key] !== initialAmounts[key]
+      ) || Object.keys(prev).length !== Object.keys(initialAmounts).length;
+      
+      return hasChanged ? initialAmounts : prev;
+    });
   }, [selectedCostTypes]);
 
   const filteredCostTypes = category ? getCostTypesByCategory(category) : costTypes;
 
   const handleCostTypeToggle = (costType: CostType) => {
-    const isSelected = selectedCostTypes.some(selected => selected.id === costType.id);
+    const isSelected = normalizedSelectedCostTypes.some(selected => selected.id === costType.id);
     
     if (isSelected) {
       // Remove cost type
-      const newSelection = selectedCostTypes.filter(selected => selected.id !== costType.id);
+      const newSelection = normalizedSelectedCostTypes.filter(selected => selected.id !== costType.id);
       onSelectionChange(newSelection);
       
       // Remove amount
@@ -68,7 +105,7 @@ export function CostTypeSelector({
     } else {
       // Add cost type with default amount
       const defaultAmount = 0;
-      const newSelection = [...selectedCostTypes, {
+      const newSelection = [...normalizedSelectedCostTypes, {
         id: costType.id,
         name: costType.name,
         amount: defaultAmount,
@@ -86,14 +123,14 @@ export function CostTypeSelector({
     setAmounts(prev => ({ ...prev, [costTypeId]: amount }));
     
     // Update selected cost types
-    const newSelection = selectedCostTypes.map(costType => 
+    const newSelection = normalizedSelectedCostTypes.map(costType => 
       costType.id === costTypeId ? { ...costType, amount } : costType
     );
     onSelectionChange(newSelection);
   };
 
   const removeCostType = (costTypeId: string) => {
-    const newSelection = selectedCostTypes.filter(costType => costType.id !== costTypeId);
+    const newSelection = normalizedSelectedCostTypes.filter(costType => costType.id !== costTypeId);
     onSelectionChange(newSelection);
     
     const newAmounts = { ...amounts };
@@ -112,7 +149,7 @@ export function CostTypeSelector({
   if (mode === 'display') {
     return (
       <div className={`space-y-2 ${className}`}>
-        {selectedCostTypes.map((costType) => {
+        {normalizedSelectedCostTypes.map((costType) => {
           const IconComponent = getCostTypeIcon(costType.name);
           return (
             <div key={costType.id} className="flex items-center justify-between bg-gray-100 rounded-lg px-3 py-2">
@@ -134,9 +171,9 @@ export function CostTypeSelector({
   return (
     <div className={`space-y-3 ${className}`}>
       {/* Selected cost types display */}
-      {selectedCostTypes.length > 0 && (
+      {normalizedSelectedCostTypes.length > 0 && (
         <div className="space-y-2">
-          {selectedCostTypes.map((costType) => {
+          {normalizedSelectedCostTypes.map((costType) => {
             const IconComponent = getCostTypeIcon(costType.name);
             return (
               <div key={costType.id} className="flex items-center gap-2 bg-gray-50 rounded-lg p-2">
@@ -170,8 +207,8 @@ export function CostTypeSelector({
           disabled={isLoading}
         >
           <span>
-            {selectedCostTypes.length > 0 
-              ? `Đã chọn ${selectedCostTypes.length} loại chi phí`
+            {normalizedSelectedCostTypes.length > 0 
+              ? `Đã chọn ${normalizedSelectedCostTypes.length} loại chi phí`
               : 'Chọn loại chi phí'
             }
           </span>
@@ -190,7 +227,7 @@ export function CostTypeSelector({
                 <div className="space-y-2">
                   {filteredCostTypes.map((costType) => {
                     const IconComponent = getCostTypeIcon(costType.name);
-                    const isSelected = selectedCostTypes.some(selected => selected.id === costType.id);
+                    const isSelected = normalizedSelectedCostTypes.some(selected => selected.id === costType.id);
                     
                     return (
                       <div

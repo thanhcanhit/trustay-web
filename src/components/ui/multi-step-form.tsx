@@ -156,14 +156,20 @@ export function MultiStepForm({
 }
 
 interface StepContentProps {
-  step: number
+  step?: number
+  stepIndex?: number
+  currentStep?: number
   children: React.ReactNode
 }
 
-export function StepContent({ step, children }: StepContentProps) {
+export function StepContent({ step, stepIndex, currentStep: propCurrentStep, children }: StepContentProps) {
   const { currentStep } = useMultiStepForm()
   
-  if (currentStep !== step) {
+  // Use prop currentStep if provided, otherwise use context currentStep
+  const activeStep = propCurrentStep ?? currentStep
+  const targetStep = stepIndex ?? step ?? 0
+  
+  if (activeStep !== targetStep) {
     return null
   }
 
@@ -177,6 +183,8 @@ interface StepNavigationProps {
   nextLabel?: string
   prevLabel?: string
   submitLabel?: string
+  isLastStep?: boolean
+  canProceed?: boolean
   isLoading?: boolean
   className?: string
 }
@@ -188,6 +196,8 @@ export function StepNavigation({
   nextLabel = "Tiếp theo",
   prevLabel = "Quay lại", 
   submitLabel = "Hoàn thành",
+  isLastStep: propIsLastStep,
+  canProceed: propCanProceed,
   isLoading = false,
   className
 }: StepNavigationProps) {
@@ -199,6 +209,10 @@ export function StepNavigation({
     isFirstStep, 
     isLastStep 
   } = useMultiStepForm()
+  
+  // Use props if provided, otherwise use context
+  const activeIsLastStep = propIsLastStep ?? isLastStep
+  const activeCanProceed = propCanProceed ?? canGoNext
 
   const handleNext = async () => {
     if (onNext) {
@@ -233,7 +247,7 @@ export function StepNavigation({
         {prevLabel}
       </Button>
 
-      {isLastStep ? (
+      {activeIsLastStep ? (
         <Button
           type="button"
           onClick={handleSubmit}
@@ -245,7 +259,7 @@ export function StepNavigation({
         <Button
           type="button"
           onClick={handleNext}
-          disabled={!canGoNext || isLoading}
+          disabled={!activeCanProceed || isLoading}
         >
           {nextLabel}
           <ChevronRight className="w-4 h-4 ml-2" />

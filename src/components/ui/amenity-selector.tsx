@@ -9,11 +9,17 @@ import { useReferenceStore } from '@/stores/referenceStore';
 import { getAmenityIcon } from '@/utils/icon-mapping';
 
 interface AmenitySelectorProps {
-  selectedAmenities: string[];
-  onSelectionChange: (amenityIds: string[]) => void;
+  selectedAmenities: string[] | RoomAmenity[];
+  onSelectionChange: (amenityIds: string[] | RoomAmenity[]) => void;
   category?: string;
   mode?: 'select' | 'display';
   className?: string;
+}
+
+interface RoomAmenity {
+  systemAmenityId: string;
+  customValue?: string;
+  notes?: string;
 }
 
 export function AmenitySelector({
@@ -34,20 +40,35 @@ export function AmenitySelector({
   }, [amenities.length, loadReferenceData]);
 
   const filteredAmenities = category ? getAmenitiesByCategory(category) : amenities;
+  
+  // Handle both string[] and RoomAmenity[] inputs
+  const selectedAmenityIds = Array.isArray(selectedAmenities) 
+    ? selectedAmenities.map(item => 
+        typeof item === 'string' ? item : item.systemAmenityId
+      )
+    : [];
+    
   const selectedAmenityObjects = filteredAmenities.filter(amenity => 
-    selectedAmenities.includes(amenity.id)
+    selectedAmenityIds.includes(amenity.id)
   );
 
   const handleAmenityToggle = (amenityId: string) => {
-    const newSelection = selectedAmenities.includes(amenityId)
-      ? selectedAmenities.filter(id => id !== amenityId)
-      : [...selectedAmenities, amenityId];
+    const isCurrentlySelected = selectedAmenityIds.includes(amenityId);
     
-    onSelectionChange(newSelection);
+    if (isCurrentlySelected) {
+      // Remove the amenity
+      const newSelection = selectedAmenityIds.filter(id => id !== amenityId);
+      onSelectionChange(newSelection);
+    } else {
+      // Add the amenity
+      const newSelection = [...selectedAmenityIds, amenityId];
+      onSelectionChange(newSelection);
+    }
   };
 
   const removeAmenity = (amenityId: string) => {
-    onSelectionChange(selectedAmenities.filter(id => id !== amenityId));
+    const newSelection = selectedAmenityIds.filter(id => id !== amenityId);
+    onSelectionChange(newSelection);
   };
 
   // Display mode - just show selected amenities
@@ -71,7 +92,7 @@ export function AmenitySelector({
   return (
     <div className={`space-y-3 ${className}`}>
       {/* Selected amenities display */}
-      {selectedAmenities.length > 0 && (
+      {selectedAmenityIds.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {selectedAmenityObjects.map((amenity) => {
             const IconComponent = getAmenityIcon(amenity.name);
@@ -99,8 +120,8 @@ export function AmenitySelector({
           disabled={isLoading}
         >
           <span>
-            {selectedAmenities.length > 0 
-              ? `Đã chọn ${selectedAmenities.length} tiện ích`
+            {selectedAmenityIds.length > 0 
+              ? `Đã chọn ${selectedAmenityIds.length} tiện ích`
               : 'Chọn tiện ích'
             }
           </span>
@@ -119,7 +140,7 @@ export function AmenitySelector({
                 <div className="space-y-2">
                   {filteredAmenities.map((amenity) => {
                     const IconComponent = getAmenityIcon(amenity.name);
-                    const isSelected = selectedAmenities.includes(amenity.id);
+                    const isSelected = selectedAmenityIds.includes(amenity.id);
                     
                     return (
                       <div
