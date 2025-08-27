@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { CKEditor } from '@ckeditor/ckeditor5-react'
 import { cn } from '@/lib/utils'
+import { getPlainTextLength } from '@/utils/textProcessing'
 
 // Import CKEditor CSS
 import 'ckeditor5/ckeditor5.css'
@@ -14,6 +15,8 @@ interface RichTextEditorProps {
   className?: string
   disabled?: boolean
   error?: boolean
+  maxLength?: number
+  showCharCount?: boolean
 }
 
 export function RichTextEditor({
@@ -22,12 +25,18 @@ export function RichTextEditor({
   placeholder = 'Nhập mô tả...',
   className,
   disabled = false,
-  error = false
+  error = false,
+  maxLength,
+  showCharCount = false
 }: RichTextEditorProps) {
   const [isLoading, setIsLoading] = useState(true)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [ClassicEditor, setClassicEditor] = useState<any>(null)
   const [hasError, setHasError] = useState(false)
+
+  // Calculate character count (strip HTML tags)
+  const charCount = getPlainTextLength(value)
+  const isOverLimit = maxLength ? charCount > maxLength : false
 
   React.useEffect(() => {
     const loadEditor = async () => {
@@ -123,6 +132,7 @@ export function RichTextEditor({
           onChange={(e) => onChange?.(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
+          maxLength={maxLength}
           className={cn(
             "min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
             "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
@@ -131,11 +141,21 @@ export function RichTextEditor({
           )}
           rows={8}
         />
-        {hasError && (
-          <p className="text-xs text-muted-foreground">
-            Rich text editor không khả dụng, sử dụng text editor đơn giản
-          </p>
-        )}
+        <div className="flex justify-between items-center text-xs">
+          {hasError && (
+            <p className="text-muted-foreground">
+              Rich text editor không khả dụng, sử dụng text editor đơn giản
+            </p>
+          )}
+          {showCharCount && maxLength && (
+            <span className={cn(
+              "text-muted-foreground",
+              isOverLimit && "text-destructive"
+            )}>
+              {charCount}/{maxLength} ký tự
+            </span>
+          )}
+        </div>
       </div>
     )
   }
@@ -181,6 +201,16 @@ export function RichTextEditor({
         }}
         disabled={disabled}
       />
+      {showCharCount && maxLength && (
+        <div className="flex justify-end mt-2">
+          <span className={cn(
+            "text-xs text-muted-foreground",
+            isOverLimit && "text-destructive"
+          )}>
+            {charCount}/{maxLength} ký tự
+          </span>
+        </div>
+      )}
       <style jsx global>{`
         .rich-text-editor .ck-editor {
           border: 1px solid hsl(var(--border));

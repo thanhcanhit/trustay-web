@@ -46,6 +46,19 @@ const extractErrorMessage = (error: unknown, defaultMessage: string): string => 
 			case 400:
 				if (typeof data === 'string') return data;
 				if (data?.message) {
+					// Handle nested message structure
+					if (typeof data.message === 'object' && data.message !== null) {
+						const nestedMessage = data.message as { message?: string | string[]; error?: string };
+						if (nestedMessage.message) {
+							if (Array.isArray(nestedMessage.message)) {
+								return `Dữ liệu không hợp lệ:\n${nestedMessage.message.join('\n')}`;
+							}
+							return nestedMessage.message;
+						}
+						if (nestedMessage.error) {
+							return nestedMessage.error;
+						}
+					}
 					// Handle array of validation errors
 					if (Array.isArray(data.message)) {
 						return `Dữ liệu không hợp lệ:\n${data.message.join('\n')}`;

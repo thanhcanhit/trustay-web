@@ -25,6 +25,7 @@ import {
 import { Building as BuildingIcon, Home, DollarSign, ArrowLeft, ImageIcon } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { stripHtmlTags, limitTextLength } from "@/utils/textProcessing"
 
 // Additional interfaces for form handling
 interface ImageFile {
@@ -172,6 +173,14 @@ function AddRoomPageContent() {
         if (!formData.maxOccupancy || formData.maxOccupancy <= 0) newErrors.maxOccupancy = 'Sức chứa phải lớn hơn 0'
         if (!formData.totalRooms || formData.totalRooms <= 0) newErrors.totalRooms = 'Số lượng phòng phải lớn hơn 0'
         if (!selectedBuildingId2) newErrors.buildingId = 'Vui lòng chọn dãy trọ'
+        
+        // Validate description length (strip HTML tags first)
+        if (formData.description) {
+          const plainText = stripHtmlTags(formData.description)
+          if (plainText.length > 1000) {
+            newErrors.description = 'Mô tả không được vượt quá 1000 ký tự'
+          }
+        }
         break
       case 1:
         if (!formData.pricing?.basePriceMonthly || formData.pricing.basePriceMonthly <= 0) {
@@ -217,10 +226,13 @@ function AddRoomPageContent() {
     try {
       setIsLoading(true)
 
-      // Ensure all numeric fields are properly converted to numbers
+      // Prepare room data
       const roomData: CreateRoomRequest = {
         name: formData.name!,
-        description: formData.description || undefined,
+        description: formData.description ? 
+          // Strip HTML tags and limit to 1000 characters
+          limitTextLength(formData.description, 1000) || undefined
+          : undefined,
         roomType: formData.roomType!,
         areaSqm: parseFloat(String(formData.areaSqm!)) || 0,
         maxOccupancy: parseInt(String(formData.maxOccupancy!)) || 1,
@@ -259,6 +271,9 @@ function AddRoomPageContent() {
         isActive: Boolean(formData.isActive)
       }
 
+      // Log data before sending to API
+      console.log('📤 Sending room data to API:', JSON.stringify(roomData, null, 2))
+
       const response = await createRoom(selectedBuildingId2, roomData)
       
       if (!response.success) {
@@ -272,14 +287,16 @@ function AddRoomPageContent() {
             errorMessage = errorObj.message
           }
         }
+        console.error('❌ API Error:', response.error)
         toast.error(errorMessage)
         return
       }
 
+      console.log('✅ Room created successfully:', response.data)
       toast.success('Tạo loại phòng thành công!')
       router.push(`/dashboard/landlord/properties/rooms?buildingId=${selectedBuildingId2}`)
     } catch (error) {
-      console.error('Error creating room:', error)
+      console.error('❌ Error creating room:', error)
       
       // Extract meaningful error message
       let errorMessage = 'Không thể tạo loại phòng. Vui lòng thử lại.'
@@ -407,7 +424,11 @@ function AddRoomPageContent() {
                     value={formData.description || ''}
                     onChange={(value) => updateFormData('description', value)}
                     placeholder="Mô tả về loại phòng..."
+                    maxLength={1000}
+                    showCharCount={true}
+                    error={!!errors.description}
                   />
+                  {errors.description && <FormMessage>{errors.description}</FormMessage>}
                 </FormField>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -605,7 +626,7 @@ function AddRoomPageContent() {
                   />
                 </FormField>
 
-              
+               
 
                 {/* Costs Section */}
                 <div>
