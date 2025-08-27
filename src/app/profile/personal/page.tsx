@@ -302,7 +302,7 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
   }
 
   return (
-    <Card className="p-8">
+    <Card className="px-8">
       <div className="space-y-6">
         <h2>Cập nhật thông tin cá nhân</h2>
 
@@ -507,7 +507,7 @@ function PersonalProfileContent() {
 
   return (
     <ProfileLayout>
-      <div className="p-6">
+      <div className="px-6">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Thông tin cá nhân</h1>
