@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "motion/react"
 import { useUserStore } from "@/stores/userStore"
-import { useSearchFilters } from "@/hooks/use-search-filters"
+import { useSearchFilters, type SearchFilters } from "@/hooks/use-search-filters"
 import { Button } from "@/components/ui/button"
 import { AmenityFilter } from "@/components/ui/amenity-filter"
 import { PriceFilter } from "@/components/ui/price-filter"
@@ -150,11 +150,11 @@ export function Navigation() {
                       selectedPrices={activeFiltersList.find(af => af.id === 'price')?.values || []}
                       selectedLocation={activeFiltersList.find(af => af.id === 'location')?.values?.[0] || ''}
                       selectedAreas={activeFiltersList.find(af => af.id === 'area')?.values || []}
-                      onRemoveFilter={(type, value) => {
+                      onRemoveFilter={(type) => {
                         if (type === 'location') {
                           removeFilter('location');
                         } else {
-                          removeFilterValue(type === 'amenity' ? 'amenities' : type, value);
+                          removeFilterValue(type === 'amenity' ? 'amenities' : type as keyof SearchFilters);
                         }
                       }}
                     />
@@ -346,8 +346,8 @@ export function Navigation() {
                         // Clear existing area filters
                         const currentAreaFilter = activeFiltersList.find(af => af.id === 'area');
                         if (currentAreaFilter) {
-                          currentAreaFilter.values.forEach(value => {
-                            removeFilterValue('area', value);
+                          currentAreaFilter.values.forEach(() => {
+                            removeFilterValue('area');
                           });
                         }
                         // Add new area filters
@@ -363,8 +363,8 @@ export function Navigation() {
                         // Clear existing price filters
                         const currentPriceFilter = activeFiltersList.find(af => af.id === 'price');
                         if (currentPriceFilter) {
-                          currentPriceFilter.values.forEach(value => {
-                            removeFilterValue('price', value);
+                          currentPriceFilter.values.forEach(() => {
+                            removeFilterValue('price');
                           });
                         }
                         // Add new price filters
@@ -380,8 +380,8 @@ export function Navigation() {
                         // Clear existing amenity filters
                         const currentAmenityFilter = activeFiltersList.find(af => af.id === 'amenities');
                         if (currentAmenityFilter) {
-                          currentAmenityFilter.values.forEach(value => {
-                            removeFilterValue('amenities', value);
+                          currentAmenityFilter.values.forEach(() => {
+                            removeFilterValue('amenities');
                           });
                         }
                         // Add new amenity filters
