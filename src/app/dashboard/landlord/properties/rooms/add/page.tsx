@@ -11,6 +11,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
+import { Separator } from "@/components/ui/separator"
 import { AmenityGrid } from "@/components/ui/amenity-grid"
 import { CostCheckboxSelector } from "@/components/ui/cost-checkbox-selector"
 import { RuleGrid } from "@/components/ui/rule-grid"
@@ -523,6 +524,8 @@ function AddRoomPageContent() {
                   {errors.description && <FormMessage>{errors.description}</FormMessage>}
                 </FormField>
 
+                <Separator />
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField>
                     <FormLabel>Diện tích (m²) <span className="text-red-500">*</span></FormLabel>
@@ -619,6 +622,8 @@ function AddRoomPageContent() {
                   <DollarSign className="h-5 w-5 text-green-600" />
                   <h3 className="text-lg font-medium">Giá cả & Chi phí phát sinh</h3>
                 </div>
+
+                <Separator />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField>
@@ -740,6 +745,8 @@ function AddRoomPageContent() {
                   <h3 className="text-lg font-medium">Tiện nghi & Nội quy</h3>
                 </div>
 
+                <Separator />
+
                                  {/* Amenities */}
                  <div>
                    <h4 className="font-medium mb-4">Tiện nghi</h4>
@@ -782,6 +789,8 @@ function AddRoomPageContent() {
                   <ImageIcon className="h-5 w-5 text-orange-600" />
                   <h3 className="text-lg font-medium">Hình ảnh phòng</h3>
                 </div>
+
+                <Separator />
 
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                   <div className="flex items-start space-x-2">

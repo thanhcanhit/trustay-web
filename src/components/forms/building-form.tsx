@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormField, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { Switch } from "@/components/ui/switch"
+import { Separator } from "@/components/ui/separator"
 import { AddressSelector, type AddressData } from "@/components/ui/address-selector"
 import { createBuilding, updateBuilding } from "@/actions/building.action"
 import { type Building, type CreateBuildingRequest, type UpdateBuildingRequest } from "@/types/types"
 import { MapPin, Building as BuildingIcon, Save, X } from "lucide-react"
 import { toast } from "sonner"
+import { cleanDescriptionText } from "@/utils/textProcessing"
 
 interface BuildingFormProps {
   building?: Building
@@ -24,7 +26,6 @@ interface BuildingFormProps {
 interface FormData {
   name: string
   description: string
-  addressLine1: string
   addressLine2: string
   latitude: string
   longitude: string
@@ -40,7 +41,6 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
   const [formData, setFormData] = useState<FormData>({
     name: building?.name || "",
     description: building?.description || "",
-    addressLine1: building?.addressLine1 || "",
     addressLine2: building?.addressLine2 || "",
     latitude: building?.latitude?.toString() || "",
     longitude: building?.longitude?.toString() || "",
@@ -51,7 +51,7 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
   useEffect(() => {
     if (building) {
       setAddressData({
-        street: building.addressLine1,
+        street: building.addressLine1 || '',
         ward: building.ward ? {
           id: building.wardId,
           name: building.ward.name,
@@ -100,10 +100,6 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
       newErrors.name = 'Tên dãy trọ phải có ít nhất 3 ký tự'
     }
 
-    if (!formData.addressLine1.trim()) {
-      newErrors.addressLine1 = 'Địa chỉ cụ thể là bắt buộc'
-    }
-
     if (!addressData?.province) {
       newErrors.province = 'Vui lòng chọn tỉnh/thành phố'
     }
@@ -114,6 +110,10 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
 
     if (!addressData?.ward) {
       newErrors.ward = 'Vui lòng chọn phường/xã'
+    }
+
+    if (!addressData?.street?.trim()) {
+      newErrors.street = 'Địa chỉ chi tiết là bắt buộc'
     }
 
     if (formData.latitude && isNaN(parseFloat(formData.latitude))) {
@@ -146,8 +146,8 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
 
       const buildingData: CreateBuildingRequest | UpdateBuildingRequest = {
         name: formData.name.trim(),
-        description: formData.description.trim() || undefined,
-        addressLine1: formData.addressLine1.trim(),
+        description: formData.description ? cleanDescriptionText(formData.description) : undefined,
+        addressLine1: addressData.street.trim(),
         addressLine2: formData.addressLine2.trim() || undefined,
         wardId: addressData.ward.id,
         districtId: addressData.district.id,
@@ -226,12 +226,16 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
               </FormField>
 
               <FormField>
-                <FormLabel>Mô tả</FormLabel>
-                <Textarea
-                  placeholder="Mô tả về dãy trọ..."
-                  className="min-h-[100px]"
+                <FormLabel>
+                  Mô tả <span className="text-red-500">*</span>
+                </FormLabel>
+                <RichTextEditor
                   value={formData.description}
-                  onChange={(e) => updateFormData('description', e.target.value)}
+                  onChange={(value) => updateFormData('description', value)}
+                  placeholder="Mô tả về dãy trọ..."
+                  maxLength={1000}
+                  showCharCount={true}
+                  error={!!errors.description}
                 />
                 {errors.description && <FormMessage>{errors.description}</FormMessage>}
               </FormField>
@@ -250,6 +254,8 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
               </div>
             </div>
 
+            <Separator />
+
             {/* Address Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium flex items-center space-x-2">
@@ -257,32 +263,10 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
                 <span>Địa chỉ</span>
               </h3>
 
-              <FormField>
-                <FormLabel>
-                  Địa chỉ cụ thể <span className="text-red-500">*</span>
-                </FormLabel>
-                <Input
-                  placeholder="Số nhà, tên đường..."
-                  value={formData.addressLine1}
-                  onChange={(e) => updateFormData('addressLine1', e.target.value)}
-                />
-                {errors.addressLine1 && <FormMessage>{errors.addressLine1}</FormMessage>}
-              </FormField>
-
-              <FormField>
-                <FormLabel>Địa chỉ bổ sung</FormLabel>
-                <Input
-                  placeholder="Hẻm, ngõ, khu vực..."
-                  value={formData.addressLine2}
-                  onChange={(e) => updateFormData('addressLine2', e.target.value)}
-                />
-                {errors.addressLine2 && <FormMessage>{errors.addressLine2}</FormMessage>}
-              </FormField>
-
               <div>
-                <FormLabel>
+                {/* <FormLabel>
                   Chọn tỉnh/thành phố, quận/huyện, phường/xã <span className="text-red-500">*</span>
-                </FormLabel>
+                </FormLabel> */}
                 <div className="mt-2">
                   <AddressSelector
                     value={addressData || undefined}
@@ -297,7 +281,19 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
                   </FormMessage>
                 )}
               </div>
+
+              <FormField>
+                <FormLabel>Địa chỉ bổ sung</FormLabel>
+                <Input
+                  placeholder="Hẻm, ngõ, khu vực..."
+                  value={formData.addressLine2}
+                  onChange={(e) => updateFormData('addressLine2', e.target.value)}
+                />
+                {errors.addressLine2 && <FormMessage>{errors.addressLine2}</FormMessage>}
+              </FormField>
             </div>
+
+            <Separator />
 
             {/* Location Coordinates (Optional) */}
             <div className="space-y-4">
@@ -334,18 +330,25 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
               </p>
             </div>
 
+            <Separator />
+
             {/* Actions */}
-            <div className="flex justify-end space-x-4 pt-6 border-t">
+            <div className="flex justify-end space-x-4 pt-6">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleCancel}
                 disabled={loading}
+                className="cursor-pointer"
               >
                 <X className="h-4 w-4 mr-2" />
                 Hủy
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className="bg-green-500 hover:bg-green-600 cursor-pointer"
+              >
                 {loading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

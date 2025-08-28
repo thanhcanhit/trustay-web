@@ -7,11 +7,12 @@ import { MultiStepForm, StepContent, StepNavigation } from "@/components/ui/mult
 import { Card, CardContent } from "@/components/ui/card"
 import { FormField, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import { AmenitySelector } from "@/components/ui/amenity-selector"
 import { CostTypeSelector } from "@/components/ui/cost-type-selector"
 import { RuleSelector } from "@/components/ui/rule-selector"
@@ -26,6 +27,7 @@ import { Building as BuildingIcon, Home, DollarSign, Settings, ArrowLeft } from 
 import { toast } from "sonner"
 import Link from "next/link"
 import { getRoomTypeOptions } from "@/utils/room-types"
+import { cleanDescriptionText } from "@/utils/textProcessing"
 
 const STEPS = [
   {
@@ -200,7 +202,7 @@ export default function EditRoomPage() {
       const updateData: UpdateRoomRequest = {}
       
       if (formData.name !== room.name) updateData.name = formData.name!
-      if (formData.description !== room.description) updateData.description = formData.description
+      if (formData.description !== room.description) updateData.description = formData.description ? cleanDescriptionText(formData.description) : undefined
       if (formData.roomType !== room.roomType) updateData.roomType = formData.roomType!
       if (formData.areaSqm !== room.areaSqm) updateData.areaSqm = formData.areaSqm!
       if (formData.maxOccupancy !== room.maxOccupancy) updateData.maxOccupancy = formData.maxOccupancy!
@@ -328,13 +330,18 @@ export default function EditRoomPage() {
 
                 <FormField>
                   <FormLabel>Mô tả</FormLabel>
-                  <Textarea
-                    placeholder="Mô tả về loại phòng..."
-                    className="min-h-[100px]"
+                  <RichTextEditor
                     value={formData.description || ''}
-                    onChange={(e) => updateFormData('description', e.target.value)}
+                    onChange={(value) => updateFormData('description', value)}
+                    placeholder="Mô tả về loại phòng..."
+                    maxLength={1000}
+                    showCharCount={true}
+                    error={!!errors.description}
                   />
+                  {errors.description && <FormMessage>{errors.description}</FormMessage>}
                 </FormField>
+
+                <Separator />
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField>
