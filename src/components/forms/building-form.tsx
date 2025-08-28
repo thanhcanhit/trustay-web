@@ -271,7 +271,6 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
                   <AddressSelector
                     value={addressData || undefined}
                     onChange={setAddressData}
-                    showStreetInput={false}
                     required
                   />
                 </div>

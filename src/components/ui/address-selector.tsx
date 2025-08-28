@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,7 +20,6 @@ interface AddressSelectorProps {
   className?: string;
   disabled?: boolean;
   required?: boolean;
-  showStreetInput?: boolean;
 }
 
 export function AddressSelector({
@@ -29,12 +28,13 @@ export function AddressSelector({
   className = '',
   disabled = false,
   required = false,
-  showStreetInput = true
+
 }: AddressSelectorProps) {
   const [selectedProvince, setSelectedProvince] = useState<number | null>(value?.province?.id || null);
   const [selectedDistrict, setSelectedDistrict] = useState<number | null>(value?.district?.id || null);
   const [selectedWard, setSelectedWard] = useState<number | null>(value?.ward?.id || null);
   const [street, setStreet] = useState(value?.street || '');
+  const isUpdatingFromValue = useRef(false);
 
   // Location store
   const {
@@ -42,6 +42,8 @@ export function AddressSelector({
     loadProvinces,
     loadDistrictsByProvince,
     loadWardsByDistrict,
+    loadDistrictById,
+    loadWardById,
     getDistrictsByProvinceId,
     getWardsByDistrictId,
     getProvinceById,
@@ -57,19 +59,114 @@ export function AddressSelector({
     loadProvinces();
   }, [loadProvinces]);
 
-  // Load districts when province is selected
+  // Re-set state when provinces are loaded and we have value
   useEffect(() => {
-    if (selectedProvince) {
+    if (provinces.length > 0 && value) {
+      // Re-set the state to ensure it's properly set after provinces are loaded
+      if (value.province?.id && selectedProvince !== value.province.id) {
+        setSelectedProvince(value.province.id);
+      }
+      if (value.district?.id && selectedDistrict !== value.district.id) {
+        setSelectedDistrict(value.district.id);
+      }
+      if (value.ward?.id && selectedWard !== value.ward.id) {
+        setSelectedWard(value.ward.id);
+      }
+    }
+  }, [provinces.length, value, selectedProvince, selectedDistrict, selectedWard]);
+
+  // Re-set state when districts are loaded for the selected province
+  useEffect(() => {
+    if (selectedProvince && value?.district?.id) {
+      const availableDistricts = getDistrictsByProvinceId(selectedProvince);
+      if (availableDistricts.length > 0 && selectedDistrict !== value.district.id) {
+        setSelectedDistrict(value.district.id);
+      }
+    }
+  }, [selectedProvince, value?.district?.id, selectedDistrict, getDistrictsByProvinceId]);
+
+  // Re-set state when wards are loaded for the selected district
+  useEffect(() => {
+    if (selectedDistrict && value?.ward?.id) {
+      const availableWards = getWardsByDistrictId(selectedDistrict);
+      if (availableWards.length > 0 && selectedWard !== value.ward.id) {
+        setSelectedWard(value.ward.id);
+      }
+    }
+  }, [selectedDistrict, value?.ward?.id, selectedWard, getWardsByDistrictId]);
+
+  // Load location data and set state when value changes (for edit mode)
+  useEffect(() => {
+    const loadLocationDataAndSetState = async () => {
+      if (!value) return;
+
+      isUpdatingFromValue.current = true;
+
+      try {
+        // Step 1: Load province data if we have province ID
+        if (value.province?.id) {
+          setSelectedProvince(value.province.id);
+          await loadDistrictsByProvince(value.province.id);
+        }
+
+        // Step 2: Handle district - if we have district ID but no province, load district first
+        if (value.district?.id) {
+          if (!value.province?.id) {
+            // Load district by ID to get province info
+            const district = await loadDistrictById(value.district.id);
+            if (district && district.provinceId) {
+              setSelectedProvince(district.provinceId);
+              await loadDistrictsByProvince(district.provinceId);
+            }
+          }
+          setSelectedDistrict(value.district.id);
+          await loadWardsByDistrict(value.district.id);
+        }
+
+        // Step 3: Handle ward - if we have ward ID but no district, load ward first
+        if (value.ward?.id) {
+          if (!value.district?.id) {
+            // Load ward by ID to get district info
+            const ward = await loadWardById(value.ward.id);
+            if (ward && ward.districtId) {
+              setSelectedDistrict(ward.districtId);
+              await loadWardsByDistrict(ward.districtId);
+            }
+          }
+          setSelectedWard(value.ward.id);
+        }
+
+        // Step 4: Set street
+        setStreet(value.street || '');
+
+      } catch (error) {
+        console.error('Error loading location data:', error);
+      } finally {
+        // Reset the flag after a short delay to allow state updates to complete
+        setTimeout(() => {
+          isUpdatingFromValue.current = false;
+        }, 100);
+      }
+    };
+
+    loadLocationDataAndSetState();
+  }, [value, loadDistrictsByProvince, loadWardsByDistrict, loadDistrictById, loadWardById]);
+
+  // Load districts when province is selected (only for user interaction, not from value prop)
+  useEffect(() => {
+    if (selectedProvince && !isUpdatingFromValue.current) {
       loadDistrictsByProvince(selectedProvince);
     }
   }, [selectedProvince, loadDistrictsByProvince]);
 
-  // Load wards when district is selected
+  // Load wards when district is selected (only for user interaction, not from value prop)
   useEffect(() => {
-    if (selectedDistrict) {
+    if (selectedDistrict && !isUpdatingFromValue.current) {
       loadWardsByDistrict(selectedDistrict);
     }
   }, [selectedDistrict, loadWardsByDistrict]);
+
+
 
   // Update parent when any field changes
   useEffect(() => {
@@ -84,8 +181,17 @@ export function AddressSelector({
       province: province || null
     };
 
-    onChange?.(addressData);
-  }, [selectedProvince, selectedDistrict, selectedWard, street, getProvinceById, getDistrictById, getWardById, onChange]);
+    // Only call onChange if the data has actually changed and we're not updating from value prop
+    const hasChanged = 
+      addressData.province?.id !== value?.province?.id ||
+      addressData.district?.id !== value?.district?.id ||
+      addressData.ward?.id !== value?.ward?.id ||
+      addressData.street !== value?.street;
+
+    if (hasChanged && !isUpdatingFromValue.current) {
+      onChange?.(addressData);
+    }
+  }, [selectedProvince, selectedDistrict, selectedWard, street, getProvinceById, getDistrictById, getWardById, onChange, value]);
 
   const handleProvinceChange = (provinceId: number | null) => {
     setSelectedProvince(provinceId);
