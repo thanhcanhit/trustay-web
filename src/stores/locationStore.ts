@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
+	getDistrictById as apiGetDistrictById,
+	getWardById as apiGetWardById,
 	getDistrictsByProvince,
 	getProvinces,
 	getWardsByDistrict,
@@ -27,6 +29,8 @@ interface LocationState {
 	loadProvinces: () => Promise<void>;
 	loadDistrictsByProvince: (provinceId: number) => Promise<void>;
 	loadWardsByDistrict: (districtId: number) => Promise<void>;
+	loadDistrictById: (districtId: number) => Promise<District | null>;
+	loadWardById: (wardId: number) => Promise<Ward | null>;
 	getProvinceById: (id: number) => Province | undefined;
 	getDistrictById: (id: number) => District | undefined;
 	getWardById: (id: number) => Ward | undefined;
@@ -168,6 +172,60 @@ export const useLocationStore = create<LocationState>()(
 			getWardsByDistrictId: (districtId: number) => {
 				const { wards } = get();
 				return wards[districtId] || [];
+			},
+
+			// Load single district by ID
+			loadDistrictById: async (districtId: number) => {
+				try {
+					const district = await apiGetDistrictById(districtId);
+					// Add the district to the appropriate province's districts if not already there
+					set((state) => {
+						const provinceId = district.provinceId;
+						const existingDistricts = state.districts[provinceId] || [];
+						const districtExists = existingDistricts.find((d) => d.id === districtId);
+
+						if (!districtExists) {
+							return {
+								districts: {
+									...state.districts,
+									[provinceId]: [...existingDistricts, district],
+								},
+							};
+						}
+						return state;
+					});
+					return district;
+				} catch (error) {
+					console.error('Error loading district by ID:', error);
+					return null;
+				}
+			},
+
+			// Load single ward by ID
+			loadWardById: async (wardId: number) => {
+				try {
+					const ward = await apiGetWardById(wardId);
+					// Add the ward to the appropriate district's wards if not already there
+					set((state) => {
+						const districtId = ward.districtId;
+						const existingWards = state.wards[districtId] || [];
+						const wardExists = existingWards.find((w) => w.id === wardId);
+
+						if (!wardExists) {
+							return {
+								wards: {
+									...state.wards,
+									[districtId]: [...existingWards, ward],
+								},
+							};
+						}
+						return state;
+					});
+					return ward;
+				} catch (error) {
+					console.error('Error loading ward by ID:', error);
+					return null;
+				}
 			},
 
 			clearErrors: () => {
