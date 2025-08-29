@@ -130,7 +130,7 @@ export default function BuildingDetailPage() {
           <div className="text-center py-12">
             <p className="text-gray-600">Không tìm thấy thông tin dãy trọ</p>
             <Link href="/dashboard/landlord/properties">
-              <Button className="mt-4">Quay lại danh sách</Button>
+              <Button className="mt-4 cursor-pointer">Quay lại danh sách</Button>
             </Link>
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function BuildingDetailPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Link href="/dashboard/landlord/properties">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="cursor-pointer">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Quay lại
               </Button>
@@ -167,12 +167,12 @@ export default function BuildingDetailPage() {
           
           <div className="flex space-x-3">
             <Link href={`/dashboard/landlord/properties/${building.id}/edit`}>
-              <Button>
+              <Button className="cursor-pointer">
                 <Edit className="h-4 w-4 mr-2" />
                 Chỉnh sửa
               </Button>
             </Link>
-            <Button variant="destructive" onClick={handleDeleteBuilding}>
+            <Button variant="destructive" onClick={handleDeleteBuilding} className="cursor-pointer">
               <Trash2 className="h-4 w-4 mr-2" />
               Xóa
             </Button>
@@ -326,7 +326,7 @@ export default function BuildingDetailPage() {
               
               <div className="mt-6">
                 <Link href={`/dashboard/landlord/properties/rooms?buildingId=${building.id}`}>
-                  <Button className="w-full">
+                  <Button className="w-full cursor-pointer">
                     <Home className="h-4 w-4 mr-2" />
                     Quản lý phòng
                   </Button>
@@ -344,25 +344,25 @@ export default function BuildingDetailPage() {
           <CardContent>
             <div className="flex flex-wrap gap-4">
               <Link href={`/dashboard/landlord/properties/rooms?buildingId=${building.id}`}>
-                <Button variant="outline">
+                <Button variant="outline" className="cursor-pointer">
                   <Home className="h-4 w-4 mr-2" />
                   Quản lý phòng
                 </Button>
               </Link>
               
               <Link href={`/dashboard/landlord/properties/rooms/add?buildingId=${building.id}`}>
-                <Button variant="outline">
+                <Button variant="outline" className="cursor-pointer">
                   <Home className="h-4 w-4 mr-2" />
                   Thêm loại phòng mới
                 </Button>
               </Link>
               
-              <Button variant="outline">
+              <Button variant="outline" className="cursor-pointer">
                 <Users className="h-4 w-4 mr-2" />
                 Xem khách thuê
               </Button>
               
-              <Button variant="outline">
+              <Button variant="outline" className="cursor-pointer">
                 <DollarSign className="h-4 w-4 mr-2" />
                 Báo cáo doanh thu
               </Button>

@@ -317,7 +317,7 @@ export default function RoomInstancesPage() {
           <div className="text-center py-12">
             <p className="text-gray-600">Không tìm thấy thông tin phòng</p>
             <Link href="/dashboard/landlord/properties/rooms">
-              <Button className="mt-4">Quay lại danh sách</Button>
+              <Button className="mt-4 cursor-pointer">Quay lại danh sách</Button>
             </Link>
           </div>
         </div>
@@ -332,7 +332,7 @@ export default function RoomInstancesPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Link href={`/dashboard/landlord/properties/rooms/${roomId}`}>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="cursor-pointer">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Quay lại
               </Button>
@@ -347,7 +347,7 @@ export default function RoomInstancesPage() {
           
           <div className="flex space-x-3">
             {selectedInstances.length > 0 && (
-              <Button onClick={() => setShowBulkEdit(true)}>
+              <Button onClick={() => setShowBulkEdit(true)} className="cursor-pointer">
                 <Edit className="h-4 w-4 mr-2" />
                 Sửa hàng loạt ({selectedInstances.length})
               </Button>
@@ -440,6 +440,7 @@ export default function RoomInstancesPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditInstance(instance)}
+                        className="cursor-pointer"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -494,11 +495,11 @@ export default function RoomInstancesPage() {
                       </FormField>
                       
                       <div className="flex space-x-2">
-                        <Button size="sm" onClick={handleSaveEdit} className="flex-1">
+                        <Button size="sm" onClick={handleSaveEdit} className="flex-1 cursor-pointer">
                           <Save className="h-4 w-4 mr-1" />
                           Lưu
                         </Button>
-                        <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                        <Button size="sm" variant="outline" onClick={handleCancelEdit} className="cursor-pointer">
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
@@ -543,7 +544,7 @@ export default function RoomInstancesPage() {
               }
             </p>
             {statusFilter !== 'all' && (
-              <Button variant="outline" onClick={() => setStatusFilter('all')}>
+              <Button variant="outline" onClick={() => setStatusFilter('all')} className="cursor-pointer">
                 Xem tất cả phòng
               </Button>
             )}
@@ -623,7 +624,7 @@ export default function RoomInstancesPage() {
                 <div className="flex space-x-2">
                   <Button 
                     onClick={handleBulkUpdate} 
-                    className="flex-1"
+                    className="flex-1 cursor-pointer"
                     disabled={getCommonAvailableStatusOptions(selectedInstances).length === 0}
                   >
                     <Save className="h-4 w-4 mr-2" />
@@ -635,6 +636,7 @@ export default function RoomInstancesPage() {
                       setShowBulkEdit(false)
                       setBulkEditForm({ status: '' as RoomStatus, reason: '' })
                     }}
+                    className="cursor-pointer"
                   >
                     Hủy
                   </Button>

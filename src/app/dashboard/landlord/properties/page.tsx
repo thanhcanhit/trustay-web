@@ -281,7 +281,7 @@ export default function LandlordProperties() {
               {searchTerm ? 'Không tìm thấy dãy trọ nào phù hợp' : 'Bạn chưa có dãy trọ nào'}
             </div>
             <Link href="/dashboard/landlord/properties/add">
-              <Button>Thêm dãy trọ đầu tiên</Button>
+              <Button className="cursor-pointer">Thêm dãy trọ đầu tiên</Button>
             </Link>
           </div>
         )}
@@ -295,6 +295,7 @@ export default function LandlordProperties() {
                 size="sm"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
+                className="cursor-pointer"
               >
                 Trước
               </Button>
@@ -306,6 +307,7 @@ export default function LandlordProperties() {
                 size="sm"
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
+                className="cursor-pointer"
               >
                 Sau
               </Button>

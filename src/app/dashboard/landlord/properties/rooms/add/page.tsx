@@ -453,7 +453,7 @@ function AddRoomPageContent() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms'}>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="cursor-pointer">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Quay lại
               </Button>
