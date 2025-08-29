@@ -32,7 +32,7 @@ interface ApiCost extends RoomCost {
   unitPrice?: number;
   baseRate?: number;
 }
-import { Building as BuildingIcon, Home, DollarSign, Settings, ArrowLeft } from "lucide-react"
+import { Building as BuildingIcon, Home, DollarSign, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { getRoomTypeOptions } from "@/utils/room-types"

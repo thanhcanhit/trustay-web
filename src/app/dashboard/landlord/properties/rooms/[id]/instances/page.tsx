@@ -134,9 +134,9 @@ export default function RoomInstancesPage() {
     if (selectedInstances.length === 0) return []
     
     // Get all possible status options for all selected instances
-    const allPossibleStatuses = selectedInstances.flatMap(instance => 
-      getAvailableStatusOptions(instance.status)
-    )
+    // const allPossibleStatuses = selectedInstances.flatMap(instance => 
+    //   getAvailableStatusOptions(instance.status)
+    // )
     
     // Return only statuses that are available for ALL selected instances
     return Object.keys(BUSINESS_RULES).filter(status => 
