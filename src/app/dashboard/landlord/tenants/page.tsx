@@ -79,7 +79,7 @@ export default function TenantsManagementPage() {
 
   return (
     <DashboardLayout userType="landlord">
-      <div className="p-6">
+      <div className="px-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Quản lý khách thuê</h1>
           <p className="text-gray-600">Quản lý thông tin và trạng thái của tất cả khách thuê</p>
