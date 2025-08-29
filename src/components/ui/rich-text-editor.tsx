@@ -91,7 +91,14 @@ export function RichTextEditor({
               { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' }
             ]
           },
-          placeholder
+          placeholder,
+          fontSize: {
+            options: [
+              14,
+              16,
+              'default'
+            ]
+          }
         }
 
         setClassicEditor(() => ClassicEditorBuild)
@@ -193,6 +200,13 @@ export function RichTextEditor({
               { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
               { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' }
             ]
+          },
+          fontSize: {
+            options: [
+              14,
+              16,
+              'default'
+            ]
           }
         }}
         onChange={(_event: unknown, editor: { getData: () => string }) => {
@@ -230,6 +244,41 @@ export function RichTextEditor({
           border: 1px solid;
           border-bottom: 1px solid;
           padding-left: 30px;
+          font-size: 16px;
+          line-height: 1.5;
+          font-family: inherit;
+          font-weight: 400;
+        }
+
+        .rich-text-editor .ck-editor__editable p {
+          font-size: 16px;
+          line-height: 1.5;
+          margin: 0.5rem 0;
+          font-family: inherit;
+          font-weight: 400;
+        }
+
+        @media (min-width: 768px) {
+          .rich-text-editor .ck-editor__editable {
+            font-size: 14px;
+          }
+          
+          .rich-text-editor .ck-editor__editable p {
+            font-size: 14px;
+          }
+        }
+
+        /* Placeholder styling to match input */
+        .rich-text-editor .ck-editor__editable .ck-placeholder {
+          font-size: 16px;
+          line-height: 1.5;
+          color: hsl(var(--muted-foreground));
+        }
+
+        @media (min-width: 768px) {
+          .rich-text-editor .ck-editor__editable .ck-placeholder {
+            font-size: 14px;
+          }
         }
 
         /* Heading styles */
