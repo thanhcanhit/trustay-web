@@ -154,7 +154,7 @@ function RoomsManagementPageContent() {
             <p className="text-gray-600">Quản lý tất cả các phòng trong hệ thống</p>
           </div>
           <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}>
-            <Button>
+            <Button className="cursor-pointer">
               <Plus className="h-4 w-4 mr-2" />
               Thêm loại phòng
             </Button>
@@ -165,7 +165,7 @@ function RoomsManagementPageContent() {
           <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/dashboard/landlord/properties">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="cursor-pointer">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Quay lại dãy trọ
                 </Button>
@@ -372,11 +372,11 @@ function RoomsManagementPageContent() {
             </div>
             {!hasBuildings ? (
               <Link href="/dashboard/landlord/properties/add">
-                <Button>Tạo dãy trọ đầu tiên</Button>
+                <Button className="cursor-pointer">Tạo dãy trọ đầu tiên</Button>
               </Link>
             ) : (
               <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}>
-                <Button>Thêm loại phòng đầu tiên</Button>
+                <Button className="cursor-pointer">Thêm loại phòng đầu tiên</Button>
               </Link>
             )}
           </div>
@@ -391,6 +391,7 @@ function RoomsManagementPageContent() {
                 size="sm"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
+                className="cursor-pointer"
               >
                 Trước
               </Button>
@@ -402,6 +403,7 @@ function RoomsManagementPageContent() {
                 size="sm"
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
+                className="cursor-pointer"
               >
                 Sau
               </Button>

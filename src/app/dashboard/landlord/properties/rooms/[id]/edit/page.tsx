@@ -367,7 +367,7 @@ export default function EditRoomPage() {
           <div className="text-center py-12">
             <p className="text-gray-600">Không tìm thấy thông tin phòng</p>
             <Link href="/dashboard/landlord/properties/rooms">
-              <Button className="mt-4">Quay lại danh sách</Button>
+              <Button className="mt-4 cursor-pointer">Quay lại danh sách</Button>
             </Link>
           </div>
         </div>
@@ -381,7 +381,7 @@ export default function EditRoomPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Link href={`/dashboard/landlord/properties/rooms/${roomId}`}>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="cursor-pointer">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Quay lại
               </Button>
