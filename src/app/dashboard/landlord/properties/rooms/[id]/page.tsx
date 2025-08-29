@@ -228,7 +228,7 @@ export default function RoomDetailPage() {
                   <p className="text-xl font-bold text-gray-900">
                     {room.pricing?.basePriceMonthly ? 
                       Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN') : 
-                      'Chưa cập nhật' || 0} VNĐ
+                      'Chưa cập nhật'} VNĐ
                   </p>
                 </div>
               </div>
