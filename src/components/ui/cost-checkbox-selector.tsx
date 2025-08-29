@@ -121,7 +121,7 @@ export function CostCheckboxSelector({
     <div className={`space-y-4 ${className}`}>
       <FormField>
         <FormLabel>Chi phí phát sinh</FormLabel>
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 space-x-2">
           {filteredCostTypes.map((costType) => {
             const IconComponent = getCostTypeIcon(costType.name);
             const checked = isSelected(costType.id);
@@ -130,40 +130,39 @@ export function CostCheckboxSelector({
             return (
               <div
                 key={costType.id}
-                className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50"
+                className="flex items-center space-x-2 p-2 border-b border-gray-200"
               >
-                <Checkbox
+                  <Checkbox
                   id={`cost-${costType.id}`}
                   checked={checked}
                   onCheckedChange={(checked) => handleCostToggle(costType, !!checked)}
-                />
-                
-                <div className="flex items-center space-x-2 flex-1">
-                  <IconComponent className="h-4 w-4 text-gray-600" />
-                  <Label
-                    htmlFor={`cost-${costType.id}`}
-                    className="text-sm font-medium cursor-pointer flex-1"
-                  >
-                    {costType.name}
-                  </Label>
-                </div>
-                
-                {checked && (
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      type="number"
-                      value={currentValue}
-                      onChange={(e) => handleValueChange(costType.id, parseFloat(e.target.value) || 0)}
-                      className="w-24 h-8 text-xs"
-                      min="0"
-                      step="1000"
-                      placeholder="0"
-                    />
-                    <span className="text-xs text-gray-500 min-w-[30px]">
-                      {costType.unit || 'VND'}
-                    </span>
+                  />
+                  
+                  <div className="flex items-center space-x-2 flex-1">
+                    <IconComponent className="h-4 w-4 text-gray-600" />
+                    <Label
+                      htmlFor={`cost-${costType.id}`}
+                      className="text-sm font-medium cursor-pointer flex-1"
+                    >
+                      {costType.name}
+                    </Label>
                   </div>
-                )}
+                  
+                  {checked && (
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        type="number"
+                        value={currentValue}
+                        onChange={(e) => handleValueChange(costType.id, parseFloat(e.target.value) || 0)}
+                        className="w-24 h-8 text-xs border-none"
+                        min="0"
+                        step="1000"
+                      />
+                      <span className="text-xs text-gray-500 min-w-[30px]">
+                        {costType.unit || 'VND'}
+                      </span>
+                    </div>
+                  )}
               </div>
             );
           })}

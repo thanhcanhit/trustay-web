@@ -686,7 +686,7 @@ function AddRoomPageContent() {
                   </FormField>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField>
                     <FormLabel>Chi phí tiện ích hàng tháng (VNĐ)</FormLabel>
                     <Input
@@ -708,9 +708,7 @@ function AddRoomPageContent() {
                       onChange={(e) => updateNestedFormData('pricing', 'cleaningFee', parseInt(e.target.value) || 0)}
                     />
                   </FormField>
-                </div>
-
-                <FormField>
+                  <FormField>
                   <FormLabel>Phí dịch vụ (%)</FormLabel>
                   <Input
                     type="number"
@@ -722,8 +720,7 @@ function AddRoomPageContent() {
                     onChange={(e) => updateNestedFormData('pricing', 'serviceFeePercentage', parseFloat(e.target.value) || 0)}
                   />
                 </FormField>
-
-               
+                </div>
 
                 {/* Costs Section */}
                 <div>
@@ -732,7 +729,7 @@ function AddRoomPageContent() {
                     onSelectionChange={(costs) => updateFormData('costs', costs)}
                   />
                 </div>
-              </CardContent>
+              </CardContent> 
             </Card>
           </StepContent>
 
