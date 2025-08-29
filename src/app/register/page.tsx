@@ -27,7 +27,7 @@ import { Eye, EyeOff, PhoneCall } from "lucide-react"
 import { cleanEmail } from "@/utils/emailValidation"
 import { RegistrationErrorHandler, type ValidationErrors, type FormData } from "@/utils/registrationErrorHandler"
 
-type RegistrationStep = 'form' | 'verification'
+type RegistrationStep = 'form' | 'verification' | 'edit-phone'
 
 // Use centralized error handler
 const errorHandler = new RegistrationErrorHandler()
@@ -65,6 +65,9 @@ export default function RegisterPage() {
   // Phone number error handling state
   const [showPhoneErrorDialog, setShowPhoneErrorDialog] = useState(false)
   const [verificationToken, setVerificationToken] = useState("")
+  
+  // Edit phone form state
+  const [newPhone, setNewPhone] = useState("")
 
   // Validation errors state - simplified with centralized handler
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
@@ -210,6 +213,29 @@ export default function RegisterPage() {
     }
   }
 
+  // Handle new phone change with validation
+  const handleNewPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPhoneValue = e.target.value
+    setNewPhone(newPhoneValue)
+    
+    // Clear phone validation error when user starts typing
+    errorHandler.handleFieldChange('phone')
+    syncErrors()
+    
+    // Real-time validation for better UX
+    if (newPhoneValue && newPhoneValue.length >= 10) {
+      // Only validate if user has typed enough characters
+      setTimeout(() => {
+        if (newPhoneValue === newPhone) { // Only validate if phone hasn't changed
+          const phoneError = errorHandler.validateField('phone', newPhoneValue)
+          if (phoneError) {
+            setValidationError('phone', phoneError)
+          }
+        }
+      }, 300)
+    }
+  }
+
   // Debug effect for phone error dialog
   useEffect(() => {
     console.log('showPhoneErrorDialog changed:', showPhoneErrorDialog);
@@ -308,12 +334,26 @@ export default function RegisterPage() {
 
     try {
       // Send verification email
-      await sendEmailVerification(email)
+      const emailResult = await sendEmailVerification(email)
+      
+      if (!emailResult.success) {
+        // Handle API error with specific message
+        console.error('Send email verification failed:', emailResult.error)
+        const mockError = new Error(emailResult.error)
+        const { message } = errorHandler.handleServerError(mockError, 'registration')
+        syncErrors()
+        toast.error(message, {
+          duration: 4000,
+        })
+        return
+      }
+
       toast.success(`Mã xác thực đã được gửi đến email: ${email}. Vui lòng kiểm tra hộp thư của bạn.`, {
         duration: 4000,
       })
       setCurrentStep('verification')
     } catch (error: unknown) {
+      console.error('Registration form submit error:', error)
       const { message } = errorHandler.handleServerError(error, 'registration')
       syncErrors()
       toast.error(message, {
@@ -341,15 +381,28 @@ export default function RegisterPage() {
 
     try {
       // Verify email code
-      const verifyResponse = await verifyEmailCode(email, verificationCode)
+      const verifyResult = await verifyEmailCode(email, verificationCode)
 
+      if (!verifyResult.success) {
+        // Handle API error with specific message
+        console.error('Email verification failed:', verifyResult.error)
+        const mockError = new Error(verifyResult.error)
+        const { message } = errorHandler.handleServerError(mockError, 'verification')
+        syncErrors()
+        toast.error(message, {
+          duration: 4000,
+        })
+        return
+      }
+
+      const verifyResponse = verifyResult.data
       if (verifyResponse.verificationToken) {
         // Store verification token for potential retry
         setVerificationToken(verifyResponse.verificationToken)
         
         try {
           // Register with verification token - use appropriate function based on phone
-          const authResponse = phone 
+          const authResult = phone 
             ? await registerWithVerification({
                 email,
                 password,
@@ -368,7 +421,29 @@ export default function RegisterPage() {
                 role,
               }, verifyResponse.verificationToken)
 
-          // Convert to user store format and login
+          if (!authResult.success) {
+            // Handle API error with specific message
+            console.error('Registration failed:', authResult.error)
+            const mockError = new Error(authResult.error)
+            const { errorType, message } = errorHandler.handleServerError(mockError, 'verification')
+            syncErrors()
+            
+            if (errorType === 'phone_conflict') {
+              console.log('Phone number conflict detected, showing dialog')
+              setShowPhoneErrorDialog(true)
+              // DON'T go back to form - stay in current state and show dialog
+              return // Exit early to prevent showing other error messages
+            } else {
+              console.log('Registration error:', message)
+              toast.error(message, {
+                duration: 4000,
+              })
+            }
+            return
+          }
+
+          // Success - convert to user store format and login
+          const authResponse = authResult.data
           const user = {
             id: authResponse.user.id,
             firstName: authResponse.user.firstName,
@@ -396,6 +471,7 @@ export default function RegisterPage() {
             router.push('/profile')
           }, 1500)
         } catch (registerError: unknown) {
+          console.error('Registration with verification error:', registerError)
           const { errorType, message } = errorHandler.handleServerError(registerError, 'verification')
           syncErrors()
           
@@ -430,7 +506,20 @@ export default function RegisterPage() {
     clearAllValidationErrors()
 
     try {
-      await sendEmailVerification(email)
+      const emailResult = await sendEmailVerification(email)
+      
+      if (!emailResult.success) {
+        // Handle API error with specific message
+        console.error('Resend email verification failed:', emailResult.error)
+        const mockError = new Error(emailResult.error)
+        const { message } = errorHandler.handleServerError(mockError, 'verification')
+        syncErrors()
+        toast.error(message, {
+          duration: 4000,
+        })
+        return
+      }
+
       toast.success(`Mã xác thực mới đã được gửi đến email: ${email}. Vui lòng kiểm tra hộp thư của bạn.`, {
         duration: 4000,
       })
@@ -462,7 +551,7 @@ export default function RegisterPage() {
 
     try {
       // Register without phone number - use specialized function
-      const authResponse = await registerWithVerificationNoPhone({
+      const authResult = await registerWithVerificationNoPhone({
         email,
         password,
         firstName,
@@ -471,7 +560,22 @@ export default function RegisterPage() {
         role,
       }, verificationToken)
 
-      // Convert to user store format and login
+      if (!authResult.success) {
+        // Handle API error with specific message
+        console.error('Skip phone registration failed:', authResult.error)
+        const mockError = new Error(authResult.error)
+        const { message } = errorHandler.handleServerError(mockError, 'verification')
+        syncErrors()
+        toast.error(message, {
+          duration: 4000,
+        })
+        // On error, show dialog again
+        setShowPhoneErrorDialog(true)
+        return
+      }
+
+      // Success - convert to user store format and login
+      const authResponse = authResult.data
       const user = {
         id: authResponse.user.id,
         firstName: authResponse.user.firstName,
@@ -511,11 +615,121 @@ export default function RegisterPage() {
   // Handle edit phone number option
   const handleEditPhone = () => {
     setShowPhoneErrorDialog(false)
+    // Initialize new phone with current phone value
+    setNewPhone(phone)
     // Clear phone error to show clean form
     errorHandler.clearField('phone')
     syncErrors()
-    // User can now edit the phone number in the form
-    // The form will be re-submitted with the new phone number
+    // Switch to edit phone form
+    setCurrentStep('edit-phone')
+  }
+
+  // Handle edit phone form submission
+  const handleEditPhoneSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    clearAllValidationErrors()
+
+    // Validate new phone number
+    if (newPhone) {
+      const phoneError = errorHandler.validateField('phone', newPhone)
+      if (phoneError) {
+        setValidationError('phone', phoneError)
+        toast.error(phoneError, {
+          duration: 4000,
+        })
+        return
+      }
+    }
+
+    // Update the main phone state and proceed with registration
+    setPhone(newPhone)
+    setIsLoading(true)
+
+    try {
+      // Register with new phone number (or without phone if empty)
+      const authResult = newPhone 
+        ? await registerWithVerification({
+            email,
+            password,
+            firstName,
+            lastName,
+            phone: newPhone,
+            gender,
+            role,
+          }, verificationToken)
+        : await registerWithVerificationNoPhone({
+            email,
+            password,
+            firstName,
+            lastName,
+            gender,
+            role,
+          }, verificationToken)
+
+      if (!authResult.success) {
+        // Handle API error with specific message
+        console.error('Edit phone registration failed:', authResult.error)
+        const mockError = new Error(authResult.error)
+        const { errorType, message } = errorHandler.handleServerError(mockError, 'verification')
+        syncErrors()
+        
+        if (errorType === 'phone_conflict') {
+          // Show phone conflict dialog again
+          setShowPhoneErrorDialog(true)
+          setCurrentStep('verification') // Go back to verification step
+          return
+        }
+        
+        // Other errors
+        toast.error(message, {
+          duration: 4000,
+        })
+        return
+      }
+
+      // Success - convert to user store format and login
+      const authResponse = authResult.data
+      const user = {
+        id: authResponse.user.id,
+        firstName: authResponse.user.firstName,
+        lastName: authResponse.user.lastName,
+        email: authResponse.user.email,
+        phone: authResponse.user.phone,
+        gender: authResponse.user.gender,
+        role: authResponse.user.role,
+        bio: authResponse.user.bio,
+        dateOfBirth: authResponse.user.dateOfBirth,
+        avatarUrl: authResponse.user.avatarUrl,
+        createdAt: authResponse.user.createdAt,
+        updatedAt: authResponse.user.updatedAt,
+      }
+
+      useUserStore.setState({ user, isAuthenticated: true })
+
+      toast.success('Đăng ký thành công! Chào mừng bạn đến với Trustay!', {
+        duration: 3000,
+      })
+
+      setTimeout(() => {
+        router.push('/profile')
+      }, 1500)
+    } catch (error: unknown) {
+      const { errorType, message } = errorHandler.handleServerError(error, 'verification')
+      syncErrors()
+      
+      if (errorType === 'phone_conflict') {
+        setShowPhoneErrorDialog(true)
+        setCurrentStep('verification') // Go back to verification step
+        return
+      }
+      
+      // Other errors
+      toast.error(message, {
+        duration: 4000,
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   // Handle form resubmission with new phone number
@@ -529,7 +743,7 @@ export default function RegisterPage() {
 
     try {
       // Register with new phone number (or without phone if empty)
-      const authResponse = phone 
+      const authResult = phone 
         ? await registerWithVerification({
             email,
             password,
@@ -548,7 +762,34 @@ export default function RegisterPage() {
             role,
           }, verificationToken)
 
-      // Convert to user store format and login
+      if (!authResult.success) {
+        // Handle API error with specific message
+        console.error('Form resubmit registration failed:', authResult.error)
+        const mockError = new Error(authResult.error)
+        const { errorType, message } = errorHandler.handleServerError(mockError, 'verification')
+        syncErrors()
+        
+        if (errorType === 'validation') {
+          toast.error(message, {
+            duration: 5000,
+          })
+          return // Stay on form to let user fix the phone number
+        }
+        
+        if (errorType === 'phone_conflict') {
+          setShowPhoneErrorDialog(true)
+          return // Show phone conflict dialog
+        }
+        
+        // Other errors
+        toast.error(message, {
+          duration: 4000,
+        })
+        return
+      }
+
+      // Success - convert to user store format and login
+      const authResponse = authResult.data
       const user = {
         id: authResponse.user.id,
         firstName: authResponse.user.firstName,
@@ -636,17 +877,21 @@ export default function RegisterPage() {
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
                 {currentStep === 'verification'
                   ? 'XÁC THỰC EMAIL'
-                  : verificationToken
-                    ? 'HOÀN TẤT ĐĂNG KÝ'
-                    : 'ĐĂNG KÝ'
+                  : currentStep === 'edit-phone'
+                    ? 'CHỈNH SỬA SỐ ĐIỆN THOẠI'
+                    : verificationToken
+                      ? 'HOÀN TẤT ĐĂNG KÝ'
+                      : 'ĐĂNG KÝ'
                 }
               </h2>
               <p className="text-gray-600 text-sm">
                 {currentStep === 'verification'
                   ? `Nhập mã xác thực đã gửi đến ${email}`
-                  : verificationToken
-                    ? 'Email đã được xác thực. Vui lòng kiểm tra và hoàn tất thông tin đăng ký'
-                    : 'Tạo tài khoản mới để bắt đầu'
+                  : currentStep === 'edit-phone'
+                    ? 'Vui lòng nhập số điện thoại mới để hoàn tất đăng ký'
+                    : verificationToken
+                      ? 'Email đã được xác thực. Vui lòng kiểm tra và hoàn tất thông tin đăng ký'
+                      : 'Tạo tài khoản mới để bắt đầu'
                 }
               </p>
               
@@ -979,14 +1224,14 @@ export default function RegisterPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full py-3 px-4 bg-blue-400 text-white hover:text-white hover:bg-blue-500 font-medium rounded-lg transition-colors flex items-center justify-center space-x-2 cursor-pointer"
+                  className="w-full h-11 py-3 px-4 bg-blue-400 text-white hover:text-white hover:bg-blue-500 font-medium rounded-lg transition-colors flex items-center justify-center space-x-2 cursor-pointer"
                 >
                   <PhoneCall className="h-4 w-4" />
                   <span>Đăng ký bằng Zalo</span>
                 </Button>
               </div>
 
-              <div className="text-center space-y-1 pt-4">
+              <div className="text-center space-y-1">
                 <p className="text-sm">
                   Đã có tài khoản?  &nbsp;
                   <a href="/login" className="text-green-600 hover:text-green-500">
@@ -1032,7 +1277,7 @@ export default function RegisterPage() {
                 <Button
                   type="submit"
                   disabled={isLoading || verificationCode.length !== 6}
-                  className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isLoading ? "ĐANG XÁC THỰC..." : "XÁC THỰC"}
                 </Button>
@@ -1067,6 +1312,67 @@ export default function RegisterPage() {
                 </Button>
               </div>
             </form>
+          ) : currentStep === 'edit-phone' ? (
+            <form className="space-y-4" onSubmit={handleEditPhoneSubmit}>
+              {/* Show user information summary */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                <h3 className="text-sm font-medium text-green-800 mb-2">Thông tin đăng ký:</h3>
+                <div className="text-sm text-green-700 space-y-1">
+                  <p><span className="font-medium">Email:</span> {email}</p>
+                  <p><span className="font-medium">Họ tên:</span> {firstName} {lastName}</p>
+                  <p><span className="font-medium">Vai trò:</span> {role === 'tenant' ? 'Người thuê trọ' : 'Chủ trọ'}</p>
+                  <p><span className="font-medium">Giới tính:</span> {gender === 'male' ? 'Nam' : gender === 'female' ? 'Nữ' : 'Khác'}</p>
+                </div>
+              </div>
+
+              {/* New phone input */}
+              <div>
+                <label htmlFor="newPhone" className="block text-sm font-medium text-gray-700 mb-2">
+                  Số điện thoại mới
+                </label>
+                <Input
+                  id="newPhone"
+                  name="newPhone"
+                  type="tel"
+                  placeholder="Nhập số điện thoại mới (không bắt buộc)"
+                  value={newPhone}
+                  onChange={handleNewPhoneChange}
+                  onBlur={() => {
+                    if (newPhone) {
+                      const phoneError = errorHandler.validateField('phone', newPhone)
+                      if (phoneError) {
+                        setValidationError('phone', phoneError)
+                      }
+                    }
+                  }}
+                  disabled={isLoading}
+                  className={`w-full h-11 px-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50 ${
+                    validationErrors.phone ? 'border-red-300 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {validationErrors.phone && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {validationErrors.phone}
+                  </p>
+                )}
+                {!validationErrors.phone && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    💡 Bỏ trống nếu bạn không muốn cung cấp số điện thoại
+                  </p>
+                )}
+              </div>
+
+              {/* Action buttons */}
+              <div className="space-y-3 pt-2">
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-11 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {isLoading ? "ĐANG XỬ LÝ..." : "HOÀN TẤT ĐĂNG KÝ"}
+                </Button>
+              </div>
+            </form>
           ) : null}
           </div>
         </div>
@@ -1089,7 +1395,7 @@ export default function RegisterPage() {
                 <Button
                   onClick={handleSkipPhone}
                   disabled={isLoading}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+                  className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {isLoading ? "Đang xử lý..." : "Bỏ qua số điện thoại và hoàn tất đăng ký"}
                 </Button>
@@ -1098,7 +1404,7 @@ export default function RegisterPage() {
                   onClick={handleEditPhone}
                   disabled={isLoading}
                   variant="outline"
-                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   Dùng số điện thoại khác
                 </Button>

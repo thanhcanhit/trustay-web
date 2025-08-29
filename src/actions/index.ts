@@ -28,8 +28,13 @@ export {
 } from './auth.action';
 // Export listings actions
 export {
+	getAllRoomListings,
 	getFeaturedRoomListings,
 	getRoomBySlug,
+	type RoomDetail,
+	type RoomListing,
+	type RoomListingsResponse,
+	type RoomSearchParams,
 	searchRoomListings,
 } from './listings.action';
 // Export location actions (excluding ApiError)

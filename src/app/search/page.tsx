@@ -8,6 +8,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { useRoomStore } from '@/stores/roomStore';
 import { type RoomSearchParams } from '@/actions/listings.action';
 import { RoomCard } from '@/components/ui/room-card';
+import { parseSearchParams } from '@/utils/search-params';
 
 function SearchPageContent() {
   const searchParams = useSearchParams();
@@ -40,23 +41,7 @@ function SearchPageContent() {
 
   // Get search parameters from URL - use useMemo for stable reference
   const currentSearchParams = useMemo((): RoomSearchParams => {
-    return {
-      search: searchParams.get('search') || undefined,
-      provinceId: searchParams.get('provinceId') ? parseInt(searchParams.get('provinceId')!) : undefined,
-      districtId: searchParams.get('districtId') ? parseInt(searchParams.get('districtId')!) : undefined,
-      wardId: searchParams.get('wardId') ? parseInt(searchParams.get('wardId')!) : undefined,
-      roomType: searchParams.get('roomType') || undefined,
-      minPrice: searchParams.get('minPrice') ? parseInt(searchParams.get('minPrice')!) : undefined,
-      maxPrice: searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!) : undefined,
-      minArea: searchParams.get('minArea') ? parseInt(searchParams.get('minArea')!) : undefined,
-      maxArea: searchParams.get('maxArea') ? parseInt(searchParams.get('maxArea')!) : undefined,
-      amenities: searchParams.get('amenities') || undefined,
-      maxOccupancy: searchParams.get('maxOccupancy') ? parseInt(searchParams.get('maxOccupancy')!) : undefined,
-      isVerified: searchParams.get('isVerified') === 'true' ? true : undefined,
-      sortBy: (searchParams.get('sortBy') as 'price' | 'area' | 'createdAt') || 'createdAt',
-      sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
-      limit: 20
-    };
+    return parseSearchParams(searchParams);
   }, [searchParams]);
 
   // Load initial results - stable function without dependencies

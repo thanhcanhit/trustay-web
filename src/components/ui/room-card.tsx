@@ -12,6 +12,7 @@ import {
 import type { RoomListing } from '@/actions/listings.action';
 import { Badge } from './badge';
 import { getOptimizedImageUrl } from '@/lib/utils';
+import { getRoomTypeDisplayName } from '@/utils/room-types';
 
 interface RoomCardProps {
   room: RoomListing;
@@ -137,7 +138,7 @@ export function RoomCard({
             {room.maxOccupancy} người
           </span>
           <span className="text-gray-400">•</span>
-          {room.roomType === 'boarding_house' ? 'Nhà trọ' : room.roomType}
+          {getRoomTypeDisplayName(room.roomType)}
           
         </div>
 

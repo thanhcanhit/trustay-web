@@ -71,13 +71,6 @@ axiosInstance.interceptors.request.use(
 			const localToken = TokenManager.getAccessToken();
 			const token = cookieToken || localToken;
 
-			console.log('Auth Debug:', {
-				cookieToken: cookieToken ? 'Found' : 'Not found',
-				localToken: localToken ? 'Found' : 'Not found',
-				finalToken: token ? 'Using token' : 'No token',
-				url: config.url,
-			});
-
 			if (token) {
 				config.headers.Authorization = `Bearer ${token}`;
 			}

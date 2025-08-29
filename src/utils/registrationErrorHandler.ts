@@ -127,8 +127,16 @@ export class RegistrationErrorHandler {
 		message: string;
 		field?: keyof ValidationErrors;
 	} {
+		console.error('RegistrationErrorHandler - Processing error:', error);
+
 		const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra';
 		const lowerErrorMessage = errorMessage.toLowerCase();
+
+		console.error('Error message details:', {
+			original: errorMessage,
+			lowercase: lowerErrorMessage,
+			context,
+		});
 
 		// Phone number conflict detection
 		if (this.isPhoneConflictError(lowerErrorMessage)) {
@@ -161,11 +169,29 @@ export class RegistrationErrorHandler {
 			};
 		}
 
-		// General server error
-		const translatedError =
-			context === 'verification'
-				? translateVerificationError(errorMessage)
-				: translateRegistrationError(errorMessage);
+		// Enhanced error translation with fallback
+		let translatedError: string;
+
+		if (context === 'verification') {
+			translatedError = translateVerificationError(errorMessage);
+		} else {
+			translatedError = translateRegistrationError(errorMessage);
+		}
+
+		// Additional fallback for generic server errors
+		if (
+			translatedError === errorMessage &&
+			(lowerErrorMessage.includes('server error') ||
+				lowerErrorMessage.includes('internal error') ||
+				lowerErrorMessage.includes('500') ||
+				errorMessage === 'Có lỗi xảy ra' ||
+				errorMessage === 'Đã xảy ra lỗi')
+		) {
+			translatedError =
+				context === 'verification'
+					? 'Lỗi xác thực. Vui lòng thử lại hoặc yêu cầu mã mới'
+					: 'Lỗi đăng ký. Vui lòng kiểm tra thông tin và thử lại';
+		}
 
 		this.setError('general', translatedError);
 		return {
@@ -181,6 +207,8 @@ export class RegistrationErrorHandler {
 			(message.includes('phone') || message.includes('số điện thoại')) &&
 			(message.includes('already exists') ||
 				message.includes('already used') ||
+				message.includes('already in use') ||
+				message.includes('is already in use') ||
 				message.includes('taken') ||
 				message.includes('in use') ||
 				message.includes('duplicate') ||

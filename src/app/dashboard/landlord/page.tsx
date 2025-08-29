@@ -25,7 +25,7 @@ export default function LandlordDashboard() {
 
   return (
     <DashboardLayout userType="landlord">
-      <div className="p-6">
+      <div className="px-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
