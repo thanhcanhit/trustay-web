@@ -146,7 +146,7 @@ export interface RoomDetail {
 
 // Search parameters interface
 export interface RoomSearchParams {
-	search?: string;
+	search: string; // Required parameter
 	provinceId?: number;
 	districtId?: number;
 	wardId?: number;
@@ -158,6 +158,8 @@ export interface RoomSearchParams {
 	amenities?: string; // comma-separated amenity IDs
 	maxOccupancy?: number;
 	isVerified?: boolean;
+	latitude?: number; // For location-based search
+	longitude?: number; // For location-based search
 	sortBy?: 'price' | 'area' | 'createdAt';
 	sortOrder?: 'asc' | 'desc';
 	page?: number;
@@ -170,20 +172,39 @@ const serverApiCall = createServerApiCall(() => TokenUtils.getAccessToken());
 /**
  * Search room listings with filters
  */
-export async function searchRoomListings(
-	params: RoomSearchParams = {},
-): Promise<RoomListingsResponse> {
+export async function searchRoomListings(params: RoomSearchParams): Promise<RoomListingsResponse> {
 	try {
 		// Build query string
 		const queryParams = new URLSearchParams();
 
-		Object.entries(params).forEach(([key, value]) => {
-			if (value !== undefined && value !== null && value !== '') {
-				queryParams.append(key, value.toString());
-			}
-		});
+		// Required parameter - use '.' if search is empty
+		queryParams.append('search', params.search || '.');
 
-		const endpoint = `/api/listings/rooms${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+		// Optional parameters
+		if (params.provinceId !== undefined)
+			queryParams.append('provinceId', params.provinceId.toString());
+		if (params.districtId !== undefined)
+			queryParams.append('districtId', params.districtId.toString());
+		if (params.wardId !== undefined) queryParams.append('wardId', params.wardId.toString());
+		if (params.roomType) queryParams.append('roomType', params.roomType);
+		if (params.minPrice !== undefined) queryParams.append('minPrice', params.minPrice.toString());
+		if (params.maxPrice !== undefined) queryParams.append('maxPrice', params.maxPrice.toString());
+		if (params.minArea !== undefined) queryParams.append('minArea', params.minArea.toString());
+		if (params.maxArea !== undefined) queryParams.append('maxArea', params.maxArea.toString());
+		if (params.amenities) queryParams.append('amenities', params.amenities);
+		if (params.maxOccupancy !== undefined)
+			queryParams.append('maxOccupancy', params.maxOccupancy.toString());
+		if (params.isVerified !== undefined)
+			queryParams.append('isVerified', params.isVerified.toString());
+		if (params.latitude !== undefined) queryParams.append('latitude', params.latitude.toString());
+		if (params.longitude !== undefined)
+			queryParams.append('longitude', params.longitude.toString());
+		if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+		if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+		if (params.page !== undefined) queryParams.append('page', params.page.toString());
+		if (params.limit !== undefined) queryParams.append('limit', params.limit.toString());
+
+		const endpoint = `/api/listings/rooms?${queryParams.toString()}`;
 		console.log('Calling API endpoint:', endpoint);
 
 		const response = await serverApiCall<RoomListingsResponse>(endpoint, {
@@ -198,8 +219,7 @@ export async function searchRoomListings(
 		return response;
 	} catch (error: unknown) {
 		console.error('Failed to search room listings:', error);
-		const errorMessage = error instanceof Error ? error.message : 'Failed to search room listings';
-		throw new Error(errorMessage);
+		throw error;
 	}
 }
 
@@ -208,15 +228,32 @@ export async function searchRoomListings(
  */
 export async function getRoomBySlug(slug: string): Promise<RoomDetail> {
 	try {
-		const response = await serverApiCall<RoomDetail>(`/api/rooms/${slug}`, {
+		const response = await serverApiCall<RoomDetail>(`/api/rooms/public/${slug}`, {
 			method: 'GET',
 		});
 
 		return response;
 	} catch (error: unknown) {
 		console.error('Failed to get room detail:', error);
-		const errorMessage = error instanceof Error ? error.message : 'Failed to get room detail';
-		throw new Error(errorMessage);
+		throw error;
+	}
+}
+
+/**
+ * Get all room listings without search filter (for internal use)
+ */
+export async function getAllRoomListings(
+	params: Omit<RoomSearchParams, 'search'> = {},
+): Promise<RoomListingsResponse> {
+	try {
+		// Use searchRoomListings with empty search (will default to '.')
+		return await searchRoomListings({
+			search: '',
+			...params,
+		});
+	} catch (error: unknown) {
+		console.error('Failed to get all room listings:', error);
+		throw error;
 	}
 }
 
@@ -225,18 +262,15 @@ export async function getRoomBySlug(slug: string): Promise<RoomDetail> {
  */
 export async function getFeaturedRoomListings(limit: number = 4): Promise<RoomListing[]> {
 	try {
-		const response = await searchRoomListings({
+		const response = await getAllRoomListings({
 			sortBy: 'createdAt',
 			sortOrder: 'desc',
-			limit,
 			page: 1,
 		});
 
-		return response.data;
+		return response.data.slice(0, limit);
 	} catch (error: unknown) {
 		console.error('Failed to get featured room listings:', error);
-		const errorMessage =
-			error instanceof Error ? error.message : 'Failed to get featured room listings';
-		throw new Error(errorMessage);
+		throw error;
 	}
 }

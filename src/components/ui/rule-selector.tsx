@@ -8,9 +8,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useReferenceStore } from '@/stores/referenceStore';
 import { getRuleIcon } from '@/utils/icon-mapping';
 
+interface RoomRule {
+  systemRuleId: string;
+  customValue?: string;
+  isEnforced: boolean;
+  notes?: string;
+}
+
 interface RuleSelectorProps {
-  selectedRules: string[];
-  onSelectionChange: (ruleIds: string[]) => void;
+  selectedRules: string[] | RoomRule[];
+  onSelectionChange: (ruleIds: string[] | RoomRule[]) => void;
   category?: string;
   mode?: 'select' | 'display';
   className?: string;
@@ -34,20 +41,35 @@ export function RuleSelector({
   }, [rules.length, loadReferenceData]);
 
   const filteredRules = category ? getRulesByCategory(category) : rules;
+  
+  // Handle both string[] and RoomRule[] inputs
+  const selectedRuleIds = Array.isArray(selectedRules) 
+    ? selectedRules.map(item => 
+        typeof item === 'string' ? item : item.systemRuleId
+      )
+    : [];
+    
   const selectedRuleObjects = filteredRules.filter(rule => 
-    selectedRules.includes(rule.id)
+    selectedRuleIds.includes(rule.id)
   );
 
   const handleRuleToggle = (ruleId: string) => {
-    const newSelection = selectedRules.includes(ruleId)
-      ? selectedRules.filter(id => id !== ruleId)
-      : [...selectedRules, ruleId];
+    const isCurrentlySelected = selectedRuleIds.includes(ruleId);
     
-    onSelectionChange(newSelection);
+    if (isCurrentlySelected) {
+      // Remove the rule
+      const newSelection = selectedRuleIds.filter(id => id !== ruleId);
+      onSelectionChange(newSelection);
+    } else {
+      // Add the rule
+      const newSelection = [...selectedRuleIds, ruleId];
+      onSelectionChange(newSelection);
+    }
   };
 
   const removeRule = (ruleId: string) => {
-    onSelectionChange(selectedRules.filter(id => id !== ruleId));
+    const newSelection = selectedRuleIds.filter(id => id !== ruleId);
+    onSelectionChange(newSelection);
   };
 
   // Display mode - just show selected rules
@@ -71,7 +93,7 @@ export function RuleSelector({
   return (
     <div className={`space-y-3 ${className}`}>
       {/* Selected rules display */}
-      {selectedRules.length > 0 && (
+      {selectedRuleIds.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {selectedRuleObjects.map((rule) => {
             const IconComponent = getRuleIcon(rule.name);
@@ -99,8 +121,8 @@ export function RuleSelector({
           disabled={isLoading}
         >
           <span>
-            {selectedRules.length > 0 
-              ? `Đã chọn ${selectedRules.length} quy định`
+            {selectedRuleIds.length > 0 
+              ? `Đã chọn ${selectedRuleIds.length} quy định`
               : 'Chọn quy định'
             }
           </span>
@@ -119,7 +141,7 @@ export function RuleSelector({
                 <div className="space-y-2">
                   {filteredRules.map((rule) => {
                     const IconComponent = getRuleIcon(rule.name);
-                    const isSelected = selectedRules.includes(rule.id);
+                    const isSelected = selectedRuleIds.includes(rule.id);
                     
                     return (
                       <div

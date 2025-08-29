@@ -187,14 +187,14 @@ export default function LoginPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full py-3 px-4 text-white hover:text-white bg-blue-400 hover:bg-blue-500 font-medium rounded-lg transition-colors flex items-center justify-center space-x-2 cursor-pointer"
+                  className="w-full h-11 py-3 px-4 text-white hover:text-white bg-blue-400 hover:bg-blue-500 font-medium rounded-lg transition-colors flex items-center justify-center space-x-2 cursor-pointer"
                 >
                   <PhoneCall className="h-4 w-4" />
                   <span>Đăng nhập bằng Zalo</span>
                 </Button>
               </div>
 
-              <div className="text-center space-y-1 pt-4">
+              <div className="text-center space-y-1">
                 <p className="text-sm">
                   Chưa có tài khoản?  &nbsp;
                   <a href="/register" className="text-green-600 hover:text-green-500">
