@@ -114,7 +114,7 @@ export default function FeedbackPage() {
 
   return (
     <DashboardLayout userType="landlord">
-      <div className="p-6">
+      <div className="px-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Phản ánh, sự cố</h1>
           <p className="text-gray-600">Quản lý các phản ánh và sự cố từ khách thuê</p>

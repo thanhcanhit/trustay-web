@@ -179,11 +179,6 @@ const landlordItems: SidebarItem[] = [
     icon: Heart
   },
   {
-    title: "Tìm bạn cùng phòng",
-    href: "/profile/roommate",
-    icon: Users
-  },
-  {
     title: "Thông báo",
     href: "/dashboard/landlord/notifications",
     icon: Bell
