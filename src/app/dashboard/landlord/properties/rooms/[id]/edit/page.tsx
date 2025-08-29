@@ -11,23 +11,33 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { AmenitySelector } from "@/components/ui/amenity-selector"
-import { CostTypeSelector } from "@/components/ui/cost-type-selector"
-import { RuleSelector } from "@/components/ui/rule-selector"
+import { AmenityGrid } from "@/components/ui/amenity-grid"
+import { CostCheckboxSelector } from "@/components/ui/cost-checkbox-selector"
+import { RuleGrid } from "@/components/ui/rule-grid"
 import { useReferenceStore } from "@/stores/referenceStore"
 import { getRoomById, updateRoom } from "@/actions/room.action"
 import { 
   type Room,
   type UpdateRoomRequest, 
-  type RoomType
+  type RoomType,
+  type RoomAmenity,
+  type RoomCost,
+  type RoomRule,
 } from "@/types/types"
+
+// Interface for API response cost structure
+interface ApiCost extends RoomCost {
+  fixedAmount?: number;
+  unitPrice?: number;
+  baseRate?: number;
+}
 import { Building as BuildingIcon, Home, DollarSign, Settings, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { getRoomTypeOptions } from "@/utils/room-types"
 import { cleanDescriptionText } from "@/utils/textProcessing"
+import { validateReferenceIds } from "@/utils/referenceValidation"
 
 const STEPS = [
   {
@@ -36,24 +46,97 @@ const STEPS = [
     description: 'Thông tin phòng và vị trí'
   },
   {
-    id: 'pricing',
-    title: 'Giá cả & Chi phí',
-    description: 'Giá thuê và các khoản phí'
+    id: 'pricing-costs',
+    title: 'Giá cả & Chi phí phát sinh',
+    description: 'Giá thuê và chi phí phát sinh'
   },
   {
-    id: 'amenities-costs',
-    title: 'Tiện nghi & Chi phí',
-    description: 'Tiện ích và chi phí phát sinh'
-  },
-  {
-    id: 'rules',
-    title: 'Nội quy',
-    description: 'Quy định và nội quy phòng'
+    id: 'amenities-rules',
+    title: 'Tiện nghi & Nội quy',
+    description: 'Tiện ích và quy định phòng'
   }
 ]
 
 // Room types
 const ROOM_TYPES = getRoomTypeOptions()
+
+// Helper function to convert string IDs to full objects
+const convertAmenitiesToObjects = (amenities: string[] | RoomAmenity[]): RoomAmenity[] => {
+  if (!Array.isArray(amenities)) return []
+  
+  return amenities.map(amenity => {
+    if (typeof amenity === 'string') {
+      const amenityData = useReferenceStore.getState().amenities.find(a => a.id === amenity)
+      return {
+        systemAmenityId: amenity,
+        customValue: amenityData?.name || '',
+        notes: ''
+      }
+    }
+    return amenity
+  })
+}
+
+const convertCostsToObjects = (costs: string[] | RoomCost[]): RoomCost[] => {
+  if (!Array.isArray(costs)) return []
+  
+  return costs.map(cost => {
+    if (typeof cost === 'string') {
+      const costTypeData = useReferenceStore.getState().costTypes.find(c => c.id === cost)
+      return {
+        systemCostTypeId: cost,
+        value: 0,
+        costType: 'fixed' as const,
+        unit: 'VND',
+        billingCycle: 'monthly' as const,
+        includedInRent: false,
+        isOptional: true,
+        notes: costTypeData?.name || ''
+      }
+    }
+    
+    // Handle API response data with extended fields
+    const apiCost = cost as ApiCost;
+    const value = apiCost.fixedAmount || apiCost.unitPrice || apiCost.baseRate || parseFloat(String(cost.value)) || 0;
+    
+    return {
+      systemCostTypeId: cost.systemCostTypeId,
+      value: value,
+      costType: cost.costType || 'fixed' as const,
+      unit: cost.unit || 'VND',
+      billingCycle: cost.billingCycle || 'monthly' as const,
+      includedInRent: Boolean(cost.includedInRent),
+      isOptional: Boolean(cost.isOptional),
+      notes: cost.notes || '',
+      // Preserve API response fields for component to use
+      fixedAmount: apiCost.fixedAmount,
+      unitPrice: apiCost.unitPrice,
+      baseRate: apiCost.baseRate
+    }
+  })
+}
+
+const convertRulesToObjects = (rules: string[] | RoomRule[]): RoomRule[] => {
+  if (!Array.isArray(rules)) return []
+  
+  return rules.map(rule => {
+    if (typeof rule === 'string') {
+      const ruleData = useReferenceStore.getState().rules.find(r => r.id === rule)
+      return {
+        systemRuleId: rule,
+        customValue: ruleData?.name || '',
+        isEnforced: true,
+        notes: ''
+      }
+    }
+    return {
+      systemRuleId: rule.systemRuleId,
+      customValue: rule.customValue || '',
+      isEnforced: Boolean(rule.isEnforced),
+      notes: rule.notes || ''
+    }
+  })
+}
 
 export default function EditRoomPage() {
   const params = useParams()
@@ -163,10 +246,7 @@ export default function EditRoomPage() {
         }
         break
       case 2:
-        // Amenities and costs are optional
-        break
-      case 3:
-        // Rules are optional
+        // Amenities and rules are optional
         break
     }
 
@@ -198,6 +278,34 @@ export default function EditRoomPage() {
     try {
       setIsLoading(true)
 
+      // Convert amenities, costs, and rules to proper format
+      const amenities = convertAmenitiesToObjects(formData.amenities || [])
+      const costs = convertCostsToObjects(formData.costs || [])
+      const rules = convertRulesToObjects(formData.rules || [])
+
+      // Validate reference IDs
+      const selectedAmenityIds = amenities.map(a => a.systemAmenityId)
+      const selectedCostTypeIds = costs.map(c => c.systemCostTypeId)
+      const selectedRuleIds = rules.map(r => r.systemRuleId)
+      
+      const validation = validateReferenceIds(selectedAmenityIds, selectedCostTypeIds, selectedRuleIds)
+      
+      if (validation.hasErrors) {
+        const errorMessages = []
+        if (validation.invalidAmenityIds.length > 0) {
+          errorMessages.push(`Tiện nghi không tồn tại: ${validation.invalidAmenityIds.join(', ')}`)
+        }
+        if (validation.invalidCostTypeIds.length > 0) {
+          errorMessages.push(`Loại chi phí không tồn tại: ${validation.invalidCostTypeIds.join(', ')}`)
+        }
+        if (validation.invalidRuleIds.length > 0) {
+          errorMessages.push(`Nội quy không tồn tại: ${validation.invalidRuleIds.join(', ')}`)
+        }
+        
+        toast.error(errorMessages.join('\n'))
+        return
+      }
+
       // Only send changed fields
       const updateData: UpdateRoomRequest = {}
       
@@ -215,9 +323,9 @@ export default function EditRoomPage() {
       
       // Always send pricing, amenities, costs, rules (OVERRIDE mode)
       updateData.pricing = formData.pricing!
-      updateData.amenities = formData.amenities!
-      updateData.costs = formData.costs!
-      updateData.rules = formData.rules!
+      updateData.amenities = amenities
+      updateData.costs = costs
+      updateData.rules = rules
 
       const response = await updateRoom(room.id, updateData)
       
@@ -385,6 +493,39 @@ export default function EditRoomPage() {
                   </FormField>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField>
+                    <FormLabel>Tầng <span className="text-red-500">*</span></FormLabel>
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="1"
+                      value={formData.floorNumber || ''}
+                      onChange={(e) => updateFormData('floorNumber', parseInt(e.target.value) || 1)}
+                    />
+                  </FormField>
+
+                  <FormField>
+                    <FormLabel>Tiền tố số phòng <span className="text-red-500">*</span></FormLabel>
+                    <Input
+                      placeholder="A"
+                      value={formData.roomNumberPrefix || ''}
+                      onChange={(e) => updateFormData('roomNumberPrefix', e.target.value)}
+                    />
+                  </FormField>
+
+                  <FormField>
+                    <FormLabel>Số phòng bắt đầu <span className="text-red-500">*</span></FormLabel>
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="101"
+                      value={formData.roomNumberStart || ''}
+                      onChange={(e) => updateFormData('roomNumberStart', parseInt(e.target.value) || 101)}
+                    />
+                  </FormField>
+                </div>
+
                 <div className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Trạng thái hoạt động</FormLabel>
@@ -397,24 +538,20 @@ export default function EditRoomPage() {
                     onCheckedChange={(checked) => updateFormData('isActive', checked)}
                   />
                 </div>
-
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Lưu ý:</strong> Một số thông tin như tầng, tiền tố số phòng không thể chỉnh sửa để đảm bảo tính nhất quán của hệ thống.
-                  </p>
-                </div>
               </CardContent>
             </Card>
           </StepContent>
 
-          {/* Step 2: Pricing - Similar to create form */}
+          {/* Step 2: Pricing & Costs */}
           <StepContent stepIndex={1} currentStep={currentStep}>
             <Card>
-              <CardContent className="p-6 space-y-6">
+              <CardContent className="p-6 space-y-8">
                 <div className="flex items-center space-x-2 mb-4">
                   <DollarSign className="h-5 w-5 text-green-600" />
-                  <h3 className="text-lg font-medium">Giá cả & Chi phí</h3>
+                  <h3 className="text-lg font-medium">Giá cả & Chi phí phát sinh</h3>
                 </div>
+
+                <Separator />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField>
@@ -442,7 +579,6 @@ export default function EditRoomPage() {
                   </FormField>
                 </div>
 
-                {/* Rest of pricing form similar to create... */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField>
                     <FormLabel>Số tháng cọc</FormLabel>
@@ -478,85 +614,91 @@ export default function EditRoomPage() {
                   </FormField>
                 </div>
 
-                <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Có thể thương lượng giá</FormLabel>
-                    <div className="text-sm text-gray-600">
-                      Cho phép khách hàng thương lượng giá thuê
-                    </div>
-                  </div>
-                  <Switch
-                    checked={formData.pricing?.priceNegotiable || false}
-                    onCheckedChange={(checked) => updateNestedFormData('pricing', 'priceNegotiable', checked)}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField>
+                    <FormLabel>Chi phí tiện ích hàng tháng (VNĐ)</FormLabel>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="500000"
+                      value={formData.pricing?.utilityCostMonthly || ''}
+                      onChange={(e) => updateNestedFormData('pricing', 'utilityCostMonthly', parseInt(e.target.value) || 0)}
+                    />
+                  </FormField>
+
+                  <FormField>
+                    <FormLabel>Phí vệ sinh (VNĐ)</FormLabel>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="200000"
+                      value={formData.pricing?.cleaningFee || ''}
+                      onChange={(e) => updateNestedFormData('pricing', 'cleaningFee', parseInt(e.target.value) || 0)}
+                    />
+                  </FormField>
+                  <FormField>
+                  <FormLabel>Phí dịch vụ (%)</FormLabel>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    placeholder="5.0"
+                    value={formData.pricing?.serviceFeePercentage || ''}
+                    onChange={(e) => updateNestedFormData('pricing', 'serviceFeePercentage', parseFloat(e.target.value) || 0)}
+                  />
+                </FormField>
+                </div>
+
+                {/* Costs Section */}
+                <div>
+                  <CostCheckboxSelector
+                    selectedCosts={convertCostsToObjects(formData.costs || [])}
+                    onSelectionChange={(costs) => updateFormData('costs', costs)}
                   />
                 </div>
-              </CardContent>
+              </CardContent> 
             </Card>
           </StepContent>
 
-          {/* Step 3: Amenities & Costs - Similar to create form */}
+          {/* Step 3: Amenities & Rules */}
           <StepContent stepIndex={2} currentStep={currentStep}>
             <Card>
               <CardContent className="p-6 space-y-8">
                 <div className="flex items-center space-x-2 mb-4">
                   <Home className="h-5 w-5 text-purple-600" />
-                  <h3 className="text-lg font-medium">Tiện nghi & Chi phí</h3>
+                  <h3 className="text-lg font-medium">Tiện nghi & Nội quy</h3>
                 </div>
+
+                <Separator />
 
                 {/* Amenities */}
                 <div>
                   <h4 className="font-medium mb-4">Tiện nghi</h4>
-                  <AmenitySelector
+                  <AmenityGrid
                     selectedAmenities={formData.amenities || []}
                     onSelectionChange={(amenities) => updateFormData('amenities', amenities)}
-                    mode="select"
                   />
-                  {formData.amenities && formData.amenities.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-sm font-medium mb-2">Tiện nghi đã chọn:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {formData.amenities.map((amenity, index) => (
-                          <Badge key={index} variant="secondary">
-                            {amenity.customValue || `Amenity ${index + 1}`}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
-                {/* Costs */}
+                {/* Rules */}
                 <div>
-                  <h4 className="font-medium mb-4">Chi phí phát sinh</h4>
-                  <CostTypeSelector
-                    selectedCostTypes={formData.costs || []}
-                    onSelectionChange={(costs) => updateFormData('costs', costs)}
-                    mode="select"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </StepContent>
-
-          {/* Step 4: Rules - Similar to create form */}
-          <StepContent stepIndex={3} currentStep={currentStep}>
-            <Card>
-              <CardContent className="p-6 space-y-6">
-                <div className="flex items-center space-x-2 mb-4">
-                  <Settings className="h-5 w-5 text-orange-600" />
-                  <h3 className="text-lg font-medium">Nội quy phòng</h3>
-                </div>
-
-                                  <RuleSelector
+                  <h4 className="font-medium mb-4">Nội quy phòng</h4>
+                  <RuleGrid
                     selectedRules={formData.rules || []}
                     onSelectionChange={(rules) => updateFormData('rules', rules)}
-                    mode="select"
                   />
 
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Lưu ý:</strong> Việc thay đổi tiện nghi, chi phí và nội quy sẽ được áp dụng cho tất cả các phòng thuộc loại này.
-                  </p>
+                  <div className="bg-blue-50 p-4 rounded-lg mt-4">
+                    <h5 className="font-medium mb-2">Gợi ý nội quy:</h5>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• Không hút thuốc trong phòng</li>
+                      <li>• Không nuôi thú cưng</li>
+                      <li>• Giữ yên lặng sau 22h</li>
+                      <li>• Không tổ chức tiệc tùng</li>
+                      <li>• Giữ gìn vệ sinh chung</li>
+                    </ul>
+                  </div>
                 </div>
               </CardContent>
             </Card>

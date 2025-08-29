@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Edit, Trash2, Eye, Home, ArrowLeft } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Eye, Home, ArrowLeft, Settings } from "lucide-react"
 import { getRoomsByBuilding, deleteRoom } from "@/actions/room.action"
 import { getBuildings } from "@/actions/building.action"
 import { type Room, type Building } from "@/types/types"
@@ -36,6 +36,7 @@ function RoomsManagementPageContent() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [hasBuildings, setHasBuildings] = useState(false)
+  const [showStatusUpdateModal, setShowStatusUpdateModal] = useState(false)
   const pageLimit = 12
 
   // Fetch buildings for filter dropdown
@@ -153,12 +154,18 @@ function RoomsManagementPageContent() {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Quản lý phòng</h1>
             <p className="text-gray-600">Quản lý tất cả các phòng trong hệ thống</p>
           </div>
-          <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Thêm loại phòng
+          <div className="flex space-x-3">
+            <Button variant="outline" onClick={() => setShowStatusUpdateModal(true)}>
+              <Settings className="h-4 w-4 mr-2" />
+              Cập nhật trạng thái
             </Button>
-          </Link>
+            <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Thêm loại phòng
+              </Button>
+            </Link>
+          </div>
         </div>
         {/* Header Actions - Only show when viewing specific building */}
         {selectedBuildingId && (
@@ -406,6 +413,64 @@ function RoomsManagementPageContent() {
                 Sau
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* Status Update Modal */}
+        {showStatusUpdateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden">
+              <CardHeader>
+                <CardTitle>Cập nhật trạng thái phòng</CardTitle>
+                <p className="text-sm text-gray-600">
+                  Chọn loại phòng để cập nhật trạng thái
+                </p>
+              </CardHeader>
+              <CardContent className="overflow-y-auto max-h-[60vh]">
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : filteredRooms.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">Không có loại phòng nào</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredRooms.map((room) => (
+                      <Card key={room.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium">{room.name}</h4>
+                            <Badge variant="outline">
+                              {ROOM_TYPE_LABELS[room.roomType as keyof typeof ROOM_TYPE_LABELS]}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-3">
+                            {room.building?.name} • {room.totalRooms} phòng
+                          </p>
+                          <Link href={`/dashboard/landlord/properties/rooms/${room.id}/instances`}>
+                            <Button size="sm" className="w-full">
+                              <Settings className="h-4 w-4 mr-2" />
+                              Quản lý trạng thái
+                            </Button>
+                          </Link>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+              <div className="p-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowStatusUpdateModal(false)}
+                  className="w-full"
+                >
+                  Đóng
+                </Button>
+              </div>
+            </Card>
           </div>
         )}
       </div>

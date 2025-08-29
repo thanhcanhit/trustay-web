@@ -38,6 +38,35 @@ import {
 import Link from "next/link"
 import { toast } from "sonner"
 
+// Business rules information
+const BUSINESS_RULES = {
+  available: {
+    description: 'Phòng trống, sẵn sàng cho thuê',
+    restrictions: ['Không được có rental đang active'],
+    allowedFrom: ['maintenance', 'reserved', 'unavailable']
+  },
+  occupied: {
+    description: 'Phòng đã có người ở',
+    restrictions: [],
+    allowedFrom: ['available', 'reserved']
+  },
+  maintenance: {
+    description: 'Phòng đang sửa chữa/bảo trì',
+    restrictions: ['Nếu occupied + có rental thì cần relocate trước'],
+    allowedFrom: ['available', 'occupied', 'reserved', 'unavailable']
+  },
+  reserved: {
+    description: 'Phòng đã được đặt cọc nhưng chưa vào ở',
+    restrictions: [],
+    allowedFrom: ['available']
+  },
+  unavailable: {
+    description: 'Phòng tạm thời không cho thuê',
+    restrictions: ['Có warning nếu có rental'],
+    allowedFrom: ['available', 'occupied', 'maintenance', 'reserved']
+  }
+}
+
 const STATUS_COLORS = {
   available: 'bg-green-100 text-green-800',
   occupied: 'bg-blue-100 text-blue-800', 
@@ -268,6 +297,23 @@ export default function RoomInstancesPage() {
           </div>
         </div>
 
+        {/* Business Rules Info */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <div className="flex items-start space-x-2">
+            <div className="text-yellow-600 mt-0.5">ℹ️</div>
+            <div>
+              <h5 className="font-medium text-yellow-800 mb-2">Quy tắc cập nhật trạng thái phòng</h5>
+              <div className="text-sm text-yellow-700 space-y-1">
+                <p><strong>Available:</strong> Chỉ từ maintenance, reserved, unavailable</p>
+                <p><strong>Occupied:</strong> Chỉ từ available hoặc reserved</p>
+                <p><strong>Maintenance:</strong> Nếu occupied + có rental thì cần relocate trước</p>
+                <p><strong>Reserved:</strong> Chỉ từ available</p>
+                <p><strong>Unavailable:</strong> Luôn được phép (có warning nếu có rental)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Status Overview */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {Object.entries(STATUS_LABELS).map(([status, label]) => {
@@ -380,6 +426,27 @@ export default function RoomInstancesPage() {
                         </Select>
                       </FormField>
                       
+                      {editForm.status && (
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <h6 className="text-sm font-medium text-blue-800 mb-2">
+                            Thông tin trạng thái: {STATUS_LABELS[editForm.status as keyof typeof STATUS_LABELS]}
+                          </h6>
+                          <p className="text-xs text-blue-700 mb-2">
+                            {BUSINESS_RULES[editForm.status as keyof typeof BUSINESS_RULES]?.description}
+                          </p>
+                          {BUSINESS_RULES[editForm.status as keyof typeof BUSINESS_RULES]?.restrictions.length > 0 && (
+                            <div className="text-xs text-orange-700">
+                              <strong>Lưu ý:</strong>
+                              <ul className="list-disc list-inside mt-1">
+                                {BUSINESS_RULES[editForm.status as keyof typeof BUSINESS_RULES]?.restrictions.map((restriction, index) => (
+                                  <li key={index}>{restriction}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
                       <FormField>
                         <FormLabel>Lý do</FormLabel>
                         <Textarea
@@ -476,6 +543,27 @@ export default function RoomInstancesPage() {
                     </SelectContent>
                   </Select>
                 </FormField>
+                
+                {bulkEditForm.status && (
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <h6 className="text-sm font-medium text-blue-800 mb-2">
+                      Thông tin trạng thái: {STATUS_LABELS[bulkEditForm.status as keyof typeof STATUS_LABELS]}
+                    </h6>
+                    <p className="text-xs text-blue-700 mb-2">
+                      {BUSINESS_RULES[bulkEditForm.status as keyof typeof BUSINESS_RULES]?.description}
+                    </p>
+                    {BUSINESS_RULES[bulkEditForm.status as keyof typeof BUSINESS_RULES]?.restrictions.length > 0 && (
+                      <div className="text-xs text-orange-700">
+                        <strong>Lưu ý:</strong>
+                        <ul className="list-disc list-inside mt-1">
+                          {BUSINESS_RULES[bulkEditForm.status as keyof typeof BUSINESS_RULES]?.restrictions.map((restriction, index) => (
+                            <li key={index}>{restriction}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
                 
                 <FormField>
                   <FormLabel>Lý do</FormLabel>

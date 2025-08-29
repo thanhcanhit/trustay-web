@@ -26,6 +26,13 @@ import {
   type RoomCost,
   type RoomRule,
 } from "@/types/types"
+
+// Interface for API response cost structure
+interface ApiCost extends RoomCost {
+  fixedAmount?: number;
+  unitPrice?: number;
+  baseRate?: number;
+}
 import { Building as BuildingIcon, Home, DollarSign, ArrowLeft, ImageIcon } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -170,15 +177,23 @@ function AddRoomPageContent() {
           notes: costTypeData?.name || ''
         }
       }
+      // Handle API response data with extended fields
+      const apiCost = cost as ApiCost;
+      const value = apiCost.fixedAmount || apiCost.unitPrice || apiCost.baseRate || parseFloat(String(cost.value)) || 0;
+      
       return {
         systemCostTypeId: cost.systemCostTypeId,
-        value: parseFloat(String(cost.value)) || 0,
+        value: value,
         costType: cost.costType || 'fixed' as const,
         unit: cost.unit || 'VND',
         billingCycle: cost.billingCycle || 'monthly' as const,
         includedInRent: Boolean(cost.includedInRent),
         isOptional: Boolean(cost.isOptional),
-        notes: cost.notes || ''
+        notes: cost.notes || '',
+        // Preserve API response fields for component to use
+        fixedAmount: apiCost.fixedAmount,
+        unitPrice: apiCost.unitPrice,
+        baseRate: apiCost.baseRate
       }
     })
   }

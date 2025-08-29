@@ -9,6 +9,13 @@ import { useReferenceStore, type CostType } from '@/stores/referenceStore';
 import { getCostTypeIcon } from '@/utils/icon-mapping';
 import { type RoomCost } from '@/types/types';
 
+// Extended interface to handle API response data
+interface ExtendedRoomCost extends RoomCost {
+  fixedAmount?: number;
+  unitPrice?: number;
+  baseRate?: number;
+}
+
 interface CostCheckboxSelectorProps {
   selectedCosts: RoomCost[];
   onSelectionChange: (costs: RoomCost[]) => void;
@@ -35,9 +42,12 @@ export function CostCheckboxSelector({
   // Initialize cost values from selected costs
   useEffect(() => {
     const initialValues: Record<string, number> = {};
-    selectedCosts.forEach(cost => {
-      initialValues[cost.systemCostTypeId] = cost.value;
-    });
+          selectedCosts.forEach(cost => {
+        // Lấy giá trị từ cost, có thể là từ API response với fixedAmount, unitPrice, baseRate
+        const extendedCost = cost as ExtendedRoomCost;
+        const value = extendedCost.fixedAmount || extendedCost.unitPrice || extendedCost.baseRate || cost.value || 0;
+        initialValues[cost.systemCostTypeId] = value;
+      });
     setCostValues(prev => {
       // Only update if different to prevent infinite loops
       const hasChanged = Object.keys(initialValues).some(key => 
