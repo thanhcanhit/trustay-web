@@ -14,6 +14,7 @@ import { getBuildings } from "@/actions/building.action"
 import { type Room, type Building } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 const ROOM_TYPE_LABELS = {
   boarding_house: 'Nhà trọ',
@@ -128,11 +129,7 @@ function RoomsManagementPageContent() {
     return matchesSearch && matchesStatus
   })
 
-  const handleDeleteRoom = async (roomId: string, roomName: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa loại phòng "${roomName}"?`)) {
-      return
-    }
-
+  const handleDeleteRoom = async (roomId: string) => {
     try {
       const response = await deleteRoom(roomId)
       if (!response.success) {
@@ -150,49 +147,46 @@ function RoomsManagementPageContent() {
 
   return (
     <DashboardLayout userType="landlord">
-      <div className="p-6">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Quản lý phòng</h1>
-          <p className="text-gray-600">Quản lý tất cả các phòng trong hệ thống</p>
+      <div className="px-6">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Quản lý phòng</h1>
+            <p className="text-gray-600">Quản lý tất cả các phòng trong hệ thống</p>
+          </div>
+          <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Thêm loại phòng
+            </Button>
+          </Link>
         </div>
-
-        {/* Filters and Actions */}
-        {/* Header Actions */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between">
-          <div className="flex items-center space-x-4">
-            {selectedBuildingId && (
+        {/* Header Actions - Only show when viewing specific building */}
+        {selectedBuildingId && (
+          <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between">
+            <div className="flex items-center space-x-4">
               <Link href="/dashboard/landlord/properties">
                 <Button variant="outline" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Quay lại dãy trọ
                 </Button>
               </Link>
-            )}
+            </div>
           </div>
-          
-          <div className="flex gap-2">
-            <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Thêm loại phòng
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Tìm kiếm loại phòng..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+        )}
+        {/* Search and Filter */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm theo tên phòng..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-200"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Trạng thái" />
             </SelectTrigger>
@@ -216,6 +210,11 @@ function RoomsManagementPageContent() {
               ))}
             </SelectContent>
           </Select>
+            <Button variant="outline" className="cursor-pointer">
+              <Search className="h-4 w-4 mr-2" />
+              Tìm kiếm
+            </Button>
+          </div>
         </div>
 
         {/* Loading State */}
@@ -232,7 +231,11 @@ function RoomsManagementPageContent() {
         {!loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRooms.map((room) => (
-              <Card key={room.id} className="hover:shadow-lg transition-shadow">
+              <Card key={room.id} className={`hover:shadow-lg transition-shadow ${
+                room.isActive 
+                  ? 'border-green-500 border-2' 
+                  : 'border-gray-300 border-2'
+              }`}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -309,13 +312,13 @@ function RoomsManagementPageContent() {
                   
                   <div className="mt-4 flex space-x-2">
                     <Link href={`/dashboard/landlord/properties/rooms/${room.id}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full">
+                      <Button variant="outline" size="sm" className="w-full cursor-pointer">
                         <Eye className="h-4 w-4 mr-1" />
                         Chi tiết
                       </Button>
                     </Link>
                     <Link href={`/dashboard/landlord/properties/rooms/${room.id}/edit`} className="flex-1">
-                      <Button size="sm" className="w-full">
+                      <Button size="sm" className="w-full cursor-pointer">
                         <Edit className="h-4 w-4 mr-1" />
                         Sửa
                       </Button>
@@ -324,19 +327,35 @@ function RoomsManagementPageContent() {
                   
                   <div className="mt-2 flex space-x-2">
                     <Link href={`/dashboard/landlord/properties/rooms/${room.id}/instances`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full text-green-600 border-green-300 hover:bg-green-50">
+                      <Button variant="outline" size="sm" className="w-full text-green-600 border-green-300 hover:bg-green-50 cursor-pointer">
                         <Home className="h-4 w-4 mr-1" />
                         Quản lý phòng
                       </Button>
                     </Link>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-red-600 border-red-300 hover:bg-red-50"
-                      onClick={() => handleDeleteRoom(room.id, room.name)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-red-600 border-red-300 hover:bg-red-50 cursor-pointer">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Xóa phòng {room.name}?</AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <AlertDialogDescription>
+                          Điều này sẽ xóa phòng {room.name} và tất cả các phòng trong phòng này.
+                        </AlertDialogDescription>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="cursor-pointer">Hủy</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+                            onClick={() => handleDeleteRoom(room.id)}
+                          >
+                            Xóa
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </CardContent>
               </Card>
