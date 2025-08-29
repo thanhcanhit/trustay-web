@@ -7,7 +7,7 @@ import { Eye, Plus, TrendingUp, Users } from "lucide-react"
 export default function LandlordAdvertising() {
   return (
     <DashboardLayout userType="landlord">
-      <div className="p-6">
+      <div className="px-6">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Quảng cáo Trọ</h1>
