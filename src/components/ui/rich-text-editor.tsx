@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { CKEditor } from '@ckeditor/ckeditor5-react'
 import { cn } from '@/lib/utils'
+import { getCleanTextLength } from '@/utils/textProcessing'
 
 // Import CKEditor CSS
 import 'ckeditor5/ckeditor5.css'
@@ -14,6 +15,8 @@ interface RichTextEditorProps {
   className?: string
   disabled?: boolean
   error?: boolean
+  maxLength?: number
+  showCharCount?: boolean
 }
 
 export function RichTextEditor({
@@ -22,12 +25,18 @@ export function RichTextEditor({
   placeholder = 'Nhập mô tả...',
   className,
   disabled = false,
-  error = false
+  error = false,
+  maxLength,
+  showCharCount = false
 }: RichTextEditorProps) {
   const [isLoading, setIsLoading] = useState(true)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [ClassicEditor, setClassicEditor] = useState<any>(null)
   const [hasError, setHasError] = useState(false)
+
+  // Calculate character count (strip HTML tags and entities)
+  const charCount = getCleanTextLength(value)
+  const isOverLimit = maxLength ? charCount > maxLength : false
 
   React.useEffect(() => {
     const loadEditor = async () => {
@@ -82,7 +91,14 @@ export function RichTextEditor({
               { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' }
             ]
           },
-          placeholder
+          placeholder,
+          fontSize: {
+            options: [
+              14,
+              16,
+              'default'
+            ]
+          }
         }
 
         setClassicEditor(() => ClassicEditorBuild)
@@ -123,6 +139,7 @@ export function RichTextEditor({
           onChange={(e) => onChange?.(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
+          maxLength={maxLength}
           className={cn(
             "min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
             "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
@@ -131,11 +148,21 @@ export function RichTextEditor({
           )}
           rows={8}
         />
-        {hasError && (
-          <p className="text-xs text-muted-foreground">
-            Rich text editor không khả dụng, sử dụng text editor đơn giản
-          </p>
-        )}
+        <div className="flex justify-between items-center text-xs">
+          {hasError && (
+            <p className="text-muted-foreground">
+              Rich text editor không khả dụng, sử dụng text editor đơn giản
+            </p>
+          )}
+          {showCharCount && maxLength && (
+            <span className={cn(
+              "text-muted-foreground",
+              isOverLimit && "text-destructive"
+            )}>
+              {charCount}/{maxLength} ký tự
+            </span>
+          )}
+        </div>
       </div>
     )
   }
@@ -173,6 +200,13 @@ export function RichTextEditor({
               { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
               { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' }
             ]
+          },
+          fontSize: {
+            options: [
+              14,
+              16,
+              'default'
+            ]
           }
         }}
         onChange={(_event: unknown, editor: { getData: () => string }) => {
@@ -181,6 +215,16 @@ export function RichTextEditor({
         }}
         disabled={disabled}
       />
+      {showCharCount && maxLength && (
+        <div className="flex justify-end mt-2">
+          <span className={cn(
+            "text-xs text-muted-foreground",
+            isOverLimit && "text-destructive"
+          )}>
+            {charCount}/{maxLength} ký tự
+          </span>
+        </div>
+      )}
       <style jsx global>{`
         .rich-text-editor .ck-editor {
           border: 1px solid hsl(var(--border));
@@ -200,6 +244,41 @@ export function RichTextEditor({
           border: 1px solid;
           border-bottom: 1px solid;
           padding-left: 30px;
+          font-size: 16px;
+          line-height: 1.5;
+          font-family: inherit;
+          font-weight: 400;
+        }
+
+        .rich-text-editor .ck-editor__editable p {
+          font-size: 16px;
+          line-height: 1.5;
+          margin: 0.5rem 0;
+          font-family: inherit;
+          font-weight: 400;
+        }
+
+        @media (min-width: 768px) {
+          .rich-text-editor .ck-editor__editable {
+            font-size: 14px;
+          }
+          
+          .rich-text-editor .ck-editor__editable p {
+            font-size: 14px;
+          }
+        }
+
+        /* Placeholder styling to match input */
+        .rich-text-editor .ck-editor__editable .ck-placeholder {
+          font-size: 16px;
+          line-height: 1.5;
+          color: hsl(var(--muted-foreground));
+        }
+
+        @media (min-width: 768px) {
+          .rich-text-editor .ck-editor__editable .ck-placeholder {
+            font-size: 14px;
+          }
         }
 
         /* Heading styles */

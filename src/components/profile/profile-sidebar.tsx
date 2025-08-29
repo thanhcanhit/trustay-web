@@ -110,7 +110,7 @@ export function ProfileSidebar({ userRole }: ProfileSidebarProps) {
   }
 
   return (
-    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200">
+    <div className="flex h-[calc(100vh-3rem)] w-64 flex-col bg-white border-r border-gray-200 sticky top-12">
       {/* User Info */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">

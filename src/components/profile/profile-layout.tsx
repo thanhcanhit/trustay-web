@@ -40,7 +40,9 @@ export function ProfileLayout({ children }: ProfileLayoutProps) {
     <div className="min-h-screen bg-gray-50 flex pt-16">
       <ProfileSidebar userRole={user.role} />
       <main className="flex-1 overflow-auto">
-        {children}
+        <div className="p-6">
+          {children}
+        </div>
       </main>
     </div>
   )
