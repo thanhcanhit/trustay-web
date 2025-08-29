@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Home, Edit, Trash2, ArrowLeft, Users, DollarSign, Settings, Building } from "lucide-react"
-import { getRoomById, deleteRoom } from "@/actions/room.action"
+import { getRoomById, deleteRoom, getRoomInstancesByStatus } from "@/actions/room.action"
 import { type Room } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -28,6 +28,19 @@ export default function RoomDetailPage() {
 
   const [room, setRoom] = useState<Room | null>(null)
   const [loading, setLoading] = useState(true)
+  const [actualStatusCounts, setActualStatusCounts] = useState<{
+    available: number;
+    occupied: number;
+    maintenance: number;
+    reserved: number;
+    unavailable: number;
+  }>({
+    available: 0,
+    occupied: 0,
+    maintenance: 0,
+    reserved: 0,
+    unavailable: 0
+  })
 
   const fetchRoomDetail = useCallback(async () => {
     try {
@@ -41,6 +54,20 @@ export default function RoomDetailPage() {
       }
       
       setRoom(response.data.data)
+      
+      // Fetch actual status counts from room instances
+      try {
+        const instancesResponse = await getRoomInstancesByStatus(roomId, 'all')
+        if (instancesResponse.success) {
+          setActualStatusCounts(instancesResponse.data.data.statusCounts)
+        }
+      } catch (instancesError) {
+        console.error('Error fetching room instances:', instancesError)
+        // Fallback to room.statusCounts if instances fetch fails
+        if (response.data.data.statusCounts) {
+          setActualStatusCounts(response.data.data.statusCounts)
+        }
+      }
     } catch (error) {
       console.error('Error fetching room detail:', error)
       toast.error('Không thể tải thông tin phòng')
@@ -158,7 +185,7 @@ export default function RoomDetailPage() {
                 <Home className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-sm text-gray-600">Tổng số phòng</p>
-                  <p className="text-2xl font-bold text-gray-900">{room.totalRooms}</p>
+                  <p className="text-2xl font-bold text-gray-900">{room.totalRooms || 0}</p>
                 </div>
               </div>
             </CardContent>
@@ -171,7 +198,7 @@ export default function RoomDetailPage() {
                 <div>
                   <p className="text-sm text-gray-600">Đã cho thuê</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {room.statusCounts?.occupied || 0}
+                      {actualStatusCounts.occupied || 0}
                   </p>
                 </div>
               </div>
@@ -185,7 +212,7 @@ export default function RoomDetailPage() {
                 <div>
                   <p className="text-sm text-gray-600">Còn trống</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {room.statusCounts?.available || 0}
+                    {actualStatusCounts.available || 0}
                   </p>
                 </div>
               </div>
@@ -201,7 +228,7 @@ export default function RoomDetailPage() {
                   <p className="text-xl font-bold text-gray-900">
                     {room.pricing?.basePriceMonthly ? 
                       Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN') : 
-                      'Chưa cập nhật'} VNĐ
+                      'Chưa cập nhật' || 0} VNĐ
                   </p>
                 </div>
               </div>
@@ -308,7 +335,7 @@ export default function RoomDetailPage() {
                     </div>
                   </div>
                   
-                  {(room.statusCounts || (room.availableInstancesCount !== undefined && room.occupiedInstancesCount !== undefined)) && (
+                  {(actualStatusCounts.available > 0 || actualStatusCounts.occupied > 0 || actualStatusCounts.maintenance > 0 || actualStatusCounts.reserved > 0 || actualStatusCounts.unavailable > 0) && (
                     <>
                       <Separator />
                       <div>
@@ -317,27 +344,27 @@ export default function RoomDetailPage() {
                           <div className="flex justify-between">
                             <span className="text-gray-600">Còn trống:</span>
                             <span className="font-medium text-green-600">
-                              {room.statusCounts?.available || room.availableInstancesCount || 0}
+                              {actualStatusCounts.available || 0}
                             </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Đã đặt:</span>
+                            <span className="font-medium text-purple-600">{actualStatusCounts.reserved || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Bảo trì:</span>
+                            <span className="font-medium text-yellow-600">{actualStatusCounts.maintenance || 0}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-600">Đã cho thuê:</span>
                             <span className="font-medium text-blue-600">
-                              {room.statusCounts?.occupied || room.occupiedInstancesCount || 0}
+                              {actualStatusCounts.occupied || 0}
                             </span>
                           </div>
-                          {room.statusCounts && (
-                            <>
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Bảo trì:</span>
-                                <span className="font-medium text-yellow-600">{room.statusCounts.maintenance}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Đã đặt:</span>
-                                <span className="font-medium text-purple-600">{room.statusCounts.reserved}</span>
-                              </div>
-                            </>
-                          )}
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Không hoạt động:</span>
+                            <span className="font-medium text-red-600">{actualStatusCounts.unavailable || 0}</span>
+                          </div>
                         </div>
                       </div>
                     </>
