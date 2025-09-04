@@ -70,17 +70,21 @@ export default function LoginPage() {
       // Error is already handled in the store
       console.error('Login failed:', error)
 
-      // Show error toast with specific message
+      // Get error from store first, then fallback to caught error
+      const { error: storeError } = useUserStore.getState()
       let errorMessage = 'Đăng nhập thất bại'
-      if (error instanceof Error) {
+      
+      if (storeError) {
+        errorMessage = translateAuthError(storeError)
+      } else if (error instanceof Error) {
         errorMessage = translateAuthError(error.message)
-
-        console.error('Error details:', {
-          message: error.message,
-          name: error.name,
-          stack: error.stack
-        })
       }
+
+      console.error('Error details:', {
+        storeError,
+        caughtError: error instanceof Error ? error.message : error,
+        finalMessage: errorMessage
+      })
 
       toast.error(errorMessage, {
         duration: 4000,

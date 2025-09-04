@@ -56,15 +56,29 @@ export const useUserStore = create<UserState>()(
 				set({ isLoading: true, error: null });
 
 				try {
-					const authResponse = await apiLogin(credentials);
-					const user = convertUserProfile(authResponse.user);
+					const result = await apiLogin(credentials);
 
-					set({
-						user,
-						isAuthenticated: true,
-						isLoading: false,
-						error: null,
-					});
+					if (result.success) {
+						const user = convertUserProfile(result.data.user);
+
+						set({
+							user,
+							isAuthenticated: true,
+							isLoading: false,
+							error: null,
+						});
+					} else {
+						// Clear tokens if login fails
+						TokenUtils.clearTokens();
+
+						set({
+							isLoading: false,
+							error: result.error,
+							isAuthenticated: false,
+							user: null,
+						});
+						throw new Error(result.error);
+					}
 				} catch (error: unknown) {
 					// Clear tokens if login fails
 					TokenUtils.clearTokens();

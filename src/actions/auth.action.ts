@@ -230,16 +230,21 @@ export const registerDirect = async (userData: RegisterDirectRequest): Promise<A
 };
 
 // Login
-export const login = async (credentials: LoginRequest): Promise<AuthResponse> => {
+export const login = async (credentials: LoginRequest): Promise<ApiResult<AuthResponse>> => {
 	try {
 		const response = await apiClient.post<AuthResponse>('/api/auth/login', credentials);
 
 		// Store tokens in cookies
 		await setAuthCookies(response.data.access_token, response.data.refresh_token);
 
-		return response.data;
+		return { success: true, data: response.data };
 	} catch (error: unknown) {
-		return handleApiError(error, 'Failed to login');
+		const errorMessage = extractErrorMessage(error, 'Failed to login');
+		return {
+			success: false,
+			error: errorMessage,
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
 	}
 };
 
