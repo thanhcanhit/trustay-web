@@ -124,7 +124,7 @@ export default function ReviewsPage() {
 
   return (
     <DashboardLayout userType="landlord">
-      <div className="p-6">
+      <div className="px-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Đánh giá khách hàng</h1>
           <p className="text-gray-600">Quản lý và phản hồi đánh giá từ khách thuê</p>
