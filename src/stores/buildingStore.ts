@@ -20,11 +20,14 @@ interface BuildingState {
 	dashboardData: DashboardData | null;
 	isLoading: boolean;
 	error: string | null;
+	hasFetched: boolean; // Flag to prevent infinite loops
 
 	// Actions
 	fetchDashboardData: () => Promise<void>;
+	fetchAllBuildings: () => Promise<void>; // Fetch all buildings for properties page
 	clearError: () => void;
 	reset: () => void;
+	forceRefresh: () => Promise<void>; // Force refresh data
 }
 
 const calculateStats = (buildings: Building[], buildingRooms: Map<string, Room[]>) => {
@@ -62,31 +65,43 @@ const calculateStats = (buildings: Building[], buildingRooms: Map<string, Room[]
 	};
 };
 
-export const useBuildingStore = create<BuildingState>((set) => ({
+export const useBuildingStore = create<BuildingState>((set, get) => ({
 	buildings: [],
 	buildingRooms: new Map(),
 	dashboardData: null,
 	isLoading: false,
 	error: null,
+	hasFetched: false,
 
 	fetchDashboardData: async () => {
+		const currentState = get();
+
+		// Prevent multiple simultaneous fetches
+		if (currentState.isLoading) {
+			return;
+		}
+
 		set({ isLoading: true, error: null });
 
 		try {
-			const buildingsResult = await getBuildings({ limit: 100 });
+			// Only fetch 3 most recent/featured buildings for dashboard overview
+			const buildingsResult = await getBuildings({ limit: 3 });
 			if (!buildingsResult.success) {
 				throw new Error(buildingsResult.error || 'Failed to fetch buildings');
 			}
 
-			const buildings = buildingsResult.data.buildings;
+			const buildings = buildingsResult.data.buildings || [];
 			const buildingRooms = new Map<string, Room[]>();
 
-			for (const building of buildings) {
-				const roomsResult = await getRoomsByBuilding(building.id, { limit: 100 });
-				if (roomsResult.success) {
-					buildingRooms.set(building.id, roomsResult.data.rooms);
-				} else {
-					buildingRooms.set(building.id, []);
+			// Only fetch rooms if there are buildings
+			if (buildings.length > 0) {
+				for (const building of buildings) {
+					const roomsResult = await getRoomsByBuilding(building.id, { limit: 50 });
+					if (roomsResult.success) {
+						buildingRooms.set(building.id, roomsResult.data.rooms || []);
+					} else {
+						buildingRooms.set(building.id, []);
+					}
 				}
 			}
 
@@ -104,6 +119,7 @@ export const useBuildingStore = create<BuildingState>((set) => ({
 				dashboardData,
 				isLoading: false,
 				error: null,
+				hasFetched: true,
 			});
 		} catch (error) {
 			const errorMessage =
@@ -112,18 +128,83 @@ export const useBuildingStore = create<BuildingState>((set) => ({
 			set({
 				buildings: [],
 				buildingRooms: new Map(),
-				dashboardData: {
-					buildings: [],
-					buildingRooms: new Map(),
-					stats: { totalRooms: 0, occupiedRooms: 0, totalRevenue: 0, occupancyRate: 0 },
-				},
+				dashboardData: null, // Set to null instead of empty data to properly handle empty state
 				isLoading: false,
 				error: errorMessage,
+				hasFetched: true, // Mark as fetched even on error to prevent infinite retries
+			});
+		}
+	},
+
+	fetchAllBuildings: async () => {
+		const currentState = get();
+
+		// Prevent multiple simultaneous fetches
+		if (currentState.isLoading) {
+			return;
+		}
+
+		set({ isLoading: true, error: null });
+
+		try {
+			// Fetch all buildings for properties management page
+			const buildingsResult = await getBuildings({ limit: 100 });
+			if (!buildingsResult.success) {
+				throw new Error(buildingsResult.error || 'Failed to fetch buildings');
+			}
+
+			const buildings = buildingsResult.data.buildings || [];
+			const buildingRooms = new Map<string, Room[]>();
+
+			// Only fetch rooms if there are buildings
+			if (buildings.length > 0) {
+				for (const building of buildings) {
+					const roomsResult = await getRoomsByBuilding(building.id, { limit: 50 });
+					if (roomsResult.success) {
+						buildingRooms.set(building.id, roomsResult.data.rooms || []);
+					} else {
+						buildingRooms.set(building.id, []);
+					}
+				}
+			}
+
+			const stats = calculateStats(buildings, buildingRooms);
+
+			const dashboardData: DashboardData = {
+				buildings,
+				buildingRooms,
+				stats,
+			};
+
+			set({
+				buildings,
+				buildingRooms,
+				dashboardData,
+				isLoading: false,
+				error: null,
+				hasFetched: true,
+			});
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : 'Failed to fetch dashboard data';
+
+			set({
+				buildings: [],
+				buildingRooms: new Map(),
+				dashboardData: null,
+				isLoading: false,
+				error: errorMessage,
+				hasFetched: true,
 			});
 		}
 	},
 
 	clearError: () => set({ error: null }),
+
+	forceRefresh: async () => {
+		set({ hasFetched: false });
+		await get().fetchDashboardData();
+	},
 
 	reset: () =>
 		set({
@@ -132,5 +213,6 @@ export const useBuildingStore = create<BuildingState>((set) => ({
 			dashboardData: null,
 			isLoading: false,
 			error: null,
+			hasFetched: false,
 		}),
 }));
