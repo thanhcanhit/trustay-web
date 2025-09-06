@@ -20,11 +20,14 @@ import { useBuildingStore } from "@/stores/buildingStore"
 
 // Client Component for Dashboard Content
 function DashboardContent() {
-  const { dashboardData, isLoading, error, fetchDashboardData } = useBuildingStore()
+  const { dashboardData, isLoading, error, hasFetched, fetchDashboardData, forceRefresh } = useBuildingStore()
   
   useEffect(() => {
-    fetchDashboardData()
-  }, [fetchDashboardData])
+    // Only fetch if we haven't fetched yet and not currently loading
+    if (!hasFetched && !isLoading) {
+      fetchDashboardData()
+    }
+  }, [hasFetched, isLoading, fetchDashboardData])
 
   if (isLoading) {
     return (
@@ -42,7 +45,7 @@ function DashboardContent() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <p className="text-red-600 mb-4">Lỗi: {error}</p>
-          <Button onClick={fetchDashboardData} variant="outline">
+          <Button onClick={forceRefresh} variant="outline">
             Thử lại
           </Button>
         </div>
@@ -53,7 +56,12 @@ function DashboardContent() {
   if (!dashboardData) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-gray-600">Không có dữ liệu</p>
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">Không có dữ liệu dashboard</p>
+          <Button onClick={forceRefresh} variant="outline">
+            Thử lại
+          </Button>
+        </div>
       </div>
     )
   }
@@ -93,6 +101,12 @@ function DashboardContent() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Tổng quan</h1>
           <p className="text-gray-600">Quản lý thông tin kinh doanh trên Trọ Mới</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Hiển thị 3 nhà trọ gần đây nhất • 
+            <Link href="/dashboard/landlord/properties" className="text-blue-600 hover:text-blue-800 ml-1">
+              Xem tất cả nhà trọ
+            </Link>
+          </p>
         </div>
         <div className="flex space-x-3">
           <Link href="/dashboard/landlord/properties/add">
@@ -111,7 +125,7 @@ function DashboardContent() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
-          title="Tổng số phòng"
+          title="Phòng (3 trọ gần đây)"
           value={stats.totalRooms}
           icon={BuildingIcon}
         />
@@ -138,13 +152,23 @@ function DashboardContent() {
         <div className="lg:col-span-2">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Danh sách nhà trọ</h2>
-              <Link href="/dashboard/landlord/properties/add">
-                <Button className="bg-blue-500 hover:bg-blue-600">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Thêm trọ mới
-                </Button>
-              </Link>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Nhà trọ gần đây</h2>
+                <p className="text-sm text-gray-500">3 nhà trọ được cập nhật gần đây nhất</p>
+              </div>
+              <div className="flex space-x-2">
+                <Link href="/dashboard/landlord/properties">
+                  <Button variant="outline">
+                    Xem tất cả
+                  </Button>
+                </Link>
+                <Link href="/dashboard/landlord/properties/add">
+                  <Button className="bg-blue-500 hover:bg-blue-600">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Thêm trọ mới
+                  </Button>
+                </Link>
+              </div>
             </div>
 
             {buildings.length === 0 ? (
@@ -161,6 +185,16 @@ function DashboardContent() {
               </div>
             ) : (
               <div className="space-y-4">
+                {buildings.length < 3 && buildings.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <p className="text-blue-800 text-sm">
+                      <strong>Lưu ý:</strong> Bạn có {buildings.length} nhà trọ. 
+                      <Link href="/dashboard/landlord/properties/add" className="text-blue-600 hover:text-blue-800 ml-1">
+                        Thêm nhà trọ mới
+                      </Link> để quản lý nhiều hơn.
+                    </p>
+                  </div>
+                )}
                 {buildings.map((building) => {
                   const buildingStats = getBuildingStats(building.id)
                   const occupancyRate = buildingStats.totalRooms > 0 

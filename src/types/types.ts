@@ -310,7 +310,39 @@ export interface CreateRoomRequest {
 	isActive: boolean;
 }
 
-export type UpdateRoomRequest = Partial<CreateRoomRequest>;
+// Update room request with only allowed fields
+export interface UpdateRoomRequest {
+	name?: string;
+	description?: string;
+	roomType?: RoomType;
+	areaSqm?: number;
+	totalRooms?: number;
+	pricing?: {
+		basePriceMonthly?: number;
+		depositAmount?: number;
+		isNegotiable?: boolean;
+	};
+	amenities?: Array<{
+		systemAmenityId: string;
+		customValue?: string;
+		notes?: string;
+	}>;
+	costs?: Array<{
+		systemCostTypeId: string;
+		value: number;
+		costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
+		unit?: string;
+		isMandatory?: boolean;
+		isIncludedInRent?: boolean;
+		notes?: string;
+	}>;
+	rules?: Array<{
+		systemRuleId: string;
+		customValue?: string;
+		notes?: string;
+	}>;
+	isActive?: boolean;
+}
 
 export interface RoomsListResponse {
 	rooms: Room[];

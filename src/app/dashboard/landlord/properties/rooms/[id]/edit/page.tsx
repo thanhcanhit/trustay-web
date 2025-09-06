@@ -8,10 +8,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { FormField, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AmenityGrid } from "@/components/ui/amenity-grid"
 import { CostCheckboxSelector } from "@/components/ui/cost-checkbox-selector"
 import { RuleGrid } from "@/components/ui/rule-grid"
@@ -20,11 +20,28 @@ import { getRoomById, updateRoom } from "@/actions/room.action"
 import { 
   type Room,
   type UpdateRoomRequest, 
-  type RoomType,
   type RoomAmenity,
   type RoomCost,
   type RoomRule,
 } from "@/types/types"
+
+// Interface for update request costs (only allowed fields)
+interface UpdateRoomCost {
+  systemCostTypeId: string;
+  value: number;
+  costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
+  unit?: string;
+  isMandatory?: boolean;
+  isIncludedInRent?: boolean;
+  notes?: string;
+}
+
+// Interface for update request rules (only allowed fields)
+interface UpdateRoomRule {
+  systemRuleId: string;
+  customValue?: string;
+  notes?: string;
+}
 
 // Interface for API response cost structure
 interface ApiCost extends RoomCost {
@@ -35,9 +52,9 @@ interface ApiCost extends RoomCost {
 import { Building as BuildingIcon, Home, DollarSign, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
-import { getRoomTypeOptions } from "@/utils/room-types"
 import { cleanDescriptionText } from "@/utils/textProcessing"
 import { validateReferenceIds } from "@/utils/referenceValidation"
+import { getRoomTypeOptions } from "@/utils/room-types"
 
 const STEPS = [
   {
@@ -60,6 +77,7 @@ const STEPS = [
 // Room types
 const ROOM_TYPES = getRoomTypeOptions()
 
+
 // Helper function to convert string IDs to full objects
 const convertAmenitiesToObjects = (amenities: string[] | RoomAmenity[]): RoomAmenity[] => {
   if (!Array.isArray(amenities)) return []
@@ -77,7 +95,7 @@ const convertAmenitiesToObjects = (amenities: string[] | RoomAmenity[]): RoomAme
   })
 }
 
-const convertCostsToObjects = (costs: string[] | RoomCost[]): RoomCost[] => {
+const convertCostsToObjects = (costs: string[] | RoomCost[]): UpdateRoomCost[] => {
   if (!Array.isArray(costs)) return []
   
   return costs.map(cost => {
@@ -88,9 +106,8 @@ const convertCostsToObjects = (costs: string[] | RoomCost[]): RoomCost[] => {
         value: 0,
         costType: 'fixed' as const,
         unit: 'VND',
-        billingCycle: 'monthly' as const,
-        includedInRent: false,
-        isOptional: true,
+        isMandatory: true,
+        isIncludedInRent: false,
         notes: costTypeData?.name || ''
       }
     }
@@ -99,24 +116,20 @@ const convertCostsToObjects = (costs: string[] | RoomCost[]): RoomCost[] => {
     const apiCost = cost as ApiCost;
     const value = apiCost.fixedAmount || apiCost.unitPrice || apiCost.baseRate || parseFloat(String(cost.value)) || 0;
     
+    // Return only the fields allowed by the API specification
     return {
       systemCostTypeId: cost.systemCostTypeId,
       value: value,
       costType: cost.costType || 'fixed' as const,
       unit: cost.unit || 'VND',
-      billingCycle: cost.billingCycle || 'monthly' as const,
-      includedInRent: Boolean(cost.includedInRent),
-      isOptional: Boolean(cost.isOptional),
-      notes: cost.notes || '',
-      // Preserve API response fields for component to use
-      fixedAmount: apiCost.fixedAmount,
-      unitPrice: apiCost.unitPrice,
-      baseRate: apiCost.baseRate
+      isMandatory: Boolean(cost.isOptional === false),
+      isIncludedInRent: Boolean(cost.includedInRent),
+      notes: cost.notes || ''
     }
   })
 }
 
-const convertRulesToObjects = (rules: string[] | RoomRule[]): RoomRule[] => {
+const convertRulesToObjects = (rules: string[] | RoomRule[]): UpdateRoomRule[] => {
   if (!Array.isArray(rules)) return []
   
   return rules.map(rule => {
@@ -125,14 +138,12 @@ const convertRulesToObjects = (rules: string[] | RoomRule[]): RoomRule[] => {
       return {
         systemRuleId: rule,
         customValue: ruleData?.name || '',
-        isEnforced: true,
         notes: ''
       }
     }
     return {
       systemRuleId: rule.systemRuleId,
       customValue: rule.customValue || '',
-      isEnforced: Boolean(rule.isEnforced),
       notes: rule.notes || ''
     }
   })
@@ -169,18 +180,18 @@ export default function EditRoomPage() {
       const roomData = response.data.data
       setRoom(roomData)
       
-      // Initialize form with room data
+      // Initialize form with room data - only allowed fields for update
       setFormData({
         name: roomData.name,
         description: roomData.description,
         roomType: roomData.roomType,
         areaSqm: typeof roomData.areaSqm === 'string' ? parseFloat(roomData.areaSqm) : roomData.areaSqm,
-        maxOccupancy: roomData.maxOccupancy,
         totalRooms: roomData.totalRooms,
-        floorNumber: roomData.floorNumber,
-        roomNumberPrefix: roomData.roomNumberPrefix,
-        roomNumberStart: roomData.roomNumberStart,
-        pricing: roomData.pricing,
+        pricing: {
+          basePriceMonthly: roomData.pricing?.basePriceMonthly,
+          depositAmount: roomData.pricing?.depositAmount,
+          isNegotiable: roomData.pricing?.priceNegotiable
+        },
         amenities: roomData.amenities,
         costs: roomData.costs,
         rules: roomData.rules,
@@ -234,7 +245,6 @@ export default function EditRoomPage() {
         if (!formData.name?.trim()) newErrors.name = 'Tên phòng là bắt buộc'
         if (!formData.roomType) newErrors.roomType = 'Loại phòng là bắt buộc'
         if (!formData.areaSqm || formData.areaSqm <= 0) newErrors.areaSqm = 'Diện tích phải lớn hơn 0'
-        if (!formData.maxOccupancy || formData.maxOccupancy <= 0) newErrors.maxOccupancy = 'Sức chứa phải lớn hơn 0'
         if (!formData.totalRooms || formData.totalRooms <= 0) newErrors.totalRooms = 'Số lượng phòng phải lớn hơn 0'
         break
       case 1:
@@ -280,13 +290,13 @@ export default function EditRoomPage() {
 
       // Convert amenities, costs, and rules to proper format
       const amenities = convertAmenitiesToObjects(formData.amenities || [])
-      const costs = convertCostsToObjects(formData.costs || [])
-      const rules = convertRulesToObjects(formData.rules || [])
+      const costs = convertCostsToObjects(formData.costs as RoomCost[] || [])
+      const rules = convertRulesToObjects(formData.rules as RoomRule[] || [])
 
       // Validate reference IDs
       const selectedAmenityIds = amenities.map(a => a.systemAmenityId)
-      const selectedCostTypeIds = costs.map(c => c.systemCostTypeId)
-      const selectedRuleIds = rules.map(r => r.systemRuleId)
+      const selectedCostTypeIds = (costs as UpdateRoomCost[]).map(c => c.systemCostTypeId)
+      const selectedRuleIds = (rules as UpdateRoomRule[]).map(r => r.systemRuleId)
       
       const validation = validateReferenceIds(selectedAmenityIds, selectedCostTypeIds, selectedRuleIds)
       
@@ -306,26 +316,23 @@ export default function EditRoomPage() {
         return
       }
 
-      // Only send changed fields
-      const updateData: UpdateRoomRequest = {}
-      
-      if (formData.name !== room.name) updateData.name = formData.name!
-      if (formData.description !== room.description) updateData.description = formData.description ? cleanDescriptionText(formData.description) : undefined
-      if (formData.roomType !== room.roomType) updateData.roomType = formData.roomType!
-      if (formData.areaSqm !== room.areaSqm) updateData.areaSqm = formData.areaSqm!
-      if (formData.maxOccupancy !== room.maxOccupancy) updateData.maxOccupancy = formData.maxOccupancy!
-      if (formData.isActive !== room.isActive) updateData.isActive = formData.isActive!
-      
-      // Note: totalRooms can only be increased, not decreased
-      if (formData.totalRooms && formData.totalRooms > room.totalRooms) {
-        updateData.totalRooms = formData.totalRooms
+      // Prepare update data according to API specification - only allowed fields
+      const updateData: UpdateRoomRequest = {
+        name: formData.name!,
+        description: formData.description ? cleanDescriptionText(formData.description) : undefined,
+        roomType: formData.roomType!,
+        areaSqm: formData.areaSqm!,
+        totalRooms: formData.totalRooms!,
+        pricing: {
+          basePriceMonthly: formData.pricing?.basePriceMonthly,
+          depositAmount: formData.pricing?.depositAmount,
+          isNegotiable: formData.pricing?.isNegotiable
+        },
+        amenities: amenities,
+        costs: costs,
+        rules: rules,
+        isActive: formData.isActive!
       }
-      
-      // Always send pricing, amenities, costs, rules (OVERRIDE mode)
-      updateData.pricing = formData.pricing!
-      updateData.amenities = amenities
-      updateData.costs = costs
-      updateData.rules = rules
 
       const response = await updateRoom(room.id, updateData)
       
@@ -420,14 +427,17 @@ export default function EditRoomPage() {
 
                   <FormField>
                     <FormLabel>Loại phòng <span className="text-red-500">*</span></FormLabel>
-                    <Select value={formData.roomType} onValueChange={(value) => updateFormData('roomType', value as RoomType)}>
+                    <Select
+                      value={formData.roomType || ''}
+                      onValueChange={(value) => updateFormData('roomType', value)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn loại phòng" />
                       </SelectTrigger>
                       <SelectContent>
-                        {ROOM_TYPES.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
+                        {ROOM_TYPES.map((roomType) => (
+                          <SelectItem key={roomType.value} value={roomType.value}>
+                            {roomType.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -466,15 +476,13 @@ export default function EditRoomPage() {
                   </FormField>
 
                   <FormField>
-                    <FormLabel>Sức chứa <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>Sức chứa</FormLabel>
                     <Input
-                      type="number"
-                      min="1"
-                      placeholder="2"
-                      value={formData.maxOccupancy || ''}
-                      onChange={(e) => updateFormData('maxOccupancy', parseInt(e.target.value) || 0)}
+                      value={room?.maxOccupancy || ''}
+                      disabled
+                      className="bg-gray-50"
                     />
-                    {errors.maxOccupancy && <FormMessage>{errors.maxOccupancy}</FormMessage>}
+                    <p className="text-xs text-gray-500 mt-1">Sức chứa không thể thay đổi</p>
                   </FormField>
 
                   <FormField>
@@ -495,34 +503,33 @@ export default function EditRoomPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField>
-                    <FormLabel>Tầng <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>Tầng</FormLabel>
                     <Input
-                      type="number"
-                      min="1"
-                      placeholder="1"
-                      value={formData.floorNumber || ''}
-                      onChange={(e) => updateFormData('floorNumber', parseInt(e.target.value) || 1)}
+                      value={room?.floorNumber || ''}
+                      disabled
+                      className="bg-gray-50"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Tầng không thể thay đổi</p>
                   </FormField>
 
                   <FormField>
-                    <FormLabel>Tiền tố số phòng <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>Tiền tố số phòng</FormLabel>
                     <Input
-                      placeholder="A"
-                      value={formData.roomNumberPrefix || ''}
-                      onChange={(e) => updateFormData('roomNumberPrefix', e.target.value)}
+                      value={room?.roomNumberPrefix || ''}
+                      disabled
+                      className="bg-gray-50"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Tiền tố số phòng không thể thay đổi</p>
                   </FormField>
 
                   <FormField>
-                    <FormLabel>Số phòng bắt đầu <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>Số phòng bắt đầu</FormLabel>
                     <Input
-                      type="number"
-                      min="1"
-                      placeholder="101"
-                      value={formData.roomNumberStart || ''}
-                      onChange={(e) => updateFormData('roomNumberStart', parseInt(e.target.value) || 101)}
+                      value={room?.roomNumberStart || ''}
+                      disabled
+                      className="bg-gray-50"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Số phòng bắt đầu không thể thay đổi</p>
                   </FormField>
                 </div>
 
@@ -579,81 +586,23 @@ export default function EditRoomPage() {
                   </FormField>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField>
-                    <FormLabel>Số tháng cọc</FormLabel>
-                    <Input
-                      type="number"
-                      min="1"
-                      placeholder="2"
-                      value={formData.pricing?.depositMonths || ''}
-                      onChange={(e) => updateNestedFormData('pricing', 'depositMonths', parseInt(e.target.value) || 2)}
-                    />
-                  </FormField>
-
-                  <FormField>
-                    <FormLabel>Thời gian thuê tối thiểu (tháng)</FormLabel>
-                    <Input
-                      type="number"
-                      min="1"
-                      placeholder="3"
-                      value={formData.pricing?.minimumStayMonths || ''}
-                      onChange={(e) => updateNestedFormData('pricing', 'minimumStayMonths', parseInt(e.target.value) || 1)}
-                    />
-                  </FormField>
-
-                  <FormField>
-                    <FormLabel>Thời gian thuê tối đa (tháng)</FormLabel>
-                    <Input
-                      type="number"
-                      min="1"
-                      placeholder="24"
-                      value={formData.pricing?.maximumStayMonths || ''}
-                      onChange={(e) => updateNestedFormData('pricing', 'maximumStayMonths', parseInt(e.target.value) || 12)}
-                    />
-                  </FormField>
+                <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Giá có thể thương lượng</FormLabel>
+                    <div className="text-sm text-gray-600">
+                      Cho phép người thuê thương lượng giá
+                    </div>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField>
-                    <FormLabel>Chi phí tiện ích hàng tháng (VNĐ)</FormLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="500000"
-                      value={formData.pricing?.utilityCostMonthly || ''}
-                      onChange={(e) => updateNestedFormData('pricing', 'utilityCostMonthly', parseInt(e.target.value) || 0)}
-                    />
-                  </FormField>
-
-                  <FormField>
-                    <FormLabel>Phí vệ sinh (VNĐ)</FormLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="200000"
-                      value={formData.pricing?.cleaningFee || ''}
-                      onChange={(e) => updateNestedFormData('pricing', 'cleaningFee', parseInt(e.target.value) || 0)}
-                    />
-                  </FormField>
-                  <FormField>
-                  <FormLabel>Phí dịch vụ (%)</FormLabel>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    placeholder="5.0"
-                    value={formData.pricing?.serviceFeePercentage || ''}
-                    onChange={(e) => updateNestedFormData('pricing', 'serviceFeePercentage', parseFloat(e.target.value) || 0)}
+                  <Switch
+                    checked={formData.pricing?.isNegotiable || false}
+                    onCheckedChange={(checked) => updateNestedFormData('pricing', 'isNegotiable', checked)}
                   />
-                </FormField>
                 </div>
 
                 {/* Costs Section */}
                 <div>
                   <CostCheckboxSelector
-                    selectedCosts={convertCostsToObjects(formData.costs || [])}
+                    selectedCosts={formData.costs as RoomCost[] || []}
                     onSelectionChange={(costs) => updateFormData('costs', costs)}
                   />
                 </div>
@@ -685,7 +634,7 @@ export default function EditRoomPage() {
                 <div>
                   <h4 className="font-medium mb-4">Nội quy phòng</h4>
                   <RuleGrid
-                    selectedRules={formData.rules || []}
+                    selectedRules={formData.rules as RoomRule[] || []}
                     onSelectionChange={(rules) => updateFormData('rules', rules)}
                   />
 
