@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { MapPin, Edit, Trash2, ArrowLeft, Home, Users, DollarSign, TrendingUp } from "lucide-react"
+import { MapPin, Home, Users, DollarSign, TrendingUp } from "lucide-react"
 import { getBuildingById, deleteBuilding } from "@/actions/building.action"
 import { getRoomsByBuilding } from "@/actions/room.action"
 import { type Building as BuildingType } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
+import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
 
 export default function BuildingDetailPage() {
   const params = useParams()
@@ -143,41 +144,27 @@ export default function BuildingDetailPage() {
   return (
     <DashboardLayout userType="landlord">
       <div className="p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <Link href="/dashboard/landlord/properties">
-              <Button variant="outline" size="sm" className="cursor-pointer">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Quay lại
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{building.name}</h1>
-              <div className="flex items-center space-x-2 mt-1">
-                <Badge className={building.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                  {building.isActive ? 'Hoạt động' : 'Tạm dừng'}
-                </Badge>
-                <span className="text-sm text-gray-500">
-                  Cập nhật: {new Date(building.updatedAt).toLocaleDateString('vi-VN')}
-                </span>
-              </div>
+        <PageHeader
+          title={building.name}
+          subtitle={
+            <div className="flex items-center space-x-2">
+              <Badge className={building.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                {building.isActive ? 'Hoạt động' : 'Tạm dừng'}
+              </Badge>
+              <span className="text-sm text-gray-500">
+                Cập nhật: {new Date(building.updatedAt).toLocaleDateString('vi-VN')}
+              </span>
             </div>
-          </div>
-          
-          <div className="flex space-x-3">
-            <Link href={`/dashboard/landlord/properties/${building.id}/edit`}>
-              <Button className="cursor-pointer">
-                <Edit className="h-4 w-4 mr-2" />
-                Chỉnh sửa
-              </Button>
-            </Link>
-            <Button variant="destructive" onClick={handleDeleteBuilding} className="cursor-pointer">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Xóa
-            </Button>
-          </div>
-        </div>
+          }
+          backUrl="/dashboard/landlord/properties"
+          backLabel="Quay lại"
+          actions={
+            <>
+              <PageHeaderActions.Edit href={`/dashboard/landlord/properties/${building.id}/edit`} />
+              <PageHeaderActions.Delete onClick={handleDeleteBuilding} />
+            </>
+          }
+        />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

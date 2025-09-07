@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Edit, Trash2, Eye, Home, ArrowLeft} from "lucide-react"
-import { getRoomsByBuilding, deleteRoom } from "@/actions/room.action"
+import { Search, Edit, Trash2, Eye, Home} from "lucide-react"
+import { getMyRooms, deleteRoom } from "@/actions/room.action"
 import { getBuildings } from "@/actions/building.action"
 import { type Room, type Building } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
 
 const ROOM_TYPE_LABELS = {
   boarding_house: 'Nhà trọ',
@@ -37,7 +38,6 @@ function RoomsManagementPageContent() {
   const [totalPages, setTotalPages] = useState(1)
   const [hasBuildings, setHasBuildings] = useState(false)
   const [roomsCache, setRoomsCache] = useState<Map<string, { rooms: Room[], totalPages: number, lastFetched: number }>>(new Map())
-  const [switchingBuilding, setSwitchingBuilding] = useState(false)
   const pageLimit = 12
 
   // Fetch buildings for filter dropdown
@@ -61,43 +61,32 @@ function RoomsManagementPageContent() {
     }
   }
 
-  // Fetch rooms based on filters with pagination and caching
+  // Fetch all my rooms with pagination and caching
   const fetchRooms = useCallback(async (forceRefresh = false) => {
     try {
       setLoading(true)
       
-      if (buildingFilter === 'all') {
-        // For "all buildings", we'll implement a different approach
-        // Instead of fetching all rooms from all buildings, we'll show a message
-        // and encourage users to select a specific building
-        setRooms([])
-        setTotalPages(1)
-      } else {
-        const cacheKey = `${buildingFilter}-${currentPage}`
+      const cacheKey = `my-rooms-${currentPage}`
         const cached = roomsCache.get(cacheKey)
         const now = Date.now()
         const cacheExpiry = 5 * 60 * 1000 // 5 minutes
 
         // Use cache if available and not expired, unless force refresh
         if (cached && !forceRefresh && (now - cached.lastFetched) < cacheExpiry) {
-          const selectedBuilding = buildings && Array.isArray(buildings) ? buildings.find(b => b.id === buildingFilter) : undefined
-          setRooms(cached.rooms.map(room => ({ ...room, building: selectedBuilding })))
+        setRooms(cached.rooms)
           setTotalPages(cached.totalPages)
           setLoading(false)
           return
         }
 
-        // Fetch rooms for specific building with pagination
-        const response = await getRoomsByBuilding(buildingFilter, {
+      // Fetch all my rooms with pagination
+      const response = await getMyRooms({
           page: currentPage,
           limit: pageLimit
         })
         
         if (response.success && response.data.rooms && Array.isArray(response.data.rooms)) {
-          const selectedBuilding = buildings && Array.isArray(buildings) ? buildings.find(b => b.id === buildingFilter) : undefined
-          const roomsWithBuilding = response.data.rooms.map(room => ({ ...room, building: selectedBuilding }))
-          
-          setRooms(roomsWithBuilding)
+        setRooms(response.data.rooms)
           setTotalPages(response.data.totalPages || 1)
           
           // Cache the result
@@ -109,7 +98,6 @@ function RoomsManagementPageContent() {
         } else {
           setRooms([])
           setTotalPages(1)
-        }
       }
     } catch (error) {
       console.error('Error fetching rooms:', error)
@@ -118,47 +106,37 @@ function RoomsManagementPageContent() {
     } finally {
       setLoading(false)
     }
-  }, [buildingFilter, buildings, currentPage, pageLimit, roomsCache])
+  }, [currentPage, pageLimit, roomsCache])
 
   useEffect(() => {
     fetchBuildings()
-  }, [])
+    // Fetch rooms immediately when component mounts
+    fetchRooms()
+  }, [fetchRooms])
 
   useEffect(() => {
-    if (buildings.length > 0) {
-      // Only fetch rooms if a specific building is selected
-      if (buildingFilter !== 'all') {
-        fetchRooms().finally(() => {
-          setSwitchingBuilding(false)
-        })
-      } else {
-        // If "all" is selected, stop loading and show empty state
-        setLoading(false)
-        setSwitchingBuilding(false)
-      }
-    } else if (hasBuildings === false) {
-      // If we've confirmed there are no buildings, stop loading
-      setLoading(false)
-      setSwitchingBuilding(false)
-    }
-  }, [buildings, fetchRooms, hasBuildings, buildingFilter, selectedBuildingId])
+    // Fetch rooms when page changes
+    fetchRooms()
+  }, [currentPage, fetchRooms])
 
-  // Filter rooms based on search and status
+  // Filter rooms based on search, status, and building
   const filteredRooms = (rooms && Array.isArray(rooms) ? rooms : []).filter(room => {
     const matchesSearch = room.name.toLowerCase().includes(searchTerm.toLowerCase())
-    // We'll filter by status when we have room instances data
-    const matchesStatus = statusFilter === 'all' || room.isActive
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'active' && room.isActive) || 
+      (statusFilter === 'inactive' && !room.isActive)
+    const matchesBuilding = buildingFilter === 'all' || room.buildingId === buildingFilter
     
-    return matchesSearch && matchesStatus
+    return matchesSearch && matchesStatus && matchesBuilding
   })
 
-  // Clear cache for current building
-  const clearBuildingCache = (buildingId: string) => {
+  // Clear cache for my rooms
+  const clearRoomsCache = () => {
     setRoomsCache(prev => {
       const newCache = new Map(prev)
-      // Remove all cache entries for this building
+      // Remove all cache entries for my rooms
       for (const key of newCache.keys()) {
-        if (key.startsWith(`${buildingId}-`)) {
+        if (key.startsWith('my-rooms-')) {
           newCache.delete(key)
         }
       }
@@ -176,7 +154,7 @@ function RoomsManagementPageContent() {
       
       toast.success('Xóa loại phòng thành công')
       // Clear cache and refresh
-      clearBuildingCache(buildingFilter)
+      clearRoomsCache()
       fetchRooms(true) // Force refresh
     } catch (error) {
       console.error('Error deleting room:', error)
@@ -187,31 +165,18 @@ function RoomsManagementPageContent() {
   return (
     <DashboardLayout userType="landlord">
       <div className="px-6">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Quản lý phòng</h1>
-            <p className="text-gray-600">Quản lý tất cả các phòng trong hệ thống</p>
-          </div>
-          <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}>
-            <Button className="cursor-pointer">
-              <Plus className="h-4 w-4 mr-2" />
-              Thêm loại phòng
-            </Button>
-          </Link>
-        </div>
-        {/* Header Actions - Only show when viewing specific building */}
-        {selectedBuildingId && (
-          <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between">
-            <div className="flex items-center space-x-4">
-              <Link href="/dashboard/landlord/properties">
-                <Button variant="outline" size="sm" className="cursor-pointer">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Quay lại dãy trọ
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
+        <PageHeader
+          title="Quản lý phòng"
+          subtitle="Quản lý tất cả các phòng trong hệ thống"
+          backUrl="/dashboard/landlord/properties"
+          backLabel="Quay lại dãy trọ"
+          actions={
+            <PageHeaderActions.Add 
+              href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}
+              label="Thêm loại phòng"
+            />
+          }
+        />
         {/* Search and Filter */}
         <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -237,11 +202,8 @@ function RoomsManagementPageContent() {
           </Select>
 
           <Select value={buildingFilter} onValueChange={(value) => {
-            setSwitchingBuilding(true)
             setBuildingFilter(value)
             setCurrentPage(1) // Reset pagination when changing building
-            // Clear current rooms immediately for better UX
-            setRooms([])
           }}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Dãy trọ" />
@@ -263,24 +225,22 @@ function RoomsManagementPageContent() {
         </div>
 
         {/* Loading State */}
-        {(loading || switchingBuilding) && (
+        {loading && (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-2 text-gray-600">
-                {switchingBuilding ? 'Đang chuyển dãy trọ...' : 'Đang tải danh sách phòng...'}
-              </p>
+              <p className="mt-2 text-gray-600">Đang tải danh sách phòng...</p>
             </div>
           </div>
         )}
 
         {/* Rooms Grid */}
-        {!loading && !switchingBuilding && (
+        {!loading && (
           <>
-            {filteredRooms.length > 0 && buildingFilter !== 'all' && (
+            {filteredRooms.length > 0 && (
               <div className="mb-4 text-sm text-gray-600">
                 Hiển thị {filteredRooms.length} loại phòng
-                {buildings.find(b => b.id === buildingFilter) && (
+                {buildingFilter !== 'all' && buildings.find(b => b.id === buildingFilter) && (
                   <span> trong dãy trọ <strong>{buildings.find(b => b.id === buildingFilter)?.name}</strong></span>
                 )}
                 {totalPages > 1 && (
@@ -289,7 +249,7 @@ function RoomsManagementPageContent() {
                 {/* Show cache status in development */}
                 {process.env.NODE_ENV === 'development' && (
                   <span className="ml-2 text-xs text-blue-500">
-                    (Cache: {roomsCache.has(`${buildingFilter}-${currentPage}`) ? 'Hit' : 'Miss'})
+                    (Cache: {roomsCache.has(`my-rooms-${currentPage}`) ? 'Hit' : 'Miss'})
                   </span>
                 )}
               </div>
@@ -430,36 +390,30 @@ function RoomsManagementPageContent() {
         )}
 
         {/* Empty State */}
-        {!loading && !switchingBuilding && filteredRooms.length === 0 && (
+        {!loading && filteredRooms.length === 0 && (
           <div className="text-center py-12">
-            {buildingFilter === 'all' ? (
-              <div>
-                <div className="text-gray-500 mb-4">
-                  <strong>Chọn một dãy trọ để xem danh sách phòng</strong><br/>
-                  Vui lòng chọn một dãy trọ từ danh sách bên trên để xem các phòng trong dãy trọ đó.
-                </div>
-                <div className="text-sm text-gray-400">
-                  Bạn có {buildings.length} dãy trọ để chọn
-                </div>
-              </div>
-            ) : !hasBuildings ? (
+            {!hasBuildings ? (
               <div>
                 <div className="text-gray-500 mb-4">Bạn chưa có dãy trọ nào. Vui lòng tạo dãy trọ trước khi thêm phòng.</div>
                 <Link href="/dashboard/landlord/properties/add">
                   <Button className="cursor-pointer">Tạo dãy trọ đầu tiên</Button>
                 </Link>
               </div>
-            ) : searchTerm ? (
+            ) : searchTerm || buildingFilter !== 'all' || statusFilter !== 'all' ? (
               <div>
-                <div className="text-gray-500 mb-4">Không tìm thấy loại phòng nào phù hợp</div>
-                <Button variant="outline" onClick={() => setSearchTerm('')} className="cursor-pointer">
+                <div className="text-gray-500 mb-4">Không tìm thấy loại phòng nào phù hợp với bộ lọc</div>
+                <Button variant="outline" onClick={() => {
+                  setSearchTerm('')
+                  setBuildingFilter('all')
+                  setStatusFilter('all')
+                }} className="cursor-pointer">
                   Xóa bộ lọc
                 </Button>
               </div>
             ) : (
               <div>
-                <div className="text-gray-500 mb-4">Chưa có loại phòng nào trong dãy trọ này</div>
-                <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}>
+                <div className="text-gray-500 mb-4">Bạn chưa có loại phòng nào. Hãy tạo loại phòng đầu tiên!</div>
+                <Link href="/dashboard/landlord/properties/rooms/add">
                   <Button className="cursor-pointer">Thêm loại phòng đầu tiên</Button>
                 </Link>
               </div>
@@ -468,7 +422,7 @@ function RoomsManagementPageContent() {
         )}
 
         {/* Pagination */}
-        {!loading && !switchingBuilding && filteredRooms.length > 0 && totalPages > 1 && buildingFilter !== 'all' && (
+        {!loading && filteredRooms.length > 0 && totalPages > 1 && (
           <div className="flex justify-center mt-8">
             <div className="flex space-x-2">
               <Button 

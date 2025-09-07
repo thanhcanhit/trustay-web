@@ -85,7 +85,7 @@ function DashboardContent() {
         occupiedRooms += occupiedInstances.length
         
         if (room.pricing && occupiedInstances.length > 0) {
-          const monthlyRevenue = room.pricing.basePriceMonthly || 0
+          const monthlyRevenue = parseFloat(room.pricing.basePriceMonthly) || 0
           totalRevenue += monthlyRevenue * occupiedInstances.length
         }
       }
