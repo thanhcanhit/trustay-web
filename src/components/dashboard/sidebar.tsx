@@ -179,11 +179,6 @@ const landlordItems: SidebarItem[] = [
     icon: Heart
   },
   {
-    title: "Tìm bạn cùng phòng",
-    href: "/profile/roommate",
-    icon: Users
-  },
-  {
     title: "Thông báo",
     href: "/dashboard/landlord/notifications",
     icon: Bell
@@ -215,7 +210,7 @@ export function Sidebar({ userType }: SidebarProps) {
   }
 
   return (
-    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200">
+    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200 overflow-hidden">
       {/* User Info */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
@@ -232,7 +227,7 @@ export function Sidebar({ userType }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {items.map((item) => {
           const Icon = item.icon
           const isExpanded = expandedItems.includes(item.title)

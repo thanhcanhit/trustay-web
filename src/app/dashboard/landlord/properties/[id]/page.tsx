@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { MapPin, Edit, Trash2, ArrowLeft, Home, Users, DollarSign, TrendingUp } from "lucide-react"
+import { MapPin, Home, Users, DollarSign, TrendingUp } from "lucide-react"
 import { getBuildingById, deleteBuilding } from "@/actions/building.action"
 import { getRoomsByBuilding } from "@/actions/room.action"
 import { type Building as BuildingType } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
+import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
 
 export default function BuildingDetailPage() {
   const params = useParams()
@@ -45,15 +46,15 @@ export default function BuildingDetailPage() {
       try {
         const roomsResponse = await getRoomsByBuilding(buildingId, { limit: 1000 })
         
-        if (roomsResponse.success && roomsResponse.data.data && Array.isArray(roomsResponse.data.data)) {
-          const totalRooms = roomsResponse.data.data.reduce((sum, room) => sum + (room.totalRooms || 0), 0)
+        if (roomsResponse.success && roomsResponse.data.rooms && Array.isArray(roomsResponse.data.rooms)) {
+          const totalRooms = roomsResponse.data.rooms.reduce((sum: number, room: { totalRooms?: number }) => sum + (room.totalRooms || 0), 0)
           
           // Get status counts for all rooms
           let availableCount = 0
           let occupiedCount = 0
           let maintenanceCount = 0
           
-          for (const room of roomsResponse.data.data) {
+          for (const room of roomsResponse.data.rooms) {
             if (room.statusCounts) {
               availableCount += room.statusCounts.available
               occupiedCount += room.statusCounts.occupied
@@ -130,7 +131,7 @@ export default function BuildingDetailPage() {
           <div className="text-center py-12">
             <p className="text-gray-600">Không tìm thấy thông tin dãy trọ</p>
             <Link href="/dashboard/landlord/properties">
-              <Button className="mt-4">Quay lại danh sách</Button>
+              <Button className="mt-4 cursor-pointer">Quay lại danh sách</Button>
             </Link>
           </div>
         </div>
@@ -143,41 +144,27 @@ export default function BuildingDetailPage() {
   return (
     <DashboardLayout userType="landlord">
       <div className="p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <Link href="/dashboard/landlord/properties">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Quay lại
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{building.name}</h1>
-              <div className="flex items-center space-x-2 mt-1">
-                <Badge className={building.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                  {building.isActive ? 'Hoạt động' : 'Tạm dừng'}
-                </Badge>
-                <span className="text-sm text-gray-500">
-                  Cập nhật: {new Date(building.updatedAt).toLocaleDateString('vi-VN')}
-                </span>
-              </div>
+        <PageHeader
+          title={building.name}
+          subtitle={
+            <div className="flex items-center space-x-2">
+              <Badge className={building.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                {building.isActive ? 'Hoạt động' : 'Tạm dừng'}
+              </Badge>
+              <span className="text-sm text-gray-500">
+                Cập nhật: {new Date(building.updatedAt).toLocaleDateString('vi-VN')}
+              </span>
             </div>
-          </div>
-          
-          <div className="flex space-x-3">
-            <Link href={`/dashboard/landlord/properties/${building.id}/edit`}>
-              <Button>
-                <Edit className="h-4 w-4 mr-2" />
-                Chỉnh sửa
-              </Button>
-            </Link>
-            <Button variant="destructive" onClick={handleDeleteBuilding}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Xóa
-            </Button>
-          </div>
-        </div>
+          }
+          backUrl="/dashboard/landlord/properties"
+          backLabel="Quay lại"
+          actions={
+            <>
+              <PageHeaderActions.Edit href={`/dashboard/landlord/properties/${building.id}/edit`} />
+              <PageHeaderActions.Delete onClick={handleDeleteBuilding} />
+            </>
+          }
+        />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -326,7 +313,7 @@ export default function BuildingDetailPage() {
               
               <div className="mt-6">
                 <Link href={`/dashboard/landlord/properties/rooms?buildingId=${building.id}`}>
-                  <Button className="w-full">
+                  <Button className="w-full cursor-pointer">
                     <Home className="h-4 w-4 mr-2" />
                     Quản lý phòng
                   </Button>
@@ -344,25 +331,25 @@ export default function BuildingDetailPage() {
           <CardContent>
             <div className="flex flex-wrap gap-4">
               <Link href={`/dashboard/landlord/properties/rooms?buildingId=${building.id}`}>
-                <Button variant="outline">
+                <Button variant="outline" className="cursor-pointer">
                   <Home className="h-4 w-4 mr-2" />
                   Quản lý phòng
                 </Button>
               </Link>
               
               <Link href={`/dashboard/landlord/properties/rooms/add?buildingId=${building.id}`}>
-                <Button variant="outline">
+                <Button variant="outline" className="cursor-pointer">
                   <Home className="h-4 w-4 mr-2" />
                   Thêm loại phòng mới
                 </Button>
               </Link>
               
-              <Button variant="outline">
+              <Button variant="outline" className="cursor-pointer">
                 <Users className="h-4 w-4 mr-2" />
                 Xem khách thuê
               </Button>
               
-              <Button variant="outline">
+              <Button variant="outline" className="cursor-pointer">
                 <DollarSign className="h-4 w-4 mr-2" />
                 Báo cáo doanh thu
               </Button>

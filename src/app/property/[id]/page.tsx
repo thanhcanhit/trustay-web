@@ -14,6 +14,7 @@ import { StarRating, StarRatingDisplay } from "@/components/ui/star-rating"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { getRoomTypeDisplayName } from "@/utils/room-types"
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination } from 'swiper/modules'
 import 'swiper/css'
@@ -285,7 +286,7 @@ export default function PropertyDetailPage() {
                   <div className="min-w-0">
                     <p className="text-sm text-gray-600">Loại phòng</p>
                     <p className="font-medium text-gray-900 truncate">
-                      {roomDetail.roomType === 'boarding_house' ? 'Nhà trọ' : roomDetail.roomType}
+                      {getRoomTypeDisplayName(roomDetail.roomType)}
                     </p>
                   </div>
                 </div>

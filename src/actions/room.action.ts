@@ -46,6 +46,19 @@ const extractErrorMessage = (error: unknown, defaultMessage: string): string => 
 			case 400:
 				if (typeof data === 'string') return data;
 				if (data?.message) {
+					// Handle nested message structure
+					if (typeof data.message === 'object' && data.message !== null) {
+						const nestedMessage = data.message as { message?: string | string[]; error?: string };
+						if (nestedMessage.message) {
+							if (Array.isArray(nestedMessage.message)) {
+								return `Dữ liệu không hợp lệ:\n${nestedMessage.message.join('\n')}`;
+							}
+							return nestedMessage.message;
+						}
+						if (nestedMessage.error) {
+							return nestedMessage.error;
+						}
+					}
 					// Handle array of validation errors
 					if (Array.isArray(data.message)) {
 						return `Dữ liệu không hợp lệ:\n${data.message.join('\n')}`;
@@ -98,6 +111,39 @@ const getTokenFromCookies = async (): Promise<string | null> => {
 };
 
 const apiCall = createServerApiCall(getTokenFromCookies);
+
+// Get my rooms (landlord's rooms)
+export const getMyRooms = async (params?: {
+	page?: number;
+	limit?: number;
+}): Promise<ApiResult<RoomsListResponse>> => {
+	try {
+		const searchParams = new URLSearchParams();
+		if (params?.page) searchParams.append('page', params.page.toString());
+		if (params?.limit) searchParams.append('limit', params.limit.toString());
+
+		const endpoint = `/api/rooms/me${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+		const response = await apiCall<{
+			success: boolean;
+			message: string;
+			data: RoomsListResponse;
+		}>(endpoint, {
+			method: 'GET',
+		});
+
+		console.log('My Rooms API Response:', response);
+
+		return {
+			success: true,
+			data: response.data,
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể tải danh sách phòng của tôi'),
+		};
+	}
+};
 
 // Create room type in building
 export const createRoom = async (
@@ -166,6 +212,8 @@ export const updateRoom = async (
 	data: UpdateRoomRequest,
 ): Promise<ApiResult<{ data: Room }>> => {
 	try {
+		console.log('Room update data:', data);
+
 		const response = await apiCall<{ data: Room }>(`/api/rooms/${id}`, {
 			method: 'PUT',
 			data,
@@ -206,8 +254,6 @@ export const getRoomsByBuilding = async (
 		}>(endpoint, {
 			method: 'GET',
 		});
-
-		console.log('Rooms API Response:', response);
 
 		return {
 			success: true,

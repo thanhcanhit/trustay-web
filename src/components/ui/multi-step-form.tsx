@@ -241,7 +241,7 @@ export function StepNavigation({
         variant="outline"
         onClick={handlePrev}
         disabled={!canGoPrev || isLoading}
-        className={isFirstStep ? "invisible" : ""}
+        className={`${isFirstStep ? "invisible" : ""} cursor-pointer`}
       >
         <ChevronLeft className="w-4 h-4 mr-2" />
         {prevLabel}
@@ -252,6 +252,7 @@ export function StepNavigation({
           type="button"
           onClick={handleSubmit}
           disabled={isLoading}
+          className="cursor-pointer"
         >
           {isLoading ? "Đang xử lý..." : submitLabel}
         </Button>
@@ -260,6 +261,7 @@ export function StepNavigation({
           type="button"
           onClick={handleNext}
           disabled={!activeCanProceed || isLoading}
+          className="cursor-pointer"
         >
           {nextLabel}
           <ChevronRight className="w-4 h-4 ml-2" />

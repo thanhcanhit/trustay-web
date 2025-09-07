@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLocationStore } from '@/stores/locationStore';
 import { Province, District, Ward } from '@/types/types';
 
@@ -19,7 +20,6 @@ interface AddressSelectorProps {
   className?: string;
   disabled?: boolean;
   required?: boolean;
-  showStreetInput?: boolean;
 }
 
 export function AddressSelector({
@@ -28,15 +28,13 @@ export function AddressSelector({
   className = '',
   disabled = false,
   required = false,
-  showStreetInput = true
+
 }: AddressSelectorProps) {
   const [selectedProvince, setSelectedProvince] = useState<number | null>(value?.province?.id || null);
   const [selectedDistrict, setSelectedDistrict] = useState<number | null>(value?.district?.id || null);
   const [selectedWard, setSelectedWard] = useState<number | null>(value?.ward?.id || null);
   const [street, setStreet] = useState(value?.street || '');
-  
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
+  const isUpdatingFromValue = useRef(false);
 
   // Location store
   const {
@@ -44,6 +42,8 @@ export function AddressSelector({
     loadProvinces,
     loadDistrictsByProvince,
     loadWardsByDistrict,
+    loadDistrictById,
+    loadWardById,
     getDistrictsByProvinceId,
     getWardsByDistrictId,
     getProvinceById,
@@ -59,19 +59,114 @@ export function AddressSelector({
     loadProvinces();
   }, [loadProvinces]);
 
-  // Load districts when province is selected
+  // Re-set state when provinces are loaded and we have value
   useEffect(() => {
-    if (selectedProvince) {
+    if (provinces.length > 0 && value) {
+      // Re-set the state to ensure it's properly set after provinces are loaded
+      if (value.province?.id && selectedProvince !== value.province.id) {
+        setSelectedProvince(value.province.id);
+      }
+      if (value.district?.id && selectedDistrict !== value.district.id) {
+        setSelectedDistrict(value.district.id);
+      }
+      if (value.ward?.id && selectedWard !== value.ward.id) {
+        setSelectedWard(value.ward.id);
+      }
+    }
+  }, [provinces.length, value, selectedProvince, selectedDistrict, selectedWard]);
+
+  // Re-set state when districts are loaded for the selected province
+  useEffect(() => {
+    if (selectedProvince && value?.district?.id) {
+      const availableDistricts = getDistrictsByProvinceId(selectedProvince);
+      if (availableDistricts.length > 0 && selectedDistrict !== value.district.id) {
+        setSelectedDistrict(value.district.id);
+      }
+    }
+  }, [selectedProvince, value?.district?.id, selectedDistrict, getDistrictsByProvinceId]);
+
+  // Re-set state when wards are loaded for the selected district
+  useEffect(() => {
+    if (selectedDistrict && value?.ward?.id) {
+      const availableWards = getWardsByDistrictId(selectedDistrict);
+      if (availableWards.length > 0 && selectedWard !== value.ward.id) {
+        setSelectedWard(value.ward.id);
+      }
+    }
+  }, [selectedDistrict, value?.ward?.id, selectedWard, getWardsByDistrictId]);
+
+  // Load location data and set state when value changes (for edit mode)
+  useEffect(() => {
+    const loadLocationDataAndSetState = async () => {
+      if (!value) return;
+
+      isUpdatingFromValue.current = true;
+
+      try {
+        // Step 1: Load province data if we have province ID
+        if (value.province?.id) {
+          setSelectedProvince(value.province.id);
+          await loadDistrictsByProvince(value.province.id);
+        }
+
+        // Step 2: Handle district - if we have district ID but no province, load district first
+        if (value.district?.id) {
+          if (!value.province?.id) {
+            // Load district by ID to get province info
+            const district = await loadDistrictById(value.district.id);
+            if (district && district.provinceId) {
+              setSelectedProvince(district.provinceId);
+              await loadDistrictsByProvince(district.provinceId);
+            }
+          }
+          setSelectedDistrict(value.district.id);
+          await loadWardsByDistrict(value.district.id);
+        }
+
+        // Step 3: Handle ward - if we have ward ID but no district, load ward first
+        if (value.ward?.id) {
+          if (!value.district?.id) {
+            // Load ward by ID to get district info
+            const ward = await loadWardById(value.ward.id);
+            if (ward && ward.districtId) {
+              setSelectedDistrict(ward.districtId);
+              await loadWardsByDistrict(ward.districtId);
+            }
+          }
+          setSelectedWard(value.ward.id);
+        }
+
+        // Step 4: Set street
+        setStreet(value.street || '');
+
+      } catch (error) {
+        console.error('Error loading location data:', error);
+      } finally {
+        // Reset the flag after a short delay to allow state updates to complete
+        setTimeout(() => {
+          isUpdatingFromValue.current = false;
+        }, 100);
+      }
+    };
+
+    loadLocationDataAndSetState();
+  }, [value, loadDistrictsByProvince, loadWardsByDistrict, loadDistrictById, loadWardById]);
+
+  // Load districts when province is selected (only for user interaction, not from value prop)
+  useEffect(() => {
+    if (selectedProvince && !isUpdatingFromValue.current) {
       loadDistrictsByProvince(selectedProvince);
     }
   }, [selectedProvince, loadDistrictsByProvince]);
 
-  // Load wards when district is selected
+  // Load wards when district is selected (only for user interaction, not from value prop)
   useEffect(() => {
-    if (selectedDistrict) {
+    if (selectedDistrict && !isUpdatingFromValue.current) {
       loadWardsByDistrict(selectedDistrict);
     }
   }, [selectedDistrict, loadWardsByDistrict]);
+
+
 
   // Update parent when any field changes
   useEffect(() => {
@@ -86,8 +181,17 @@ export function AddressSelector({
       province: province || null
     };
 
-    onChangeRef.current?.(addressData);
-  }, [selectedProvince, selectedDistrict, selectedWard, street, getProvinceById, getDistrictById, getWardById]);
+    // Only call onChange if the data has actually changed and we're not updating from value prop
+    const hasChanged = 
+      addressData.province?.id !== value?.province?.id ||
+      addressData.district?.id !== value?.district?.id ||
+      addressData.ward?.id !== value?.ward?.id ||
+      addressData.street !== value?.street;
+
+    if (hasChanged && !isUpdatingFromValue.current) {
+      onChange?.(addressData);
+    }
+  }, [selectedProvince, selectedDistrict, selectedWard, street, getProvinceById, getDistrictById, getWardById, onChange, value]);
 
   const handleProvinceChange = (provinceId: number | null) => {
     setSelectedProvince(provinceId);
@@ -105,10 +209,96 @@ export function AddressSelector({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {showStreetInput && (
+      {/* Row 1: Province and District */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="province" className="text-sm font-medium">
+            Tỉnh/Thành phố {required && <span className="text-red-500">*</span>}
+          </Label>
+          <Select
+            value={selectedProvince?.toString() || ''}
+            onValueChange={(value) => {
+              const provinceId = value ? Number(value) : null;
+              handleProvinceChange(provinceId);
+            }}
+            disabled={disabled || provincesLoading}
+          >
+            <SelectTrigger className="mt-1 w-full">
+              <SelectValue placeholder={provincesLoading ? 'Đang tải...' : 'Chọn tỉnh/thành phố'} />
+            </SelectTrigger>
+            <SelectContent>
+              {provinces.map((province) => (
+                <SelectItem key={province.id} value={province.id.toString()}>
+                  {province.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="district" className="text-sm font-medium">
+            Quận/Huyện {required && <span className="text-red-500">*</span>}
+          </Label>
+          <Select
+            value={selectedDistrict?.toString() || ''}
+            onValueChange={(value) => {
+              const districtId = value ? Number(value) : null;
+              handleDistrictChange(districtId);
+            }}
+            // disabled={disabled || !selectedProvince || districtsLoading[selectedProvince]}
+          >
+            <SelectTrigger className="mt-1 w-full">
+              <SelectValue placeholder={
+                !selectedProvince || districtsLoading[selectedProvince]
+                  ? 'Chọn quận/huyện' 
+                  : 'Chọn quận/huyện'
+              } />
+            </SelectTrigger>
+            <SelectContent>
+              {availableDistricts.map((district) => (
+                <SelectItem key={district.id} value={district.id.toString()}>
+                  {district.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Row 2: Ward and Street Address */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="ward" className="text-sm font-medium">
+            Phường/Xã {required && <span className="text-red-500">*</span>}
+          </Label>
+          <Select
+            value={selectedWard?.toString() || ''}
+            onValueChange={(value) => {
+              const wardId = value ? Number(value) : null;
+              setSelectedWard(wardId);
+            }}
+            // disabled={disabled || !selectedDistrict || wardsLoading[selectedDistrict]}
+          >
+            <SelectTrigger className="mt-1 w-full">
+              <SelectValue placeholder={
+                !selectedDistrict || wardsLoading[selectedDistrict]
+                  ? 'Chọn phường/xã' 
+                  : 'Chọn phường/xã'
+              } />
+            </SelectTrigger>
+            <SelectContent>
+              {availableWards.map((ward) => (
+                <SelectItem key={ward.id} value={ward.id.toString()}>
+                  {ward.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div>
           <Label htmlFor="street" className="text-sm font-medium">
-            Địa chỉ cụ thể {required && <span className="text-red-500">*</span>}
+            Địa chỉ chi tiết {required && <span className="text-red-500">*</span>}
           </Label>
           <Input
             id="street"
@@ -120,86 +310,7 @@ export function AddressSelector({
             className="mt-1"
           />
         </div>
-      )}
-
-      <div>
-        <Label htmlFor="province" className="text-sm font-medium">
-          Tỉnh/Thành phố {required && <span className="text-red-500">*</span>}
-        </Label>
-        <select
-          id="province"
-          value={selectedProvince || ''}
-          onChange={(e) => {
-            const value = e.target.value ? Number(e.target.value) : null;
-            handleProvinceChange(value);
-          }}
-          disabled={disabled || provincesLoading}
-          className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-        >
-          <option value="">
-            {provincesLoading ? 'Đang tải...' : 'Chọn tỉnh/thành phố'}
-          </option>
-          {provinces.map((province) => (
-            <option key={province.id} value={province.id}>
-              {province.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {selectedProvince && (
-        <div>
-          <Label htmlFor="district" className="text-sm font-medium">
-            Quận/Huyện {required && <span className="text-red-500">*</span>}
-          </Label>
-          <select
-            id="district"
-            value={selectedDistrict || ''}
-            onChange={(e) => {
-              const value = e.target.value ? Number(e.target.value) : null;
-              handleDistrictChange(value);
-            }}
-            disabled={disabled || districtsLoading[selectedProvince]}
-            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          >
-            <option value="">
-              {districtsLoading[selectedProvince] ? 'Đang tải...' : 'Chọn quận/huyện'}
-            </option>
-            {availableDistricts.map((district) => (
-              <option key={district.id} value={district.id}>
-                {district.name}
-              </option>
-            ))}
-          </select>
         </div>
-      )}
-
-      {selectedDistrict && (
-        <div>
-          <Label htmlFor="ward" className="text-sm font-medium">
-            Phường/Xã {required && <span className="text-red-500">*</span>}
-          </Label>
-          <select
-            id="ward"
-            value={selectedWard || ''}
-            onChange={(e) => {
-              const value = e.target.value ? Number(e.target.value) : null;
-              setSelectedWard(value);
-            }}
-            disabled={disabled || wardsLoading[selectedDistrict]}
-            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          >
-            <option value="">
-              {wardsLoading[selectedDistrict] ? 'Đang tải...' : 'Chọn phường/xã'}
-            </option>
-            {availableWards.map((ward) => (
-              <option key={ward.id} value={ward.id}>
-                {ward.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
     </div>
   );
 }

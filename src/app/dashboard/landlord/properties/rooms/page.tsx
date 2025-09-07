@@ -8,16 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Edit, Trash2, Eye, Home, ArrowLeft } from "lucide-react"
-import { getRoomsByBuilding, deleteRoom } from "@/actions/room.action"
+import { Search, Edit, Trash2, Eye, Home} from "lucide-react"
+import { getMyRooms, deleteRoom } from "@/actions/room.action"
 import { getBuildings } from "@/actions/building.action"
 import { type Room, type Building } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
-
-
-
-
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
 
 const ROOM_TYPE_LABELS = {
   boarding_house: 'Nhà trọ',
@@ -38,61 +36,68 @@ function RoomsManagementPageContent() {
   const [buildingFilter, setBuildingFilter] = useState(selectedBuildingId || 'all')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [hasBuildings, setHasBuildings] = useState(false)
+  const [roomsCache, setRoomsCache] = useState<Map<string, { rooms: Room[], totalPages: number, lastFetched: number }>>(new Map())
   const pageLimit = 12
 
   // Fetch buildings for filter dropdown
   const fetchBuildings = async () => {
     try {
-      const response = await getBuildings({ limit: 1000 })
-      console.log('Buildings response:', response)
+      // Only fetch a reasonable number of buildings for the dropdown
+      const response = await getBuildings({ limit: 50 })
+      
       if (response.success && response.data.buildings && Array.isArray(response.data.buildings)) {
         setBuildings(response.data.buildings)
+        setHasBuildings(response.data.buildings.length > 0)
       } else {
         console.error('Buildings fetch failed:', !response.success ? response.error : 'Unknown error')
         setBuildings([])
+        setHasBuildings(false)
       }
     } catch (error) {
       console.error('Error fetching buildings:', error)
       setBuildings([])
+      setHasBuildings(false)
     }
   }
 
-  // Fetch rooms based on filters
-  const fetchRooms = useCallback(async () => {
+  // Fetch all my rooms with pagination and caching
+  const fetchRooms = useCallback(async (forceRefresh = false) => {
     try {
       setLoading(true)
       
-      if (buildingFilter === 'all') {
-        // If no specific building selected, we need to fetch from all buildings
-        const allRooms: Room[] = []
-        if (buildings && Array.isArray(buildings)) {
-          for (const building of buildings) {
-          try {
-            const response = await getRoomsByBuilding(building.id, {
-              page: 1,
-              limit: 1000
-            })
-            if (response.success && response.data.data && Array.isArray(response.data.data)) {
-              allRooms.push(...response.data.data.map(room => ({ ...room, building })))
-            }
-          } catch (err) {
-            console.error(`Error fetching rooms for building ${building.id}:`, err)
-          }
+      const cacheKey = `my-rooms-${currentPage}`
+        const cached = roomsCache.get(cacheKey)
+        const now = Date.now()
+        const cacheExpiry = 5 * 60 * 1000 // 5 minutes
+
+        // Use cache if available and not expired, unless force refresh
+        if (cached && !forceRefresh && (now - cached.lastFetched) < cacheExpiry) {
+        setRooms(cached.rooms)
+          setTotalPages(cached.totalPages)
+          setLoading(false)
+          return
         }
-        }
-          setRooms(allRooms)
-      } else {
-        // Fetch rooms for specific building
-        const response = await getRoomsByBuilding(buildingFilter, {
+
+      // Fetch all my rooms with pagination
+      const response = await getMyRooms({
           page: currentPage,
           limit: pageLimit
         })
         
-        if (response.success && response.data.data && Array.isArray(response.data.data)) {
-          const selectedBuilding = buildings && Array.isArray(buildings) ? buildings.find(b => b.id === buildingFilter) : undefined
-          setRooms(response.data.data.map(room => ({ ...room, building: selectedBuilding })))
-          setTotalPages(response.data.pagination?.totalPages || 1)
-        }
+        if (response.success && response.data.rooms && Array.isArray(response.data.rooms)) {
+        setRooms(response.data.rooms)
+          setTotalPages(response.data.totalPages || 1)
+          
+          // Cache the result
+          setRoomsCache(prev => new Map(prev).set(cacheKey, {
+            rooms: response.data.rooms,
+            totalPages: response.data.totalPages || 1,
+            lastFetched: now
+          }))
+        } else {
+          setRooms([])
+          setTotalPages(1)
       }
     } catch (error) {
       console.error('Error fetching rooms:', error)
@@ -101,32 +106,45 @@ function RoomsManagementPageContent() {
     } finally {
       setLoading(false)
     }
-  }, [buildingFilter, buildings, currentPage, pageLimit])
+  }, [currentPage, pageLimit, roomsCache])
 
   useEffect(() => {
     fetchBuildings()
-  }, [])
+    // Fetch rooms immediately when component mounts
+    fetchRooms()
+  }, [fetchRooms])
 
   useEffect(() => {
-    if (buildings.length > 0) {
-      fetchRooms()
-    }
-  }, [buildings, fetchRooms])
+    // Fetch rooms when page changes
+    fetchRooms()
+  }, [currentPage, fetchRooms])
 
-  // Filter rooms based on search and status
+  // Filter rooms based on search, status, and building
   const filteredRooms = (rooms && Array.isArray(rooms) ? rooms : []).filter(room => {
     const matchesSearch = room.name.toLowerCase().includes(searchTerm.toLowerCase())
-    // We'll filter by status when we have room instances data
-    const matchesStatus = statusFilter === 'all' || room.isActive
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'active' && room.isActive) || 
+      (statusFilter === 'inactive' && !room.isActive)
+    const matchesBuilding = buildingFilter === 'all' || room.buildingId === buildingFilter
     
-    return matchesSearch && matchesStatus
+    return matchesSearch && matchesStatus && matchesBuilding
   })
 
-  const handleDeleteRoom = async (roomId: string, roomName: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa loại phòng "${roomName}"?`)) {
-      return
-    }
+  // Clear cache for my rooms
+  const clearRoomsCache = () => {
+    setRoomsCache(prev => {
+      const newCache = new Map(prev)
+      // Remove all cache entries for my rooms
+      for (const key of newCache.keys()) {
+        if (key.startsWith('my-rooms-')) {
+          newCache.delete(key)
+        }
+      }
+      return newCache
+    })
+  }
 
+  const handleDeleteRoom = async (roomId: string) => {
     try {
       const response = await deleteRoom(roomId)
       if (!response.success) {
@@ -135,7 +153,9 @@ function RoomsManagementPageContent() {
       }
       
       toast.success('Xóa loại phòng thành công')
-      fetchRooms() // Refresh list
+      // Clear cache and refresh
+      clearRoomsCache()
+      fetchRooms(true) // Force refresh
     } catch (error) {
       console.error('Error deleting room:', error)
       toast.error('Không thể xóa loại phòng. Vui lòng kiểm tra lại.')
@@ -144,49 +164,33 @@ function RoomsManagementPageContent() {
 
   return (
     <DashboardLayout userType="landlord">
-      <div className="p-6">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Quản lý phòng</h1>
-          <p className="text-gray-600">Quản lý tất cả các phòng trong hệ thống</p>
-        </div>
-
-        {/* Filters and Actions */}
-        {/* Header Actions */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between">
-          <div className="flex items-center space-x-4">
-            {selectedBuildingId && (
-              <Link href="/dashboard/landlord/properties">
-                <Button variant="outline" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Quay lại dãy trọ
-                </Button>
-              </Link>
-            )}
-          </div>
-          
-          <div className="flex gap-2">
-            <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Thêm loại phòng
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Tìm kiếm loại phòng..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+      <div className="px-6">
+        <PageHeader
+          title="Quản lý phòng"
+          subtitle="Quản lý tất cả các phòng trong hệ thống"
+          backUrl="/dashboard/landlord/properties"
+          backLabel="Quay lại dãy trọ"
+          actions={
+            <PageHeaderActions.Add 
+              href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}
+              label="Thêm loại phòng"
             />
-          </div>
-          
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          }
+        />
+        {/* Search and Filter */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Tìm kiếm theo tên phòng..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-200"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Trạng thái" />
             </SelectTrigger>
@@ -197,7 +201,10 @@ function RoomsManagementPageContent() {
             </SelectContent>
           </Select>
 
-          <Select value={buildingFilter} onValueChange={setBuildingFilter}>
+          <Select value={buildingFilter} onValueChange={(value) => {
+            setBuildingFilter(value)
+            setCurrentPage(1) // Reset pagination when changing building
+          }}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Dãy trọ" />
             </SelectTrigger>
@@ -210,6 +217,11 @@ function RoomsManagementPageContent() {
               ))}
             </SelectContent>
           </Select>
+            <Button variant="outline" className="cursor-pointer">
+              <Search className="h-4 w-4 mr-2" />
+              Tìm kiếm
+            </Button>
+          </div>
         </div>
 
         {/* Loading State */}
@@ -224,9 +236,31 @@ function RoomsManagementPageContent() {
 
         {/* Rooms Grid */}
         {!loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <>
+            {filteredRooms.length > 0 && (
+              <div className="mb-4 text-sm text-gray-600">
+                Hiển thị {filteredRooms.length} loại phòng
+                {buildingFilter !== 'all' && buildings.find(b => b.id === buildingFilter) && (
+                  <span> trong dãy trọ <strong>{buildings.find(b => b.id === buildingFilter)?.name}</strong></span>
+                )}
+                {totalPages > 1 && (
+                  <span> • Trang {currentPage}/{totalPages}</span>
+                )}
+                {/* Show cache status in development */}
+                {process.env.NODE_ENV === 'development' && (
+                  <span className="ml-2 text-xs text-blue-500">
+                    (Cache: {roomsCache.has(`my-rooms-${currentPage}`) ? 'Hit' : 'Miss'})
+                  </span>
+                )}
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRooms.map((room) => (
-              <Card key={room.id} className="hover:shadow-lg transition-shadow">
+              <Card key={room.id} className={`hover:shadow-lg transition-shadow ${
+                room.isActive 
+                  ? 'border-green-500 border-2' 
+                  : 'border-gray-300 border-2'
+              }`}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -252,42 +286,44 @@ function RoomsManagementPageContent() {
                     
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Tầng:</span>
-                      <span className="font-medium">Tầng {room.floorNumber}</span>
+                      <span className="font-medium">Tầng {room.floorNumber || 'Chưa cập nhật'}</span>
                     </div>
                     
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Diện tích:</span>
-                      <span className="font-medium">{room.areaSqm}m²</span>
+                      <span className="font-medium">{room.areaSqm || 'Chưa cập nhật'}m²</span>
                     </div>
                     
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Sức chứa:</span>
-                      <span className="font-medium">{room.maxOccupancy} người</span>
+                      <span className="font-medium">{room.maxOccupancy || 'Chưa cập nhật'} người</span>
                     </div>
                     
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Tổng phòng:</span>
-                      <span className="font-medium">{room.totalRooms} phòng</span>
+                      <span className="font-medium">{room.totalRooms || 'Chưa cập nhật'} phòng</span>
                     </div>
                     
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Giá thuê:</span>
                       <span className="font-medium text-green-600">
-                        {(room.pricing?.basePriceMonthly || 0).toLocaleString('vi-VN')} VNĐ/tháng
+                        {room.pricing?.basePriceMonthly ? 
+                          Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN') : 
+                          'Chưa cập nhật'} VNĐ/tháng
                       </span>
                     </div>
                     
-                    {room.statusCounts && (
+                    {room.availableInstancesCount !== undefined && room.occupiedInstancesCount !== undefined && (
                       <div className="bg-gray-50 p-3 rounded-lg">
                         <div className="text-xs text-gray-600 mb-2">Tình trạng phòng:</div>
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div className="flex justify-between">
                             <span>Trống:</span>
-                            <span className="font-medium text-green-600">{room.statusCounts.available}</span>
+                            <span className="font-medium text-green-600">{room.availableInstancesCount}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Đã thuê:</span>
-                            <span className="font-medium text-blue-600">{room.statusCounts.occupied}</span>
+                            <span className="font-medium text-blue-600">{room.occupiedInstancesCount}</span>
                           </div>
                         </div>
                       </div>
@@ -301,13 +337,13 @@ function RoomsManagementPageContent() {
                   
                   <div className="mt-4 flex space-x-2">
                     <Link href={`/dashboard/landlord/properties/rooms/${room.id}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full">
+                      <Button variant="outline" size="sm" className="w-full cursor-pointer">
                         <Eye className="h-4 w-4 mr-1" />
                         Chi tiết
                       </Button>
                     </Link>
                     <Link href={`/dashboard/landlord/properties/rooms/${room.id}/edit`} className="flex-1">
-                      <Button size="sm" className="w-full">
+                      <Button size="sm" className="w-full cursor-pointer">
                         <Edit className="h-4 w-4 mr-1" />
                         Sửa
                       </Button>
@@ -316,40 +352,77 @@ function RoomsManagementPageContent() {
                   
                   <div className="mt-2 flex space-x-2">
                     <Link href={`/dashboard/landlord/properties/rooms/${room.id}/instances`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full text-green-600 border-green-300 hover:bg-green-50">
+                      <Button variant="outline" size="sm" className="w-full text-green-600 border-green-300 hover:bg-green-50 cursor-pointer">
                         <Home className="h-4 w-4 mr-1" />
                         Quản lý phòng
                       </Button>
                     </Link>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-red-600 border-red-300 hover:bg-red-50"
-                      onClick={() => handleDeleteRoom(room.id, room.name)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-red-600 border-red-300 hover:bg-red-50 cursor-pointer">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Xóa phòng {room.name}?</AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <AlertDialogDescription>
+                          Điều này sẽ xóa phòng {room.name} và tất cả các phòng trong phòng này.
+                        </AlertDialogDescription>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="cursor-pointer">Hủy</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+                            onClick={() => handleDeleteRoom(room.id)}
+                          >
+                            Xóa
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </CardContent>
               </Card>
             ))}
-          </div>
+            </div>
+          </>
         )}
 
         {/* Empty State */}
         {!loading && filteredRooms.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">
-              {searchTerm ? 'Không tìm thấy loại phòng nào phù hợp' : 'Chưa có loại phòng nào'}
-            </div>
-            <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms/add?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms/add'}>
-              <Button>Thêm loại phòng đầu tiên</Button>
-            </Link>
+            {!hasBuildings ? (
+              <div>
+                <div className="text-gray-500 mb-4">Bạn chưa có dãy trọ nào. Vui lòng tạo dãy trọ trước khi thêm phòng.</div>
+                <Link href="/dashboard/landlord/properties/add">
+                  <Button className="cursor-pointer">Tạo dãy trọ đầu tiên</Button>
+                </Link>
+              </div>
+            ) : searchTerm || buildingFilter !== 'all' || statusFilter !== 'all' ? (
+              <div>
+                <div className="text-gray-500 mb-4">Không tìm thấy loại phòng nào phù hợp với bộ lọc</div>
+                <Button variant="outline" onClick={() => {
+                  setSearchTerm('')
+                  setBuildingFilter('all')
+                  setStatusFilter('all')
+                }} className="cursor-pointer">
+                  Xóa bộ lọc
+                </Button>
+              </div>
+            ) : (
+              <div>
+                <div className="text-gray-500 mb-4">Bạn chưa có loại phòng nào. Hãy tạo loại phòng đầu tiên!</div>
+                <Link href="/dashboard/landlord/properties/rooms/add">
+                  <Button className="cursor-pointer">Thêm loại phòng đầu tiên</Button>
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
         {/* Pagination */}
-        {!loading && filteredRooms.length > 0 && totalPages > 1 && buildingFilter !== 'all' && (
+        {!loading && filteredRooms.length > 0 && totalPages > 1 && (
           <div className="flex justify-center mt-8">
             <div className="flex space-x-2">
               <Button 
@@ -357,6 +430,7 @@ function RoomsManagementPageContent() {
                 size="sm"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
+                className="cursor-pointer"
               >
                 Trước
               </Button>
@@ -368,6 +442,7 @@ function RoomsManagementPageContent() {
                 size="sm"
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
+                className="cursor-pointer"
               >
                 Sau
               </Button>

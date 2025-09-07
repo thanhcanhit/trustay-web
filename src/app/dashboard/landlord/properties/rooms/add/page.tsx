@@ -11,6 +11,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
+import { Separator } from "@/components/ui/separator"
 import { AmenityGrid } from "@/components/ui/amenity-grid"
 import { CostCheckboxSelector } from "@/components/ui/cost-checkbox-selector"
 import { RuleGrid } from "@/components/ui/rule-grid"
@@ -21,10 +22,23 @@ import { getBuildings } from "@/actions/building.action"
 import { 
   type CreateRoomRequest, 
   type Building,
+  type RoomAmenity,
+  type RoomCost,
+  type RoomRule,
 } from "@/types/types"
+
+// Interface for API response cost structure
+interface ApiCost extends Omit<RoomCost, 'fixedAmount' | 'unitPrice' | 'baseRate'> {
+  fixedAmount?: number;
+  unitPrice?: number;
+  baseRate?: number;
+}
 import { Building as BuildingIcon, Home, DollarSign, ArrowLeft, ImageIcon } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { cleanDescriptionText } from "@/utils/textProcessing"
+import { validateReferenceIds } from "@/utils/referenceValidation"
+import { getRoomTypeOptions } from "@/utils/room-types"
 
 // Additional interfaces for form handling
 interface ImageFile {
@@ -33,8 +47,11 @@ interface ImageFile {
   id: string
 }
 
-interface CreateRoomFormData extends CreateRoomRequest {
+interface CreateRoomFormData extends Omit<CreateRoomRequest, 'amenities' | 'costs' | 'rules'> {
   images?: ImageFile[]
+  amenities?: string[] | RoomAmenity[]
+  costs?: string[] | RoomCost[]
+  rules?: string[] | RoomRule[]
 }
 
 const STEPS = [
@@ -61,12 +78,7 @@ const STEPS = [
 ]
 
 // Room types
-const ROOM_TYPES = [
-  { value: 'boarding_house', label: 'Nhà trọ' },
-  { value: 'apartment', label: 'Căn hộ' },
-  { value: 'house', label: 'Nhà nguyên căn' },
-  { value: 'studio', label: 'Studio' }
-]
+const ROOM_TYPES = getRoomTypeOptions()
 
 function AddRoomPageContent() {
   const router = useRouter()
@@ -95,16 +107,21 @@ function AddRoomPageContent() {
     roomNumberPrefix: 'A',
     roomNumberStart: 101,
     pricing: {
-      basePriceMonthly: 0,
-      depositAmount: 0,
+      id: '',
+      roomId: '',
+      basePriceMonthly: '0',
+      currency: 'VND',
+      depositAmount: '0',
       depositMonths: 2,
       utilityIncluded: false,
-      utilityCostMonthly: 0,
-      cleaningFee: 0,
-      serviceFeePercentage: 0,
+      utilityCostMonthly: '0',
+      cleaningFee: '0',
+      serviceFeePercentage: '0',
       minimumStayMonths: 1,
       maximumStayMonths: 12,
-      priceNegotiable: false
+      priceNegotiable: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     },
     amenities: [],
     costs: [],
@@ -120,11 +137,147 @@ function AddRoomPageContent() {
     loadReferenceData()
     fetchBuildings()
   }, [loadReferenceData])
+  
+  // Function to reload reference data if needed
+  const reloadReferenceDataIfNeeded = async () => {
+    const store = useReferenceStore.getState()
+    if (store.amenities.length === 0 || store.costTypes.length === 0 || store.rules.length === 0) {
+      await loadReferenceData()
+    }
+  }
+
+
+
+  // Helper function to convert string IDs to full objects
+  const convertAmenitiesToObjects = (amenities: string[] | RoomAmenity[]): RoomAmenity[] => {
+    if (!Array.isArray(amenities)) return []
+    
+    return amenities.map(amenity => {
+      if (typeof amenity === 'string') {
+        const amenityData = useReferenceStore.getState().amenities.find(a => a.id === amenity)
+        return {
+          id: '',
+          roomId: '',
+          systemAmenityId: amenity,
+          customValue: amenityData?.name || '',
+          notes: '',
+          createdAt: new Date().toISOString(),
+          systemAmenity: {
+            name: amenityData?.name || '',
+            nameEn: amenityData?.name || '',
+            category: amenityData?.category || ''
+          }
+        }
+      }
+      return amenity
+    })
+  }
+
+  const convertCostsToObjects = (costs: string[] | RoomCost[]): RoomCost[] => {
+    if (!Array.isArray(costs)) return []
+    
+    return costs.map(cost => {
+      if (typeof cost === 'string') {
+        const costTypeData = useReferenceStore.getState().costTypes.find(c => c.id === cost)
+        return {
+          id: '',
+          roomId: '',
+          systemCostTypeId: cost,
+          value: 0,
+          costType: 'fixed' as const,
+          currency: 'VND',
+          unit: 'VND',
+          isMetered: false,
+          billingCycle: 'monthly' as const,
+          includedInRent: false,
+          isOptional: true,
+          isActive: true,
+          notes: costTypeData?.name || '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          systemCostType: {
+            name: costTypeData?.name || '',
+            nameEn: costTypeData?.name || '',
+            category: costTypeData?.category || ''
+          }
+        }
+      }
+      // Handle API response data with extended fields
+      const apiCost = cost as ApiCost;
+      const value = apiCost.fixedAmount || apiCost.unitPrice || apiCost.baseRate || parseFloat(String(cost.value)) || 0;
+      
+      return {
+        id: cost.id || '',
+        roomId: cost.roomId || '',
+        systemCostTypeId: cost.systemCostTypeId,
+        value: value,
+        costType: cost.costType || 'fixed' as const,
+        currency: cost.currency || 'VND',
+        unit: cost.unit || 'VND',
+        isMetered: cost.isMetered || false,
+        billingCycle: cost.billingCycle || 'monthly' as const,
+        includedInRent: Boolean(cost.includedInRent),
+        isOptional: Boolean(cost.isOptional),
+        isActive: cost.isActive || true,
+        notes: cost.notes || '',
+        createdAt: cost.createdAt || new Date().toISOString(),
+        updatedAt: cost.updatedAt || new Date().toISOString(),
+        systemCostType: cost.systemCostType || {
+          name: '',
+          nameEn: '',
+          category: ''
+        },
+        // Preserve API response fields for component to use
+        fixedAmount: apiCost.fixedAmount ? String(apiCost.fixedAmount) : undefined,
+        unitPrice: apiCost.unitPrice,
+        baseRate: apiCost.baseRate
+      }
+    })
+  }
+
+  const convertRulesToObjects = (rules: string[] | RoomRule[]): RoomRule[] => {
+    if (!Array.isArray(rules)) return []
+    
+    return rules.map(rule => {
+      if (typeof rule === 'string') {
+        const ruleData = useReferenceStore.getState().rules.find(r => r.id === rule)
+        return {
+          id: '',
+          roomId: '',
+          systemRuleId: rule,
+          customValue: ruleData?.name || '',
+          isEnforced: true,
+          notes: '',
+          createdAt: new Date().toISOString(),
+          systemRule: {
+            name: ruleData?.name || '',
+            nameEn: ruleData?.name || '',
+            category: ruleData?.category || '',
+            ruleType: ruleData?.ruleType || ''
+          }
+        }
+      }
+      return {
+        id: rule.id || '',
+        roomId: rule.roomId || '',
+        systemRuleId: rule.systemRuleId,
+        customValue: rule.customValue || '',
+        isEnforced: Boolean(rule.isEnforced),
+        notes: rule.notes || '',
+        createdAt: rule.createdAt || new Date().toISOString(),
+        systemRule: rule.systemRule || {
+          name: '',
+          nameEn: '',
+          category: '',
+          ruleType: ''
+        }
+      }
+    })
+  }
 
   const fetchBuildings = async () => {
     try {
       const response = await getBuildings({ limit: 1000 })
-      console.log('Buildings response in add page:', response)
       if (response.success && response.data.buildings && Array.isArray(response.data.buildings)) {
         setBuildings(response.data.buildings)
       } else {
@@ -172,12 +325,20 @@ function AddRoomPageContent() {
         if (!formData.maxOccupancy || formData.maxOccupancy <= 0) newErrors.maxOccupancy = 'Sức chứa phải lớn hơn 0'
         if (!formData.totalRooms || formData.totalRooms <= 0) newErrors.totalRooms = 'Số lượng phòng phải lớn hơn 0'
         if (!selectedBuildingId2) newErrors.buildingId = 'Vui lòng chọn dãy trọ'
+        
+        // Validate description length (clean HTML tags and entities first)
+        if (formData.description) {
+          const cleanText = cleanDescriptionText(formData.description)
+          if (cleanText.length > 1000) {
+            newErrors.description = 'Mô tả không được vượt quá 1000 ký tự'
+          }
+        }
         break
       case 1:
-        if (!formData.pricing?.basePriceMonthly || formData.pricing.basePriceMonthly <= 0) {
+        if (!formData.pricing?.basePriceMonthly || parseFloat(formData.pricing.basePriceMonthly) <= 0) {
           newErrors.basePriceMonthly = 'Giá thuê phải lớn hơn 0'
         }
-        if (!formData.pricing?.depositAmount || formData.pricing.depositAmount < 0) {
+        if (!formData.pricing?.depositAmount || parseFloat(formData.pricing.depositAmount) < 0) {
           newErrors.depositAmount = 'Tiền cọc không được âm'
         }
         break
@@ -217,10 +378,13 @@ function AddRoomPageContent() {
     try {
       setIsLoading(true)
 
-      // Ensure all numeric fields are properly converted to numbers
+      // Prepare room data
       const roomData: CreateRoomRequest = {
         name: formData.name!,
-        description: formData.description || undefined,
+        description: formData.description ? 
+          // Clean description text and limit to 1000 characters
+          cleanDescriptionText(formData.description, 1000) || undefined
+          : undefined,
         roomType: formData.roomType!,
         areaSqm: parseFloat(String(formData.areaSqm!)) || 0,
         maxOccupancy: parseInt(String(formData.maxOccupancy!)) || 1,
@@ -229,35 +393,56 @@ function AddRoomPageContent() {
         roomNumberPrefix: formData.roomNumberPrefix!,
         roomNumberStart: parseInt(String(formData.roomNumberStart!)) || 101,
         pricing: {
-          basePriceMonthly: parseFloat(String(formData.pricing!.basePriceMonthly)) || 0,
-          depositAmount: parseFloat(String(formData.pricing!.depositAmount)) || 0,
+          id: '',
+          roomId: '',
+          basePriceMonthly: String(parseFloat(String(formData.pricing!.basePriceMonthly)) || 0),
+          currency: 'VND',
+          depositAmount: String(parseFloat(String(formData.pricing!.depositAmount)) || 0),
           depositMonths: parseInt(String(formData.pricing!.depositMonths)) || 2,
           utilityIncluded: Boolean(formData.pricing!.utilityIncluded),
-          utilityCostMonthly: parseFloat(String(formData.pricing!.utilityCostMonthly)) || 0,
-          cleaningFee: parseFloat(String(formData.pricing!.cleaningFee)) || 0,
-          serviceFeePercentage: parseFloat(String(formData.pricing!.serviceFeePercentage)) || 0,
+          utilityCostMonthly: String(parseFloat(String(formData.pricing!.utilityCostMonthly)) || 0),
+          cleaningFee: String(parseFloat(String(formData.pricing!.cleaningFee)) || 0),
+          serviceFeePercentage: String(parseFloat(String(formData.pricing!.serviceFeePercentage)) || 0),
           minimumStayMonths: parseInt(String(formData.pricing!.minimumStayMonths)) || 1,
           maximumStayMonths: parseInt(String(formData.pricing!.maximumStayMonths)) || 12,
-          priceNegotiable: Boolean(formData.pricing!.priceNegotiable)
+          priceNegotiable: Boolean(formData.pricing!.priceNegotiable),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         },
-        amenities: formData.amenities!.map(amenity => 
-          typeof amenity === 'string' 
-            ? { systemAmenityId: amenity }
-            : amenity
-        ),
-        costs: formData.costs!.map(cost => ({
-          systemCostTypeId: cost.systemCostTypeId,
-          value: parseFloat(String(cost.value)) || 0,
-          costType: cost.costType || 'fixed' as const,
-          unit: cost.unit || 'VND',
-          billingCycle: cost.billingCycle || 'monthly' as const,
-          includedInRent: Boolean(cost.includedInRent),
-          isOptional: Boolean(cost.isOptional),
-          notes: cost.notes
-        })),
-        rules: formData.rules!,
+        amenities: convertAmenitiesToObjects(formData.amenities || []),
+        costs: convertCostsToObjects(formData.costs || []),
+        rules: convertRulesToObjects(formData.rules || []),
         isActive: Boolean(formData.isActive)
       }
+
+      // Reload reference data if needed
+      await reloadReferenceDataIfNeeded()
+      
+      // Validate all reference IDs
+      const selectedAmenityIds = roomData.amenities.map(a => a.systemAmenityId)
+      const selectedCostTypeIds = roomData.costs.map(c => c.systemCostTypeId)
+      const selectedRuleIds = roomData.rules.map(r => r.systemRuleId)
+      
+      const validation = validateReferenceIds(selectedAmenityIds, selectedCostTypeIds, selectedRuleIds)
+      
+             if (validation.hasErrors) {
+        
+        const errorMessages = []
+        if (validation.invalidAmenityIds.length > 0) {
+          errorMessages.push(`Tiện nghi không tồn tại: ${validation.invalidAmenityIds.join(', ')}`)
+        }
+        if (validation.invalidCostTypeIds.length > 0) {
+          errorMessages.push(`Loại chi phí không tồn tại: ${validation.invalidCostTypeIds.join(', ')}`)
+        }
+        if (validation.invalidRuleIds.length > 0) {
+          errorMessages.push(`Nội quy không tồn tại: ${validation.invalidRuleIds.join(', ')}`)
+        }
+        
+        toast.error(errorMessages.join('\n'))
+        return
+      }
+      
+      
 
       const response = await createRoom(selectedBuildingId2, roomData)
       
@@ -271,15 +456,15 @@ function AddRoomPageContent() {
           } else if (typeof errorObj.message === 'string') {
             errorMessage = errorObj.message
           }
-        }
-        toast.error(errorMessage)
+                 }
+         toast.error(errorMessage)
         return
       }
 
+      
       toast.success('Tạo loại phòng thành công!')
       router.push(`/dashboard/landlord/properties/rooms?buildingId=${selectedBuildingId2}`)
-    } catch (error) {
-      console.error('Error creating room:', error)
+         } catch (error) {
       
       // Extract meaningful error message
       let errorMessage = 'Không thể tạo loại phòng. Vui lòng thử lại.'
@@ -328,7 +513,7 @@ function AddRoomPageContent() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms'}>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="cursor-pointer">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Quay lại
               </Button>
@@ -407,8 +592,14 @@ function AddRoomPageContent() {
                     value={formData.description || ''}
                     onChange={(value) => updateFormData('description', value)}
                     placeholder="Mô tả về loại phòng..."
+                    maxLength={1000}
+                    showCharCount={true}
+                    error={!!errors.description}
                   />
+                  {errors.description && <FormMessage>{errors.description}</FormMessage>}
                 </FormField>
+
+                <Separator />
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField>
@@ -507,6 +698,8 @@ function AddRoomPageContent() {
                   <h3 className="text-lg font-medium">Giá cả & Chi phí phát sinh</h3>
                 </div>
 
+                <Separator />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField>
                     <FormLabel>Giá thuê hàng tháng (VNĐ) <span className="text-red-500">*</span></FormLabel>
@@ -568,7 +761,7 @@ function AddRoomPageContent() {
                   </FormField>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField>
                     <FormLabel>Chi phí tiện ích hàng tháng (VNĐ)</FormLabel>
                     <Input
@@ -590,9 +783,7 @@ function AddRoomPageContent() {
                       onChange={(e) => updateNestedFormData('pricing', 'cleaningFee', parseInt(e.target.value) || 0)}
                     />
                   </FormField>
-                </div>
-
-                <FormField>
+                  <FormField>
                   <FormLabel>Phí dịch vụ (%)</FormLabel>
                   <Input
                     type="number"
@@ -604,17 +795,16 @@ function AddRoomPageContent() {
                     onChange={(e) => updateNestedFormData('pricing', 'serviceFeePercentage', parseFloat(e.target.value) || 0)}
                   />
                 </FormField>
-
-              
+                </div>
 
                 {/* Costs Section */}
                 <div>
                   <CostCheckboxSelector
-                    selectedCosts={formData.costs || []}
+                    selectedCosts={convertCostsToObjects(formData.costs || [])}
                     onSelectionChange={(costs) => updateFormData('costs', costs)}
                   />
                 </div>
-              </CardContent>
+              </CardContent> 
             </Card>
           </StepContent>
 
@@ -627,14 +817,18 @@ function AddRoomPageContent() {
                   <h3 className="text-lg font-medium">Tiện nghi & Nội quy</h3>
                 </div>
 
-                {/* Amenities */}
-                <div>
-                  <h4 className="font-medium mb-4">Tiện nghi</h4>
-                  <AmenityGrid
-                    selectedAmenities={formData.amenities || []}
-                    onSelectionChange={(amenities) => updateFormData('amenities', amenities)}
-                  />
-                </div>
+                <Separator />
+
+                                 {/* Amenities */}
+                 <div>
+                   <h4 className="font-medium mb-4">Tiện nghi</h4>
+                   <AmenityGrid
+                     selectedAmenities={formData.amenities || []}
+                     onSelectionChange={(amenities) => updateFormData('amenities', amenities)}
+                   />
+                   
+                                       
+                 </div>
 
                 {/* Rules */}
                 <div>
@@ -667,6 +861,8 @@ function AddRoomPageContent() {
                   <ImageIcon className="h-5 w-5 text-orange-600" />
                   <h3 className="text-lg font-medium">Hình ảnh phòng</h3>
                 </div>
+
+                <Separator />
 
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                   <div className="flex items-start space-x-2">

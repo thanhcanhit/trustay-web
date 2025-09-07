@@ -27,3 +27,17 @@ export const getWardsByDistrict = async (districtId: string): Promise<Ward[]> =>
 		method: 'GET',
 	});
 };
+
+// Get district by ID
+export const getDistrictById = async (districtId: number): Promise<District> => {
+	return await apiCall<District>(`/api/districts/${districtId}`, {
+		method: 'GET',
+	});
+};
+
+// Get ward by ID
+export const getWardById = async (wardId: number): Promise<Ward> => {
+	return await apiCall<Ward>(`/api/wards/${wardId}`, {
+		method: 'GET',
+	});
+};

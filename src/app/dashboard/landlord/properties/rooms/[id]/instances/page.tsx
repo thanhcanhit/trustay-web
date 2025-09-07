@@ -38,6 +38,35 @@ import {
 import Link from "next/link"
 import { toast } from "sonner"
 
+// Business rules information (for internal validation only)
+const BUSINESS_RULES = {
+  available: {
+    description: 'Phòng trống, sẵn sàng cho thuê',
+    restrictions: ['Không được có rental đang active'],
+    allowedFrom: ['maintenance', 'reserved', 'unavailable']
+  },
+  occupied: {
+    description: 'Phòng đã có người ở',
+    restrictions: [],
+    allowedFrom: ['available', 'reserved']
+  },
+  maintenance: {
+    description: 'Phòng đang sửa chữa/bảo trì',
+    restrictions: ['Nếu occupied + có rental thì cần relocate trước'],
+    allowedFrom: ['available', 'occupied', 'reserved', 'unavailable']
+  },
+  reserved: {
+    description: 'Phòng đã được đặt cọc nhưng chưa vào ở',
+    restrictions: [],
+    allowedFrom: ['available']
+  },
+  unavailable: {
+    description: 'Phòng tạm thời không cho thuê',
+    restrictions: ['Có warning nếu có rental'],
+    allowedFrom: ['available', 'occupied', 'maintenance', 'reserved']
+  }
+}
+
 const STATUS_COLORS = {
   available: 'bg-green-100 text-green-800',
   occupied: 'bg-blue-100 text-blue-800', 
@@ -83,6 +112,39 @@ export default function RoomInstancesPage() {
     reason: ''
   })
   const [showBulkEdit, setShowBulkEdit] = useState(false)
+
+  // Validation function to check if status transition is allowed
+  const isStatusTransitionAllowed = (currentStatus: RoomStatus, newStatus: RoomStatus): boolean => {
+    const allowedFrom = BUSINESS_RULES[newStatus]?.allowedFrom || []
+    return allowedFrom.includes(currentStatus)
+  }
+
+  // Get available status options for a given current status
+  const getAvailableStatusOptions = (currentStatus: RoomStatus): RoomStatus[] => {
+    return Object.keys(BUSINESS_RULES).filter(status => 
+      isStatusTransitionAllowed(currentStatus, status as RoomStatus)
+    ) as RoomStatus[]
+  }
+
+  // Get common available status options for multiple instances
+  const getCommonAvailableStatusOptions = (instanceIds: string[]): RoomStatus[] => {
+    if (instanceIds.length === 0) return []
+    
+    const selectedInstances = instances.filter(instance => instanceIds.includes(instance.id))
+    if (selectedInstances.length === 0) return []
+    
+    // Get all possible status options for all selected instances
+    // const allPossibleStatuses = selectedInstances.flatMap(instance => 
+    //   getAvailableStatusOptions(instance.status)
+    // )
+    
+    // Return only statuses that are available for ALL selected instances
+    return Object.keys(BUSINESS_RULES).filter(status => 
+      selectedInstances.every(instance => 
+        isStatusTransitionAllowed(instance.status, status as RoomStatus)
+      )
+    ) as RoomStatus[]
+  }
 
   const fetchRoomAndInstances = useCallback(async () => {
     try {
@@ -147,6 +209,19 @@ export default function RoomInstancesPage() {
   const handleSaveEdit = async () => {
     if (!editingInstance) return
 
+    // Find the current instance to validate status transition
+    const currentInstance = instances.find(instance => instance.id === editingInstance)
+    if (!currentInstance) {
+      toast.error('Không tìm thấy thông tin phòng')
+      return
+    }
+
+    // Validate status transition
+    if (!isStatusTransitionAllowed(currentInstance.status, editForm.status)) {
+      toast.error(`Không thể chuyển từ trạng thái "${STATUS_LABELS[currentInstance.status]}" sang "${STATUS_LABELS[editForm.status]}"`)
+      return
+    }
+
     try {
       const updateData: UpdateRoomInstanceStatusRequest = {
         status: editForm.status,
@@ -181,6 +256,18 @@ export default function RoomInstancesPage() {
 
     if (!bulkEditForm.status) {
       toast.error('Vui lòng chọn trạng thái')
+      return
+    }
+
+    // Validate status transitions for all selected instances
+    const invalidInstances = selectedInstances.filter(instanceId => {
+      const instance = instances.find(inst => inst.id === instanceId)
+      return instance && !isStatusTransitionAllowed(instance.status, bulkEditForm.status)
+    })
+
+    if (invalidInstances.length > 0) {
+      const invalidCount = invalidInstances.length
+      toast.error(`${invalidCount} phòng không thể chuyển sang trạng thái "${STATUS_LABELS[bulkEditForm.status]}"`)
       return
     }
 
@@ -230,7 +317,7 @@ export default function RoomInstancesPage() {
           <div className="text-center py-12">
             <p className="text-gray-600">Không tìm thấy thông tin phòng</p>
             <Link href="/dashboard/landlord/properties/rooms">
-              <Button className="mt-4">Quay lại danh sách</Button>
+              <Button className="mt-4 cursor-pointer">Quay lại danh sách</Button>
             </Link>
           </div>
         </div>
@@ -245,7 +332,7 @@ export default function RoomInstancesPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Link href={`/dashboard/landlord/properties/rooms/${roomId}`}>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="cursor-pointer">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Quay lại
               </Button>
@@ -260,13 +347,15 @@ export default function RoomInstancesPage() {
           
           <div className="flex space-x-3">
             {selectedInstances.length > 0 && (
-              <Button onClick={() => setShowBulkEdit(true)}>
+              <Button onClick={() => setShowBulkEdit(true)} className="cursor-pointer">
                 <Edit className="h-4 w-4 mr-2" />
                 Sửa hàng loạt ({selectedInstances.length})
               </Button>
             )}
           </div>
         </div>
+
+
 
         {/* Status Overview */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
@@ -351,6 +440,7 @@ export default function RoomInstancesPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditInstance(instance)}
+                        className="cursor-pointer"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -371,14 +461,28 @@ export default function RoomInstancesPage() {
                             <SelectValue placeholder="Chọn trạng thái" />
                           </SelectTrigger>
                           <SelectContent>
-                            {Object.entries(STATUS_LABELS).map(([status, label]) => (
+                            {getAvailableStatusOptions(instance.status).map((status) => (
                               <SelectItem key={status} value={status}>
-                                {label}
+                                {STATUS_LABELS[status]}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </FormField>
+                      
+                      {editForm.status && (
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <h6 className="text-sm font-medium text-blue-800 mb-2">
+                            Thông tin trạng thái: {STATUS_LABELS[editForm.status as keyof typeof STATUS_LABELS]}
+                          </h6>
+                          <p className="text-xs text-blue-700 mb-2">
+                            {BUSINESS_RULES[editForm.status as keyof typeof BUSINESS_RULES]?.description}
+                          </p>
+                       
+                            
+                         
+                        </div>
+                      )}
                       
                       <FormField>
                         <FormLabel>Lý do</FormLabel>
@@ -391,11 +495,11 @@ export default function RoomInstancesPage() {
                       </FormField>
                       
                       <div className="flex space-x-2">
-                        <Button size="sm" onClick={handleSaveEdit} className="flex-1">
+                        <Button size="sm" onClick={handleSaveEdit} className="flex-1 cursor-pointer">
                           <Save className="h-4 w-4 mr-1" />
                           Lưu
                         </Button>
-                        <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                        <Button size="sm" variant="outline" onClick={handleCancelEdit} className="cursor-pointer">
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
@@ -440,7 +544,7 @@ export default function RoomInstancesPage() {
               }
             </p>
             {statusFilter !== 'all' && (
-              <Button variant="outline" onClick={() => setStatusFilter('all')}>
+              <Button variant="outline" onClick={() => setStatusFilter('all')} className="cursor-pointer">
                 Xem tất cả phòng
               </Button>
             )}
@@ -460,22 +564,52 @@ export default function RoomInstancesPage() {
               <CardContent className="space-y-4">
                 <FormField>
                   <FormLabel>Trạng thái mới</FormLabel>
-                  <Select 
-                    value={bulkEditForm.status} 
-                    onValueChange={(value) => setBulkEditForm(prev => ({ ...prev, status: value as RoomStatus }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(STATUS_LABELS).map(([status, label]) => (
-                        <SelectItem key={status} value={status}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {getCommonAvailableStatusOptions(selectedInstances).length > 0 ? (
+                    <Select 
+                      value={bulkEditForm.status} 
+                      onValueChange={(value) => setBulkEditForm(prev => ({ ...prev, status: value as RoomStatus }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn trạng thái" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getCommonAvailableStatusOptions(selectedInstances).map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {STATUS_LABELS[status]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <p className="text-sm text-red-700">
+                        Không có trạng thái nào có thể chuyển đổi được cho tất cả các phòng đã chọn. 
+                        Vui lòng chọn lại các phòng hoặc cập nhật từng phòng riêng lẻ.
+                      </p>
+                    </div>
+                  )}
                 </FormField>
+                
+                {bulkEditForm.status && (
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <h6 className="text-sm font-medium text-blue-800 mb-2">
+                      Thông tin trạng thái: {STATUS_LABELS[bulkEditForm.status as keyof typeof STATUS_LABELS]}
+                    </h6>
+                    <p className="text-xs text-blue-700 mb-2">
+                      {BUSINESS_RULES[bulkEditForm.status as keyof typeof BUSINESS_RULES]?.description}
+                    </p>
+                    {BUSINESS_RULES[bulkEditForm.status as keyof typeof BUSINESS_RULES]?.restrictions.length > 0 && (
+                      <div className="text-xs text-orange-700">
+                        <strong>Lưu ý:</strong>
+                        <ul className="list-disc list-inside mt-1">
+                          {BUSINESS_RULES[bulkEditForm.status as keyof typeof BUSINESS_RULES]?.restrictions.map((restriction, index) => (
+                            <li key={index}>{restriction}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
                 
                 <FormField>
                   <FormLabel>Lý do</FormLabel>
@@ -488,7 +622,11 @@ export default function RoomInstancesPage() {
                 </FormField>
                 
                 <div className="flex space-x-2">
-                  <Button onClick={handleBulkUpdate} className="flex-1">
+                  <Button 
+                    onClick={handleBulkUpdate} 
+                    className="flex-1 cursor-pointer"
+                    disabled={getCommonAvailableStatusOptions(selectedInstances).length === 0}
+                  >
                     <Save className="h-4 w-4 mr-2" />
                     Cập nhật
                   </Button>
@@ -498,6 +636,7 @@ export default function RoomInstancesPage() {
                       setShowBulkEdit(false)
                       setBulkEditForm({ status: '' as RoomStatus, reason: '' })
                     }}
+                    className="cursor-pointer"
                   >
                     Hủy
                   </Button>

@@ -209,77 +209,128 @@ export interface BuildingsListResponse {
 
 // Room Management Types
 export interface RoomAmenity {
+	id: string;
+	roomId: string;
 	systemAmenityId: string;
 	customValue?: string;
 	notes?: string;
+	createdAt: string;
+	systemAmenity: {
+		name: string;
+		nameEn: string;
+		category: string;
+	};
 }
 
 export interface RoomCost {
+	id: string;
+	roomId: string;
 	systemCostTypeId: string;
-	value: number;
 	costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
-	unit?: string;
+	baseRate?: number | null;
+	unitPrice?: number | null;
+	fixedAmount?: string;
+	value?: number; // For form handling
+	currency: string;
+	unit: string;
+	minimumCharge?: number | null;
+	maximumCharge?: number | null;
+	isMetered: boolean;
+	meterReading?: number | null;
+	lastMeterReading?: number | null;
 	billingCycle: 'monthly' | 'quarterly' | 'yearly';
 	includedInRent: boolean;
 	isOptional: boolean;
 	notes?: string;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
+	systemCostType: {
+		name: string;
+		nameEn: string;
+		category: string;
+	};
 }
 
 export interface RoomRule {
+	id: string;
+	roomId: string;
 	systemRuleId: string;
 	customValue?: string;
 	isEnforced: boolean;
 	notes?: string;
+	createdAt: string;
+	systemRule: {
+		name: string;
+		nameEn: string;
+		category: string;
+		ruleType: string;
+	};
 }
 
 export interface RoomPricing {
-	basePriceMonthly: number;
-	depositAmount: number;
+	id: string;
+	roomId: string;
+	basePriceMonthly: string;
+	currency: string;
+	depositAmount: string;
 	depositMonths: number;
 	utilityIncluded: boolean;
-	utilityCostMonthly?: number;
-	cleaningFee?: number;
-	serviceFeePercentage?: number;
+	utilityCostMonthly: string;
+	cleaningFee: string;
+	serviceFeePercentage: string;
 	minimumStayMonths: number;
-	maximumStayMonths?: number;
+	maximumStayMonths: number;
 	priceNegotiable: boolean;
+	createdAt: string;
+	updatedAt: string;
 }
 
 export interface RoomInstance {
 	id: string;
+	roomId: string;
 	roomNumber: string;
 	status: 'available' | 'occupied' | 'maintenance' | 'reserved' | 'unavailable';
-	floorNumber: number;
 	statusReason?: string;
+	floorNumber?: number;
 	lastStatusChange?: string;
+	isActive: boolean;
+	notes?: string | null;
+	createdAt: string;
+	updatedAt: string;
 }
 
 export interface Room {
 	id: string;
+	slug: string;
+	buildingId: string;
+	floorNumber: number;
 	name: string;
 	description?: string;
-	roomType: 'boarding_house' | 'apartment' | 'house' | 'studio';
-	areaSqm: number;
+	roomType: 'boarding_house' | 'dormitory' | 'sleepbox' | 'apartment' | 'whole_house';
+	areaSqm: string;
 	maxOccupancy: number;
 	totalRooms: number;
-	floorNumber: number;
-	roomNumberPrefix: string;
-	roomNumberStart: number;
+	roomNumberPrefix?: string;
+	roomNumberStart?: number;
+	viewCount: number;
 	isActive: boolean;
-	slug?: string;
-	buildingId: string;
+	isVerified: boolean;
 	createdAt: string;
 	updatedAt: string;
 	// Related data
 	building?: {
 		id: string;
 		name: string;
+		addressLine1?: string;
 	};
-	pricing: RoomPricing;
-	amenities: RoomAmenity[];
-	costs: RoomCost[];
-	rules: RoomRule[];
-	instances?: RoomInstance[];
+	pricing?: RoomPricing;
+	amenities?: RoomAmenity[];
+	costs?: RoomCost[];
+	rules?: RoomRule[];
+	roomInstances?: RoomInstance[];
+	availableInstancesCount?: number;
+	occupiedInstancesCount?: number;
 	statusCounts?: {
 		available: number;
 		occupied: number;
@@ -292,7 +343,7 @@ export interface Room {
 export interface CreateRoomRequest {
 	name: string;
 	description?: string;
-	roomType: 'boarding_house' | 'apartment' | 'house' | 'studio';
+	roomType: 'boarding_house' | 'dormitory' | 'sleepbox' | 'apartment' | 'whole_house';
 	areaSqm: number;
 	maxOccupancy: number;
 	totalRooms: number;
@@ -306,16 +357,46 @@ export interface CreateRoomRequest {
 	isActive: boolean;
 }
 
-export type UpdateRoomRequest = Partial<CreateRoomRequest>;
+// Update room request with only allowed fields
+export interface UpdateRoomRequest {
+	name?: string;
+	description?: string;
+	roomType?: RoomType;
+	areaSqm?: number;
+	totalRooms?: number;
+	pricing?: {
+		basePriceMonthly?: number;
+		depositAmount?: number;
+		isNegotiable?: boolean;
+	};
+	amenities?: Array<{
+		systemAmenityId: string;
+		customValue?: string;
+		notes?: string;
+	}>;
+	costs?: Array<{
+		systemCostTypeId: string;
+		value: number;
+		costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
+		unit?: string;
+		isMandatory?: boolean;
+		isIncludedInRent?: boolean;
+		notes?: string;
+	}>;
+	rules?: Array<{
+		systemRuleId: string;
+		customValue?: string;
+		notes?: string;
+	}>;
+	isActive?: boolean;
+}
 
 export interface RoomsListResponse {
-	data: Room[];
-	pagination: {
-		page: number;
-		limit: number;
-		total: number;
-		totalPages: number;
-	};
+	rooms: Room[];
+	total: number;
+	page: number;
+	limit: number;
+	totalPages: number;
 }
 
 export interface RoomInstancesResponse {
@@ -346,7 +427,7 @@ export interface BulkUpdateRoomInstancesRequest {
 export type UserRole = 'tenant' | 'landlord';
 export type Gender = 'male' | 'female' | 'other';
 export type VerificationType = 'email' | 'phone';
-export type RoomType = 'boarding_house' | 'apartment' | 'house' | 'studio';
+export type RoomType = 'boarding_house' | 'dormitory' | 'sleepbox' | 'apartment' | 'whole_house';
 export type RoomStatus = 'available' | 'occupied' | 'maintenance' | 'reserved' | 'unavailable';
 export type CostType = 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
 export type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
