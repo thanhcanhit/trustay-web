@@ -4,6 +4,7 @@ import type { LoginRequest, UserProfile } from '@/actions';
 import { login as apiLogin, logout as apiLogout, getCurrentUser } from '@/actions';
 import { TokenUtils } from '@/lib/token-utils';
 import { UserProfile as User } from '@/types/types';
+import { useBuildingStore } from './buildingStore';
 
 export type { User };
 
@@ -102,6 +103,9 @@ export const useUserStore = create<UserState>()(
 				} catch (error) {
 					console.warn('Logout API call failed:', error);
 				} finally {
+					// Reset building store when logging out
+					useBuildingStore.getState().reset();
+
 					set({
 						user: null,
 						isAuthenticated: false,

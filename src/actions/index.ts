@@ -26,11 +26,20 @@ export {
 	skipProfileUpdate,
 	verifyEmailCode,
 } from './auth.action';
+// Export building actions
+export {
+	createBuilding,
+	deleteBuilding,
+	getBuildingById,
+	getBuildings,
+	getMyBuildings,
+	updateBuilding,
+} from './building.action';
 // Export listings actions
 export {
 	getAllRoomListings,
 	getFeaturedRoomListings,
-	getRoomBySlug,
+	//getRoomBySlug,
 	type RoomDetail,
 	type RoomListing,
 	type RoomListingsResponse,
@@ -50,6 +59,19 @@ export {
 	getCostTypes,
 	getRules,
 } from './reference.action';
+// Export room actions
+export {
+	bulkUpdateRoomInstancesStatus,
+	createRoom,
+	deleteRoom,
+	getMyRooms,
+	getRoomById,
+	getRoomBySlug,
+	getRoomInstancesByStatus,
+	getRoomsByBuilding,
+	updateRoom,
+	updateRoomInstanceStatus,
+} from './room.action';
 // Export upload actions
 export {
 	getImageUrl,

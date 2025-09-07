@@ -28,7 +28,7 @@ import {
 } from "@/types/types"
 
 // Interface for API response cost structure
-interface ApiCost extends RoomCost {
+interface ApiCost extends Omit<RoomCost, 'fixedAmount' | 'unitPrice' | 'baseRate'> {
   fixedAmount?: number;
   unitPrice?: number;
   baseRate?: number;
@@ -107,16 +107,21 @@ function AddRoomPageContent() {
     roomNumberPrefix: 'A',
     roomNumberStart: 101,
     pricing: {
-      basePriceMonthly: 0,
-      depositAmount: 0,
+      id: '',
+      roomId: '',
+      basePriceMonthly: '0',
+      currency: 'VND',
+      depositAmount: '0',
       depositMonths: 2,
       utilityIncluded: false,
-      utilityCostMonthly: 0,
-      cleaningFee: 0,
-      serviceFeePercentage: 0,
+      utilityCostMonthly: '0',
+      cleaningFee: '0',
+      serviceFeePercentage: '0',
       minimumStayMonths: 1,
       maximumStayMonths: 12,
-      priceNegotiable: false
+      priceNegotiable: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     },
     amenities: [],
     costs: [],
@@ -151,9 +156,17 @@ function AddRoomPageContent() {
       if (typeof amenity === 'string') {
         const amenityData = useReferenceStore.getState().amenities.find(a => a.id === amenity)
         return {
+          id: '',
+          roomId: '',
           systemAmenityId: amenity,
           customValue: amenityData?.name || '',
-          notes: ''
+          notes: '',
+          createdAt: new Date().toISOString(),
+          systemAmenity: {
+            name: amenityData?.name || '',
+            nameEn: amenityData?.name || '',
+            category: amenityData?.category || ''
+          }
         }
       }
       return amenity
@@ -167,14 +180,26 @@ function AddRoomPageContent() {
       if (typeof cost === 'string') {
         const costTypeData = useReferenceStore.getState().costTypes.find(c => c.id === cost)
         return {
+          id: '',
+          roomId: '',
           systemCostTypeId: cost,
           value: 0,
           costType: 'fixed' as const,
+          currency: 'VND',
           unit: 'VND',
+          isMetered: false,
           billingCycle: 'monthly' as const,
           includedInRent: false,
           isOptional: true,
-          notes: costTypeData?.name || ''
+          isActive: true,
+          notes: costTypeData?.name || '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          systemCostType: {
+            name: costTypeData?.name || '',
+            nameEn: costTypeData?.name || '',
+            category: costTypeData?.category || ''
+          }
         }
       }
       // Handle API response data with extended fields
@@ -182,16 +207,28 @@ function AddRoomPageContent() {
       const value = apiCost.fixedAmount || apiCost.unitPrice || apiCost.baseRate || parseFloat(String(cost.value)) || 0;
       
       return {
+        id: cost.id || '',
+        roomId: cost.roomId || '',
         systemCostTypeId: cost.systemCostTypeId,
         value: value,
         costType: cost.costType || 'fixed' as const,
+        currency: cost.currency || 'VND',
         unit: cost.unit || 'VND',
+        isMetered: cost.isMetered || false,
         billingCycle: cost.billingCycle || 'monthly' as const,
         includedInRent: Boolean(cost.includedInRent),
         isOptional: Boolean(cost.isOptional),
+        isActive: cost.isActive || true,
         notes: cost.notes || '',
+        createdAt: cost.createdAt || new Date().toISOString(),
+        updatedAt: cost.updatedAt || new Date().toISOString(),
+        systemCostType: cost.systemCostType || {
+          name: '',
+          nameEn: '',
+          category: ''
+        },
         // Preserve API response fields for component to use
-        fixedAmount: apiCost.fixedAmount,
+        fixedAmount: apiCost.fixedAmount ? String(apiCost.fixedAmount) : undefined,
         unitPrice: apiCost.unitPrice,
         baseRate: apiCost.baseRate
       }
@@ -205,17 +242,35 @@ function AddRoomPageContent() {
       if (typeof rule === 'string') {
         const ruleData = useReferenceStore.getState().rules.find(r => r.id === rule)
         return {
+          id: '',
+          roomId: '',
           systemRuleId: rule,
           customValue: ruleData?.name || '',
           isEnforced: true,
-          notes: ''
+          notes: '',
+          createdAt: new Date().toISOString(),
+          systemRule: {
+            name: ruleData?.name || '',
+            nameEn: ruleData?.name || '',
+            category: ruleData?.category || '',
+            ruleType: ruleData?.ruleType || ''
+          }
         }
       }
       return {
+        id: rule.id || '',
+        roomId: rule.roomId || '',
         systemRuleId: rule.systemRuleId,
         customValue: rule.customValue || '',
         isEnforced: Boolean(rule.isEnforced),
-        notes: rule.notes || ''
+        notes: rule.notes || '',
+        createdAt: rule.createdAt || new Date().toISOString(),
+        systemRule: rule.systemRule || {
+          name: '',
+          nameEn: '',
+          category: '',
+          ruleType: ''
+        }
       }
     })
   }
@@ -280,10 +335,10 @@ function AddRoomPageContent() {
         }
         break
       case 1:
-        if (!formData.pricing?.basePriceMonthly || formData.pricing.basePriceMonthly <= 0) {
+        if (!formData.pricing?.basePriceMonthly || parseFloat(formData.pricing.basePriceMonthly) <= 0) {
           newErrors.basePriceMonthly = 'Giá thuê phải lớn hơn 0'
         }
-        if (!formData.pricing?.depositAmount || formData.pricing.depositAmount < 0) {
+        if (!formData.pricing?.depositAmount || parseFloat(formData.pricing.depositAmount) < 0) {
           newErrors.depositAmount = 'Tiền cọc không được âm'
         }
         break
@@ -338,16 +393,21 @@ function AddRoomPageContent() {
         roomNumberPrefix: formData.roomNumberPrefix!,
         roomNumberStart: parseInt(String(formData.roomNumberStart!)) || 101,
         pricing: {
-          basePriceMonthly: parseFloat(String(formData.pricing!.basePriceMonthly)) || 0,
-          depositAmount: parseFloat(String(formData.pricing!.depositAmount)) || 0,
+          id: '',
+          roomId: '',
+          basePriceMonthly: String(parseFloat(String(formData.pricing!.basePriceMonthly)) || 0),
+          currency: 'VND',
+          depositAmount: String(parseFloat(String(formData.pricing!.depositAmount)) || 0),
           depositMonths: parseInt(String(formData.pricing!.depositMonths)) || 2,
           utilityIncluded: Boolean(formData.pricing!.utilityIncluded),
-          utilityCostMonthly: parseFloat(String(formData.pricing!.utilityCostMonthly)) || 0,
-          cleaningFee: parseFloat(String(formData.pricing!.cleaningFee)) || 0,
-          serviceFeePercentage: parseFloat(String(formData.pricing!.serviceFeePercentage)) || 0,
+          utilityCostMonthly: String(parseFloat(String(formData.pricing!.utilityCostMonthly)) || 0),
+          cleaningFee: String(parseFloat(String(formData.pricing!.cleaningFee)) || 0),
+          serviceFeePercentage: String(parseFloat(String(formData.pricing!.serviceFeePercentage)) || 0),
           minimumStayMonths: parseInt(String(formData.pricing!.minimumStayMonths)) || 1,
           maximumStayMonths: parseInt(String(formData.pricing!.maximumStayMonths)) || 12,
-          priceNegotiable: Boolean(formData.pricing!.priceNegotiable)
+          priceNegotiable: Boolean(formData.pricing!.priceNegotiable),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         },
         amenities: convertAmenitiesToObjects(formData.amenities || []),
         costs: convertCostsToObjects(formData.costs || []),

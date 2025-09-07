@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Search, Calendar, Receipt, Clock, Download, Send, Eye } from "lucide-react"
+import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
 
 // Mock data for invoices
 const MOCK_INVOICES = [
@@ -106,10 +107,18 @@ export default function InvoicesPage() {
   return (
     <DashboardLayout userType="landlord">
       <div className="px-6">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Quản lý hóa đơn</h1>
-          <p className="text-gray-600">Quản lý tất cả hóa đơn và thanh toán</p>
-        </div>
+        <PageHeader
+          title="Quản lý hóa đơn"
+          subtitle="Quản lý tất cả hóa đơn và thanh toán"
+          actions={
+            <PageHeaderActions.Custom>
+              <Button className="flex items-center space-x-2">
+                <Receipt className="h-4 w-4" />
+                <span>Tạo hóa đơn mới</span>
+              </Button>
+            </PageHeaderActions.Custom>
+          }
+        />
 
         {/* Filters and Actions */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between">
@@ -137,11 +146,6 @@ export default function InvoicesPage() {
               </SelectContent>
             </Select>
           </div>
-
-          <Button className="flex items-center space-x-2">
-            <Receipt className="h-4 w-4" />
-            <span>Tạo hóa đơn mới</span>
-          </Button>
         </div>
 
         {/* Invoices Grid */}

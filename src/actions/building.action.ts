@@ -117,6 +117,39 @@ export const getBuildings = async (params?: {
 	}
 };
 
+// Get my buildings (landlord's buildings)
+export const getMyBuildings = async (params?: {
+	page?: number;
+	limit?: number;
+}): Promise<ApiResult<BuildingsListResponse>> => {
+	try {
+		const searchParams = new URLSearchParams();
+		if (params?.page) searchParams.append('page', params.page.toString());
+		if (params?.limit) searchParams.append('limit', params.limit.toString());
+
+		const endpoint = `/api/buildings/me${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+		const response = await apiCall<{
+			success: boolean;
+			message: string;
+			data: BuildingsListResponse;
+		}>(endpoint, {
+			method: 'GET',
+		});
+
+		console.log('My Buildings API Response:', response);
+
+		return {
+			success: true,
+			data: response.data,
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể tải danh sách dãy trọ của tôi'),
+		};
+	}
+};
+
 // Get building by ID
 export const getBuildingById = async (id: string): Promise<ApiResult<{ data: Building }>> => {
 	try {
