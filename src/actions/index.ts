@@ -39,11 +39,8 @@ export {
 export {
 	getAllRoomListings,
 	getFeaturedRoomListings,
+	listPublicRoomSeekingPosts,
 	//getRoomBySlug,
-	type RoomDetail,
-	type RoomListing,
-	type RoomListingsResponse,
-	type RoomSearchParams,
 	searchRoomListings,
 } from './listings.action';
 // Export location actions (excluding ApiError)

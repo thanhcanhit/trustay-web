@@ -2,169 +2,14 @@
 
 import { createServerApiCall } from '@/lib/api-client';
 import { TokenUtils } from '@/lib/token-utils';
-
-// Types for API responses
-export interface RoomListing {
-	id: string;
-	slug: string;
-	name: string;
-	roomType: string;
-	maxOccupancy: number;
-	isVerified: boolean;
-	buildingName: string;
-	buildingVerified: boolean;
-	address: string;
-	owner: {
-		name: string;
-		avatarUrl: string | null;
-		gender: string;
-		verifiedPhone: boolean;
-		verifiedEmail: boolean;
-		verifiedIdentity: boolean;
-	};
-	location: {
-		provinceId: number;
-		provinceName: string;
-		districtId: number;
-		districtName: string;
-		wardId: number;
-		wardName: string;
-	};
-	images: Array<{
-		url: string;
-		alt: string;
-		isPrimary: boolean;
-		sortOrder: number;
-	}>;
-	amenities: Array<{
-		id: string;
-		name: string;
-		category: string;
-	}>;
-	costs: Array<{
-		id: string;
-		name: string;
-		value: string;
-	}>;
-	pricing: {
-		basePriceMonthly: string;
-		depositAmount: string;
-		utilityIncluded: boolean;
-	};
-	rules: Array<{
-		id: string;
-		name: string;
-		type: string;
-	}>;
-}
-
-export interface RoomListingsResponse {
-	data: RoomListing[];
-	meta: {
-		page: number;
-		limit: number;
-		total: number;
-		totalPages: number;
-		hasNext: boolean;
-		hasPrev: boolean;
-		itemCount: number;
-	};
-}
-
-export interface RoomDetail {
-	id: string;
-	slug: string;
-	name: string;
-	description: string;
-	roomType: string;
-	areaSqm: string;
-	maxOccupancy: number;
-	isVerified: boolean;
-	isActive: boolean;
-	floorNumber: number;
-	buildingName: string;
-	buildingDescription: string;
-	address: string;
-	addressLine2: string | null;
-	location: {
-		provinceId: number;
-		provinceName: string;
-		districtId: number;
-		districtName: string;
-		wardId: number;
-		wardName: string;
-	};
-	owner: {
-		id: string;
-		firstName: string;
-		lastName: string;
-		phone: string;
-		avatarUrl: string | null;
-		isVerifiedPhone: boolean;
-		isVerifiedEmail: boolean;
-		isVerifiedIdentity: boolean;
-	};
-	images: Array<{
-		url: string;
-		alt: string;
-		isPrimary: boolean;
-		sortOrder: number;
-	}>;
-	amenities: Array<{
-		id: string;
-		name: string;
-		category: string;
-		customValue: string | null;
-		notes: string | null;
-	}>;
-	costs: Array<{
-		id: string;
-		name: string;
-		value: string;
-		category: string;
-		notes: string | null;
-	}>;
-	pricing: {
-		basePriceMonthly: string;
-		depositAmount: string;
-		depositMonths: number;
-		utilityIncluded: boolean;
-		minimumStayMonths: number;
-		maximumStayMonths: number | null;
-		priceNegotiable: boolean;
-	};
-	rules: Array<{
-		id: string;
-		name: string;
-		type: string;
-		customValue: string | null;
-		notes: string | null;
-		isEnforced: boolean;
-	}>;
-	lastUpdated: string;
-}
-
-// Search parameters interface
-export interface RoomSearchParams {
-	search: string; // Required parameter
-	provinceId?: number;
-	districtId?: number;
-	wardId?: number;
-	roomType?: string;
-	minPrice?: number;
-	maxPrice?: number;
-	minArea?: number;
-	maxArea?: number;
-	amenities?: string; // comma-separated amenity IDs
-	maxOccupancy?: number;
-	isVerified?: boolean;
-	latitude?: number; // For location-based search
-	longitude?: number; // For location-based search
-	sortBy?: 'price' | 'area' | 'createdAt';
-	sortOrder?: 'asc' | 'desc';
-	page?: number;
-	limit?: number;
-}
+import type { RoomSeekingPostListResponse } from '@/types/room-seeking';
+import type {
+	RoomDetail,
+	RoomListing,
+	RoomListingsResponse,
+	RoomSearchParams,
+	RoomSeekingPublicSearchParams,
+} from '@/types/types';
 
 // Create server API call function
 const serverApiCall = createServerApiCall(() => TokenUtils.getAccessToken());
@@ -271,6 +116,35 @@ export async function getFeaturedRoomListings(limit: number = 4): Promise<RoomLi
 		return response.data.slice(0, limit);
 	} catch (error: unknown) {
 		console.error('Failed to get featured room listings:', error);
+		throw error;
+	}
+}
+
+export async function listPublicRoomSeekingPosts(
+	params: RoomSeekingPublicSearchParams = {},
+): Promise<RoomSeekingPostListResponse> {
+	const query = new URLSearchParams();
+	if (typeof params.page === 'number') query.append('page', String(params.page));
+	if (typeof params.limit === 'number') query.append('limit', String(params.limit));
+	if (params.search) query.append('search', params.search);
+	if (typeof params.provinceId === 'number') query.append('provinceId', String(params.provinceId));
+	if (typeof params.districtId === 'number') query.append('districtId', String(params.districtId));
+	if (typeof params.wardId === 'number') query.append('wardId', String(params.wardId));
+	if (typeof params.minBudget === 'number') query.append('minBudget', String(params.minBudget));
+	if (typeof params.maxBudget === 'number') query.append('maxBudget', String(params.maxBudget));
+	if (params.roomType) query.append('roomType', params.roomType);
+	if (typeof params.occupancy === 'number') query.append('occupancy', String(params.occupancy));
+	if (params.status) query.append('status', params.status);
+	if (typeof params.isPublic === 'boolean') query.append('isPublic', String(params.isPublic));
+	if (params.sortBy) query.append('sortBy', params.sortBy);
+	if (params.sortOrder) query.append('sortOrder', params.sortOrder);
+
+	const endpoint = `/api/listings/room-seeking-posts${query.toString() ? `?${query.toString()}` : ''}`;
+	try {
+		const response = await serverApiCall<RoomSeekingPostListResponse>(endpoint, { method: 'GET' });
+		return response;
+	} catch (error) {
+		console.error('Failed to list public room seeking posts:', error);
 		throw error;
 	}
 }
