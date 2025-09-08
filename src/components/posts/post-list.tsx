@@ -12,14 +12,16 @@ import {
 	Home, 
 	Eye, 
 	MessageCircle, 
- 
+	 
 	Edit, 
 	Trash2, 
 	Calendar,
 	MapPin,
 	DollarSign,
-	User
+	User,
+	Plus
 } from 'lucide-react'
+import Link from 'next/link'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { RoomSeekingPost, RoommatePost, RentalPost } from '@/types'
@@ -28,12 +30,18 @@ interface PostListProps {
 	roomSeekingPosts?: RoomSeekingPost[]
 	roommatePosts?: RoommatePost[]
 	rentalPosts?: RentalPost[]
+	showRental?: boolean
+	showRoomSeeking?: boolean
+	showRoommate?: boolean
+	initialTab?: 'room-seeking' | 'roommate' | 'rental'
 	onEdit?: (postId: string, type: 'room-seeking' | 'roommate' | 'rental') => void
 	onDelete?: (postId: string, type: 'room-seeking' | 'roommate' | 'rental') => void
 }
 
 const POST_STATUSES = {
 	active: { label: 'Đang hoạt động', color: 'bg-green-500' },
+	paused: { label: 'Tạm dừng', color: 'bg-yellow-500' },
+	closed: { label: 'Đã đóng', color: 'bg-gray-500' },
 	inactive: { label: 'Tạm dừng', color: 'bg-yellow-500' },
 	expired: { label: 'Hết hạn', color: 'bg-red-500' },
 	rented: { label: 'Đã cho thuê', color: 'bg-blue-500' },
@@ -44,10 +52,16 @@ export function PostList({
 	roomSeekingPosts = [], 
 	roommatePosts = [], 
 	rentalPosts = [],
+	showRental = true,
+	showRoomSeeking = true,
+	showRoommate = true,
+	initialTab = 'room-seeking',
 	onEdit,
 	onDelete 
 }: PostListProps) {
-	const [activeTab, setActiveTab] = useState('room-seeking')
+	const [activeTab, setActiveTab] = useState(initialTab)
+
+	const visibleTabsCount = [showRoomSeeking, showRoommate, showRental].filter(Boolean).length
 
 	const formatPrice = (price: number) => {
 		return new Intl.NumberFormat('vi-VN', {
@@ -259,28 +273,37 @@ export function PostList({
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
 				<h2 className="text-2xl font-bold">Bài đăng của tôi</h2>
-				<Button>
-					<Search className="h-4 w-4 mr-2" />
-					Tạo bài đăng mới
-				</Button>
+				<Link href="/profile/posts/room-seeking/add">
+					<Button>
+						<Plus className="h-4 w-4 mr-2" />
+						Tạo bài đăng mới
+					</Button>
+				</Link>
 			</div>
 
-			<Tabs value={activeTab} onValueChange={setActiveTab}>
-				<TabsList className="grid w-full grid-cols-3">
-					<TabsTrigger value="room-seeking" className="flex items-center gap-2">
-						<Search className="h-4 w-4" />
-						Tìm trọ ({roomSeekingPosts.length})
-					</TabsTrigger>
-					<TabsTrigger value="roommate" className="flex items-center gap-2">
-						<Users className="h-4 w-4" />
-						Tìm bạn cùng trọ ({roommatePosts.length})
-					</TabsTrigger>
-					<TabsTrigger value="rental" className="flex items-center gap-2">
-						<Home className="h-4 w-4" />
-						Cho thuê ({rentalPosts.length})
-					</TabsTrigger>
+			<Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'room-seeking' | 'roommate' | 'rental')}>
+				<TabsList className={`grid w-full ${visibleTabsCount === 3 ? 'grid-cols-3' : visibleTabsCount === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+					{showRoomSeeking && (
+						<TabsTrigger value="room-seeking" className="flex items-center gap-2">
+							<Search className="h-4 w-4" />
+							Tìm trọ ({roomSeekingPosts.length})
+						</TabsTrigger>
+					)}
+					{showRoommate && (
+						<TabsTrigger value="roommate" className="flex items-center gap-2">
+							<Users className="h-4 w-4" />
+							Tìm bạn cùng trọ ({roommatePosts.length})
+						</TabsTrigger>
+					)}
+					{showRental && (
+						<TabsTrigger value="rental" className="flex items-center gap-2">
+							<Home className="h-4 w-4" />
+							Cho thuê ({rentalPosts.length})
+						</TabsTrigger>
+					)}
 				</TabsList>
 
+				{showRoomSeeking && (
 				<TabsContent value="room-seeking" className="space-y-4">
 					{roomSeekingPosts.length === 0 ? (
 						<Card>
@@ -290,10 +313,12 @@ export function PostList({
 								<p className="text-muted-foreground text-center mb-4">
 									Tạo bài đăng đầu tiên để tìm phòng trọ phù hợp
 								</p>
-								<Button>
-									<Search className="h-4 w-4 mr-2" />
-									Tạo bài đăng tìm trọ
-								</Button>
+								<Link href="/profile/posts/room-seeking/add">
+									<Button>
+										<Plus className="h-4 w-4 mr-2" />
+										Tạo bài đăng tìm trọ
+									</Button>
+								</Link>
 							</CardContent>
 						</Card>
 					) : (
@@ -302,7 +327,9 @@ export function PostList({
 						</div>
 					)}
 				</TabsContent>
+				)}
 
+				{showRoommate && (
 				<TabsContent value="roommate" className="space-y-4">
 					{roommatePosts.length === 0 ? (
 						<Card>
@@ -324,28 +351,31 @@ export function PostList({
 						</div>
 					)}
 				</TabsContent>
+				)}
 
-				<TabsContent value="rental" className="space-y-4">
-					{rentalPosts.length === 0 ? (
-						<Card>
-							<CardContent className="flex flex-col items-center justify-center py-12">
-								<Home className="h-12 w-12 text-muted-foreground mb-4" />
-								<h3 className="text-lg font-medium mb-2">Chưa có bài đăng cho thuê</h3>
-								<p className="text-muted-foreground text-center mb-4">
-									Tạo bài đăng đầu tiên để cho thuê phòng trọ
-								</p>
-								<Button>
-									<Home className="h-4 w-4 mr-2" />
-									Tạo bài đăng cho thuê
-								</Button>
-							</CardContent>
-						</Card>
-					) : (
-						<div className="grid gap-4">
-							{rentalPosts.map(renderRentalPost)}
-						</div>
-					)}
-				</TabsContent>
+				{showRental && (
+					<TabsContent value="rental" className="space-y-4">
+						{rentalPosts.length === 0 ? (
+							<Card>
+								<CardContent className="flex flex-col items-center justify-center py-12">
+									<Home className="h-12 w-12 text-muted-foreground mb-4" />
+									<h3 className="text-lg font-medium mb-2">Chưa có bài đăng cho thuê</h3>
+									<p className="text-muted-foreground text-center mb-4">
+										Tạo bài đăng đầu tiên để cho thuê phòng trọ
+									</p>
+									<Button>
+										<Home className="h-4 w-4 mr-2" />
+										Tạo bài đăng cho thuê
+									</Button>
+								</CardContent>
+							</Card>
+						) : (
+							<div className="grid gap-4">
+								{rentalPosts.map(renderRentalPost)}
+							</div>
+						)}
+					</TabsContent>
+				)}
 			</Tabs>
 		</div>
 	)

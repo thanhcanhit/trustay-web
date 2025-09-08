@@ -18,7 +18,7 @@ export interface RoomSeekingPost {
 	expiresAt: string;
 	amenityIds: string[];
 	contactCount: number;
-	status: 'active' | 'inactive' | 'expired';
+	status: 'active' | 'paused' | 'closed' | 'expired';
 	createdAt: string;
 	updatedAt: string;
 	userId: string;
@@ -27,7 +27,6 @@ export interface RoomSeekingPost {
 export interface CreateRoomSeekingPostRequest {
 	title: string;
 	description: string;
-	slug: string;
 	preferredDistrictId: number;
 	preferredWardId: number;
 	preferredProvinceId: number;
@@ -78,6 +77,9 @@ export interface RoomSeekingSearchParams {
 	limit?: number;
 	status?: string;
 	userId?: string;
+	search?: string;
+	sortBy?: 'createdAt' | 'updatedAt' | 'title' | 'maxBudget' | 'viewCount' | 'contactCount';
+	sortOrder?: 'asc' | 'desc';
 	preferredProvinceId?: number;
 	preferredDistrictId?: number;
 	preferredWardId?: number;
@@ -120,7 +122,8 @@ export const CURRENCIES = {
 
 export const POST_STATUSES = {
 	ACTIVE: 'active',
-	INACTIVE: 'inactive',
+	PAUSED: 'paused',
+	CLOSED: 'closed',
 	EXPIRED: 'expired',
 } as const;
 
@@ -141,6 +144,7 @@ export const CURRENCY_LABELS = {
 // Status labels for display
 export const STATUS_LABELS = {
 	[POST_STATUSES.ACTIVE]: 'Đang hoạt động',
-	[POST_STATUSES.INACTIVE]: 'Tạm dừng',
+	[POST_STATUSES.PAUSED]: 'Tạm dừng',
+	[POST_STATUSES.CLOSED]: 'Đã đóng',
 	[POST_STATUSES.EXPIRED]: 'Hết hạn',
 } as const;

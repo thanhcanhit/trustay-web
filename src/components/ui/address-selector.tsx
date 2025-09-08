@@ -20,6 +20,7 @@ interface AddressSelectorProps {
   className?: string;
   disabled?: boolean;
   required?: boolean;
+  showStreetInput?: boolean;
 }
 
 export function AddressSelector({
@@ -28,6 +29,7 @@ export function AddressSelector({
   className = '',
   disabled = false,
   required = false,
+  showStreetInput = true,
 
 }: AddressSelectorProps) {
   const [selectedProvince, setSelectedProvince] = useState<number | null>(value?.province?.id || null);
@@ -35,6 +37,13 @@ export function AddressSelector({
   const [selectedWard, setSelectedWard] = useState<number | null>(value?.ward?.id || null);
   const [street, setStreet] = useState(value?.street || '');
   const isUpdatingFromValue = useRef(false);
+  const onChangeRef = useRef<((address: AddressData) => void) | undefined>(undefined);
+  const lastEmittedAddressRef = useRef<AddressData | null>(null);
+
+  // Keep latest onChange without re-subscribing effect
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   // Location store
   const {
@@ -181,17 +190,21 @@ export function AddressSelector({
       province: province || null
     };
 
-    // Only call onChange if the data has actually changed and we're not updating from value prop
-    const hasChanged = 
-      addressData.province?.id !== value?.province?.id ||
-      addressData.district?.id !== value?.district?.id ||
-      addressData.ward?.id !== value?.ward?.id ||
-      addressData.street !== value?.street;
+    if (isUpdatingFromValue.current) return;
 
-    if (hasChanged && !isUpdatingFromValue.current) {
-      onChange?.(addressData);
+    // Shallow compare against last emitted payload to avoid loops
+    const prev = lastEmittedAddressRef.current;
+    const hasChanged =
+      prev?.province?.id !== addressData.province?.id ||
+      prev?.district?.id !== addressData.district?.id ||
+      prev?.ward?.id !== addressData.ward?.id ||
+      prev?.street !== addressData.street;
+
+    if (hasChanged) {
+      lastEmittedAddressRef.current = addressData;
+      onChangeRef.current?.(addressData);
     }
-  }, [selectedProvince, selectedDistrict, selectedWard, street, getProvinceById, getDistrictById, getWardById, onChange, value]);
+  }, [selectedProvince, selectedDistrict, selectedWard, street, getProvinceById, getDistrictById, getWardById]);
 
   const handleProvinceChange = (provinceId: number | null) => {
     setSelectedProvince(provinceId);
@@ -296,20 +309,22 @@ export function AddressSelector({
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <Label htmlFor="street" className="text-sm font-medium">
-            Địa chỉ chi tiết {required && <span className="text-red-500">*</span>}
-          </Label>
-          <Input
-            id="street"
-            type="text"
-            placeholder="Số nhà, tên đường..."
-            value={street}
-            onChange={(e) => setStreet(e.target.value)}
-            disabled={disabled}
-            className="mt-1"
-          />
-        </div>
+        {showStreetInput && (
+          <div>
+            <Label htmlFor="street" className="text-sm font-medium">
+              Địa chỉ chi tiết {required && <span className="text-red-500">*</span>}
+            </Label>
+            <Input
+              id="street"
+              type="text"
+              placeholder="Số nhà, tên đường..."
+              value={street}
+              onChange={(e) => setStreet(e.target.value)}
+              disabled={disabled}
+              className="mt-1"
+            />
+          </div>
+        )}
         </div>
     </div>
   );

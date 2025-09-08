@@ -34,6 +34,8 @@ interface PostDetailProps {
 
 const POST_STATUSES = {
 	active: { label: 'Đang hoạt động', color: 'bg-green-500' },
+	paused: { label: 'Tạm dừng', color: 'bg-yellow-500' },
+	closed: { label: 'Đã đóng', color: 'bg-gray-500' },
 	inactive: { label: 'Tạm dừng', color: 'bg-yellow-500' },
 	expired: { label: 'Hết hạn', color: 'bg-red-500' },
 	rented: { label: 'Đã cho thuê', color: 'bg-blue-500' },

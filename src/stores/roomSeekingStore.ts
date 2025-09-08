@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import {
 	createRoomSeekingPost,
 	deleteRoomSeekingPost,
+	getMyRoomSeekingPosts,
 	getRoomSeekingPostById,
 	getRoomSeekingPosts,
 	incrementRoomSeekingPostContact,
@@ -55,6 +56,7 @@ interface RoomSeekingState {
 
 	// Actions
 	loadUserPosts: (params?: { page?: number; limit?: number; status?: string }) => Promise<void>;
+	fetchMyPosts: (params?: { page?: number; limit?: number; status?: string }) => Promise<void>;
 	loadPublicPosts: (params?: { page?: number; limit?: number; status?: string }) => Promise<void>;
 	loadPostDetail: (id: string) => Promise<void>;
 	createPost: (data: CreateRoomSeekingPostRequest) => Promise<boolean>;
@@ -93,10 +95,7 @@ export const useRoomSeekingStore = create<RoomSeekingState>()(
 				set({ userPostsLoading: true, userPostsError: null });
 
 				try {
-					const response = await getRoomSeekingPosts({
-						...params,
-						userId: 'current', // This will be handled by the API to get current user's posts
-					});
+					const response = await getMyRoomSeekingPosts(params);
 
 					if (response.success) {
 						set({
@@ -119,6 +118,12 @@ export const useRoomSeekingStore = create<RoomSeekingState>()(
 					});
 					console.error('Failed to load user posts:', error);
 				}
+			},
+
+			// Alias for loadUserPosts for better naming
+			fetchMyPosts: async (params = {}) => {
+				const { loadUserPosts } = get();
+				await loadUserPosts(params);
 			},
 
 			// Load public room seeking posts
@@ -290,10 +295,13 @@ export const useRoomSeekingStore = create<RoomSeekingState>()(
 				}
 			},
 
-			// Toggle post status (active/inactive)
+			// Toggle post status (active/paused)
 			togglePostStatus: async (id: string): Promise<boolean> => {
 				try {
-					const response = await updateRoomSeekingPostStatus(id);
+					const { userPosts, currentPost } = get();
+					const target = userPosts.find((p) => p.id === id) || currentPost;
+					const nextStatus: 'active' | 'paused' = target?.status === 'active' ? 'paused' : 'active';
+					const response = await updateRoomSeekingPostStatus(id, nextStatus);
 
 					if (response.success) {
 						const { userPosts, currentPost } = get();

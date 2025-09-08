@@ -67,48 +67,6 @@ const mockRoommatePosts = [
 	},
 ]
 
-const mockRentalPosts = [
-	{
-		id: '1',
-		title: 'Cho thuê phòng trọ gần trường ĐH Bách Khoa, đầy đủ tiện nghi',
-		description: 'Phòng trọ mới sửa chữa, đầy đủ tiện nghi: điều hòa, wifi, tủ lạnh, máy giặt. Gần chợ, bến xe buýt, thuận tiện đi lại.',
-		images: [],
-		price: 4500000,
-		deposit: 4500000,
-		area: 25,
-		address: {
-			street: '456 Đường XYZ',
-			ward: 'Phường 2',
-			district: 'Quận 1',
-			city: 'TP.HCM',
-		},
-		amenities: ['wifi', 'ac', 'kitchen', 'washing-machine'],
-		rules: [],
-		contactInfo: {
-			phone: '0987654321',
-			email: 'landlord@email.com',
-			facebook: 'facebook.com/landlord',
-			zalo: '0987654321',
-		},
-		roomType: 'boarding_house' as const,
-		availableFrom: '2024-02-01',
-		gender: 'mixed' as const,
-		maxOccupants: 2,
-		electricityCost: 3500,
-		waterCost: 15000,
-		internetCost: 200000,
-		cleaningCost: 100000,
-		parkingCost: 50000,
-		isHot: true,
-		isPriority: false,
-		views: 150,
-		likes: 12,
-		status: 'active' as const,
-		createdAt: '2024-01-05',
-		updatedAt: '2024-01-05',
-		userId: 'user1',
-	},
-]
 
 export default function PostsPage() {
 	const handleEdit = (postId: string, type: 'room-seeking' | 'roommate' | 'rental') => {
@@ -126,7 +84,10 @@ export default function PostsPage() {
 			<PostList
 				roomSeekingPosts={mockRoomSeekingPosts}
 				roommatePosts={mockRoommatePosts}
-				rentalPosts={mockRentalPosts}
+				showRental={false}
+				showRoomSeeking={true}
+				showRoommate={true}
+				initialTab={'room-seeking'}
 				onEdit={handleEdit}
 				onDelete={handleDelete}
 			/>

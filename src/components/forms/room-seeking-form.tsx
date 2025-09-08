@@ -19,17 +19,20 @@ import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { CalendarIcon, ArrowLeft, ArrowRight, Check } from 'lucide-react'
-import { createRoomSeekingPost } from '@/actions/room-seeking.action'
+import { useRouter } from 'next/navigation'
+import { createRoomSeekingPost, updateRoomSeekingPost } from '@/actions/room-seeking.action'
 import { toast } from 'sonner'
-import { createSlugFromTitle } from '@/utils'
 import { 
-//	RoomSeekingFormData, 
+	//	RoomSeekingFormData, 
 	ROOM_TYPE_LABELS,
 	CreateRoomSeekingPostRequest
 } from '@/types'
 
 interface RoomSeekingFormProps {
-	onBack: () => void
+	onBack?: () => void
+	postId?: string
+	initialData?: Partial<FormData>
+	mode?: 'create' | 'edit'
 }
 
 const steps = [
@@ -57,26 +60,27 @@ interface FormData {
 	amenityIds: string[]
 }
 
-export function RoomSeekingForm({ onBack }: RoomSeekingFormProps) {
+export function RoomSeekingForm({ onBack, postId, initialData, mode = 'create' }: RoomSeekingFormProps) {
+	const router = useRouter()
 	const [currentStep, setCurrentStep] = useState(1)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [errors, setErrors] = useState<Record<string, string>>({})
 
 	const [formData, setFormData] = useState<FormData>({
-		title: '',
-		description: '',
-		preferredProvinceId: '',
-		preferredDistrictId: '',
-		preferredWardId: '',
-		minBudget: '',
-		maxBudget: '',
-		currency: 'VND',
-		preferredRoomType: 'boarding_house',
-		occupancy: '',
-		moveInDate: '',
-		isPublic: true,
-		expiresAt: '',
-		amenityIds: [],
+		title: initialData?.title ?? '',
+		description: initialData?.description ?? '',
+		preferredProvinceId: initialData?.preferredProvinceId ?? '',
+		preferredDistrictId: initialData?.preferredDistrictId ?? '',
+		preferredWardId: initialData?.preferredWardId ?? '',
+		minBudget: initialData?.minBudget ?? '',
+		maxBudget: initialData?.maxBudget ?? '',
+		currency: (initialData?.currency as FormData['currency']) ?? 'VND',
+		preferredRoomType: (initialData?.preferredRoomType as FormData['preferredRoomType']) ?? 'boarding_house',
+		occupancy: initialData?.occupancy ?? '',
+		moveInDate: initialData?.moveInDate ?? '',
+		isPublic: initialData?.isPublic ?? true,
+		expiresAt: initialData?.expiresAt ?? '',
+		amenityIds: initialData?.amenityIds ?? [],
 	})
 
 	const updateFormData = <K extends keyof FormData>(field: K, value: FormData[K]) => {
@@ -84,7 +88,6 @@ export function RoomSeekingForm({ onBack }: RoomSeekingFormProps) {
 			...prev,
 			[field]: value
 		}))
-		// Clear error when user starts typing
 		if (errors[field]) {
 			setErrors(prev => ({
 				...prev,
@@ -123,7 +126,6 @@ export function RoomSeekingForm({ onBack }: RoomSeekingFormProps) {
 				if (!formData.preferredWardId) {
 					newErrors.preferredWardId = 'Vui lòng chọn phường/xã'
 				}
-				// Additional validation to ensure all address fields are selected
 				if (formData.preferredProvinceId && !formData.preferredDistrictId) {
 					newErrors.preferredDistrictId = 'Vui lòng chọn quận/huyện'
 				}
@@ -169,11 +171,9 @@ export function RoomSeekingForm({ onBack }: RoomSeekingFormProps) {
 				if (!formData.expiresAt) {
 					newErrors.expiresAt = 'Vui lòng chọn ngày hết hạn'
 				}
-				// Validate that expiration date is in the future
 				if (formData.expiresAt && new Date(formData.expiresAt) <= new Date()) {
 					newErrors.expiresAt = 'Ngày hết hạn phải sau ngày hiện tại'
 				}
-				// Validate that move-in date is not too far in the past
 				if (formData.moveInDate && new Date(formData.moveInDate) < new Date(new Date().setDate(new Date().getDate() - 30))) {
 					newErrors.moveInDate = 'Ngày vào ở không được quá 30 ngày trong quá khứ'
 				}
@@ -201,14 +201,9 @@ export function RoomSeekingForm({ onBack }: RoomSeekingFormProps) {
 
 		setIsSubmitting(true)
 		try {
-			// Generate slug from title using utility function
-			const slug = createSlugFromTitle(formData.title)
-
-			// Convert form data to CreateRoomSeekingPostRequest format
 			const submitData: CreateRoomSeekingPostRequest = {
 				title: formData.title.trim(),
 				description: formData.description.trim(),
-				slug: slug,
 				preferredProvinceId: Number(formData.preferredProvinceId),
 				preferredDistrictId: Number(formData.preferredDistrictId),
 				preferredWardId: Number(formData.preferredWardId),
@@ -223,32 +218,19 @@ export function RoomSeekingForm({ onBack }: RoomSeekingFormProps) {
 				amenityIds: formData.amenityIds || []
 			}
 
-			// Debug: Log the data being sent
-			console.log('Form Data:', formData)
-			console.log('Submit Data:', submitData)
-			console.log('Submit Data JSON:', JSON.stringify(submitData, null, 2))
-
-			// Validate that all required fields are properly set
-			if (!submitData.title || !submitData.description) {
-				throw new Error('Title and description are required')
-			}
-
-			if (isNaN(submitData.preferredProvinceId) || isNaN(submitData.preferredDistrictId) || isNaN(submitData.preferredWardId)) {
-				throw new Error('Invalid address data')
-			}
-
-			if (isNaN(submitData.minBudget) || isNaN(submitData.maxBudget) || isNaN(submitData.occupancy)) {
-				throw new Error('Invalid numeric data')
-			}
-
-			// Call API to create room seeking post
-			const result = await createRoomSeekingPost(submitData)
-			
-			if (result.success) {
-				toast.success('Tạo bài đăng tìm trọ thành công!')
-				onBack()
+			let result
+			if (mode === 'edit' && postId) {
+				result = await updateRoomSeekingPost(postId, submitData)
 			} else {
-				toast.error(result.error || 'Có lỗi xảy ra khi tạo bài đăng')
+				result = await createRoomSeekingPost(submitData)
+			}
+
+			if (result.success) {
+				toast.success(mode === 'edit' ? 'Cập nhật bài đăng thành công!' : 'Tạo bài đăng tìm trọ thành công!')
+				if (onBack) onBack()
+				else router.push('/profile/posts/room-seeking')
+			} else {
+				toast.error(result.error || (mode === 'edit' ? 'Có lỗi khi cập nhật' : 'Có lỗi xảy ra khi tạo bài đăng'))
 			}
 		} catch (error) {
 			console.error('Error creating room seeking post:', error)
@@ -503,13 +485,13 @@ export function RoomSeekingForm({ onBack }: RoomSeekingFormProps) {
 	return (
 		<div className="max-w-4xl mx-auto p-6">
 			<div className="mb-6">
-				<Button variant="ghost" onClick={onBack} className="mb-4">
+				<Button variant="ghost" onClick={() => (onBack ? onBack() : router.back())} className="mb-4">
 					<ArrowLeft className="h-4 w-4 mr-2" />
 					Quay lại
 				</Button>
 				
 				<div className="mb-6">
-					<h1 className="text-2xl font-bold mb-2">Tạo bài đăng tìm trọ</h1>
+					<h1 className="text-2xl font-bold mb-2">{mode === 'edit' ? 'Cập nhật bài đăng tìm trọ' : 'Tạo bài đăng tìm trọ'}</h1>
 					<p className="text-muted-foreground">
 						Bước {currentStep} trong {steps.length}: {steps[currentStep - 1].description}
 					</p>

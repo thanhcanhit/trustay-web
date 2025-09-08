@@ -16,6 +16,7 @@ import {
   Receipt,
   Send,
   Shield,
+  FileText,
 } from "lucide-react"
 import { useUserStore } from "@/stores/userStore"
 
@@ -74,6 +75,22 @@ const profileItems: ProfileSidebarItem[] = [
     title: "Tìm bạn cùng phòng",
     href: "/profile/roommate",
     icon: Users
+  },
+  {
+    title: "Quản lý bài đăng",
+    icon: FileText,
+    subItems: [
+      {
+        title: "Tìm trọ",
+        href: "/profile/posts/room-seeking",
+        icon: FileText
+      },
+      {
+        title: "Tìm người ở ghép",
+        href: "/profile/posts/roommate",
+        icon: FileText
+      }
+    ]
   },
   {
     title: "Yêu cầu thuê",
