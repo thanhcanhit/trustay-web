@@ -1,4 +1,4 @@
-import { type RoomSearchParams } from '@/actions/listings.action';
+import { type RoomSearchParams } from '@/types/types';
 
 /**
  * Helper function to build URL search params from RoomSearchParams

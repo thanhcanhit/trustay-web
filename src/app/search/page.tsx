@@ -6,7 +6,7 @@ import { Loader2, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { useRoomStore } from '@/stores/roomStore';
-import { type RoomSearchParams } from '@/actions/listings.action';
+import { type RoomSearchParams } from '@/types/types';
 import { RoomCard } from '@/components/ui/room-card';
 import { parseSearchParams } from '@/utils/search-params';
 

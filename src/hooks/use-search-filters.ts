@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
-import { type RoomSearchParams } from '@/actions/listings.action';
+import { type RoomSearchParams } from '@/types/types';
 import { parseSearchParams } from '@/utils/search-params';
 
 export interface SearchFilters extends RoomSearchParams {

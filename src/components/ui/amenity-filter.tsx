@@ -9,12 +9,15 @@ interface AmenityFilterProps {
   selectedAmenities: string[];
   onSelectionChange: (amenityIds: string[]) => void;
   className?: string;
+  // When true, render the amenity list inline (no dropdown selector button)
+  mode?: 'dropdown' | 'inline';
 }
 
 export function AmenityFilter({
   selectedAmenities,
   onSelectionChange,
-  className = ''
+  className = '',
+  mode = 'dropdown'
 }: AmenityFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -99,13 +102,49 @@ export function AmenityFilter({
     return categoryLabels[category] || category;
   };
 
+  // Inline rendering (no dropdown), used for filter dialog
+  if (mode === 'inline') {
+    return (
+      <div className={className}>
+        {isLoading ? (
+          <div className="text-sm text-gray-500">Đang tải...</div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {amenities.map((amenity) => {
+              const isChecked = selectedAmenities.includes(amenity.id);
+              const IconComponent = getAmenityIcon(amenity.name);
+
+              return (
+                <label
+                  key={amenity.id}
+                  className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-gray-50"
+                >
+                  <Checkbox
+                    checked={isChecked}
+                    onCheckedChange={(checked) =>
+                      handleAmenityToggle(amenity.id, checked as boolean)
+                    }
+                    className="border-2 border-gray-400 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                  />
+                  <IconComponent className="h-4 w-4 text-gray-600" />
+                  <span className="text-sm text-gray-700 truncate">{amenity.name}</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Default: dropdown selector
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       {/* Filter Button */}
-             <button
-         onClick={() => setIsOpen(!isOpen)}
-         className="flex items-center justify-between px-4 py-2 bg-white rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 min-w-[120px] text-left cursor-pointer"
-       >
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between px-4 py-2 bg-white rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 min-w-[120px] text-left cursor-pointer"
+      >
         <span className="text-sm text-gray-700 flex items-center">
           <span className="mr-2">🏠</span>
           Tiện ích
@@ -120,14 +159,12 @@ export function AmenityFilter({
         <div className="absolute top-full -right-50 mt-1 max-w-[600px] bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-[400px] overflow-y-auto">
           <div className="p-3">
             <div className="text-sm font-medium text-gray-900 mb-3">Chọn tiện ích</div>
-            
             {isLoading ? (
               <div className="text-center py-4">
                 <div className="text-sm text-gray-500">Đang tải...</div>
               </div>
             ) : (
               <div className="space-y-4 flex flex-row">
-                {/* Group amenities by category */}
                 {Object.entries(groupAmenitiesByCategory()).map(([category, categoryAmenities], index) => (
                   <div key={category}>
                     {index >= 0 && <div className="border-t border-gray-100 my-3"></div>}
@@ -138,7 +175,6 @@ export function AmenityFilter({
                       {categoryAmenities.map((amenity) => {
                         const isChecked = selectedAmenities.includes(amenity.id);
                         const IconComponent = getAmenityIcon(amenity.name);
-
                         return (
                           <div
                             key={amenity.id}
@@ -172,13 +208,9 @@ export function AmenityFilter({
                 ))}
               </div>
             )}
-
-            {/* Selected Count Footer */}
             {selectedCount > 0 && (
               <div className="mt-3 pt-3 border-t border-gray-200">
-                <div className="text-xs text-gray-500">
-                  Đã chọn {selectedCount} tiện ích
-                </div>
+                <div className="text-xs text-gray-500">Đã chọn {selectedCount} tiện ích</div>
               </div>
             )}
           </div>

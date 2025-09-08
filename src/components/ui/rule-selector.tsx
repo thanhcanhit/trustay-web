@@ -19,7 +19,7 @@ interface RuleSelectorProps {
   selectedRules: string[] | RoomRule[];
   onSelectionChange: (ruleIds: string[] | RoomRule[]) => void;
   category?: string;
-  mode?: 'select' | 'display';
+  mode?: 'select' | 'display' | 'inline';
   className?: string;
 }
 
@@ -85,6 +85,31 @@ export function RuleSelector({
             </div>
           );
         })}
+      </div>
+    );
+  }
+
+  // Inline mode: grid of checkboxes for use inside dialogs
+  if (mode === 'inline') {
+    return (
+      <div className={`space-y-3 ${className}`}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {filteredRules.map((rule) => {
+            const IconComponent = getRuleIcon(rule.name);
+            const isSelected = selectedRuleIds.includes(rule.id);
+            return (
+              <label key={rule.id} className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-gray-50">
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={() => handleRuleToggle(rule.id)}
+                  className="border-2 border-gray-400 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                />
+                <IconComponent className="h-4 w-4 text-gray-600" />
+                <span className="text-sm text-gray-700 truncate">{rule.name}</span>
+              </label>
+            );
+          })}
+        </div>
       </div>
     );
   }
