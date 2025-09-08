@@ -6,6 +6,7 @@ import { MapPin, Loader2, ChevronDown, ChevronUp, Calendar, Home, PhoneCall, Bui
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { SizingImage } from "@/components/sizing-image"
+import type { RoomListing } from "@/actions/listings.action"
 import { useRoomStore } from "@/stores/roomStore"
 import { AmenitySelector } from "@/components/ui/amenity-selector"
 import { ImageSwiper } from "@/components/ui/image-swiper"
@@ -116,17 +117,17 @@ export default function PropertyDetailPage() {
   }
 
   // Get similar posts from available room listings
-  const getSimilarPosts = () => {
+  const getSimilarPosts = (): RoomListing[] => {
     // Combine featured rooms and search results, excluding current room
     const allRooms = [...featuredRooms, ...searchResults]
     
     // Remove duplicates by ID and exclude current room
     const uniqueRooms = allRooms.reduce((acc, room) => {
-      if (room.id !== roomDetail?.id && !acc.find(r => r.id === room.id)) {
+      if (room.id !== roomDetail?.id && !acc.find((r: RoomListing) => r.id === room.id)) {
         acc.push(room)
       }
       return acc
-    }, [] as typeof allRooms)
+    }, [] as RoomListing[])
     
     return uniqueRooms.slice(0, 8) // Limit to 8 similar posts
   }
@@ -330,7 +331,7 @@ export default function PropertyDetailPage() {
                   Tiện nghi
                 </h3>
                   <AmenitySelector
-                  selectedAmenities={roomDetail.amenities.map(a => a.id)}
+                  selectedAmenities={roomDetail.amenities.map((a: typeof roomDetail.amenities[number]) => a.id)}
                   onSelectionChange={() => {}} // Read-only
                   mode="display"
                 />
@@ -344,7 +345,7 @@ export default function PropertyDetailPage() {
                     Chi phí phát sinh
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {roomDetail.costs.map(cost => {
+                    {roomDetail.costs.map((cost: typeof roomDetail.costs[number]) => {
                       const isElectricity = cost.name.toLowerCase().includes('điện')
                       const isWater = cost.name.toLowerCase().includes('nước')
                       
@@ -376,7 +377,7 @@ export default function PropertyDetailPage() {
                     Quy định
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {roomDetail.rules.map(rule => {
+                    {roomDetail.rules.map((rule: typeof roomDetail.rules[number]) => {
                       const getRuleStyle = (type: string) => {
                         switch (type) {
                           case 'required':
@@ -766,7 +767,7 @@ export default function PropertyDetailPage() {
                   }}
                   className="similar-posts-swiper"
                 >
-                  {getSimilarPosts().map((room, index) => (
+                  {getSimilarPosts().map((room: RoomListing, index: number) => (
                     <SwiperSlide key={`${room.id}-${room.slug}-${index}`}>
                       <RoomCard
                         room={room}
