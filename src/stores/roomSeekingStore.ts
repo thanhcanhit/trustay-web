@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { listPublicRoomSeekingPosts } from '@/actions/listings.action';
 import {
 	createRoomSeekingPost,
 	deleteRoomSeekingPost,
 	getMyRoomSeekingPosts,
 	getRoomSeekingPostById,
-	getRoomSeekingPosts,
 	incrementRoomSeekingPostContact,
 	updateRoomSeekingPost,
 	updateRoomSeekingPostStatus,
@@ -131,24 +131,18 @@ export const useRoomSeekingStore = create<RoomSeekingState>()(
 				set({ publicPostsLoading: true, publicPostsError: null });
 
 				try {
-					const response = await getRoomSeekingPosts({
+					const response = await listPublicRoomSeekingPosts({
 						...params,
 						status: 'active', // Only show active posts publicly
+						isPublic: true,
 					});
 
-					if (response.success) {
-						set({
-							publicPosts: response.data.data,
-							publicPostsPagination: response.data.meta,
-							publicPostsLoading: false,
-							publicPostsError: null,
-						});
-					} else {
-						set({
-							publicPostsLoading: false,
-							publicPostsError: response.error,
-						});
-					}
+					set({
+						publicPosts: (response as any).data ?? [],
+						publicPostsPagination: (response as any).meta ?? null,
+						publicPostsLoading: false,
+						publicPostsError: null,
+					});
 				} catch (error: unknown) {
 					const errorMessage =
 						error instanceof Error ? error.message : 'Failed to load public posts';
