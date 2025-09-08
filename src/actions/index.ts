@@ -76,6 +76,7 @@ export {
 export {
 	createRoomSeekingPost,
 	deleteRoomSeekingPost,
+	getMyRoomSeekingPosts,
 	getRoomSeekingPostById,
 	getRoomSeekingPosts,
 	incrementRoomSeekingPostContact,
