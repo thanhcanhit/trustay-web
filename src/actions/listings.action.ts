@@ -1,4 +1,4 @@
-'use server';
+//'use server';
 
 import { createServerApiCall } from '@/lib/api-client';
 import { TokenUtils } from '@/lib/token-utils';
@@ -124,9 +124,12 @@ export async function listPublicRoomSeekingPosts(
 	params: RoomSeekingPublicSearchParams = {},
 ): Promise<RoomSeekingPostListResponse> {
 	const query = new URLSearchParams();
+	// Do NOT force a default search for room-seeking posts
+	if (params.search && params.search.trim().length > 0) {
+		query.append('search', params.search);
+	}
 	if (typeof params.page === 'number') query.append('page', String(params.page));
 	if (typeof params.limit === 'number') query.append('limit', String(params.limit));
-	if (params.search) query.append('search', params.search);
 	if (typeof params.provinceId === 'number') query.append('provinceId', String(params.provinceId));
 	if (typeof params.districtId === 'number') query.append('districtId', String(params.districtId));
 	if (typeof params.wardId === 'number') query.append('wardId', String(params.wardId));
