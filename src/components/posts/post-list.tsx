@@ -18,7 +18,7 @@ import {
 	Calendar,
 	MapPin,
 	DollarSign,
-	User,
+	//User,
 	Plus
 } from 'lucide-react'
 import Link from 'next/link'
@@ -61,6 +61,23 @@ export function PostList({
 	onDelete 
 }: PostListProps) {
 	const [activeTab, setActiveTab] = useState(initialTab)
+
+	const RoommateAuthorAvatar = ({ name, src }: { name: string; src?: string }) => {
+		const [isError, setIsError] = useState(false)
+		const initials = name.split(' ').map(n => n[0]).join('').toUpperCase()
+		const showImage = !!src && src.trim() !== '' && !isError
+		return (
+			<Avatar className="h-8 w-8">
+				{showImage ? (
+					<AvatarImage src={src} alt={name} onError={() => setIsError(true)} />
+				) : (
+					<AvatarFallback>
+						{initials}
+					</AvatarFallback>
+				)}
+			</Avatar>
+		)
+	}
 
 	const visibleTabsCount = [showRoomSeeking, showRoommate, showRental].filter(Boolean).length
 
@@ -174,12 +191,7 @@ export function PostList({
 			</CardHeader>
 			<CardContent>
 				<div className="flex items-center gap-3 mb-3">
-					<Avatar className="h-8 w-8">
-						<AvatarImage src={post.authorAvatar} />
-						<AvatarFallback>
-							<User className="h-4 w-4" />
-						</AvatarFallback>
-					</Avatar>
+					<RoommateAuthorAvatar name={post.authorName} src={post.authorAvatar} />
 					<div>
 						<p className="text-sm font-medium">{post.authorName}</p>
 						<p className="text-xs text-muted-foreground">
