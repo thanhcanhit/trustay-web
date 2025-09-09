@@ -6,6 +6,7 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Thumbs, FreeMode } from 'swiper/modules'
 import type { Swiper as SwiperType } from 'swiper'
 import { getOptimizedImageUrl } from '@/lib/utils'
+import { PhotoProvider, PhotoView } from 'react-photo-view'
 
 // Import Swiper styles
 import 'swiper/css'
@@ -13,6 +14,7 @@ import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 import 'swiper/css/thumbs'
 import 'swiper/css/free-mode'
+import 'react-photo-view/dist/react-photo-view.css'
 
 interface ImageSwiperProps {
   images: string[] | { url: string }[]
@@ -52,7 +54,9 @@ export function ImageSwiper({
     setImageErrors(prev => ({ ...prev, [index]: true }))
   }
 
-  return (
+  const objectFitClass = imageContext === 'detail' ? 'object-contain' : 'object-cover'
+
+  const MainSwiper = (
     <div className={`bg-white rounded-lg shadow-sm overflow-hidden ${className}`}>
       {/* Main Swiper */}
       <div className={`relative ${height}`}>
@@ -73,15 +77,28 @@ export function ImageSwiper({
         >
           {normalizedImages.map((image, index) => (
             <SwiperSlide key={index}>
-              <div className="relative w-full h-full">
-                <Image
-                  src={imageErrors[index] ? "/images/error-image.jpg" : getOptimizedImageUrl(image, imageContext)}
-                  alt={`${title} ${index + 1}`}
-                  fill
-                  className="object-cover"
-                  onError={() => handleImageError(index)}
-                  unoptimized={!imageErrors[index] && image.includes('pt123.cdn.static123.com')}
-                />
+              <div className="relative w-full h-full bg-black">
+                {imageContext === 'detail' ? (
+                  <PhotoView src={getOptimizedImageUrl(image, 'gallery')}>
+                    <Image
+                      src={imageErrors[index] ? "/images/error-image.jpg" : getOptimizedImageUrl(image, imageContext)}
+                      alt={`${title} ${index + 1}`}
+                      fill
+                      className={objectFitClass}
+                      onError={() => handleImageError(index)}
+                      unoptimized={!imageErrors[index] && image.includes('pt123.cdn.static123.com')}
+                    />
+                  </PhotoView>
+                ) : (
+                  <Image
+                    src={imageErrors[index] ? "/images/error-image.jpg" : getOptimizedImageUrl(image, imageContext)}
+                    alt={`${title} ${index + 1}`}
+                    fill
+                    className={objectFitClass}
+                    onError={() => handleImageError(index)}
+                    unoptimized={!imageErrors[index] && image.includes('pt123.cdn.static123.com')}
+                  />
+                )}
               </div>
             </SwiperSlide>
           ))}
@@ -152,4 +169,14 @@ export function ImageSwiper({
       )}
     </div>
   )
+
+  if (imageContext === 'detail') {
+    return (
+      <PhotoProvider>
+        {MainSwiper}
+      </PhotoProvider>
+    )
+  }
+
+  return MainSwiper
 }
