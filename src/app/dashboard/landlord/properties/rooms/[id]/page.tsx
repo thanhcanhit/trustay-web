@@ -127,7 +127,7 @@ export default function RoomDetailPage() {
           <div className="text-center py-12">
             <p className="text-gray-600">Không tìm thấy thông tin phòng</p>
             <Link href="/dashboard/landlord/properties/rooms">
-              <Button className="mt-4">Quay lại danh sách</Button>
+              <Button className="mt-4 cursor-pointer">Quay lại danh sách</Button>
             </Link>
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function RoomDetailPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Link href="/dashboard/landlord/properties/rooms">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="cursor-pointer">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Quay lại
               </Button>
@@ -165,12 +165,12 @@ export default function RoomDetailPage() {
           
           <div className="flex space-x-3">
             <Link href={`/dashboard/landlord/properties/rooms/${room.id}/edit`}>
-              <Button>
+              <Button className="cursor-pointer">
                 <Edit className="h-4 w-4 mr-2" />
                 Chỉnh sửa
               </Button>
             </Link>
-            <Button variant="destructive" onClick={handleDeleteRoom}>
+            <Button variant="destructive" onClick={handleDeleteRoom} className="cursor-pointer">
               <Trash2 className="h-4 w-4 mr-2" />
               Xóa
             </Button>
@@ -550,7 +550,7 @@ export default function RoomDetailPage() {
                 <div className="text-center py-8">
                   <p className="text-gray-600 mb-4">Quản lý trạng thái từng phòng cụ thể</p>
                   <Link href={`/dashboard/landlord/properties/rooms/${room.id}/instances`}>
-                    <Button>
+                    <Button className="cursor-pointer">
                       <Settings className="h-4 w-4 mr-2" />
                       Quản lý phòng
                     </Button>

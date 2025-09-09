@@ -10,7 +10,7 @@ import { getCostTypeIcon } from '@/utils/icon-mapping';
 import { type RoomCost } from '@/types/types';
 
 // Extended interface to handle API response data
-interface ExtendedRoomCost extends RoomCost {
+interface ExtendedRoomCost extends Omit<RoomCost, 'fixedAmount' | 'unitPrice' | 'baseRate'> {
   fixedAmount?: number;
   unitPrice?: number;
   baseRate?: number;
@@ -64,14 +64,26 @@ export function CostCheckboxSelector({
     if (checked) {
       // Add cost type
       const newCost: RoomCost = {
+        id: '', // Will be set by API
+        roomId: '', // Will be set by API
         systemCostTypeId: costType.id,
         value: costValues[costType.id] || 0,
         costType: 'fixed',
+        currency: 'VND',
         unit: costType.unit || 'VND',
+        isMetered: false,
         billingCycle: 'monthly',
         includedInRent: false,
         isOptional: true,
-        notes: costType.name
+        isActive: true,
+        notes: costType.name,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        systemCostType: {
+          name: costType.name,
+          nameEn: costType.name,
+          category: costType.category
+        }
       };
       
       const newCosts = [...selectedCosts, newCost];
@@ -197,7 +209,7 @@ export function CostCheckboxSelector({
                     <span className="text-sm">{costType.name}</span>
                   </div>
                   <span className="text-sm font-medium">
-                    {formatAmount(cost.value, cost.unit || 'VND')}
+                    {formatAmount(cost.value || 0, cost.unit || 'VND')}
                   </span>
                 </div>
               );

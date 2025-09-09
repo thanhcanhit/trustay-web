@@ -112,6 +112,39 @@ const getTokenFromCookies = async (): Promise<string | null> => {
 
 const apiCall = createServerApiCall(getTokenFromCookies);
 
+// Get my rooms (landlord's rooms)
+export const getMyRooms = async (params?: {
+	page?: number;
+	limit?: number;
+}): Promise<ApiResult<RoomsListResponse>> => {
+	try {
+		const searchParams = new URLSearchParams();
+		if (params?.page) searchParams.append('page', params.page.toString());
+		if (params?.limit) searchParams.append('limit', params.limit.toString());
+
+		const endpoint = `/api/rooms/me${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+		const response = await apiCall<{
+			success: boolean;
+			message: string;
+			data: RoomsListResponse;
+		}>(endpoint, {
+			method: 'GET',
+		});
+
+		console.log('My Rooms API Response:', response);
+
+		return {
+			success: true,
+			data: response.data,
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể tải danh sách phòng của tôi'),
+		};
+	}
+};
+
 // Create room type in building
 export const createRoom = async (
 	buildingId: string,
@@ -179,6 +212,8 @@ export const updateRoom = async (
 	data: UpdateRoomRequest,
 ): Promise<ApiResult<{ data: Room }>> => {
 	try {
+		console.log('Room update data:', data);
+
 		const response = await apiCall<{ data: Room }>(`/api/rooms/${id}`, {
 			method: 'PUT',
 			data,
