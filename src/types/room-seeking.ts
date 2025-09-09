@@ -22,6 +22,19 @@ export interface RoomSeekingPost {
 	createdAt: string;
 	updatedAt: string;
 	userId: string;
+	// Location name fields from API response
+	preferredProvince?: { id: number; name: string; nameEn?: string | null };
+	preferredDistrict?: { id: number; name: string; nameEn?: string | null };
+	preferredWard?: { id: number; name: string; nameEn?: string | null };
+	// Requester info
+	requester?: {
+		id: string;
+		firstName?: string;
+		lastName?: string;
+		email?: string;
+		phone?: string;
+		avatarUrl?: string;
+	};
 }
 
 export interface CreateRoomSeekingPostRequest {

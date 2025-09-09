@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogTitle, AlertDialogHeader, AlertDialogDescriptio
 import { Eye, MapPin, Pencil, Plus, Trash2, DollarSign, Home } from 'lucide-react'
 import { RoomSeekingPost } from '@/types'
 import { deleteRoomSeekingPost } from '@/actions/room-seeking.action'
+import { getRoomTypeDisplayName } from '@/utils/room-types'
 
 interface RoomSeekingManagerProps {
   posts: RoomSeekingPost[]
@@ -60,7 +61,7 @@ export function RoomSeekingManager({ posts }: RoomSeekingManagerProps) {
                   <CardTitle className="text-lg font-semibold leading-snug line-clamp-1">{post.title}</CardTitle>
                   <div className="mt-1">
                     <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
-                      {post.preferredRoomType}
+                      {getRoomTypeDisplayName(post.preferredRoomType)}
                     </Badge>
                   </div>
                 </div>
@@ -72,7 +73,11 @@ export function RoomSeekingManager({ posts }: RoomSeekingManagerProps) {
             <div className="space-y-3">
               <div className="flex items-center space-x-2 text-sm">
                 <MapPin className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-600">Quận {post.preferredDistrictId}</span>
+                <span className="text-gray-600">
+                  {post.preferredWard?.name ? `${post.preferredWard.name}, ` : ''}
+                  {post.preferredDistrict?.name ? `${post.preferredDistrict.name}, ` : ''}
+                  {post.preferredProvince?.name || 'Khu vực linh hoạt'}
+                </span>
               </div>
               
               <div className="grid grid-cols-2 gap-4 text-sm">

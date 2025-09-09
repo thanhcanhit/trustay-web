@@ -18,7 +18,7 @@ import { PriceFilter } from '@/components/ui/price-filter'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { CalendarIcon, ArrowLeft, ArrowRight, Check } from 'lucide-react'
+import { CalendarIcon, ArrowLeft, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createRoomSeekingPost, updateRoomSeekingPost } from '@/actions/room-seeking.action'
 import { toast } from 'sonner'
@@ -482,8 +482,71 @@ export function RoomSeekingForm({ onBack, postId, initialData, mode = 'create' }
 		}
 	}
 
+	const PreviewCard = () => {
+		const minBudgetLabel = formData.minBudget ? Number(formData.minBudget).toLocaleString() : '—'
+		const maxBudgetLabel = formData.maxBudget ? Number(formData.maxBudget).toLocaleString() : '—'
+		const budgetRange = formData.minBudget && formData.maxBudget
+			? `${minBudgetLabel} - ${maxBudgetLabel} ${formData.currency}`
+			: 'Chưa thiết lập'
+
+		return (
+			<Card className="sticky top-4">
+				<CardHeader>
+					<CardTitle className="text-base">Xem trước bài đăng</CardTitle>
+					<CardDescription>Thông tin sẽ hiển thị như người dùng thấy</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-3">
+					<div>
+						<p className="text-sm text-muted-foreground">Tiêu đề</p>
+						<p className="font-medium">{formData.title || 'Tiêu đề bài đăng'}</p>
+					</div>
+					<div>
+						<p className="text-sm text-muted-foreground">Mô tả</p>
+						<p className="text-sm line-clamp-5">
+							{formData.description || 'Mô tả chi tiết về nhu cầu tìm phòng của bạn sẽ hiển thị tại đây.'}
+						</p>
+					</div>
+					<div className="grid grid-cols-2 gap-3">
+						<div>
+							<p className="text-sm text-muted-foreground">Khu vực</p>
+							<p className="text-sm">{formData.preferredProvinceId && formData.preferredDistrictId && formData.preferredWardId ? 'Đã chọn' : 'Chưa chọn'}</p>
+						</div>
+						<div>
+							<p className="text-sm text-muted-foreground">Khoảng giá</p>
+							<p className="text-sm">{budgetRange}</p>
+						</div>
+						<div>
+							<p className="text-sm text-muted-foreground">Loại phòng</p>
+							<p className="text-sm">{ROOM_TYPE_LABELS[formData.preferredRoomType]}</p>
+						</div>
+						<div>
+							<p className="text-sm text-muted-foreground">Số người</p>
+							<p className="text-sm">{formData.occupancy || '—'}</p>
+						</div>
+						<div>
+							<p className="text-sm text-muted-foreground">Ngày vào ở</p>
+							<p className="text-sm">{formData.moveInDate ? format(new Date(formData.moveInDate), 'dd/MM/yyyy', { locale: vi }) : 'Chưa chọn'}</p>
+						</div>
+						<div>
+							<p className="text-sm text-muted-foreground">Hết hạn</p>
+							<p className="text-sm">{formData.expiresAt ? format(new Date(formData.expiresAt), 'dd/MM/yyyy', { locale: vi }) : 'Chưa chọn'}</p>
+						</div>
+					</div>
+					<div className="flex items-center justify-between text-sm">
+						<p className="text-muted-foreground">Tiện ích đã chọn</p>
+						<p>{formData.amenityIds.length}</p>
+					</div>
+					<div className="flex items-center justify-between text-sm">
+						<p className="text-muted-foreground">Chế độ</p>
+						<p>{formData.isPublic ? 'Công khai' : 'Riêng tư'}</p>
+					</div>
+				</CardContent>
+			</Card>
+		)
+	}
+
 	return (
-		<div className="max-w-4xl mx-auto pb-6">
+		<div className="max-w-6xl mx-auto pb-6">
 			<div className="mb-2">
 				<Button variant="ghost" onClick={() => (onBack ? onBack() : router.back())} className="cursor-pointer">
 					<ArrowLeft className="h-4 w-4 mr-2" />
@@ -498,97 +561,55 @@ export function RoomSeekingForm({ onBack, postId, initialData, mode = 'create' }
 				</div>
 
 				<Progress value={((currentStep - 1) / (steps.length - 1)) * 100} className="mb-4" />
-
-				<div className="flex items-center justify-between mb-6">
-					{steps.map((step, index) => (
-						<div key={step.id} className="flex items-center">
-							<div
-								className={cn(
-									'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium',
-									currentStep > step.id
-										? 'bg-green-500 text-white'
-										: currentStep === step.id
-										? 'bg-blue-500 text-white'
-										: 'bg-gray-200 text-gray-600'
-								)}
-							>
-								{currentStep > step.id ? (
-									<Check className="h-4 w-4" />
-								) : (
-									step.id
-								)}
-							</div>
-							{index < steps.length - 1 && (
-								<div
-									className={cn(
-										'w-16 h-0.5 mx-2',
-										currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
-									)}
-								/>
-							)}
-						</div>
-					))}
-				</div>
 			</div>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>{steps[currentStep - 1].title}</CardTitle>
-					<CardDescription>{steps[currentStep - 1].description}</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
-						{renderStepContent()}
-
-						{currentStep === steps.length && (
-							<div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
-								<h3 className="font-medium text-gray-900 mb-2">Xem trước thông tin</h3>
-								<div className="space-y-2 text-sm text-gray-600">
-									<p><strong>Tiêu đề:</strong> {formData.title}</p>
-									<p><strong>Địa điểm:</strong> {formData.preferredProvinceId && formData.preferredDistrictId && formData.preferredWardId ? 'Đã chọn' : 'Chưa chọn'}</p>
-									<p><strong>Khoảng giá:</strong> {formData.minBudget && formData.maxBudget ? `${Number(formData.minBudget).toLocaleString()} - ${Number(formData.maxBudget).toLocaleString()} ${formData.currency}` : 'Chưa nhập'}</p>
-									<p><strong>Số người:</strong> {formData.occupancy || 'Chưa nhập'}</p>
-									<p><strong>Tiện ích:</strong> {formData.amenityIds.length} tiện ích đã chọn</p>
-									<p><strong>Ngày vào ở:</strong> {formData.moveInDate ? format(new Date(formData.moveInDate), 'dd/MM/yyyy', { locale: vi }) : 'Chưa chọn'}</p>
-									<p><strong>Ngày hết hạn:</strong> {formData.expiresAt ? format(new Date(formData.expiresAt), 'dd/MM/yyyy', { locale: vi }) : 'Chưa chọn'}</p>
-								</div>
-							</div>
-						)}
-
-						<Separator />
-
-						<div className="flex justify-between">
-							<Button
-								type="button"
-								variant="outline"
-								onClick={handlePrevious}
-								disabled={currentStep === 1}
-							>
-								<ArrowLeft className="h-4 w-4 mr-2" />
-								Quay lại
-							</Button>
-
-							{currentStep < steps.length ? (
-								<Button type="button" onClick={handleNext}>
-									Tiếp theo
-									<ArrowRight className="h-4 w-4 ml-2" />
-								</Button>
-							) : (
-								<Button type="submit" disabled={isSubmitting}>
-									{isSubmitting ? (
-										<>
-											<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-											Đang tạo...
-										</>
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+				<div className="md:col-span-2">
+					<Card>
+						<CardHeader className="pb-3">
+							<CardTitle className="text-xl">{steps[currentStep - 1].title}</CardTitle>
+							<CardDescription>{steps[currentStep - 1].description}</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
+								{renderStepContent()}
+								<Separator />
+								<div className="flex justify-between">
+									<Button
+										type="button"
+										variant="outline"
+										onClick={handlePrevious}
+										disabled={currentStep === 1}
+									>
+										<ArrowLeft className="h-4 w-4 mr-2" />
+										Quay lại
+									</Button>
+									{currentStep < steps.length ? (
+										<Button type="button" onClick={handleNext}>
+											Tiếp theo
+											<ArrowRight className="h-4 w-4 ml-2" />
+										</Button>
 									) : (
-										'Tạo bài đăng'
+										<Button type="submit" disabled={isSubmitting}>
+											{isSubmitting ? (
+												<>
+													<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+													Đang tạo...
+												</>
+											) : (
+												'Tạo bài đăng'
+											)}
+										</Button>
 									)}
-								</Button>
-							)}
-						</div>
-					</form>
-				</CardContent>
-			</Card>
+								</div>
+							</form>
+						</CardContent>
+					</Card>
+				</div>
+				<div className="md:col-span-1">
+					<PreviewCard />
+				</div>
+			</div>
 		</div>
 	)
 }
