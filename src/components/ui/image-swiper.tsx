@@ -75,7 +75,7 @@ export function ImageSwiper({
             <SwiperSlide key={index}>
               <div className="relative w-full h-full">
                 <Image
-                  src={imageErrors[index] ? "/images/roommate1.png" : getOptimizedImageUrl(image, imageContext)}
+                  src={imageErrors[index] ? "/images/error-image.jpg" : getOptimizedImageUrl(image, imageContext)}
                   alt={`${title} ${index + 1}`}
                   fill
                   className="object-cover"
@@ -136,7 +136,7 @@ export function ImageSwiper({
               <SwiperSlide key={index} className="!w-20 !h-20">
                 <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-500 cursor-pointer transition-colors">
                   <Image
-                    src={imageErrors[index] ? "/images/roommate1.png" : getOptimizedImageUrl(image, 'thumbnail')}
+                    src={imageErrors[index] ? "/images/error-image.jpg" : getOptimizedImageUrl(image, 'thumbnail')}
                     alt={`${title} thumbnail ${index + 1}`}
                     width={80}
                     height={80}
