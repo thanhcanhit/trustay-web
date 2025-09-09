@@ -1,4 +1,4 @@
-//'use server';
+'use server';
 
 import { createServerApiCall } from '@/lib/api-client';
 import { TokenUtils } from '@/lib/token-utils';
@@ -11,9 +11,6 @@ import type {
 	RoomSeekingPublicSearchParams,
 } from '@/types/types';
 import { encodeSearchQuery } from '@/utils/search-params';
-
-// Re-export types for external use
-export type { RoomListing, RoomDetail, RoomListingsResponse, RoomSearchParams };
 
 // Create server API call function
 const serverApiCall = createServerApiCall(() => TokenUtils.getAccessToken());
