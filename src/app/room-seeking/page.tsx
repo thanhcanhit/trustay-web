@@ -15,9 +15,27 @@ function RoomSeekingContent() {
   const { publicPosts, publicPostsLoading, publicPostsError, loadPublicPosts } = useRoomSeekingStore()
 
   const computedParams = useMemo(() => {
-    const params: Record<string, string | number> = {}
+    const params: Record<string, string | number | boolean> = {}
     const search = searchParams.get('search')
     if (search) params.search = search
+    const provinceId = searchParams.get('provinceId')
+    const districtId = searchParams.get('districtId')
+    const wardId = searchParams.get('wardId')
+    const minBudget = searchParams.get('minBudget')
+    const maxBudget = searchParams.get('maxBudget')
+    const roomType = searchParams.get('roomType')
+    const occupancy = searchParams.get('occupancy')
+    const sortBy = searchParams.get('sortBy')
+    const sortOrder = searchParams.get('sortOrder')
+    if (provinceId) params.provinceId = Number(provinceId)
+    if (districtId) params.districtId = Number(districtId)
+    if (wardId) params.wardId = Number(wardId)
+    if (minBudget) params.minBudget = Number(minBudget)
+    if (maxBudget) params.maxBudget = Number(maxBudget)
+    if (roomType) params.roomType = roomType
+    if (occupancy) params.occupancy = Number(occupancy)
+    if (sortBy) params.sortBy = sortBy
+    if (sortOrder) params.sortOrder = sortOrder
     return params
   }, [searchParams])
 
@@ -35,7 +53,7 @@ function RoomSeekingContent() {
   }, [computedParams, loadPublicPosts])
 
   return (
-    <div className="container mx-auto px-4 py-8 pt-20">
+    <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
@@ -66,13 +84,20 @@ function RoomSeekingContent() {
       )}
 
       {!publicPostsLoading && !publicPostsError && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {publicPosts.map(post => (
-            <Link key={post.id} href={`/room-seeking/${post.id}`} className="block">
-              <RoomSeekingCard post={post} />
-            </Link>
-          ))}
-        </div>
+        publicPosts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {publicPosts.map(post => (
+              <Link key={post.id} href={`/room-seeking/${post.id}`} className="block">
+                <RoomSeekingCard post={post} />
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <p className="text-gray-600 mb-4">Không tìm thấy bài đăng phù hợp</p>
+            <Button onClick={() => loadPublicPosts({ page: 1, ...computedParams })} variant="outline">Thử lại</Button>
+          </div>
+        )
       )}
     </div>
   )

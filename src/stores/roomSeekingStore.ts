@@ -15,6 +15,7 @@ import type {
 	RoomSeekingPost,
 	UpdateRoomSeekingPostRequest,
 } from '@/types/room-seeking';
+import type { RoomSeekingPublicSearchParams } from '@/types/types';
 
 interface RoomSeekingState {
 	// User's room seeking posts
@@ -57,7 +58,9 @@ interface RoomSeekingState {
 	// Actions
 	loadUserPosts: (params?: { page?: number; limit?: number; status?: string }) => Promise<void>;
 	fetchMyPosts: (params?: { page?: number; limit?: number; status?: string }) => Promise<void>;
-	loadPublicPosts: (params?: { page?: number; limit?: number; status?: string }) => Promise<void>;
+	loadPublicPosts: (
+		params?: RoomSeekingPublicSearchParams & { status?: string; isPublic?: boolean },
+	) => Promise<void>;
 	loadPostDetail: (id: string) => Promise<void>;
 	createPost: (data: CreateRoomSeekingPostRequest) => Promise<boolean>;
 	updatePost: (id: string, data: UpdateRoomSeekingPostRequest) => Promise<boolean>;
