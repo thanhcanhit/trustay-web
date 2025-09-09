@@ -18,7 +18,7 @@ import {
 	Calendar,
 	MapPin,
 	DollarSign,
-	User,
+	//User,
 	Plus
 } from 'lucide-react'
 import Link from 'next/link'
