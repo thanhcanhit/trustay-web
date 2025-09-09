@@ -6,7 +6,7 @@ import { MapPin, Loader2, ChevronDown, ChevronUp, Calendar, Home, PhoneCall, Bui
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { SizingImage } from "@/components/sizing-image"
-import type { RoomListing } from "@/actions/listings.action"
+import type { RoomListing } from "@/types/types"
 import { useRoomStore } from "@/stores/roomStore"
 import { AmenitySelector } from "@/components/ui/amenity-selector"
 import { ImageSwiper } from "@/components/ui/image-swiper"
