@@ -37,7 +37,7 @@ export function ProfileLayout({ children }: ProfileLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex pt-16">
+    <div className="min-h-screen bg-gray-50 flex">
       <ProfileSidebar userRole={user.role} />
       <main className="flex-1 overflow-auto">
         <div className="p-6">

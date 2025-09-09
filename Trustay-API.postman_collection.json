@@ -1,0 +1,2448 @@
+{
+  "info": {
+    "_postman_id": "trustay-api-collection",
+    "name": "Trustay API Collection",
+    "description": "Complete API collection for Trustay rental platform with authentication flows and refresh token support",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "trustay-team"
+  },
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "📧 Send Email Verification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('verificationId', response.verificationId);",
+                  "    console.log('📧 Verification ID saved:', response.verificationId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"email\",\n  \"email\": \"{{testEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/verification/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "verification", "send"]
+            },
+            "description": "Send verification code to email address"
+          },
+          "response": []
+        },
+        {
+          "name": "✅ Verify Email Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('verificationToken', response.verificationToken);",
+                  "    console.log('✅ Verification Token saved:', response.verificationToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"email\",\n  \"email\": \"{{testEmail}}\",\n  \"code\": \"{{verificationCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/verification/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "verification", "verify"]
+            },
+            "description": "Verify email with 6-digit code"
+          },
+          "response": []
+        },
+        {
+          "name": "📝 Register with Verification",
+          "event": [
+            {
+              "listen": "pre-request",
+              "script": {
+                "exec": [
+                  "// Set verification token in header",
+                  "const verificationToken = pm.collectionVariables.get('verificationToken');",
+                  "if (verificationToken) {",
+                  "    pm.request.headers.add({",
+                  "        key: 'X-Verification-Token',",
+                  "        value: verificationToken",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.access_token);",
+                  "    pm.collectionVariables.set('refreshToken', response.refresh_token);",
+                  "    pm.collectionVariables.set('userId', response.user.id);",
+                  "    console.log('✅ Registration successful!');",
+                  "    console.log('🔑 Access Token saved:', response.access_token.substring(0, 20) + '...');",
+                  "    console.log('🔄 Refresh Token saved:', response.refresh_token ? response.refresh_token.substring(0, 20) + '...' : 'Not provided');",
+                  "    console.log('👤 User ID saved:', response.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"firstName\": \"{{testFirstName}}\",\n  \"lastName\": \"{{testLastName}}\",\n  \"phone\": \"{{testPhone}}\",\n  \"gender\": \"{{testGender}}\",\n  \"role\": \"{{testRole}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Complete registration with verified email/phone"
+          },
+          "response": []
+        },
+        {
+          "name": "⚡ Register Direct (Development)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.access_token);",
+                  "    pm.collectionVariables.set('refreshToken', response.refresh_token);",
+                  "    pm.collectionVariables.set('userId', response.user.id);",
+                  "    console.log('✅ Direct Registration successful!');",
+                  "    console.log('🔑 Access Token saved:', response.access_token.substring(0, 20) + '...');",
+                  "    console.log('🔄 Refresh Token saved:', response.refresh_token ? response.refresh_token.substring(0, 20) + '...' : 'Not provided');",
+                  "    console.log('👤 User ID saved:', response.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmailDev}}\",\n  \"password\": \"{{testPassword}}\",\n  \"firstName\": \"{{testFirstName}}\",\n  \"lastName\": \"{{testLastName}}\",\n  \"phone\": \"{{testPhoneDev}}\",\n  \"gender\": \"{{testGender}}\",\n  \"role\": \"{{testRole}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register-direct",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register-direct"]
+            },
+            "description": "Direct registration for development (bypasses verification)"
+          },
+          "response": []
+        },
+        {
+          "name": "🔑 Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.access_token);",
+                  "    pm.collectionVariables.set('refreshToken', response.refresh_token);",
+                  "    pm.collectionVariables.set('userId', response.user.id);",
+                  "    console.log('✅ Login successful!');",
+                  "    console.log('🔑 Access Token saved:', response.access_token.substring(0, 20) + '...');",
+                  "    console.log('🔄 Refresh Token saved:', response.refresh_token ? response.refresh_token.substring(0, 20) + '...' : 'Not provided');",
+                  "    console.log('👤 User ID saved:', response.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login with email and password"
+          },
+          "response": []
+        },
+        {
+          "name": "👤 Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Get current authenticated user profile (auto-auth enabled)"
+          },
+          "response": []
+        },
+        {
+          "name": "🔄 Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.access_token);",
+                  "    pm.collectionVariables.set('refreshToken', response.refresh_token);",
+                  "    console.log('✅ Token refreshed successfully!');",
+                  "    console.log('🔑 New Access Token saved:', response.access_token.substring(0, 20) + '...');",
+                  "    console.log('🔄 New Refresh Token saved:', response.refresh_token.substring(0, 20) + '...');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh"]
+            },
+            "description": "Refresh access token using refresh token"
+          },
+          "response": []
+        },
+        {
+          "name": "🧪 Test Auth Flow",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test that auto-auth is working",
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Auto-authentication working correctly!');",
+                  "    const response = pm.response.json();",
+                  "    console.log('Current user:', response.firstName, response.lastName);",
+                  "} else if (pm.response.code === 401) {",
+                  "    console.log('❌ Authentication failed. Try refreshing token or login again.');",
+                  "} else {",
+                  "    console.log('⚠️ Unexpected response:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Test endpoint to verify automatic authentication headers are working"
+          },
+          "response": []
+        },
+        {
+          "name": "🔒 Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{currentPassword}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "change-password"]
+            },
+            "description": "Change user password (auto-auth enabled)"
+          },
+          "response": []
+        },
+        {
+          "name": "🔍 Check Password Strength",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"{{testPasswordToCheck}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/check-password-strength",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "check-password-strength"]
+            },
+            "description": "Check password strength and security score"
+          },
+          "response": []
+        },
+        {
+          "name": "🎲 Generate Secure Password",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/generate-password?length={{passwordLength}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "generate-password"],
+              "query": [
+                {
+                  "key": "length",
+                  "value": "{{passwordLength}}"
+                }
+              ]
+            },
+            "description": "Generate a secure password with specified length"
+          },
+          "response": []
+        },
+        {
+          "name": "🗑️ Revoke Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/revoke",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "revoke"]
+            },
+            "description": "Revoke a specific refresh token"
+          },
+          "response": []
+        },
+        {
+          "name": "🗑️ Revoke All Refresh Tokens",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ All refresh tokens revoked successfully!');",
+                  "    // Clear refresh token from collection variables",
+                  "    pm.collectionVariables.set('refreshToken', '');",
+                  "    console.log('🔄 Refresh token cleared from collection variables.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/revoke-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "revoke-all"]
+            },
+            "description": "Revoke all refresh tokens for current user (auto-auth enabled)"
+          },
+          "response": []
+        },
+        {
+          "name": "⚡ Quick Login (Budget Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    ",
+                  "    // Enhanced token saving with validation",
+                  "    if (response.access_token && response.access_token.length > 0) {",
+                  "        pm.collectionVariables.set('accessToken', response.access_token);",
+                  "        console.log('✅ Access Token saved successfully');",
+                  "        console.log('🔑 Token preview:', response.access_token.substring(0, 30) + '...');",
+                  "        console.log('🔑 Token length:', response.access_token.length);",
+                  "    } else {",
+                  "        console.log('❌ ERROR: No access_token in response!');",
+                  "    }",
+                  "    ",
+                  "    if (response.refresh_token) {",
+                  "        pm.collectionVariables.set('refreshToken', response.refresh_token);",
+                  "        console.log('✅ Refresh Token saved successfully');",
+                  "    }",
+                  "    ",
+                  "    if (response.user && response.user.id) {",
+                  "        pm.collectionVariables.set('userId', response.user.id);",
+                  "        console.log('👤 User ID saved:', response.user.id);",
+                  "        console.log('🏠 User Role:', response.user.role);",
+                  "        ",
+                  "        // Verify landlord role",
+                  "        if (response.user.role === 'landlord') {",
+                  "            console.log('✅ User is landlord - Building/Room APIs available');",
+                  "        } else {",
+                  "            console.log('⚠️ WARNING: User role is not landlord. Building/Room APIs may fail.');",
+                  "        }",
+                  "    }",
+                  "    ",
+                  "    console.log('⚡ Quick Login successful!');",
+                  "    console.log('🔄 Next request will auto-include Authorization header');",
+                  "    ",
+                  "    // Verify token is actually saved",
+                  "    const savedToken = pm.collectionVariables.get('accessToken');",
+                  "    if (savedToken) {",
+                  "        console.log('✅ Token verification: Successfully saved to collection variables');",
+                  "    } else {",
+                  "        console.log('❌ Token verification: FAILED to save to collection variables');",
+                  "    }",
+                  "} else {",
+                  "    console.log('❌ Quick Login failed with status:', pm.response.code);",
+                  "    console.log('📝 Response body:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"budget.student@trustay.com\",\n  \"password\": \"trustay123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Quick login with budget.student@trustay.com for immediate testing of Building & Room APIs"
+          },
+          "response": []
+        },
+        {
+          "name": "🚪 Logout (Clear All Tokens)",
+          "event": [
+            {
+              "listen": "pre-request",
+              "script": {
+                "exec": [
+                  "// Try to revoke refresh token before clearing",
+                  "const refreshToken = pm.collectionVariables.get('refreshToken');",
+                  "if (refreshToken) {",
+                  "    console.log('🔓 Attempting to revoke refresh token before logout...');",
+                  "} else {",
+                  "    console.log('⚠️ No refresh token to revoke');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Clear all authentication tokens",
+                  "pm.collectionVariables.set('accessToken', '');",
+                  "pm.collectionVariables.set('refreshToken', '');",
+                  "pm.collectionVariables.set('userId', '');",
+                  "pm.collectionVariables.set('verificationToken', '');",
+                  "pm.collectionVariables.set('verificationId', '');",
+                  "",
+                  "console.log('🚪 Logout completed - All tokens cleared');",
+                  "console.log('You can now register/login with new credentials.');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/revoke",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "revoke"]
+            },
+            "description": "Logout user by revoking refresh token and clearing all stored tokens"
+          },
+          "response": []
+        }
+      ],
+      "description": "Complete authentication flow with refresh token support and automatic header management"
+    },
+    {
+      "name": "👤 User Management",
+      "item": [
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profile"]
+            },
+            "description": "Get authenticated user's profile (auto-auth enabled)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"{{updatedFirstName}}\",\n  \"lastName\": \"{{updatedLastName}}\",\n  \"phone\": \"{{updatedPhone}}\",\n  \"gender\": \"{{updatedGender}}\",\n  \"bio\": \"{{updatedBio}}\",\n  \"dateOfBirth\": \"{{updatedDateOfBirth}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profile"]
+            },
+            "description": "Update user profile information (auto-auth enabled)"
+          },
+          "response": []
+        }
+      ],
+      "description": "User profile management endpoints with automatic authentication"
+    },
+    {
+      "name": "🌍 Location Services",
+      "item": [
+        {
+          "name": "Get All Provinces",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/provinces",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "provinces"]
+            },
+            "description": "Get list of all provinces in Vietnam"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Districts by Province",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/districts?provinceId={{testProvinceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "districts"],
+              "query": [
+                {
+                  "key": "provinceId",
+                  "value": "{{testProvinceId}}"
+                }
+              ]
+            },
+            "description": "Get districts within a specific province"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Wards by District",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wards?districtId={{testDistrictId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wards"],
+              "query": [
+                {
+                  "key": "districtId",
+                  "value": "{{testDistrictId}}"
+                }
+              ]
+            },
+            "description": "Get wards within a specific district"
+          },
+          "response": []
+        }
+      ],
+      "description": "Vietnam location data endpoints (public access)"
+    },
+    {
+      "name": "🏢 Buildings Management",
+      "item": [
+        {
+          "name": "🏗️ Create Building",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('buildingId', response.data.id);",
+                  "    pm.collectionVariables.set('buildingSlug', response.data.slug);",
+                  "    console.log('🏗️ Building created successfully!');",
+                  "    console.log('🏢 Building ID saved:', response.data.id);",
+                  "    console.log('🔗 Building Slug saved:', response.data.slug);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{buildingName}}\",\n  \"description\": \"{{buildingDescription}}\",\n  \"addressLine1\": \"{{buildingAddress}}\",\n  \"addressLine2\": \"{{buildingAddress2}}\",\n  \"wardId\": {{buildingWardId}},\n  \"districtId\": {{buildingDistrictId}},\n  \"provinceId\": {{buildingProvinceId}},\n  \"country\": \"Vietnam\",\n  \"latitude\": {{buildingLatitude}},\n  \"longitude\": {{buildingLongitude}},\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/buildings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "buildings"]
+            },
+            "description": "Create a new building (requires landlord role)"
+          },
+          "response": []
+        },
+        {
+          "name": "📋 Get My Buildings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/buildings/me?page={{buildingPage}}&limit={{buildingLimit}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "buildings", "me"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{buildingPage}}",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "{{buildingLimit}}",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Get my buildings with pagination (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "🏢 Get Building Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/buildings/{{buildingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "buildings", "{{buildingId}}"]
+            },
+            "description": "Get detailed information about a building"
+          },
+          "response": []
+        },
+        {
+          "name": "✏️ Update Building",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{buildingNameUpdated}}\",\n  \"description\": \"{{buildingDescriptionUpdated}}\",\n  \"addressLine1\": \"{{buildingAddressUpdated}}\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/buildings/{{buildingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "buildings", "{{buildingId}}"]
+            },
+            "description": "Update building information (owner only)"
+          },
+          "response": []
+        },
+        {
+          "name": "📋 List My Buildings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/buildings?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "buildings"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get list of buildings owned by current user with pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "🗑️ Delete Building",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/buildings/{{buildingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "buildings", "{{buildingId}}"]
+            },
+            "description": "Delete a building (cannot delete if there are active rentals)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Building management endpoints for landlords"
+    },
+    {
+      "name": "🏠 Rooms Management",
+      "item": [
+        {
+          "name": "📋 Get My Rooms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/me?page={{roomPage}}&limit={{roomLimit}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "me"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{roomPage}}",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "{{roomLimit}}",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Get my rooms with pagination (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "🏗️ Create Room Type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('roomId', response.data.id);",
+                  "    pm.collectionVariables.set('roomSlug', response.data.slug);",
+                  "    console.log('🏠 Room type created successfully!');",
+                  "    console.log('🆔 Room ID saved:', response.data.id);",
+                  "    console.log('🔗 Room Slug saved:', response.data.slug);",
+                  "    console.log('🚪 Room instances created:', response.data.totalRooms);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{roomName}}\",\n  \"description\": \"{{roomDescription}}\",\n  \"roomType\": \"{{roomType}}\",\n  \"areaSqm\": {{roomAreaSqm}},\n  \"maxOccupancy\": {{roomMaxOccupancy}},\n  \"totalRooms\": {{roomTotalRooms}},\n  \"floorNumber\": {{roomFloorNumber}},\n  \"roomNumberPrefix\": \"{{roomNumberPrefix}}\",\n  \"roomNumberStart\": {{roomNumberStart}},\n  \"pricing\": {\n    \"basePriceMonthly\": {{roomBasePriceMonthly}},\n    \"depositAmount\": {{roomDepositAmount}},\n    \"depositMonths\": {{roomDepositMonths}},\n    \"utilityIncluded\": {{roomUtilityIncluded}},\n    \"utilityCostMonthly\": {{roomUtilityCostMonthly}},\n    \"cleaningFee\": {{roomCleaningFee}},\n    \"serviceFeePercentage\": {{roomServiceFeePercentage}},\n    \"minimumStayMonths\": {{roomMinimumStayMonths}},\n    \"maximumStayMonths\": {{roomMaximumStayMonths}},\n    \"priceNegotiable\": {{roomPriceNegotiable}}\n  },\n  \"amenities\": [\n    {\n      \"systemAmenityId\": \"{{amenityId1}}\",\n      \"customValue\": \"{{amenityValue1}}\",\n      \"notes\": \"{{amenityNotes1}}\"\n    },\n    {\n      \"systemAmenityId\": \"{{amenityId2}}\",\n      \"customValue\": \"{{amenityValue2}}\",\n      \"notes\": \"{{amenityNotes2}}\"\n    }\n  ],\n  \"costs\": [\n    {\n      \"systemCostTypeId\": \"{{costTypeId1}}\",\n      \"value\": {{costValue1}},\n      \"costType\": \"{{costType1}}\",\n      \"unit\": \"{{costUnit1}}\",\n      \"billingCycle\": \"{{costBillingCycle1}}\",\n      \"includedInRent\": {{costIncludedInRent1}},\n      \"isOptional\": {{costIsOptional1}},\n      \"notes\": \"{{costNotes1}}\"\n    },\n    {\n      \"systemCostTypeId\": \"{{costTypeId2}}\",\n      \"value\": {{costValue2}},\n      \"costType\": \"{{costType2}}\",\n      \"unit\": \"{{costUnit2}}\",\n      \"billingCycle\": \"{{costBillingCycle2}}\",\n      \"includedInRent\": {{costIncludedInRent2}},\n      \"isOptional\": {{costIsOptional2}},\n      \"notes\": \"{{costNotes2}}\"\n    }\n  ],\n  \"rules\": [\n    {\n      \"systemRuleId\": \"{{ruleId1}}\",\n      \"customValue\": \"{{ruleValue1}}\",\n      \"isEnforced\": {{ruleIsEnforced1}},\n      \"notes\": \"{{ruleNotes1}}\"\n    },\n    {\n      \"systemRuleId\": \"{{ruleId2}}\",\n      \"customValue\": \"{{ruleValue2}}\",\n      \"isEnforced\": {{ruleIsEnforced2}},\n      \"notes\": \"{{ruleNotes2}}\"\n    }\n  ],\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{buildingId}}/rooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "{{buildingId}}", "rooms"]
+            },
+            "description": "Create room type with automatic room instance generation"
+          },
+          "response": []
+        },
+        {
+          "name": "🏠 Get Room Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "{{roomId}}"]
+            },
+            "description": "Get detailed room type information with pricing, amenities, costs, rules"
+          },
+          "response": []
+        },
+        {
+          "name": "🔍 Get Room by Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomSlug}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "{{roomSlug}}"]
+            },
+            "description": "Get room details using slug (public endpoint for search)"
+          },
+          "response": []
+        },
+        {
+          "name": "✏️ Update Room Type (OVERRIDE Mode)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{roomNameUpdated}}\",\n  \"description\": \"{{roomDescriptionUpdated}}\",\n  \"areaSqm\": {{roomAreaSqmUpdated}},\n  \"totalRooms\": {{roomTotalRoomsUpdated}},\n  \"pricing\": {\n    \"basePriceMonthly\": {{roomBasePriceMonthlyUpdated}},\n    \"depositAmount\": {{roomDepositAmountUpdated}},\n    \"isNegotiable\": {{roomIsNegotiableUpdated}}\n  },\n  \"amenities\": [\n    {\n      \"systemAmenityId\": \"{{amenityId1Updated}}\",\n      \"customValue\": \"{{amenityValue1Updated}}\",\n      \"notes\": \"{{amenityNotes1Updated}}\"\n    },\n    {\n      \"systemAmenityId\": \"{{amenityId3}}\",\n      \"customValue\": \"{{amenityValue3}}\",\n      \"notes\": \"{{amenityNotes3}}\"\n    }\n  ],\n  \"costs\": [\n    {\n      \"systemCostTypeId\": \"{{costTypeId1}}\",\n      \"value\": {{costValue1Updated}},\n      \"costType\": \"{{costType1}}\",\n      \"unit\": \"{{costUnit1}}\",\n      \"isMandatory\": {{costIsMandatory1}},\n      \"isIncludedInRent\": {{costIncludedInRent1}},\n      \"notes\": \"{{costNotes1Updated}}\"\n    }\n  ],\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "{{roomId}}"]
+            },
+            "description": "Update room type - amenities/costs/rules arrays will COMPLETELY OVERRIDE existing data"
+          },
+          "response": []
+        },
+        {
+          "name": "📋 List Rooms by Building",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/building/{{buildingId}}/rooms?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "building", "{{buildingId}}", "rooms"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get list of room types in a building with pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "🚪 Get Room Instances by Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data.instances.length > 0) {",
+                  "        pm.collectionVariables.set('roomInstanceId', response.data.instances[0].id);",
+                  "        console.log('🚪 Room Instance ID saved:', response.data.instances[0].id);",
+                  "    }",
+                  "    console.log('📊 Status Counts:', JSON.stringify(response.data.statusCounts, null, 2));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}/instances/status?status={{filterStatus}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "{{roomId}}", "instances", "status"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "{{filterStatus}}",
+                  "description": "Filter by status: available, occupied, maintenance, reserved, unavailable"
+                }
+              ]
+            },
+            "description": "Get room instances with status filter and statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "🔧 Update Single Room Instance Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"{{newRoomStatus}}\",\n  \"reason\": \"{{statusChangeReason}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/instance/{{roomInstanceId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "instance", "{{roomInstanceId}}", "status"]
+            },
+            "description": "Update status of a single room instance with business logic validation"
+          },
+          "response": []
+        },
+        {
+          "name": "🔧 Bulk Update Room Instance Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomInstanceIds\": [\"{{roomInstanceId1}}\", \"{{roomInstanceId2}}\", \"{{roomInstanceId3}}\"],\n  \"status\": \"{{bulkNewStatus}}\",\n  \"reason\": \"{{bulkStatusReason}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}/instances/status/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "{{roomId}}", "instances", "status", "bulk"]
+            },
+            "description": "Update status of multiple room instances at once (atomic operation)"
+          },
+          "response": []
+        },
+        {
+          "name": "🗑️ Delete Room Type",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "{{roomId}}"]
+            },
+            "description": "Delete room type and all instances (cannot delete if there are active rentals)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Room type and instance management with complex CRUD operations"
+    },
+    {
+      "name": "🔍 Room Seeking Posts",
+      "item": [
+        {
+          "name": "📝 Create Room Seeking Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('roomSeekingPostId', response.id);",
+                  "    pm.collectionVariables.set('roomSeekingPostSlug', response.slug);",
+                  "    console.log('📝 Room seeking post created successfully!');",
+                  "    console.log('🆔 Post ID saved:', response.id);",
+                  "    console.log('🔗 Post Slug generated:', response.slug);",
+                  "    console.log('👤 Requester:', response.requester.firstName, response.requester.lastName);",
+                  "    console.log('💰 Budget:', response.minBudget ? response.minBudget.toLocaleString() : 'N/A', '-', response.maxBudget.toLocaleString(), response.currency);",
+                  "    console.log('🏠 Room Type:', response.preferredRoomType || 'Any');",
+                  "    console.log('👥 Occupancy:', response.occupancy || 'Not specified');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"{{seekingPostTitle}}\",\n  \"description\": \"{{seekingPostDescription}}\",\n  \"preferredProvinceId\": {{seekingPostProvinceId}},\n  \"preferredDistrictId\": {{seekingPostDistrictId}},\n  \"preferredWardId\": {{seekingPostWardId}},\n  \"minBudget\": {{seekingPostMinBudget}},\n  \"maxBudget\": {{seekingPostMaxBudget}},\n  \"currency\": \"{{seekingPostCurrency}}\",\n  \"preferredRoomType\": \"{{seekingPostRoomType}}\",\n  \"occupancy\": {{seekingPostOccupancy}},\n  \"moveInDate\": \"{{seekingPostMoveInDate}}\",\n  \"isPublic\": {{seekingPostIsPublic}},\n  \"expiresAt\": \"{{seekingPostExpiresAt}}\",\n  \"amenityIds\": [\"{{seekingPostAmenityId1}}\", \"{{seekingPostAmenityId2}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/room-seeking-posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "room-seeking-posts"]
+            },
+            "description": "Create a new room seeking post (requires authentication). Slug will be auto-generated from title."
+          },
+          "response": []
+        },
+        {
+          "name": "📋 Get My Room Seeking Posts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/room-seeking-posts/me?page={{seekingPostPage}}&limit={{seekingPostLimit}}&search={{seekingPostSearch}}&sortBy={{seekingPostSortBy}}&sortOrder={{seekingPostSortOrder}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "room-seeking-posts", "me"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{seekingPostPage}}",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "{{seekingPostLimit}}",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "search",
+                  "value": "{{seekingPostSearch}}",
+                  "description": "Search in title and description"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "{{seekingPostSortBy}}",
+                  "description": "Sort field (createdAt, updatedAt, title, maxBudget, viewCount, contactCount)"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "{{seekingPostSortOrder}}",
+                  "description": "Sort order (asc, desc)"
+                }
+              ]
+            },
+            "description": "Get my room seeking posts with pagination and search (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "🔍 Get Room Seeking Post Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('🔍 Room seeking post details retrieved successfully!');",
+                  "    console.log('📝 Title:', response.title);",
+                  "    console.log('💰 Budget:', response.minBudget ? response.minBudget.toLocaleString() : 'N/A', '-', response.maxBudget.toLocaleString(), response.currency);",
+                  "console.log('👤 Requester:', response.requester.firstName, response.requester.lastName);",
+                  "console.log('📊 Views:', response.viewCount, '| Contacts:', response.contactCount);",
+                  "console.log('🏠 Room Type:', response.preferredRoomType || 'Any');",
+                  "console.log('📍 Location:', response.preferredProvince?.name || 'N/A');",
+                  "if (response.preferredDistrict) console.log('📍 District:', response.preferredDistrict.name);",
+                  "if (response.preferredWard) console.log('📍 Ward:', response.preferredWard.name);",
+                  "console.log('🏷️ Amenities:', response.amenities.length, 'items');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/room-seeking-posts/{{roomSeekingPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "room-seeking-posts", "{{roomSeekingPostId}}"]
+            },
+            "description": "Get detailed information about a room seeking post (public endpoint)"
+          },
+          "response": []
+        },
+        {
+          "name": "✏️ Update Room Seeking Post",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"{{seekingPostTitleUpdated}}\",\n  \"description\": \"{{seekingPostDescriptionUpdated}}\",\n  \"maxBudget\": {{seekingPostMaxBudgetUpdated}},\n  \"occupancy\": {{seekingPostOccupancyUpdated}},\n  \"moveInDate\": \"{{seekingPostMoveInDateUpdated}}\",\n  \"isPublic\": {{seekingPostIsPublicUpdated}}\",\n  \"amenityIds\": [\"{{seekingPostAmenityId1Updated}}\", \"{{seekingPostAmenityId3}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/room-seeking-posts/{{roomSeekingPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "room-seeking-posts", "{{roomSeekingPostId}}"]
+            },
+            "description": "Update room seeking post (owner only). Slug will be auto-regenerated if title changes."
+          },
+          "response": []
+        },
+        {
+          "name": "🔄 Update Room Seeking Post Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"{{seekingPostNewStatus}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/room-seeking-posts/{{roomSeekingPostId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "room-seeking-posts", "{{roomSeekingPostId}}", "status"]
+            },
+            "description": "Update room seeking post status (active, paused, closed, expired)"
+          },
+          "response": []
+        },
+        {
+          "name": "🗑️ Delete Room Seeking Post",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/room-seeking-posts/{{roomSeekingPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "room-seeking-posts", "{{roomSeekingPostId}}"]
+            },
+            "description": "Delete room seeking post (owner only)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Room seeking post management endpoints for tenants looking for accommodation. Slugs are auto-generated from titles. Search functionality is available via /api/listings/room-seeking-posts endpoint."
+    },
+    {
+      "name": "🔧 Utilities",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "API health check endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "API Documentation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api",
+              "host": ["{{baseUrl}}"],
+              "path": ["api"]
+            },
+            "description": "Swagger API documentation"
+          },
+          "response": []
+        }
+      ],
+      "description": "Utility and documentation endpoints"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "console.log('🚀 Trustay API Request:', pm.info.requestName);",
+          "",
+          "// Set common headers",
+          "pm.request.headers.add({",
+          "    key: 'User-Agent',",
+          "    value: 'Trustay-Postman-Collection/2.0'",
+          "});",
+          "",
+          "// Log current environment",
+          "console.log('Environment:', pm.collectionVariables.get('environment'));",
+          "",
+          "// Auto-refresh token for protected endpoints",
+          "const requestName = pm.info.requestName;",
+          "const requestUrl = pm.request.url.toString();",
+          "",
+          "// Define endpoints that DON'T need authentication",
+          "const publicEndpoints = [",
+          "    'Login', 'Register', 'Verification', 'Password Strength', 'Generate', 'Health', 'Documentation',",
+          "    'Provinces', 'Districts', 'Wards', 'Get Room by Slug',",
+          "    'Get Room Seeking Post Details'",
+          "];",
+          "",
+          "const isPublicEndpoint = publicEndpoints.some(endpoint => requestName.includes(endpoint));",
+          "const isRefreshEndpoint = requestName.includes('Refresh') || requestName.includes('Revoke');",
+          "",
+          "// Add auth header to protected endpoints (including /api/auth/me)",
+          "if (!isPublicEndpoint && !isRefreshEndpoint) {",
+          "    const accessToken = pm.collectionVariables.get('accessToken');",
+          "    const refreshToken = pm.collectionVariables.get('refreshToken');",
+          "    ",
+          "    if (accessToken && !pm.request.headers.has('Authorization')) {",
+          "        pm.request.headers.add({",
+          "            key: 'Authorization',",
+          "            value: `Bearer ${accessToken}`",
+          "        });",
+          "        console.log('🔐 Auto-added Authorization header for:', requestName);",
+          "    } else if (pm.request.headers.has('Authorization')) {",
+          "        console.log('🔐 Authorization header already present for:', requestName);",
+          "    }",
+          "    ",
+          "    if (!accessToken && refreshToken) {",
+          "        console.log('⚠️ No access token but refresh token available. Consider refreshing token first.');",
+          "    }",
+          "    ",
+          "    if (!accessToken && !refreshToken) {",
+          "        console.log('❌ No authentication tokens available. Please login first.');",
+          "        console.log('💡 Tip: Run the \"🔑 Login\" request first to get access tokens.');",
+          "    }",
+          "}",
+          "",
+          "// Auto-detect login attempt and prepare for token capture",
+          "if (requestName.includes('Login')) {",
+          "    console.log('🔑 Login attempt detected - tokens will be saved automatically after success');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "// Skip Content-Type test for certain endpoints that might not return JSON",
+          "const skipContentTypeCheck = ['Health Check', 'API Documentation', 'Generate Secure Password'];",
+          "const currentRequest = pm.info.requestName;",
+          "",
+          "if (!skipContentTypeCheck.some(name => currentRequest.includes(name))) {",
+          "    pm.test('Response has proper headers', function () {",
+          "        const contentType = pm.response.headers.get('Content-Type');",
+          "        if (contentType) {",
+          "            pm.expect(contentType).to.include('application/json');",
+          "        }",
+          "    });",
+          "}",
+          "",
+          "// Handle authentication errors and suggest solutions",
+          "if (pm.response.code === 401) {",
+          "    console.log('🔓 Authentication failed (401 Unauthorized)');",
+          "    const refreshToken = pm.collectionVariables.get('refreshToken');",
+          "    if (refreshToken) {",
+          "        console.log('💡 Suggestion: Try running the \"🔄 Refresh Token\" request');",
+          "    } else {",
+          "        console.log('💡 Suggestion: Login again using \"🔑 Login\" request');",
+          "    }",
+          "}",
+          "",
+          "// Handle forbidden errors",
+          "if (pm.response.code === 403) {",
+          "    console.log('🚫 Access denied (403 Forbidden)');",
+          "    console.log('💡 Check if your user has the correct role (landlord for building/room APIs)');",
+          "}",
+          "",
+          "// Log response for debugging",
+          "if (pm.response.code >= 400) {",
+          "    console.log('❌ Error Response:', pm.response.json());",
+          "} else {",
+          "    console.log('✅ Success Response');",
+          "    ",
+          "    // Auto-save important IDs from successful responses",
+          "    try {",
+          "        const response = pm.response.json();",
+          "        if (response.data) {",
+          "            // Save building ID from building creation",
+          "            if (response.data.id && currentRequest.includes('Create Building')) {",
+          "                pm.collectionVariables.set('buildingId', response.data.id);",
+          "                pm.collectionVariables.set('buildingSlug', response.data.slug);",
+          "                console.log('🏢 Auto-saved building ID:', response.data.id);",
+          "            }",
+          "            ",
+          "            // Save room ID from room creation",
+          "            if (response.data.id && currentRequest.includes('Create Room')) {",
+          "                pm.collectionVariables.set('roomId', response.data.id);",
+          "                pm.collectionVariables.set('roomSlug', response.data.slug);",
+          "                console.log('🏠 Auto-saved room ID:', response.data.id);",
+          "            }",
+          "            ",
+          "            // Save room instance IDs",
+          "            if (response.data.instances && currentRequest.includes('Room Instances')) {",
+          "                const instances = response.data.instances;",
+          "                if (instances.length > 0) {",
+          "                    pm.collectionVariables.set('roomInstanceId', instances[0].id);",
+          "                    console.log('🚪 Auto-saved first room instance ID:', instances[0].id);",
+          "                }",
+          "                if (instances.length > 2) {",
+          "                    pm.collectionVariables.set('roomInstanceId1', instances[0].id);",
+          "                    pm.collectionVariables.set('roomInstanceId2', instances[1].id);",
+          "                    pm.collectionVariables.set('roomInstanceId3', instances[2].id);",
+          "                    console.log('🚪 Auto-saved multiple room instance IDs for bulk operations');",
+          "                }",
+          "            }",
+          "            ",
+          "                        // Save room seeking post IDs",
+          "            if (response.id && currentRequest.includes('Create Room Seeking Post')) {",
+          "                pm.collectionVariables.set('roomSeekingPostId', response.id);",
+          "                pm.collectionVariables.set('roomSeekingPostSlug', response.slug);",
+          "                console.log('📝 Auto-saved room seeking post ID:', response.id);",
+          "                console.log('🔗 Auto-saved generated slug:', response.slug);",
+          "            }",
+          "        }",
+          "    } catch (e) {",
+          "        // Ignore JSON parsing errors for non-JSON responses",
+          "    }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "Base URL for Trustay API"
+    },
+    {
+      "key": "environment",
+      "value": "development",
+      "type": "string",
+      "description": "Current environment (development/production)"
+    },
+    {
+      "key": "testEmail",
+      "value": "budget.student@trustay.com",
+      "type": "string",
+      "description": "Test email for verification (existing landlord user)"
+    },
+    {
+      "key": "testEmailDev",
+      "value": "landlord.dev@trustay.life",
+      "type": "string",
+      "description": "Test email for direct registration (landlord)"
+    },
+    {
+      "key": "testPhone",
+      "value": "+84901234567",
+      "type": "string",
+      "description": "Test phone number"
+    },
+    {
+      "key": "testPhoneDev",
+      "value": "+84987654321",
+      "type": "string",
+      "description": "Test phone for direct registration"
+    },
+    {
+      "key": "testPassword",
+      "value": "trustay123",
+      "type": "string",
+      "description": "Test password for registration (matches existing user)"
+    },
+    {
+      "key": "testFirstName",
+      "value": "Minh",
+      "type": "string",
+      "description": "Test first name"
+    },
+    {
+      "key": "testLastName",
+      "value": "Nguyễn",
+      "type": "string",
+      "description": "Test last name"
+    },
+    {
+      "key": "testGender",
+      "value": "male",
+      "type": "string",
+      "description": "Test gender (male/female/other)"
+    },
+    {
+      "key": "testRole",
+      "value": "landlord",
+      "type": "string",
+      "description": "Test user role (tenant/landlord) - SET TO 'landlord' for building/room management"
+    },
+    {
+      "key": "verificationCode",
+      "value": "123456",
+      "type": "string",
+      "description": "6-digit verification code (check console/email)"
+    },
+    {
+      "key": "loginEmail",
+      "value": "budget.student@trustay.com",
+      "type": "string",
+      "description": "Email for login (existing user)"
+    },
+    {
+      "key": "loginPassword",
+      "value": "trustay123",
+      "type": "string",
+      "description": "Password for login (existing user)"
+    },
+    {
+      "key": "currentPassword",
+      "value": "trustay123",
+      "type": "string",
+      "description": "Current password for change"
+    },
+    {
+      "key": "newPassword",
+      "value": "NewTrustayPass456!",
+      "type": "string",
+      "description": "New password for change"
+    },
+    {
+      "key": "testPasswordToCheck",
+      "value": "WeakPass",
+      "type": "string",
+      "description": "Password to check strength"
+    },
+    {
+      "key": "passwordLength",
+      "value": "16",
+      "type": "string",
+      "description": "Length for generated password"
+    },
+    {
+      "key": "updatedFirstName",
+      "value": "Minh Updated",
+      "type": "string",
+      "description": "Updated first name"
+    },
+    {
+      "key": "updatedLastName",
+      "value": "Nguyễn Updated",
+      "type": "string",
+      "description": "Updated last name"
+    },
+    {
+      "key": "updatedPhone",
+      "value": "+84909999999",
+      "type": "string",
+      "description": "Updated phone number"
+    },
+    {
+      "key": "updatedGender",
+      "value": "female",
+      "type": "string",
+      "description": "Updated gender"
+    },
+    {
+      "key": "updatedBio",
+      "value": "I'm a Trustay user looking for the perfect rental.",
+      "type": "string",
+      "description": "Updated bio"
+    },
+    {
+      "key": "updatedDateOfBirth",
+      "value": "1995-06-15",
+      "type": "string",
+      "description": "Updated date of birth (YYYY-MM-DD)"
+    },
+    {
+      "key": "testProvinceId",
+      "value": "79",
+      "type": "string",
+      "description": "Test province ID (Thành phố Hồ Chí Minh)"
+    },
+    {
+      "key": "testDistrictId",
+      "value": "769",
+      "type": "string",
+      "description": "Test district ID (Thủ Đức, HCMC)"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT access token (auto-populated)"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT refresh token (auto-populated)"
+    },
+    {
+      "key": "verificationToken",
+      "value": "",
+      "type": "string",
+      "description": "Verification token (auto-populated)"
+    },
+    {
+      "key": "verificationId",
+      "value": "",
+      "type": "string",
+      "description": "Verification ID (auto-populated)"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string",
+      "description": "Current user ID (auto-populated)"
+    },
+    {
+      "key": "buildingId",
+      "value": "",
+      "type": "string",
+      "description": "Building ID (auto-populated after creation)"
+    },
+    {
+      "key": "buildingSlug",
+      "value": "",
+      "type": "string",
+      "description": "Building slug (auto-populated after creation)"
+    },
+    {
+      "key": "buildingName",
+      "value": "Nhà trọ Minh Phát",
+      "type": "string",
+      "description": "Building name for creation"
+    },
+    {
+      "key": "buildingDescription",
+      "value": "Nhà trọ cao cấp tại Thủ Đức, gần trường Đại học Bách Khoa và Đại học Quốc gia, đầy đủ tiện nghi hiện đại",
+      "type": "string",
+      "description": "Building description (Thu Duc area, near universities)"
+    },
+    {
+      "key": "buildingAddress",
+      "value": "123 Võ Văn Ngân, Phường Linh Chiểu",
+      "type": "string",
+      "description": "Building primary address in Ho Chi Minh City"
+    },
+    {
+      "key": "buildingAddress2",
+      "value": "Hẻm 458",
+      "type": "string",
+      "description": "Building secondary address"
+    },
+    {
+      "key": "buildingWardId",
+      "value": "26734",
+      "type": "string",
+      "description": "Ward ID for building location (Phường Linh Chiểu, Thủ Đức, HCMC)"
+    },
+    {
+      "key": "buildingDistrictId",
+      "value": "769",
+      "type": "string",
+      "description": "District ID for building location (Thủ Đức, HCMC)"
+    },
+    {
+      "key": "buildingProvinceId",
+      "value": "79",
+      "type": "string",
+      "description": "Province ID for building location (Thành phố Hồ Chí Minh)"
+    },
+    {
+      "key": "buildingLatitude",
+      "value": "10.8505",
+      "type": "string",
+      "description": "Building latitude coordinate (Thu Duc area, HCMC)"
+    },
+    {
+      "key": "buildingLongitude",
+      "value": "106.7717",
+      "type": "string",
+      "description": "Building longitude coordinate (Thu Duc area, HCMC)"
+    },
+    {
+      "key": "buildingNameUpdated",
+      "value": "Nhà trọ Minh Phát Premium",
+      "type": "string",
+      "description": "Updated building name"
+    },
+    {
+      "key": "buildingDescriptionUpdated",
+      "value": "Nhà trọ cao cấp đã được nâng cấp hoàn toàn với trang thiết bị hiện đại",
+      "type": "string",
+      "description": "Updated building description"
+    },
+    {
+      "key": "buildingAddressUpdated",
+      "value": "125 Võ Văn Ngân",
+      "type": "string",
+      "description": "Updated building address"
+    },
+    {
+      "key": "roomId",
+      "value": "",
+      "type": "string",
+      "description": "Room type ID (auto-populated after creation)"
+    },
+    {
+      "key": "roomSlug",
+      "value": "",
+      "type": "string",
+      "description": "Room slug (auto-populated after creation)"
+    },
+    {
+      "key": "roomName",
+      "value": "Phòng VIP",
+      "type": "string",
+      "description": "Room type name"
+    },
+    {
+      "key": "roomDescription",
+      "value": "Phòng cao cấp với đầy đủ tiện nghi, view đẹp",
+      "type": "string",
+      "description": "Room type description"
+    },
+    {
+      "key": "roomType",
+      "value": "boarding_house",
+      "type": "string",
+      "description": "Room type enum: boarding_house, apartment, house, studio"
+    },
+    {
+      "key": "roomAreaSqm",
+      "value": "25.5",
+      "type": "string",
+      "description": "Room area in square meters"
+    },
+    {
+      "key": "roomMaxOccupancy",
+      "value": "2",
+      "type": "string",
+      "description": "Maximum occupancy"
+    },
+    {
+      "key": "roomTotalRooms",
+      "value": "5",
+      "type": "string",
+      "description": "Total room instances to create"
+    },
+    {
+      "key": "roomFloorNumber",
+      "value": "1",
+      "type": "string",
+      "description": "Floor number"
+    },
+    {
+      "key": "roomNumberPrefix",
+      "value": "A",
+      "type": "string",
+      "description": "Room number prefix"
+    },
+    {
+      "key": "roomNumberStart",
+      "value": "101",
+      "type": "string",
+      "description": "Starting room number"
+    },
+    {
+      "key": "roomBasePriceMonthly",
+      "value": "3500000",
+      "type": "string",
+      "description": "Base monthly rent price (VND)"
+    },
+    {
+      "key": "roomDepositAmount",
+      "value": "7000000",
+      "type": "string",
+      "description": "Deposit amount (VND)"
+    },
+    {
+      "key": "roomDepositMonths",
+      "value": "2",
+      "type": "string",
+      "description": "Number of months for deposit"
+    },
+    {
+      "key": "roomUtilityIncluded",
+      "value": "false",
+      "type": "string",
+      "description": "Whether utilities are included"
+    },
+    {
+      "key": "roomUtilityCostMonthly",
+      "value": "500000",
+      "type": "string",
+      "description": "Monthly utility cost if separate"
+    },
+    {
+      "key": "roomCleaningFee",
+      "value": "200000",
+      "type": "string",
+      "description": "One-time cleaning fee"
+    },
+    {
+      "key": "roomServiceFeePercentage",
+      "value": "5.0",
+      "type": "string",
+      "description": "Service fee percentage"
+    },
+    {
+      "key": "roomMinimumStayMonths",
+      "value": "3",
+      "type": "string",
+      "description": "Minimum stay duration"
+    },
+    {
+      "key": "roomMaximumStayMonths",
+      "value": "24",
+      "type": "string",
+      "description": "Maximum stay duration"
+    },
+    {
+      "key": "roomPriceNegotiable",
+      "value": "true",
+      "type": "string",
+      "description": "Whether price is negotiable"
+    },
+    {
+      "key": "amenityId1",
+      "value": "sample-amenity-id-1",
+      "type": "string",
+      "description": "System amenity ID 1 (replace with actual ID)"
+    },
+    {
+      "key": "amenityValue1",
+      "value": "2 chiếc Daikin inverter",
+      "type": "string",
+      "description": "Custom amenity value 1"
+    },
+    {
+      "key": "amenityNotes1",
+      "value": "Điều hòa mới 100%, bảo hành 3 năm",
+      "type": "string",
+      "description": "Amenity notes 1"
+    },
+    {
+      "key": "amenityId2",
+      "value": "sample-amenity-id-2",
+      "type": "string",
+      "description": "System amenity ID 2 (replace with actual ID)"
+    },
+    {
+      "key": "amenityValue2",
+      "value": "Viettel Fiber 100Mbps",
+      "type": "string",
+      "description": "Custom amenity value 2"
+    },
+    {
+      "key": "amenityNotes2",
+      "value": "Tốc độ ổn định 24/7",
+      "type": "string",
+      "description": "Amenity notes 2"
+    },
+    {
+      "key": "costTypeId1",
+      "value": "sample-cost-type-id-1",
+      "type": "string",
+      "description": "System cost type ID 1 (replace with actual ID)"
+    },
+    {
+      "key": "costValue1",
+      "value": "3500",
+      "type": "string",
+      "description": "Cost value 1"
+    },
+    {
+      "key": "costType1",
+      "value": "per_unit",
+      "type": "string",
+      "description": "Cost type: fixed, per_unit, percentage, metered, tiered"
+    },
+    {
+      "key": "costUnit1",
+      "value": "kWh",
+      "type": "string",
+      "description": "Cost unit 1"
+    },
+    {
+      "key": "costBillingCycle1",
+      "value": "monthly",
+      "type": "string",
+      "description": "Billing cycle: monthly, quarterly, yearly"
+    },
+    {
+      "key": "costIncludedInRent1",
+      "value": "false",
+      "type": "string",
+      "description": "Whether cost is included in rent"
+    },
+    {
+      "key": "costIsOptional1",
+      "value": "false",
+      "type": "string",
+      "description": "Whether cost is optional"
+    },
+    {
+      "key": "costNotes1",
+      "value": "Giá điện theo EVN, đọc công tơ cuối tháng",
+      "type": "string",
+      "description": "Cost notes 1"
+    },
+    {
+      "key": "costTypeId2",
+      "value": "sample-cost-type-id-2",
+      "type": "string",
+      "description": "System cost type ID 2 (replace with actual ID)"
+    },
+    {
+      "key": "costValue2",
+      "value": "25000",
+      "type": "string",
+      "description": "Cost value 2"
+    },
+    {
+      "key": "costType2",
+      "value": "per_unit",
+      "type": "string",
+      "description": "Cost type 2"
+    },
+    {
+      "key": "costUnit2",
+      "value": "m³",
+      "type": "string",
+      "description": "Cost unit 2"
+    },
+    {
+      "key": "costBillingCycle2",
+      "value": "monthly",
+      "type": "string",
+      "description": "Billing cycle 2"
+    },
+    {
+      "key": "costIncludedInRent2",
+      "value": "false",
+      "type": "string",
+      "description": "Whether cost 2 is included in rent"
+    },
+    {
+      "key": "costIsOptional2",
+      "value": "false",
+      "type": "string",
+      "description": "Whether cost 2 is optional"
+    },
+    {
+      "key": "costNotes2",
+      "value": "Nước sạch Saigon Water",
+      "type": "string",
+      "description": "Cost notes 2"
+    },
+    {
+      "key": "ruleId1",
+      "value": "sample-rule-id-1",
+      "type": "string",
+      "description": "System rule ID 1 (replace with actual ID)"
+    },
+    {
+      "key": "ruleValue1",
+      "value": "Tối đa 2 người/phòng",
+      "type": "string",
+      "description": "Custom rule value 1"
+    },
+    {
+      "key": "ruleIsEnforced1",
+      "value": "true",
+      "type": "string",
+      "description": "Whether rule 1 is enforced"
+    },
+    {
+      "key": "ruleNotes1",
+      "value": "Quá số lượng sẽ tính phụ phí",
+      "type": "string",
+      "description": "Rule notes 1"
+    },
+    {
+      "key": "ruleId2",
+      "value": "sample-rule-id-2",
+      "type": "string",
+      "description": "System rule ID 2 (replace with actual ID)"
+    },
+    {
+      "key": "ruleValue2",
+      "value": "Không hút thuốc trong phòng",
+      "type": "string",
+      "description": "Custom rule value 2"
+    },
+    {
+      "key": "ruleIsEnforced2",
+      "value": "true",
+      "type": "string",
+      "description": "Whether rule 2 is enforced"
+    },
+    {
+      "key": "ruleNotes2",
+      "value": "Vi phạm 3 lần sẽ chấm dứt hợp đồng",
+      "type": "string",
+      "description": "Rule notes 2"
+    },
+    {
+      "key": "roomNameUpdated",
+      "value": "Phòng VIP Deluxe",
+      "type": "string",
+      "description": "Updated room name"
+    },
+    {
+      "key": "roomDescriptionUpdated",
+      "value": "Phòng cao cấp được nâng cấp hoàn toàn với trang thiết bị hiện đại",
+      "type": "string",
+      "description": "Updated room description"
+    },
+    {
+      "key": "roomAreaSqmUpdated",
+      "value": "28.5",
+      "type": "string",
+      "description": "Updated room area"
+    },
+    {
+      "key": "roomTotalRoomsUpdated",
+      "value": "8",
+      "type": "string",
+      "description": "Updated total rooms (can only increase)"
+    },
+    {
+      "key": "roomBasePriceMonthlyUpdated",
+      "value": "3800000",
+      "type": "string",
+      "description": "Updated base monthly price"
+    },
+    {
+      "key": "roomDepositAmountUpdated",
+      "value": "7600000",
+      "type": "string",
+      "description": "Updated deposit amount"
+    },
+    {
+      "key": "roomIsNegotiableUpdated",
+      "value": "false",
+      "type": "string",
+      "description": "Updated negotiability"
+    },
+    {
+      "key": "amenityId1Updated",
+      "value": "sample-amenity-id-1",
+      "type": "string",
+      "description": "Updated system amenity ID 1"
+    },
+    {
+      "key": "amenityValue1Updated",
+      "value": "3 chiếc LG inverter",
+      "type": "string",
+      "description": "Updated custom amenity value 1"
+    },
+    {
+      "key": "amenityNotes1Updated",
+      "value": "Điều hòa mới 100%, tiết kiệm điện",
+      "type": "string",
+      "description": "Updated amenity notes 1"
+    },
+    {
+      "key": "amenityId3",
+      "value": "sample-amenity-id-3",
+      "type": "string",
+      "description": "New system amenity ID 3"
+    },
+    {
+      "key": "amenityValue3",
+      "value": "Tủ lạnh Samsung 180L",
+      "type": "string",
+      "description": "New amenity value 3"
+    },
+    {
+      "key": "amenityNotes3",
+      "value": "Tủ lạnh mới, tiết kiệm điện",
+      "type": "string",
+      "description": "New amenity notes 3"
+    },
+    {
+      "key": "costValue1Updated",
+      "value": "4000",
+      "type": "string",
+      "description": "Updated cost value 1"
+    },
+    {
+      "key": "costIsMandatory1",
+      "value": "true",
+      "type": "string",
+      "description": "Whether cost 1 is mandatory"
+    },
+    {
+      "key": "costNotes1Updated",
+      "value": "Giá điện tăng theo EVN",
+      "type": "string",
+      "description": "Updated cost notes 1"
+    },
+    {
+      "key": "roomInstanceId",
+      "value": "",
+      "type": "string",
+      "description": "Room instance ID (auto-populated)"
+    },
+    {
+      "key": "roomInstanceId1",
+      "value": "",
+      "type": "string",
+      "description": "Room instance ID 1 for bulk operations"
+    },
+    {
+      "key": "roomInstanceId2",
+      "value": "",
+      "type": "string",
+      "description": "Room instance ID 2 for bulk operations"
+    },
+    {
+      "key": "roomInstanceId3",
+      "value": "",
+      "type": "string",
+      "description": "Room instance ID 3 for bulk operations"
+    },
+    {
+      "key": "filterStatus",
+      "value": "available",
+      "type": "string",
+      "description": "Filter status: available, occupied, maintenance, reserved, unavailable"
+    },
+    {
+      "key": "newRoomStatus",
+      "value": "maintenance",
+      "type": "string",
+      "description": "New room instance status"
+    },
+    {
+      "key": "statusChangeReason",
+      "value": "Sửa chữa điều hòa và sơn lại tường",
+      "type": "string",
+      "description": "Reason for status change"
+    },
+    {
+      "key": "bulkNewStatus",
+      "value": "maintenance",
+      "type": "string",
+      "description": "New status for bulk update"
+    },
+    {
+      "key": "bulkStatusReason",
+      "value": "Bảo trì định kỳ tòa nhà",
+      "type": "string",
+      "description": "Reason for bulk status change"
+    },
+    {
+      "key": "roomSeekingPostId",
+      "value": "",
+      "type": "string",
+      "description": "Room seeking post ID (auto-populated after creation)"
+    },
+    {
+      "key": "roomSeekingPostSlug",
+      "value": "",
+      "type": "string",
+      "description": "Room seeking post slug (auto-generated from title after creation)"
+    },
+    {
+      "key": "seekingPostTitle",
+      "value": "Tìm phòng trọ gần trường ĐH Bách Khoa",
+      "type": "string",
+      "description": "Room seeking post title"
+    },
+    {
+      "key": "seekingPostDescription",
+      "value": "Sinh viên năm 3 tìm phòng trọ gần trường ĐH Bách Khoa, ưu tiên khu vực Thủ Đức. Cần phòng có điều hòa, wifi, gần chợ và bến xe buýt.",
+      "type": "string",
+      "description": "Room seeking post description"
+    },
+    {
+      "key": "seekingPostProvinceId",
+      "value": "79",
+      "type": "string",
+      "description": "Preferred province ID (Thành phố Hồ Chí Minh)"
+    },
+    {
+      "key": "seekingPostDistrictId",
+      "value": "769",
+      "type": "string",
+      "description": "Preferred district ID (Thủ Đức, HCMC)"
+    },
+    {
+      "key": "seekingPostWardId",
+      "value": "26734",
+      "type": "string",
+      "description": "Preferred ward ID (Phường Linh Chiểu, Thủ Đức)"
+    },
+    {
+      "key": "seekingPostMinBudget",
+      "value": "2000000",
+      "type": "string",
+      "description": "Minimum budget (VND)"
+    },
+    {
+      "key": "seekingPostMaxBudget",
+      "value": "4000000",
+      "type": "string",
+      "description": "Maximum budget (VND)"
+    },
+    {
+      "key": "seekingPostCurrency",
+      "value": "VND",
+      "type": "string",
+      "description": "Currency for budget"
+    },
+    {
+      "key": "seekingPostRoomType",
+      "value": "boarding_house",
+      "type": "string",
+      "description": "Preferred room type (boarding_house, dormitory, sleepbox, apartment, whole_house)"
+    },
+    {
+      "key": "seekingPostOccupancy",
+      "value": "1",
+      "type": "string",
+      "description": "Number of people who will live in the room"
+    },
+    {
+      "key": "seekingPostMoveInDate",
+      "value": "2024-09-01",
+      "type": "string",
+      "description": "Preferred move-in date (YYYY-MM-DD)"
+    },
+    {
+      "key": "seekingPostIsPublic",
+      "value": "true",
+      "type": "string",
+      "description": "Whether the post is public"
+    },
+    {
+      "key": "seekingPostExpiresAt",
+      "value": "2024-12-31",
+      "type": "string",
+      "description": "Post expiration date (YYYY-MM-DD)"
+    },
+    {
+      "key": "seekingPostAmenityId1",
+      "value": "sample-amenity-id-1",
+      "type": "string",
+      "description": "System amenity ID 1 (replace with actual ID)"
+    },
+    {
+      "key": "seekingPostAmenityId2",
+      "value": "sample-amenity-id-2",
+      "type": "string",
+      "description": "System amenity ID 2 (replace with actual ID)"
+    },
+    {
+      "key": "seekingPostPage",
+      "value": "1",
+      "type": "string",
+      "description": "Page number for listing"
+    },
+    {
+      "key": "seekingPostLimit",
+      "value": "20",
+      "type": "string",
+      "description": "Items per page for listing"
+    },
+    {
+      "key": "seekingPostFilterProvinceId",
+      "value": "79",
+      "type": "string",
+      "description": "Filter by province ID"
+    },
+    {
+      "key": "seekingPostFilterDistrictId",
+      "value": "769",
+      "type": "string",
+      "description": "Filter by district ID"
+    },
+    {
+      "key": "seekingPostFilterMinBudget",
+      "value": "2000000",
+      "type": "string",
+      "description": "Filter by minimum budget"
+    },
+    {
+      "key": "seekingPostFilterMaxBudget",
+      "value": "5000000",
+      "type": "string",
+      "description": "Filter by maximum budget"
+    },
+    {
+      "key": "seekingPostFilterRoomType",
+      "value": "boarding_house",
+      "type": "string",
+      "description": "Filter by room type"
+    },
+    {
+      "key": "seekingPostFilterOccupancy",
+      "value": "1",
+      "type": "string",
+      "description": "Filter by occupancy"
+    },
+    {
+      "key": "seekingPostFilterStatus",
+      "value": "active",
+      "type": "string",
+      "description": "Filter by status (active, paused, closed, expired)"
+    },
+    {
+      "key": "seekingPostFilterIsPublic",
+      "value": "true",
+      "type": "string",
+      "description": "Filter by public status"
+    },
+    {
+      "key": "seekingPostSearch",
+      "value": "trọ",
+      "type": "string",
+      "description": "Search term for title and description"
+    },
+    {
+      "key": "seekingPostTitleUpdated",
+      "value": "Tìm phòng trọ gần trường ĐH Bách Khoa - Cập nhật",
+      "type": "string",
+      "description": "Updated room seeking post title"
+    },
+    {
+      "key": "seekingPostDescriptionUpdated",
+      "value": "Sinh viên năm 3 tìm phòng trọ gần trường ĐH Bách Khoa, ưu tiên khu vực Thủ Đức. Cần phòng có điều hòa, wifi, gần chợ và bến xe buýt. Có thể chia sẻ phòng với bạn cùng lớp.",
+      "type": "string",
+      "description": "Updated room seeking post description"
+    },
+    {
+      "key": "seekingPostMaxBudgetUpdated",
+      "value": "3500000",
+      "type": "string",
+      "description": "Updated maximum budget"
+    },
+    {
+      "key": "seekingPostOccupancyUpdated",
+      "value": "2",
+      "type": "string",
+      "description": "Updated occupancy"
+    },
+    {
+      "key": "seekingPostMoveInDateUpdated",
+      "value": "2024-10-01",
+      "type": "string",
+      "description": "Updated move-in date"
+    },
+    {
+      "key": "seekingPostIsPublicUpdated",
+      "value": "true",
+      "type": "string",
+      "description": "Updated public status"
+    },
+    {
+      "key": "seekingPostAmenityId1Updated",
+      "value": "sample-amenity-id-1",
+      "type": "string",
+      "description": "Updated system amenity ID 1"
+    },
+    {
+      "key": "seekingPostAmenityId3",
+      "value": "sample-amenity-id-3",
+      "type": "string",
+      "description": "New system amenity ID 3"
+    },
+    {
+      "key": "seekingPostNewStatus",
+      "value": "paused",
+      "type": "string",
+      "description": "New status for room seeking post (active, paused, closed, expired)"
+    },
+    {
+      "key": "seekingPostSortBy",
+      "value": "createdAt",
+      "type": "string",
+      "description": "Sort field for my posts (createdAt, updatedAt, title, maxBudget, viewCount, contactCount)"
+    },
+    {
+      "key": "seekingPostSortOrder",
+      "value": "desc",
+      "type": "string",
+      "description": "Sort order for my posts (asc, desc)"
+    },
+    {
+      "key": "buildingPage",
+      "value": "1",
+      "type": "string",
+      "description": "Page number for buildings pagination"
+    },
+    {
+      "key": "buildingLimit",
+      "value": "10",
+      "type": "string",
+      "description": "Items per page for buildings pagination"
+    },
+    {
+      "key": "roomPage",
+      "value": "1",
+      "type": "string",
+      "description": "Page number for rooms pagination"
+    },
+    {
+      "key": "roomLimit",
+      "value": "10",
+      "type": "string",
+      "description": "Items per page for rooms pagination"
+    }
+  ]
+}

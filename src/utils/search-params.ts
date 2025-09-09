@@ -1,4 +1,15 @@
-import { type RoomSearchParams } from '@/actions/listings.action';
+import { type RoomSearchParams } from '@/types/types';
+
+/**
+ * Safely encode search query for API calls
+ * Handles empty strings, whitespace, and special characters
+ */
+export function encodeSearchQuery(query: string | undefined | null): string {
+	if (!query || query.trim() === '') {
+		return '.';
+	}
+	return query.trim();
+}
 
 /**
  * Helper function to build URL search params from RoomSearchParams
@@ -8,7 +19,7 @@ export function buildSearchParams(params: RoomSearchParams): URLSearchParams {
 	const searchParams = new URLSearchParams();
 
 	// Required parameter
-	searchParams.append('search', params.search);
+	searchParams.append('search', encodeSearchQuery(params.search));
 
 	// Optional parameters
 	if (params.provinceId !== undefined)
@@ -41,7 +52,7 @@ export function buildSearchParams(params: RoomSearchParams): URLSearchParams {
  */
 export function parseSearchParams(searchParams: URLSearchParams): RoomSearchParams {
 	return {
-		search: searchParams.get('search') || '',
+		search: encodeSearchQuery(searchParams.get('search')),
 		provinceId: searchParams.get('provinceId')
 			? parseInt(searchParams.get('provinceId')!)
 			: undefined,

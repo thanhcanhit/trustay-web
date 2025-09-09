@@ -1,13 +1,36 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
+// PriceFilter for forms (min/max price inputs)
 interface PriceFilterProps {
+  minPrice?: string;
+  maxPrice?: string;
+  currency?: 'VND' | 'USD';
+  onMinPriceChange?: (value: string) => void;
+  onMaxPriceChange?: (value: string) => void;
+  onCurrencyChange?: (value: string) => void;
+  error?: boolean;
+  helperText?: string;
+  className?: string;
+}
+
+// PriceFilterDropdown for navigation (checkbox selection)
+interface PriceFilterDropdownProps {
   selectedPrices: string[];
   onSelectionChange: (prices: string[]) => void;
   className?: string;
 }
+
+const currencies = [
+  { value: 'VND', label: 'VNĐ' },
+  { value: 'USD', label: 'USD' },
+];
 
 const priceOptions = [
   { value: '0-2000000', label: 'Dưới 2 triệu' },
@@ -18,10 +41,76 @@ const priceOptions = [
 ];
 
 export function PriceFilter({
+  minPrice = '',
+  maxPrice = '',
+  currency = 'VND',
+  onMinPriceChange,
+  onMaxPriceChange,
+  onCurrencyChange,
+  error = false,
+  helperText,
+  className = ''
+}: PriceFilterProps) {
+  return (
+    <div className={cn("space-y-3", className)}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <Label htmlFor="minPrice">Giá tối thiểu</Label>
+          <Input
+            id="minPrice"
+            type="number"
+            min="0"
+            placeholder="VD: 2000000"
+            value={minPrice}
+            onChange={(e) => onMinPriceChange?.(e.target.value)}
+            className={cn(error && "border-destructive ring-destructive/20")}
+          />
+        </div>
+        <div>
+          <Label htmlFor="maxPrice">Giá tối đa</Label>
+          <Input
+            id="maxPrice"
+            type="number"
+            min="0"
+            placeholder="VD: 5000000"
+            value={maxPrice}
+            onChange={(e) => onMaxPriceChange?.(e.target.value)}
+            className={cn(error && "border-destructive ring-destructive/20")}
+          />
+        </div>
+        <div>
+          <Label htmlFor="currency">Đơn vị tiền</Label>
+          <Select value={currency} onValueChange={onCurrencyChange}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {currencies.map((curr) => (
+                <SelectItem key={curr.value} value={curr.value}>
+                  {curr.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      {helperText && (
+        <p className={cn(
+          "text-sm",
+          error ? "text-destructive" : "text-muted-foreground"
+        )}>
+          {helperText}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function PriceFilterDropdown({
   selectedPrices,
   onSelectionChange,
   className = ''
-}: PriceFilterProps) {
+}: PriceFilterDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { SlidersHorizontal, X, Search } from 'lucide-react';
 import { useSearchFilters } from '@/hooks/use-search-filters';
-import { type RoomSearchParams } from '@/actions/listings.action';
+import { type RoomSearchParams } from '@/types/types';
 import { getRoomTypeOptions } from '@/utils/room-types';
 
 interface SearchFiltersProps {

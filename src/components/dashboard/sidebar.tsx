@@ -32,6 +32,7 @@ interface SidebarSubItem {
   title: string
   href: string
   icon: React.ComponentType<{ className?: string }>
+  disabled?: boolean
 }
 
 interface SidebarItem {
@@ -40,6 +41,7 @@ interface SidebarItem {
   icon: React.ComponentType<{ className?: string }>
   badge?: string
   subItems?: SidebarSubItem[]
+  disabled?: boolean
 }
 
 interface SidebarProps {
@@ -124,64 +126,76 @@ const landlordItems: SidebarItem[] = [
       {
         title: "Yêu cầu thuê trọ",
         href: "/dashboard/landlord/rental-requests",
-        icon: Send
+        icon: Send,
+        disabled: true
       },
       {
         title: "Khách thuê",
         href: "/dashboard/landlord/tenants",
-        icon: Users
+        icon: Users,
+        disabled: true
       },
       {
         title: "Hợp đồng",
         href: "/dashboard/landlord/contracts",
-        icon: FileText
+        icon: FileText,
+        disabled: true
       },
       {
         title: "Hóa đơn",
         href: "/dashboard/landlord/invoices",
-        icon: Receipt
+        icon: Receipt,
+        disabled: true
       },
       {
         title: "Thu chi",
         href: "/dashboard/landlord/revenue",
-        icon: TrendingUp
+        icon: TrendingUp,
+        disabled: true
       },
       {
         title: "Dịch vụ",
         href: "/dashboard/landlord/services",
-        icon: Wrench
+        icon: Wrench,
+        disabled: true
       },
       {
         title: "Báo cáo",
         href: "/dashboard/landlord/reports",
-        icon: BarChart3
+        icon: BarChart3,
+        disabled: true
       },
       {
         title: "Phản ánh, sự cố",
         href: "/dashboard/landlord/feedback",
-        icon: AlertTriangle
+        icon: AlertTriangle,
+        disabled: true
       },
       {
         title: "Khách hàng đánh giá",
         href: "/dashboard/landlord/reviews",
-        icon: Star
+        icon: Star,
+        disabled: true
       }
     ]
   },
   {
     title: "Quảng cáo Trọ",
     href: "/dashboard/landlord/advertising",
-    icon: Search
+    icon: Search,
+    disabled: true
   },
   {
     title: "Quản lý cho thuê",
     href: "/dashboard/landlord/rentals",
-    icon: Heart
+    icon: Heart,
+    disabled: true
   },
   {
     title: "Thông báo",
     href: "/dashboard/landlord/notifications",
-    icon: Bell
+    icon: Bell,
+    disabled: true
   }
 ]
 
@@ -252,23 +266,39 @@ export function Sidebar({ userType }: SidebarProps) {
                   )}
                 </button>
               ) : (
-                <Link
-                  href={item.href!}
-                  className={cn(
-                    "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                    pathname === item.href
-                      ? "bg-green-50 text-green-700 border-r-2 border-green-500"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span>{item.title}</span>
-                  {item.badge && (
-                    <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
+                item.disabled ? (
+                  <div
+                    className={cn(
+                      "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-not-allowed opacity-50"
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{item.title}</span>
+                    {item.badge && (
+                      <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    href={item.href!}
+                    className={cn(
+                      "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      pathname === item.href
+                        ? "bg-green-50 text-green-700 border-r-2 border-green-500"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{item.title}</span>
+                    {item.badge && (
+                      <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                )
               )}
 
               {/* Sub Items */}
@@ -278,7 +308,15 @@ export function Sidebar({ userType }: SidebarProps) {
                     const SubIcon = subItem.icon
                     const isSubActive = isActiveRoute(subItem.href)
 
-                    return (
+                    return subItem.disabled ? (
+                      <div
+                        key={subItem.href}
+                        className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors relative cursor-not-allowed opacity-50"
+                      >
+                        <SubIcon className="h-5 w-5 text-gray-400" />
+                        <span>{subItem.title}</span>
+                      </div>
+                    ) : (
                       <Link
                         key={subItem.href}
                         href={subItem.href}

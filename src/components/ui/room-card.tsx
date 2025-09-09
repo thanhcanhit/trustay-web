@@ -9,7 +9,7 @@ import {
   Users, 
   Wifi,
   Zap} from 'lucide-react';
-import type { RoomListing } from '@/actions/listings.action';
+import type { RoomListing } from '@/types/types';
 import { Badge } from './badge';
 import { getOptimizedImageUrl } from '@/lib/utils';
 import { getRoomTypeDisplayName } from '@/utils/room-types';
@@ -41,10 +41,10 @@ export function RoomCard({
       return { electricityCost: undefined, waterCost: undefined };
     }
 
-    const electricityCost = room.costs.find(cost =>
+    const electricityCost = room.costs.find((cost: RoomListing['costs'][number]) =>
       cost.name.toLowerCase().includes('điện')
     );
-    const waterCost = room.costs.find(cost =>
+    const waterCost = room.costs.find((cost: RoomListing['costs'][number]) =>
       cost.name.toLowerCase().includes('nước')
     );
 
@@ -57,7 +57,7 @@ export function RoomCard({
       return false;
     }
 
-    return room.amenities.some(amenity =>
+    return room.amenities.some((amenity: RoomListing['amenities'][number]) =>
       amenity.name.toLowerCase().includes('wifi') ||
       amenity.name.toLowerCase().includes('internet')
     );
