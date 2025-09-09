@@ -25,6 +25,7 @@ import Link from 'next/link'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { RoomSeekingPost, RoommatePost, RentalPost } from '@/types'
+import { getRoomTypeDisplayName } from '@/utils/room-types'
 
 interface PostListProps {
 	roomSeekingPosts?: RoomSeekingPost[]
@@ -96,7 +97,9 @@ export function PostList({
 							</div>
 							<div className="flex items-center gap-1">
 								<MapPin className="h-4 w-4" />
-								Quận {post.preferredDistrictId}
+								{post.preferredWard?.name ? `${post.preferredWard.name}, ` : ''}
+								{post.preferredDistrict?.name ? `${post.preferredDistrict.name}, ` : ''}
+								{post.preferredProvince?.name || 'Khu vực linh hoạt'}
 							</div>
 							<div className="flex items-center gap-1">
 								<DollarSign className="h-4 w-4" />
@@ -119,7 +122,7 @@ export function PostList({
 				</p>
 				<div className="flex justify-between items-center">
 					<div className="flex items-center gap-2">
-						<Badge variant="outline">{post.preferredRoomType}</Badge>
+						<Badge variant="outline">{getRoomTypeDisplayName(post.preferredRoomType)}</Badge>
 						<Badge variant="outline">{post.occupancy} người</Badge>
 					</div>
 					<div className="flex items-center gap-2">

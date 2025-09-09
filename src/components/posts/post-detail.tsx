@@ -23,6 +23,7 @@ import {
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { RoomSeekingPost, RoommatePost, RentalPost } from '@/types'
+import { getRoomTypeDisplayName } from '@/utils/room-types'
 
 interface PostDetailProps {
 	post: RoomSeekingPost | RoommatePost | RentalPost
@@ -82,7 +83,18 @@ export function PostDetail({ post, type, onContact, onLike, onShare }: PostDetai
 						</div>
 						<div className="flex items-center gap-1">
 							<MapPin className="h-4 w-4" />
-							Quận {post.preferredDistrictId}
+							{(() => {
+								const wardName = (post as RoomSeekingPost).preferredWard?.name
+								const districtName = (post as RoomSeekingPost).preferredDistrict?.name
+								const provinceName = (post as RoomSeekingPost).preferredProvince?.name
+								return (
+									<>
+										{wardName ? `${wardName}, ` : ''}
+										{districtName ? `${districtName}, ` : ''}
+										{provinceName || 'Khu vực linh hoạt'}
+									</>
+								)
+							})()}
 						</div>
 						<div className="flex items-center gap-1">
 							<DollarSign className="h-4 w-4" />
@@ -110,7 +122,9 @@ export function PostDetail({ post, type, onContact, onLike, onShare }: PostDetai
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div>
 							<strong>Loại phòng mong muốn:</strong>
-							<p className="text-muted-foreground">{post.preferredRoomType}</p>
+							<p className="text-muted-foreground">
+								{getRoomTypeDisplayName((post as RoomSeekingPost).preferredRoomType)}
+							</p>
 						</div>
 						<div>
 							<strong>Số người sẽ ở:</strong>
