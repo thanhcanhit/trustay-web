@@ -89,7 +89,7 @@ export function PostCreationWizard() {
 	}
 
 	return (
-		<div className="max-w-4xl mx-auto p-6">
+		<div className="max-w-4xl mx-auto">
 			<div className="text-center mb-8">
 				<h1 className="text-3xl font-bold mb-2">Tạo bài đăng mới</h1>
 				<p className="text-muted-foreground">
@@ -114,7 +114,7 @@ export function PostCreationWizard() {
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
-							<Button className="w-full" variant="outline">
+							<Button className="w-full cursor-pointer" variant="outline">
 								<Plus className="h-4 w-4 mr-2" />
 								Tạo bài đăng
 							</Button>

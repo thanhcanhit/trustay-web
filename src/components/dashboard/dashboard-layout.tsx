@@ -58,7 +58,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex pt-16">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* Mobile menu button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

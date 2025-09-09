@@ -198,30 +198,7 @@ export default function PropertyDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16">
-      {/* Header */}
-      {/*<div className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-2">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/" className="flex items-center">
-                  <Home className="h-4 w-4" />
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/search">Tìm kiếm</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>{roomDetail.name}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
-      </div>
-      */}
+    <div className="min-h-screen bg-gray-50">
 
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -231,39 +208,39 @@ export default function PropertyDetailPage() {
             <ImageSwiper
               images={roomDetail.images || []}
               title={roomDetail.name}
-              className="mb-8"
+              className="mb-2"
               isVerified={roomDetail.isVerified}
               imageContext="detail"
             />
 
             {/* Room Basic Info */}
-            <Card className="mb-8">
-              <CardContent className="p-6">
+            <Card className="mb-2">
+              <CardContent>
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">{roomDetail.name}</h1>
               
-              <div className="flex items-center mb-2">
-                <span className="text-2xl font-bold text-red-600 mr-4">
-                  {roomDetail.pricing?.basePriceMonthly ? formatPrice(parseInt(roomDetail.pricing.basePriceMonthly)) : 'Liên hệ'} VNĐ/tháng
-                </span>
-              </div>
+                <div className="flex items-center mb-2">
+                  <span className="text-2xl font-bold text-red-600 mr-4">
+                    {roomDetail.pricing?.basePriceMonthly ? formatPrice(parseInt(roomDetail.pricing.basePriceMonthly)) : 'Liên hệ'} VNĐ/tháng
+                  </span>
+                </div>
               
-              <div className="flex items-center mb-2">
-                <MapPin className="h-4 w-4 text-gray-500 mr-1" />
-                <span className="text-gray-700 text-sm">
-                  {roomDetail.address}, {roomDetail.location.wardName}, {roomDetail.location.districtName}, {roomDetail.location.provinceName}
-                </span>
-              </div>
+                <div className="flex items-center mb-2">
+                  <MapPin className="h-4 w-4 text-gray-500 mr-1" />
+                  <span className="text-gray-700 text-sm">
+                    {roomDetail.address}, {roomDetail.location.wardName}, {roomDetail.location.districtName}, {roomDetail.location.provinceName}
+                  </span>
+                </div>
               
-              <div className="flex items-center text-sm text-gray-500">
-                <Calendar className="h-4 w-4 mr-1" />
-                <span>Đăng lúc: {formatDate(roomDetail.lastUpdated)}</span>
-              </div>
+                <div className="flex items-center text-sm text-gray-500">
+                  <Calendar className="h-4 w-4 mr-1" />
+                  <span>Đăng lúc: {formatDate(roomDetail.lastUpdated)}</span>
+                </div>
               </CardContent>
             </Card>
 
             {/* Additional Room Info - Compact Version */}
-            <Card className="mb-8">
-              <CardContent className="p-6">
+            <Card className="mb-2">
+              <CardContent>
               {/* Basic Info - Horizontal Layout */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                 <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
@@ -411,8 +388,8 @@ export default function PropertyDetailPage() {
             </Card>
 
             {/* Description */}
-            <Card className="mb-8">
-              <CardContent className="p-6">
+            <Card className="mb-2">
+              <CardContent>
                 <h3 className="font-semibold text-gray-900 mb-3">Mô tả</h3>
               <div className={`text-gray-700 whitespace-pre-line ${!isDescriptionExpanded ? 'line-clamp-3' : ''}`}>
                 {roomDetail.description}
@@ -437,8 +414,8 @@ export default function PropertyDetailPage() {
             </Card>           
 
             {/* Google Maps */}
-            <Card className="mb-8">
-              <CardContent className="p-6">
+            <Card className="mb-2">
+              <CardContent>
                 <h3 className="font-semibold text-gray-900 mb-3">Vị trí</h3>
               <div className="w-full h-64 bg-gray-200 rounded-lg overflow-hidden">
                 {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (

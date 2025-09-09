@@ -483,56 +483,21 @@ export function RoomSeekingForm({ onBack, postId, initialData, mode = 'create' }
 	}
 
 	return (
-		<div className="max-w-4xl mx-auto p-6">
-			<div className="mb-6">
-				<Button variant="ghost" onClick={() => (onBack ? onBack() : router.back())} className="mb-4">
+		<div className="max-w-4xl mx-auto pb-6">
+			<div className="mb-2">
+				<Button variant="ghost" onClick={() => (onBack ? onBack() : router.back())} className="cursor-pointer">
 					<ArrowLeft className="h-4 w-4 mr-2" />
 					Quay lại
 				</Button>
 				
-				<div className="mb-6">
+				<div className="mb-4">
 					<h1 className="text-2xl font-bold mb-2">{mode === 'edit' ? 'Cập nhật bài đăng tìm trọ' : 'Tạo bài đăng tìm trọ'}</h1>
 					<p className="text-muted-foreground">
 						Bước {currentStep} trong {steps.length}: {steps[currentStep - 1].description}
 					</p>
-					{currentStep === 1 && (
-						<div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-							<p className="text-sm text-blue-800">
-								💡 <strong>Mẹo:</strong> Viết tiêu đề rõ ràng và mô tả chi tiết sẽ giúp chủ trọ hiểu rõ nhu cầu của bạn hơn.
-							</p>
-						</div>
-					)}
-					{currentStep === 2 && (
-						<div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
-							<p className="text-sm text-green-800">
-								📍 <strong>Lưu ý:</strong> Chọn địa điểm chính xác sẽ giúp tìm được phòng phù hợp với vị trí mong muốn.
-							</p>
-						</div>
-					)}
-					{currentStep === 3 && (
-						<div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-							<p className="text-sm text-yellow-800">
-								💰 <strong>Gợi ý:</strong> Đặt khoảng giá phù hợp với ngân sách để tăng khả năng tìm được phòng ưng ý.
-							</p>
-						</div>
-					)}
-					{currentStep === 4 && (
-						<div className="mt-2 p-3 bg-purple-50 border border-purple-200 rounded-md">
-							<p className="text-sm text-purple-800">
-								🏠 <strong>Hướng dẫn:</strong> Chọn tiện ích cần thiết để tìm được phòng đáp ứng đầy đủ nhu cầu sinh hoạt.
-							</p>
-						</div>
-					)}
-					{currentStep === 5 && (
-						<div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-md">
-							<p className="text-sm text-orange-800">
-								📅 <strong>Nhắc nhở:</strong> Chọn thời gian phù hợp để có đủ thời gian tìm và dọn vào phòng mới.
-							</p>
-						</div>
-					)}
 				</div>
 
-				<Progress value={((currentStep - 1) / (steps.length - 1)) * 100} className="mb-6" />
+				<Progress value={((currentStep - 1) / (steps.length - 1)) * 100} className="mb-4" />
 
 				<div className="flex items-center justify-between mb-6">
 					{steps.map((step, index) => (
