@@ -8,6 +8,7 @@ import { Search, Users, Home, Plus } from 'lucide-react'
 import { RoomSeekingForm } from '../forms/room-seeking-form'
 import { RoommatePostForm } from '../forms/roommate-post-form'
 import { RentalPostForm } from '../forms/rental-post-form'
+import { useUserStore } from '@/stores/userStore'
 
 type PostType = 'room-seeking' | 'roommate' | 'rental'
 
@@ -47,6 +48,7 @@ export function PostCreationWizard() {
 	const searchParams = useSearchParams()
 	const [selectedType, setSelectedType] = useState<PostType | null>(null)
 	const [currentStep, setCurrentStep] = useState(1)
+	const { user } = useUserStore()
 
 	// Handle URL parameters to auto-select post type
 	useEffect(() => {
@@ -98,29 +100,41 @@ export function PostCreationWizard() {
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-				{postTypes.map((type) => (
-					<Card
-						key={type.id}
-						className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
-						onClick={() => handleTypeSelect(type.id)}
-					>
-						<CardHeader className="text-center">
-							<div className={`mx-auto w-16 h-16 rounded-full ${type.color} flex items-center justify-center text-white mb-4`}>
-								{type.icon}
-							</div>
-							<CardTitle className="text-xl">{type.title}</CardTitle>
-							<CardDescription className="text-sm">
-								{type.description}
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<Button className="w-full cursor-pointer" variant="outline">
-								<Plus className="h-4 w-4 mr-2" />
-								Tạo bài đăng
-							</Button>
-						</CardContent>
-					</Card>
-				))}
+				{postTypes
+					.filter((type) => (type.id === 'rental' ? user?.role === 'landlord' : true))
+					.map((type) => {
+						const isDisabled = type.id === 'roommate'
+						const cardClasses = isDisabled
+							? 'h-full flex flex-col cursor-not-allowed opacity-60'
+							: 'h-full flex flex-col cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105'
+
+						return (
+							<Card
+								key={type.id}
+								className={cardClasses}
+								onClick={() => {
+									if (isDisabled) return
+									handleTypeSelect(type.id)
+								}}
+							>
+								<CardHeader className="text-center">
+									<div className={`mx-auto w-16 h-16 rounded-full ${type.color} flex items-center justify-center text-white mb-4`}>
+										{type.icon}
+									</div>
+									<CardTitle className="text-xl">{type.title}</CardTitle>
+									<CardDescription className="text-sm">
+										{type.description}
+									</CardDescription>
+								</CardHeader>
+								<CardContent className="mt-auto">
+									<Button className="w-full" variant="outline" disabled={isDisabled}>
+										<Plus className="h-4 w-4 mr-2" />
+										Tạo bài đăng
+									</Button>
+								</CardContent>
+							</Card>
+						)
+					})}
 			</div>
 
 			<div className="mt-8 text-center">
