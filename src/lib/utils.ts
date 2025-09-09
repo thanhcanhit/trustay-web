@@ -27,6 +27,12 @@ export function getImageUrl(imagePath: string, options: ImageUrlOptions = {}): s
 	// Clean the image path (remove leading slash if present)
 	const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
 
+	// Serve specific public assets directly (avoid breaking DB images under /images)
+	const PUBLIC_LOCAL_IMAGES = new Set<string>(['images/error-image.jpg', 'placeholder-avatar.png']);
+	if (PUBLIC_LOCAL_IMAGES.has(cleanPath)) {
+		return `/${cleanPath}`;
+	}
+
 	// If original size requested, return full URL without sizing
 	if (size === 'original') {
 		const url = `${baseUrl}/${cleanPath}`;

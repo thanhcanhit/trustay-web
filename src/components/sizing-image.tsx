@@ -26,6 +26,14 @@ const parseImagePath = (src: string, size: SrcSize): string => {
     return src
   }
 
+  // Chỉ trả về local cho danh sách ảnh public đã biết, tránh ảnh DB trùng pattern
+  const trimmed = src.startsWith('/') ? src.slice(1) : src
+  const PUBLIC_LOCAL_IMAGES = new Set<string>([
+    'images/error-image.jpg',
+    'placeholder-avatar.png',
+  ])
+  if (PUBLIC_LOCAL_IMAGES.has(trimmed)) return `/${trimmed}`
+
   const basePath = process.env.NEXT_PUBLIC_IMAGE_BASE_PATH || 'https://api.trustay.life/images'
   
   // Xử lý src để loại bỏ dấu / ở đầu và cuối

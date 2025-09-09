@@ -87,7 +87,7 @@ export function RoomCard({
       {/* Image Container */}
       <div className="relative h-48">
         <Image
-          src={imageError ? "/images/roommate1.png" : getOptimizedImageUrl(room.images?.[0]?.url || '', 'listing')}
+          src={imageError ? "/images/error-image.jpg" : getOptimizedImageUrl(room.images?.[0]?.url || '', 'listing')}
           alt={room.name || "Room image"}
           fill
           className="object-cover"

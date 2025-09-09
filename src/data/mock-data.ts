@@ -36,7 +36,7 @@ export const mockRoommatePosts: RoommatePost[] = [
 		description:
 			'Mình là nữ, 23 tuổi, làm việc tại quận 1. Tìm bạn nữ cùng ở ghép, sạch sẽ, thân thiện. Phòng có đầy đủ tiện nghi, gần chợ và trường học.',
 		authorName: 'Nguyễn Thị B',
-		authorAvatar: '/placeholder-avatar.jpg',
+		authorAvatar: '/placeholder-avatar.png',
 		budget: 2500000,
 		location: 'Đường Nguyễn Huệ',
 		district: 'Quận 1',
@@ -45,7 +45,7 @@ export const mockRoommatePosts: RoommatePost[] = [
 		preferredGender: 'female',
 		requirements: ['Không hút thuốc', 'Sạch sẽ', 'Không về muộn'],
 		preferences: ['Yên tĩnh', 'Học tập', 'Nấu ăn'],
-		images: ['/images/roommate1.png'],
+		images: ['/images/error-image.jpg'],
 		contactInfo: {
 			phone: '0987654321',
 			email: 'nguyenthib@email.com',
@@ -70,7 +70,7 @@ export const mockRoommatePosts: RoommatePost[] = [
 		preferredGender: 'male',
 		requirements: ['Sinh viên', 'Không hút thuốc', 'Chia sẻ chi phí'],
 		preferences: ['Học tập', 'Thể thao', 'Game'],
-		images: ['/images/roommate1.png'],
+		images: ['/images/error-image.jpg'],
 		contactInfo: {
 			phone: '0123456789',
 		},
@@ -94,7 +94,7 @@ export const mockRoommatePosts: RoommatePost[] = [
 		preferredGender: 'any',
 		requirements: ['Đi làm ổn định', 'Chia sẻ chi phí'],
 		preferences: ['Du lịch', 'Ẩm thực', 'Phim ảnh'],
-		images: ['/images/roommate1.png'],
+		images: ['/images/error-image.jpg'],
 		contactInfo: {
 			phone: '0909123456',
 			email: 'lethid@email.com',
@@ -131,7 +131,7 @@ export const mockProperties = [
 		totalRooms: 10,
 		occupiedRooms: 8,
 		monthlyRevenue: 35000000,
-		images: ['/images/roommate1.png'],
+		images: ['/images/error-image.jpg'],
 		status: 'active',
 		amenities: ['Wifi', 'Điều hòa', 'Máy giặt', 'Bảo vệ 24/7'],
 	},
@@ -144,7 +144,7 @@ export const mockProperties = [
 		totalRooms: 15,
 		occupiedRooms: 12,
 		monthlyRevenue: 63000000,
-		images: ['/images/roommate1.png'],
+		images: ['/images/error-image.jpg'],
 		status: 'active',
 		amenities: ['Wifi', 'Điều hòa', 'Thang máy', 'Bảo vệ 24/7', 'Gửi xe'],
 	},
