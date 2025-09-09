@@ -10,6 +10,7 @@ import type {
 	RoomSearchParams,
 	RoomSeekingPublicSearchParams,
 } from '@/types/types';
+import { encodeSearchQuery } from '@/utils/search-params';
 
 // Re-export types for external use
 export type { RoomListing, RoomDetail, RoomListingsResponse, RoomSearchParams };
@@ -25,8 +26,8 @@ export async function searchRoomListings(params: RoomSearchParams): Promise<Room
 		// Build query string
 		const queryParams = new URLSearchParams();
 
-		// Required parameter - use '.' if search is empty
-		queryParams.append('search', params.search || '.');
+		// Required parameter - handle empty search properly
+		queryParams.append('search', encodeSearchQuery(params.search));
 
 		// Optional parameters
 		if (params.provinceId !== undefined)

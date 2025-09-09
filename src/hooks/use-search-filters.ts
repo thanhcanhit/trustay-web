@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { type RoomSearchParams } from '@/types/types';
-import { parseSearchParams } from '@/utils/search-params';
+import { encodeSearchQuery, parseSearchParams } from '@/utils/search-params';
 
 export interface SearchFilters extends RoomSearchParams {
 	// Additional UI-specific filters for the UI components
@@ -142,6 +142,8 @@ export function useSearchFilters() {
 			// Ensure search parameter is always present - use '.' if empty
 			if (!current.has('search')) {
 				current.set('search', '.');
+			} else {
+				current.set('search', encodeSearchQuery(current.get('search')));
 			}
 
 			const search = current.toString();
@@ -196,6 +198,8 @@ export function useSearchFilters() {
 			// Ensure search parameter is always present - use '.' if empty
 			if (!current.has('search')) {
 				current.set('search', '.');
+			} else {
+				current.set('search', encodeSearchQuery(current.get('search')));
 			}
 
 			const search = current.toString();
@@ -229,6 +233,8 @@ export function useSearchFilters() {
 			// Ensure search parameter is always present - use '.' if empty
 			if (!current.has('search')) {
 				current.set('search', '.');
+			} else {
+				current.set('search', encodeSearchQuery(current.get('search')));
 			}
 
 			const search = current.toString();
@@ -248,8 +254,8 @@ export function useSearchFilters() {
 	// Apply filters (navigate to search page)
 	const applyFilters = useCallback(() => {
 		const current = new URLSearchParams();
-		// Use '.' if search is empty, otherwise use the search query
-		current.set('search', searchQuery || '.');
+		// Handle search query properly using utility function
+		current.set('search', encodeSearchQuery(searchQuery));
 		current.set('page', '1');
 
 		const query = current.toString();
@@ -267,9 +273,8 @@ export function useSearchFilters() {
 	// Clear all filters except search
 	const clearFilters = useCallback(() => {
 		const current = new URLSearchParams();
-		const search = searchParams.get('search') || '.';
-		// Use '.' if search is empty, otherwise use the current search
-		current.set('search', search);
+		// Use utility function to handle search query properly
+		current.set('search', encodeSearchQuery(searchParams.get('search')));
 		current.set('page', '1');
 
 		const query = current.toString();
