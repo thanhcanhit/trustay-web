@@ -233,3 +233,60 @@ export interface CreateRoommatePostData {
 	images?: ImageFile[];
 	expiresAt?: string;
 }
+
+// Rental Post (Bài đăng cho thuê trọ)
+export interface RentalPost {
+	id: string;
+	title: string;
+	description: string;
+	images: PropertyImage[];
+	price: number;
+	deposit: number;
+	area: number;
+	address: Address;
+	amenities: string[];
+	rules: PropertyRule[];
+	contactInfo: ContactInfo;
+	roomType: 'boarding_house' | 'apartment' | 'house' | 'studio';
+	availableFrom: string;
+	gender?: 'male' | 'female' | 'mixed';
+	maxOccupants: number;
+	electricityCost?: number;
+	waterCost?: number;
+	internetCost?: number;
+	cleaningCost?: number;
+	parkingCost?: number;
+	isHot?: boolean;
+	isPriority?: boolean;
+	views: number;
+	likes: number;
+	status: 'active' | 'inactive' | 'expired' | 'rented';
+	expiresAt?: string;
+	createdAt: string;
+	updatedAt: string;
+	userId: string;
+}
+
+export interface CreateRentalPostData {
+	title: string;
+	description: string;
+	images: ImageFile[];
+	price: number;
+	deposit: number;
+	area: number;
+	address: Address;
+	amenities: string[];
+	rules: string[];
+	contactInfo: ContactInfo;
+	roomType: 'boarding_house' | 'apartment' | 'house' | 'studio';
+	availableFrom: string;
+	gender?: 'male' | 'female' | 'mixed';
+	maxOccupants: number;
+	electricityCost?: number;
+	waterCost?: number;
+	internetCost?: number;
+	cleaningCost?: number;
+	parkingCost?: number;
+	isPriority?: boolean;
+	expiresAt?: string;
+}

@@ -6,7 +6,7 @@ import { Loader2, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { useRoomStore } from '@/stores/roomStore';
-import { type RoomSearchParams } from '@/actions/listings.action';
+import { type RoomSearchParams } from '@/types/types';
 import { RoomCard } from '@/components/ui/room-card';
 import { parseSearchParams } from '@/utils/search-params';
 
@@ -226,7 +226,7 @@ function SearchPageContent() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 pt-20">
+    <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">

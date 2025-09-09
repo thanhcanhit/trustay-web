@@ -12,7 +12,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("all")
 
   return (
-    <div className="min-h-screen pt-16">
+    <div className="min-h-screen">
       {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-green-900 via-green-800 to-green-600 min-h-[300px] overflow-hidden">
         {/* Background Pattern */}

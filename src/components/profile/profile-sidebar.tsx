@@ -6,9 +6,9 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import {
   User,
-  Bell,
   Home,
-  Users,
+  Bell,
+  //Users,
   Heart,
   LogOut,
   ChevronDown,
@@ -16,6 +16,7 @@ import {
   Receipt,
   Send,
   Shield,
+  FileText,
 } from "lucide-react"
 import { useUserStore } from "@/stores/userStore"
 
@@ -23,6 +24,7 @@ interface ProfileSidebarSubItem {
   title: string
   href: string
   icon: React.ComponentType<{ className?: string }>
+  disabled?: boolean
 }
 
 interface ProfileSidebarItem {
@@ -31,6 +33,7 @@ interface ProfileSidebarItem {
   icon: React.ComponentType<{ className?: string }>
   badge?: string
   subItems?: ProfileSidebarSubItem[]
+  disabled?: boolean
 }
 
 interface ProfileSidebarProps {
@@ -61,34 +64,51 @@ const profileItems: ProfileSidebarItem[] = [
       {
         title: "Trọ của tôi",
         href: "/profile/accommodation",
-        icon: Home
+        icon: Home,
+        disabled: true
       },
       {
         title: "Hóa đơn",
         href: "/profile/bills",
-        icon: Receipt
+        icon: Receipt,
+        disabled: true
       }
     ]
   },
   {
-    title: "Tìm bạn cùng phòng",
-    href: "/profile/roommate",
-    icon: Users
+    title: "Quản lý bài đăng",
+    icon: FileText,
+    subItems: [
+      {
+        title: "Tìm trọ",
+        href: "/profile/posts/room-seeking",
+        icon: FileText
+      },
+      {
+        title: "Tìm người ở ghép",
+        href: "/profile/posts/roommate",
+        icon: FileText,
+        disabled: true
+      }
+    ]
   },
   {
     title: "Yêu cầu thuê",
     href: "/profile/requests",
-    icon: Send
+    icon: Send,
+    disabled: true
   },
   {
     title: "Trọ đã lưu",
     href: "/profile/saved",
-    icon: Heart
+    icon: Heart,
+    disabled: true
   },
   {
     title: "Thông báo",
     href: "/profile/notifications",
-    icon: Bell
+    icon: Bell,
+    disabled: true
   }
 ]
 
@@ -152,23 +172,39 @@ export function ProfileSidebar({ userRole }: ProfileSidebarProps) {
                   )}
                 </button>
               ) : (
-                <Link
-                  href={item.href!}
-                  className={cn(
-                    "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                    pathname === item.href
-                      ? "bg-green-50 text-green-700 border-r-2 border-green-500"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span>{item.title}</span>
-                  {item.badge && (
-                    <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
+                item.disabled ? (
+                  <div
+                    className={cn(
+                      "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-not-allowed opacity-50"
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{item.title}</span>
+                    {item.badge && (
+                      <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    href={item.href!}
+                    className={cn(
+                      "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      pathname === item.href
+                        ? "bg-green-50 text-green-700 border-r-2 border-green-500"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{item.title}</span>
+                    {item.badge && (
+                      <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                )
               )}
 
               {/* Sub Items */}
@@ -178,7 +214,15 @@ export function ProfileSidebar({ userRole }: ProfileSidebarProps) {
                     const SubIcon = subItem.icon
                     const isSubActive = isActiveRoute(subItem.href)
 
-                    return (
+                    return subItem.disabled ? (
+                      <div
+                        key={subItem.href}
+                        className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors relative cursor-not-allowed opacity-50"
+                      >
+                        <SubIcon className="h-5 w-5 text-gray-400" />
+                        <span>{subItem.title}</span>
+                      </div>
+                    ) : (
                       <Link
                         key={subItem.href}
                         href={subItem.href}

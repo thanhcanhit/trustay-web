@@ -39,11 +39,8 @@ export {
 export {
 	getAllRoomListings,
 	getFeaturedRoomListings,
+	listPublicRoomSeekingPosts,
 	//getRoomBySlug,
-	type RoomDetail,
-	type RoomListing,
-	type RoomListingsResponse,
-	type RoomSearchParams,
 	searchRoomListings,
 } from './listings.action';
 // Export location actions (excluding ApiError)
@@ -72,6 +69,17 @@ export {
 	updateRoom,
 	updateRoomInstanceStatus,
 } from './room.action';
+// Export room seeking actions
+export {
+	createRoomSeekingPost,
+	deleteRoomSeekingPost,
+	getMyRoomSeekingPosts,
+	getRoomSeekingPostById,
+	getRoomSeekingPosts,
+	incrementRoomSeekingPostContact,
+	updateRoomSeekingPost,
+	updateRoomSeekingPostStatus,
+} from './room-seeking.action';
 // Export upload actions
 export {
 	getImageUrl,

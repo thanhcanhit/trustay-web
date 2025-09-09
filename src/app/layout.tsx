@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import { Navigation } from "@/components/navigation";
-import { Footer } from "@/components/footer";
+import { FooterGate } from "@/components/footer-gate";
 import { AuthProvider } from "@/components/auth-provider";
 import { AppInitializer } from "@/components/app-initializer";
 import { Toaster } from "@/components/ui/sonner";
@@ -45,7 +45,7 @@ export default function RootLayout({
               <Navigation />
             </Suspense>
             <main className="flex-1 page-content">{children}</main>
-            <Footer />
+            <FooterGate />
             <Toaster
               position="top-center"
               expand={true}

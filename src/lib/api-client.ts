@@ -212,6 +212,7 @@ const handleServerApiError = (error: unknown): never => {
 export const createServerApiCall = (getToken: () => Promise<string | null> | string | null) => {
 	return async function apiCall<T>(endpoint: string, options: AxiosRequestConfig = {}): Promise<T> {
 		const token = await getToken();
+		// Default to production API if env not set
 		const serverBaseURL = process.env.NEXT_PUBLIC_API_URL || 'http://trustay.life:3000';
 
 		const config: AxiosRequestConfig = {

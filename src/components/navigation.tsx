@@ -2,58 +2,104 @@
 
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
-import { usePathname } from "next/navigation"
-import { motion, AnimatePresence } from "motion/react"
+import { usePathname, useRouter } from "next/navigation"
+// import { motion, AnimatePresence } from "motion/react"
 import { useUserStore } from "@/stores/userStore"
-import { useSearchFilters, type SearchFilters } from "@/hooks/use-search-filters"
+import { useSearchFilters } from "@/hooks/use-search-filters"
+import { encodeSearchQuery } from "@/utils/search-params"
 import { Button } from "@/components/ui/button"
+// Removed second-row granular filters in favor of a single Filter dialog
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
+import { AddressSelector } from "@/components/ui/address-selector"
 import { AmenityFilter } from "@/components/ui/amenity-filter"
-import { PriceFilter } from "@/components/ui/price-filter"
-import { LocationFilter } from "@/components/ui/location-filter"
-import { AreaFilter } from "@/components/ui/area-filter"
-import { SearchInputWithFilters } from "@/components/ui/search-input-with-filters"
+import { RuleSelector } from "@/components/ui/rule-selector"
+import { getRoomTypeOptions } from "@/utils/room-types"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { SizingImage } from "@/components/sizing-image"
+// navigation-menu components are not used here
+
 import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu"
-import {
-  Plus,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Plus,
+  Funnel
 } from "lucide-react"
 import Image from "next/image"
+import { Input } from "./ui/input"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuPortal, DropdownMenuTrigger } from "./ui/dropdown-menu"
 
 export function Navigation() {
   const pathname = usePathname()
-  const { user, isAuthenticated, logout, switchRole } = useUserStore()
+  const router = useRouter()
+  const { user, isAuthenticated, logout } = useUserStore()
   const [showUserDropdown, setShowUserDropdown] = useState(false)
-  const [showSecondRow, setShowSecondRow] = useState(true)
-  const [lastScrollY, setLastScrollY] = useState(0)
+  // Second row removed; scroll-based toggle no longer needed
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState<string>("")
+  const [selectedProvinceId, setSelectedProvinceId] = useState<number | null>(null)
+  const [selectedDistrictId, setSelectedDistrictId] = useState<number | null>(null)
+  const [selectedWardId, setSelectedWardId] = useState<number | null>(null)
+  const [selectedPriceRange, setSelectedPriceRange] = useState<string>("")
+  const [selectedAreaRange, setSelectedAreaRange] = useState<string>("")
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
+  const [selectedRules, setSelectedRules] = useState<string[]>([])
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Use search filters hook
   const {
     searchQuery,
     setSearchQuery,
-    getActiveFilters,
-    addFilterValue,
-    removeFilterValue,
-    removeFilter,
+    // getActiveFilters,
     applyFilters
   } = useSearchFilters()
 
   // Get active filters for display
-  const activeFiltersList = getActiveFilters()
+  // const activeFiltersList = getActiveFilters()
 
-  // Handle search
-  const handleSearch = () => {
+  // Handle apply for new filter dialog
+  const handleApplyFilters = () => {
+    // If user selected "người tìm trọ" -> navigate to public room-seeking list
+    if (selectedCategory === 'room-seeking') {
+      setIsFilterOpen(false)
+      const params = new URLSearchParams()
+      const encodedQuery = encodeSearchQuery(searchQuery)
+      if (encodedQuery !== '.') params.set('search', encodedQuery)
+      if (selectedProvinceId) params.set('provinceId', String(selectedProvinceId))
+      if (selectedDistrictId) params.set('districtId', String(selectedDistrictId))
+      if (selectedWardId) params.set('wardId', String(selectedWardId))
+      router.push(`/room-seeking${params.toString() ? `?${params.toString()}` : ''}`)
+      return
+    }
+
+    // If user selected a room type -> go to search listings with roomType
+    if (selectedCategory.startsWith('roomType:')) {
+      const roomType = selectedCategory.replace('roomType:', '')
+      const params = new URLSearchParams()
+      params.set('search', encodeSearchQuery(searchQuery))
+      params.set('page', '1')
+      if (roomType) params.set('roomType', roomType)
+      if (selectedProvinceId) params.set('provinceId', String(selectedProvinceId))
+      if (selectedDistrictId) params.set('districtId', String(selectedDistrictId))
+      if (selectedWardId) params.set('wardId', String(selectedWardId))
+      if (selectedPriceRange) {
+        const [minP, maxP] = selectedPriceRange.split('-')
+        if (minP) params.set('minPrice', minP)
+        if (maxP) params.set('maxPrice', maxP)
+      }
+      if (selectedAreaRange) {
+        const [minA, maxA] = selectedAreaRange.split('-')
+        if (minA) params.set('minArea', minA)
+        if (maxA) params.set('maxArea', maxA)
+      }
+      if (selectedAmenities.length > 0) params.set('amenities', selectedAmenities.join(','))
+      setIsFilterOpen(false)
+      router.push(`/search?${params.toString()}`)
+      return
+    }
+
+    // Default fallback to original search apply
     applyFilters()
+    setIsFilterOpen(false)
   }
 
 
@@ -74,44 +120,7 @@ export function Navigation() {
     }
   }
 
-  const handleRoleSwitch = () => {
-    if (!user) return
-    const newRole = user.role === 'tenant' ? 'landlord' : 'tenant'
-    switchRole(newRole)
-    setShowUserDropdown(false)
-    // Redirect to appropriate dashboard
-    window.location.href = newRole === 'tenant' ? '/profile' : '/dashboard/landlord'
-  }
 
-  // const getDashboardLink = () => {
-  //   if (!user) return "/login"
-  //   return user.role === 'tenant' ? '/profile' : '/dashboard/landlord'
-  // }
-
-  // Handle scroll to show/hide second row
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY
-      
-      if (currentScrollY < 10) {
-        // At the top, always show second row
-        setShowSecondRow(true)
-      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        // Scrolling down and past threshold, hide second row
-        setShowSecondRow(false)
-      } else if (currentScrollY < lastScrollY) {
-        // Scrolling up, show second row
-        setShowSecondRow(true)
-      }
-      
-      setLastScrollY(currentScrollY)
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [lastScrollY])
-
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -129,275 +138,292 @@ export function Navigation() {
     <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-[9998]">
       {/* First Row: Logo, Search, Login/Signup */}
       <div className={isAuthPage ? "" : "border-b border-gray-200"}>
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 relative">
           <div className="flex h-16 items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
-              <Image src="/logo.png" alt="Trustay" width={140} height={140} />
-            </Link>
-
-            {/* Search Bar - Hidden on auth pages */}
+            <div className="flex items-center gap-4">
+              {/* Logo */}
+              <Link href="/" className="flex items-center space-x-2">
+                <Image src="/logo.png" alt="Trustay" width={140} height={140} />
+              </Link>
+            </div>
+            {/* Centered Search + Filter (hidden on auth pages) */}
             {!isAuthPage && (
-              <div className="flex-1 max-w-4xl mx-8">
-                <div className="flex space-x-2">
-                  {/* Search Input with Selected Filters */}
-                  <div className="flex-1">
-                    <SearchInputWithFilters
-                      searchQuery={searchQuery}
-                      onSearchChange={setSearchQuery}
-                      onSearch={handleSearch}
-                      selectedAmenities={activeFiltersList.find(af => af.id === 'amenities')?.values || []}
-                      selectedPrices={activeFiltersList.find(af => af.id === 'price')?.values || []}
-                      selectedLocation={activeFiltersList.find(af => af.id === 'location')?.values?.[0] || ''}
-                      selectedAreas={activeFiltersList.find(af => af.id === 'area')?.values || []}
-                      onRemoveFilter={(type) => {
-                        if (type === 'location') {
-                          removeFilter('location');
-                        } else {
-                          removeFilterValue(type === 'amenity' ? 'amenities' : type as keyof SearchFilters);
-                        }
-                      }}
-                    />
-                  </div>
+              <div className="absolute left-1/2 -translate-x-1/2 -mx-8">
+                <div className="flex items-center gap-3">
+                  {/* Keyword search input (restored) */}
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { applyFilters() } }}
+                    placeholder="Tìm kiếm theo từ khóa..."
+                    className="flex-1 h-10 w-120 px-4 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-600"
+                  />
 
-                  {/* Search Button */}
-                  <Button
-                    onClick={handleSearch}
-                    className="h-12 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors px-6 cursor-pointer"
-                  >
-                    Tìm kiếm
-                  </Button>
+                  <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-10 w-18 hover:bg-gray-200 rounded-lg cursor-pointer">
+                        <Funnel className="h-4 w-4" />
+                        Bộ lọc
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
+                      <DialogHeader className="flex-shrink-0">
+                        <DialogTitle>Bộ lọc</DialogTitle>
+                      </DialogHeader>
+                      <div className="flex-1 overflow-y-auto space-y-6 py-2 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 scrollbar-thumb-rounded-full">
+                        <div>
+                          <div className="text-sm font-medium mb-2">Danh mục cho thuê</div>
+                          <div className="flex flex-wrap gap-2">
+                            {getRoomTypeOptions().map(option => (
+                              <Button
+                                key={option.value}
+                                onClick={() => setSelectedCategory(`roomType:${option.value}`)}
+                                variant={selectedCategory === `roomType:${option.value}` ? 'default' : 'outline'}
+                                className={`h-9 ${selectedCategory === `roomType:${option.value}` ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                              >
+                                {option.label}
+                              </Button>
+                            ))}
+                            <Button
+                              onClick={() => setSelectedCategory('roommate')}
+                              variant={selectedCategory === 'roommate' ? 'default' : 'outline'}
+                              className={`h-9 ${selectedCategory === 'roommate' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                            >
+                              Tìm người ở ghép
+                            </Button>
+                            <Button
+                              onClick={() => setSelectedCategory('room-seeking')}
+                              variant={selectedCategory === 'room-seeking' ? 'default' : 'outline'}
+                              className={`h-9 ${selectedCategory === 'room-seeking' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                            >
+                              Người tìm trọ
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Lọc theo khu vực */}
+                        <div className="space-y-3">
+                          <div className="text-sm font-medium">Lọc theo khu vực</div>
+                          <AddressSelector
+                            showStreetInput={false}
+                            onChange={(addr) => {
+                              setSelectedProvinceId(addr.province?.id || null)
+                              setSelectedDistrictId(addr.district?.id || null)
+                              setSelectedWardId(addr.ward?.id || null)
+                            }}
+                          />
+                        </div>
+
+                        {/* Khoảng giá */}
+                        <div className="space-y-3">
+                          <div className="text-sm font-medium">Khoảng giá</div>
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              { v: '', l: 'Tất cả' },
+                              { v: '0-1000000', l: 'Dưới 1 triệu' },
+                              { v: '1000000-2000000', l: '1 - 2 triệu' },
+                              { v: '2000000-3000000', l: '2 - 3 triệu' },
+                              { v: '3000000-5000000', l: '3 - 5 triệu' },
+                              { v: '5000000-7000000', l: '5 - 7 triệu' },
+                              { v: '7000000-10000000', l: '7 - 10 triệu' },
+                              { v: '10000000-15000000', l: '10 - 15 triệu' },
+                              { v: '15000000-999999999', l: 'Trên 15 triệu' },
+                            ].map(opt => (
+                              <Button
+                                key={opt.v || 'all'}
+                                onClick={() => setSelectedPriceRange(opt.v)}
+                                variant={selectedPriceRange === opt.v ? 'default' : 'outline'}
+                                className={`h-9 ${selectedPriceRange === opt.v ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                              >
+                                {opt.l}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Khoảng diện tích */}
+                        <div className="space-y-3">
+                          <div className="text-sm font-medium">Khoảng diện tích</div>
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              { v: '', l: 'Tất cả' },
+                              { v: '0-20', l: 'Dưới 20m²' },
+                              { v: '20-30', l: '20 - 30m²' },
+                              { v: '30-50', l: '30 - 50m²' },
+                              { v: '50-70', l: '50 - 70m²' },
+                              { v: '70-90', l: '70 - 90m²' },
+                              { v: '90-999', l: 'Trên 90m²' },
+                            ].map(opt => (
+                              <Button
+                                key={opt.v || 'all'}
+                                onClick={() => setSelectedAreaRange(opt.v)}
+                                variant={selectedAreaRange === opt.v ? 'default' : 'outline'}
+                                className={`h-9 ${selectedAreaRange === opt.v ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                              >
+                                {opt.l}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Đặc điểm nổi bật */}
+                        <div className="space-y-3">
+                          <div className="text-sm font-medium">Đặc điểm nổi bật</div>
+                          <AmenityFilter
+                            selectedAmenities={selectedAmenities}
+                            onSelectionChange={setSelectedAmenities}
+                            mode="inline"
+                          />
+                          <RuleSelector
+                            selectedRules={selectedRules}
+                            onSelectionChange={(rules) => setSelectedRules(rules as string[])}
+                            mode="inline"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="text-sm font-medium mb-2">Từ khóa</div>
+                          <input
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Nhập từ khóa..."
+                            className="w-full h-10 px-3 rounded-md border focus:outline-none focus:ring-2 focus:ring-green-600"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter className="flex-shrink-0 mt-4 pt-4 border-t">
+                        <Button
+                          onClick={() => setIsFilterOpen(false)}
+                          variant="outline"
+                          className="cursor-pointer"
+                        >
+                          Hủy
+                        </Button>
+                        <Button onClick={handleApplyFilters} className="bg-green-600 hover:bg-green-700 cursor-pointer">Áp dụng</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             )}
-
             {/* Right Section - Login/Signup or User Menu */}
             <div className="flex items-center space-x-3">
               {isAuthenticated && user ? (
-                <>
-                  {/* Role Switch Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRoleSwitch}
-                    className="text-sm border-green-500 text-green-600 hover:bg-green-50"
-                  >
-                    {user.role === 'tenant' ? 'Quản cáo trọ' : 'Chế độ thuê trọ'}
-                  </Button>
-
-                  <div className="relative" ref={dropdownRef}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowUserDropdown(!showUserDropdown)}
-                    className="flex items-center space-x-2 text-gray-700 hover:text-gray-900"
-                  >
-                    <Avatar className="h-8 w-8">
-                      {user.avatarUrl ? (
-                        <div className="w-full h-full relative">
-                          <SizingImage 
-                            src={user.avatarUrl} 
-                            srcSize="256x256" 
-                            alt={`${user.firstName} ${user.lastName}`} 
-                            className="object-cover rounded-full"
-                            fill
-                          />
-                        </div>
-                      ) : (
-                        <AvatarFallback className="text-sm font-medium bg-green-100 text-green-700">
-                          {user.firstName?.charAt(0)?.toUpperCase()}{user.lastName?.charAt(0)?.toUpperCase()}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <span className="hidden sm:inline-block">{user.firstName} {user.lastName}</span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-
-                  {showUserDropdown && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border z-50">
-                      <div className="py-1">
-                        <Link
-                          href={"/profile"}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setShowUserDropdown(false)}
-                        >
-                          Quản lý cá nhân
-                        </Link>
-                        {user?.role === 'landlord' ? (
-                          <Link
-                          href={"/dashboard/landlord"}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setShowUserDropdown(false)}
-                        >
-                          Quản lý trọ
-                        </Link>
-                        ): null}
-                        
-                        <hr className="border-gray-200" />
-                        <button
-                          onClick={handleLogout}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          <LogOut className="h-4 w-4 inline mr-2" />
-                          Đăng xuất
-                        </button>
+                <div className="relative" ref={dropdownRef}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowUserDropdown(!showUserDropdown)}
+                  className="flex items-center space-x-2 h-10 text-gray-700 hover:text-gray-900 cursor-pointer"
+                >
+                  <Avatar className="h-8 w-8">
+                    {user.avatarUrl ? (
+                      <div className="w-full h-full relative">
+                        <SizingImage 
+                          src={user.avatarUrl} 
+                          srcSize="256x256" 
+                          alt={`${user.firstName} ${user.lastName}`} 
+                          className="object-cover rounded-full"
+                          fill
+                        />
                       </div>
+                    ) : (
+                      <AvatarFallback className="text-sm font-medium bg-green-100 text-green-700">
+                        {user.firstName?.charAt(0)?.toUpperCase()}{user.lastName?.charAt(0)?.toUpperCase()}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <span className="hidden sm:inline-block">{user.firstName} {user.lastName}</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+
+                {showUserDropdown && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border z-50">
+                    <div className="py-1">
+                      <Link
+                        href={"/profile"}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => setShowUserDropdown(false)}
+                      >
+                        Quản lý cá nhân
+                      </Link>
+                      {user?.role === 'landlord' ? (
+                        <Link
+                        href={"/dashboard/landlord"}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => setShowUserDropdown(false)}
+                      >
+                        Quản lý trọ
+                      </Link>
+                      ): null}
+                      
+                      <hr className="border-gray-200" />
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      >
+                        <LogOut className="h-4 w-4 inline mr-2" />
+                        Đăng xuất
+                      </button>
                     </div>
-                  )}
                   </div>
-                </>
+                )}
+                </div>
               ) : (
                 <div className="flex items-center space-x-2">
                   <Button variant="ghost" size="sm" asChild>
-                    <Link href="/login" className="text-gray-600 hover:text-gray-700">
+                    <Link href="/login" className="text-gray-600 hover:text-gray-700 cursor-pointer">
                       Đăng nhập
                     </Link>
                   </Button>
-                  <Button size="sm" className="bg-primary hover:bg-green-700 text-white" asChild>
+                  <Button size="sm" className="bg-primary hover:bg-green-700 text-white cursor-pointer" asChild>
                     <Link href="/register">Đăng ký</Link>
                   </Button>
                 </div>
               )}
+                    
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-10 text-white bg-green-600 hover:bg-green-700 font-medium cursor-pointer">
+                    <Plus className="h-4 w-4" />
+                    Đăng bài
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent className="w-56 z-[10000]" align="end" side="top">
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem>
+                        <Link href="/post?type=room-seeking" className="select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                          <div className="text-sm font-medium leading-none">Đăng tin tìm chỗ thuê</div>
+                          <p className="text-xs leading-tight text-muted-foreground">
+                            Đăng tin tìm kiếm phòng trọ, nhà trọ
+                          </p>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Link href="/post?type=roommate" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                          <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
+                          <p className="text-xs leading-tight text-muted-foreground">
+                            Tìm bạn cùng phòng, người ở ghép
+                          </p>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Link href="/dashboard/landlord/properties/add" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                          <div className="text-sm font-medium leading-none">Đăng tin cho thuê</div>
+                          <p className="text-xs leading-tight text-muted-foreground">
+                            Đăng tin cho thuê phòng trọ, nhà trọ của bạn
+                          </p>
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
+              </DropdownMenu>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Second Row: Filter Bar - Hidden on auth pages */}
-      {!isAuthPage && (
-        <AnimatePresence>
-          {showSecondRow && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ 
-                duration: 0.3, 
-                ease: "easeInOut",
-                opacity: { duration: 0.2 }
-              }}
-              className="overflow-visible"
-            >
-                             <div className="container mx-auto px-4 overflow-visible relative">
-                 <div className="flex h-12 items-center gap-15 overflow-visible relative">
-                  {/* Post Button */}
-                  <NavigationMenu viewport={false}>
-                    <NavigationMenuList>
-                      <NavigationMenuItem>
-                                                 <NavigationMenuTrigger className="text-white bg-green-600 hover:bg-green-700 font-medium px-4 py-2 rounded-md cursor-pointer">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Đăng bài
-                        </NavigationMenuTrigger>
-                        <NavigationMenuContent>
-                          <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px]">
-                            <li>
-                              <NavigationMenuLink asChild>
-                                <Link href="/dashboard/landlord/properties/add" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                                  <div className="text-sm font-medium leading-none">Đăng tin cho thuê</div>
-                                  <p className="text-xs leading-tight text-muted-foreground">
-                                    Đăng tin cho thuê phòng trọ, nhà trọ của bạn
-                                  </p>
-                                </Link>
-                              </NavigationMenuLink>
-                            </li>
-                            <li>
-                              <NavigationMenuLink asChild>
-                                <Link href="/profile/find-rental" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                                  <div className="text-sm font-medium leading-none">Đăng tin tìm chỗ thuê</div>
-                                  <p className="text-xs leading-tight text-muted-foreground">
-                                    Đăng tin tìm kiếm phòng trọ, nhà trọ
-                                  </p>
-                                </Link>
-                              </NavigationMenuLink>
-                            </li>
-                            <li>
-                              <NavigationMenuLink asChild>
-                                <Link href="/profile/find-roommate" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                                  <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
-                                  <p className="text-xs leading-tight text-muted-foreground">
-                                    Tìm bạn cùng phòng, người ở ghép
-                                  </p>
-                                </Link>
-                              </NavigationMenuLink>
-                            </li>
-                          </ul>
-                        </NavigationMenuContent>
-                      </NavigationMenuItem>
-                    </NavigationMenuList>
-                  </NavigationMenu>
-
-                                     {/* Filter Buttons */}
-                   <div className="flex items-center space-x-5 flex-wrap relative">
-                    <LocationFilter
-                      selectedLocation={activeFiltersList.find(af => af.id === 'location')?.values?.[0] || ''}
-                      onLocationChange={(location) => {
-                        // Clear existing location filter
-                        removeFilter('location');
-                        // Add new location filter if not empty
-                        if (location) {
-                          addFilterValue('location', location);
-                        }
-                      }}
-                    />
-
-                    <AreaFilter
-                      selectedAreas={activeFiltersList.find(af => af.id === 'area')?.values || []}
-                      onSelectionChange={(areas) => {
-                        // Clear existing area filters
-                        const currentAreaFilter = activeFiltersList.find(af => af.id === 'area');
-                        if (currentAreaFilter) {
-                          currentAreaFilter.values.forEach(() => {
-                            removeFilterValue('area');
-                          });
-                        }
-                        // Add new area filters
-                        areas.forEach(area => {
-                          addFilterValue('area', area);
-                        });
-                      }}
-                    />
-
-                    <PriceFilter
-                      selectedPrices={activeFiltersList.find(af => af.id === 'price')?.values || []}
-                      onSelectionChange={(prices) => {
-                        // Clear existing price filters
-                        const currentPriceFilter = activeFiltersList.find(af => af.id === 'price');
-                        if (currentPriceFilter) {
-                          currentPriceFilter.values.forEach(() => {
-                            removeFilterValue('price');
-                          });
-                        }
-                        // Add new price filters
-                        prices.forEach(price => {
-                          addFilterValue('price', price);
-                        });
-                      }}
-                    />
-
-                    <AmenityFilter
-                      selectedAmenities={activeFiltersList.find(af => af.id === 'amenities')?.values || []}
-                      onSelectionChange={(amenityIds) => {
-                        // Clear existing amenity filters
-                        const currentAmenityFilter = activeFiltersList.find(af => af.id === 'amenities');
-                        if (currentAmenityFilter) {
-                          currentAmenityFilter.values.forEach(() => {
-                            removeFilterValue('amenities');
-                          });
-                        }
-                        // Add new amenity filters
-                        amenityIds.forEach(amenityId => {
-                          addFilterValue('amenities', amenityId);
-                        });
-                      }}
-                    />
-                  </div>
-
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      )}
     </nav>
   )
 }

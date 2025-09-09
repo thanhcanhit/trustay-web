@@ -1,8 +1,12 @@
+import { Suspense } from 'react'
+import { PostCreationWizard } from '@/components/forms/post-creation-wizard'
+
 export default function PostPage() {
-  return (
-    <div className="container mx-auto px-4 py-8 pt-20">
-      <h1 className="text-2xl font-bold mb-6">Đăng tin</h1>
-      <p className="text-muted-foreground">Trang đăng tin đang được phát triển...</p>
-    </div>
-  )
+	return (
+		<div className="min-h-screen bg-gray-50 pt-8 -mb-20">
+			<Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="text-lg">Loading...</div></div>}>
+				<PostCreationWizard />
+			</Suspense>
+		</div>
+	)
 }
