@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation"
 // import { motion, AnimatePresence } from "motion/react"
 import { useUserStore } from "@/stores/userStore"
 import { useSearchFilters } from "@/hooks/use-search-filters"
+import { encodeSearchQuery } from "@/utils/search-params"
 import { Button } from "@/components/ui/button"
 // Removed second-row granular filters in favor of a single Filter dialog
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
@@ -61,7 +62,8 @@ export function Navigation() {
     if (selectedCategory === 'room-seeking') {
       setIsFilterOpen(false)
       const params = new URLSearchParams()
-      if (searchQuery) params.set('search', searchQuery)
+      const encodedQuery = encodeSearchQuery(searchQuery)
+      if (encodedQuery !== '.') params.set('search', encodedQuery)
       if (selectedProvinceId) params.set('provinceId', String(selectedProvinceId))
       if (selectedDistrictId) params.set('districtId', String(selectedDistrictId))
       if (selectedWardId) params.set('wardId', String(selectedWardId))
@@ -73,7 +75,7 @@ export function Navigation() {
     if (selectedCategory.startsWith('roomType:')) {
       const roomType = selectedCategory.replace('roomType:', '')
       const params = new URLSearchParams()
-      params.set('search', searchQuery || '.')
+      params.set('search', encodeSearchQuery(searchQuery))
       params.set('page', '1')
       if (roomType) params.set('roomType', roomType)
       if (selectedProvinceId) params.set('provinceId', String(selectedProvinceId))
@@ -136,177 +138,174 @@ export function Navigation() {
     <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-[9998]">
       {/* First Row: Logo, Search, Login/Signup */}
       <div className={isAuthPage ? "" : "border-b border-gray-200"}>
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 relative">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-4">
               {/* Logo */}
               <Link href="/" className="flex items-center space-x-2">
                 <Image src="/logo.png" alt="Trustay" width={140} height={140} />
               </Link>
+            </div>
+            {/* Centered Search + Filter (hidden on auth pages) */}
+            {!isAuthPage && (
+              <div className="absolute left-1/2 -translate-x-1/2 -mx-8">
+                <div className="flex items-center gap-3">
+                  {/* Keyword search input (restored) */}
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { applyFilters() } }}
+                    placeholder="Tìm kiếm theo từ khóa..."
+                    className="flex-1 h-10 w-120 px-4 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-600"
+                  />
 
-              {/* Filter + Post buttons - Hidden on auth pages */}
-              {!isAuthPage && (
-                <div className="flex-1 max-w-4xl mx-8">
-                  <div className="flex items-center gap-3">
-                    {/* Keyword search input (restored) */}
-                    <Input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { applyFilters() } }}
-                      placeholder="Tìm kiếm theo từ khóa..."
-                      className="flex-1 h-10 w-100 px-4 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-600"
-                    />
-
-                    <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-10 w-18 hover:bg-gray-200 rounded-lg cursor-pointer">
-                          <Funnel className="h-4 w-4" />
-                          Bộ lọc
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Bộ lọc</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-6 py-2">
-                          <div>
-                            <div className="text-sm font-medium mb-2">Danh mục cho thuê</div>
-                            <div className="flex flex-wrap gap-2">
-                              {getRoomTypeOptions().map(option => (
-                                <Button
-                                  key={option.value}
-                                  onClick={() => setSelectedCategory(`roomType:${option.value}`)}
-                                  variant={selectedCategory === `roomType:${option.value}` ? 'default' : 'outline'}
-                                  className={`h-9 ${selectedCategory === `roomType:${option.value}` ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                                >
-                                  {option.label}
-                                </Button>
-                              ))}
+                  <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-10 w-18 hover:bg-gray-200 rounded-lg cursor-pointer">
+                        <Funnel className="h-4 w-4" />
+                        Bộ lọc
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
+                      <DialogHeader className="flex-shrink-0">
+                        <DialogTitle>Bộ lọc</DialogTitle>
+                      </DialogHeader>
+                      <div className="flex-1 overflow-y-auto space-y-6 py-2 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 scrollbar-thumb-rounded-full">
+                        <div>
+                          <div className="text-sm font-medium mb-2">Danh mục cho thuê</div>
+                          <div className="flex flex-wrap gap-2">
+                            {getRoomTypeOptions().map(option => (
                               <Button
-                                onClick={() => setSelectedCategory('roommate')}
-                                variant={selectedCategory === 'roommate' ? 'default' : 'outline'}
-                                className={`h-9 ${selectedCategory === 'roommate' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                                key={option.value}
+                                onClick={() => setSelectedCategory(`roomType:${option.value}`)}
+                                variant={selectedCategory === `roomType:${option.value}` ? 'default' : 'outline'}
+                                className={`h-9 ${selectedCategory === `roomType:${option.value}` ? 'bg-green-600 hover:bg-green-700' : ''}`}
                               >
-                                Tìm người ở ghép
+                                {option.label}
                               </Button>
-                              <Button
-                                onClick={() => setSelectedCategory('room-seeking')}
-                                variant={selectedCategory === 'room-seeking' ? 'default' : 'outline'}
-                                className={`h-9 ${selectedCategory === 'room-seeking' ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                              >
-                                Người tìm trọ
-                              </Button>
-                            </div>
-                          </div>
-
-                          {/* Lọc theo khu vực */}
-                          <div className="space-y-3">
-                            <div className="text-sm font-medium">Lọc theo khu vực</div>
-                            <AddressSelector
-                              showStreetInput={false}
-                              onChange={(addr) => {
-                                setSelectedProvinceId(addr.province?.id || null)
-                                setSelectedDistrictId(addr.district?.id || null)
-                                setSelectedWardId(addr.ward?.id || null)
-                              }}
-                            />
-                          </div>
-
-                          {/* Khoảng giá */}
-                          <div className="space-y-3">
-                            <div className="text-sm font-medium">Khoảng giá</div>
-                            <div className="flex flex-wrap gap-2">
-                              {[
-                                { v: '', l: 'Tất cả' },
-                                { v: '0-1000000', l: 'Dưới 1 triệu' },
-                                { v: '1000000-2000000', l: '1 - 2 triệu' },
-                                { v: '2000000-3000000', l: '2 - 3 triệu' },
-                                { v: '3000000-5000000', l: '3 - 5 triệu' },
-                                { v: '5000000-7000000', l: '5 - 7 triệu' },
-                                { v: '7000000-10000000', l: '7 - 10 triệu' },
-                                { v: '10000000-15000000', l: '10 - 15 triệu' },
-                                { v: '15000000-999999999', l: 'Trên 15 triệu' },
-                              ].map(opt => (
-                                <Button
-                                  key={opt.v || 'all'}
-                                  onClick={() => setSelectedPriceRange(opt.v)}
-                                  variant={selectedPriceRange === opt.v ? 'default' : 'outline'}
-                                  className={`h-9 ${selectedPriceRange === opt.v ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                                >
-                                  {opt.l}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Khoảng diện tích */}
-                          <div className="space-y-3">
-                            <div className="text-sm font-medium">Khoảng diện tích</div>
-                            <div className="flex flex-wrap gap-2">
-                              {[
-                                { v: '', l: 'Tất cả' },
-                                { v: '0-20', l: 'Dưới 20m²' },
-                                { v: '20-30', l: '20 - 30m²' },
-                                { v: '30-50', l: '30 - 50m²' },
-                                { v: '50-70', l: '50 - 70m²' },
-                                { v: '70-90', l: '70 - 90m²' },
-                                { v: '90-999', l: 'Trên 90m²' },
-                              ].map(opt => (
-                                <Button
-                                  key={opt.v || 'all'}
-                                  onClick={() => setSelectedAreaRange(opt.v)}
-                                  variant={selectedAreaRange === opt.v ? 'default' : 'outline'}
-                                  className={`h-9 ${selectedAreaRange === opt.v ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                                >
-                                  {opt.l}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Đặc điểm nổi bật */}
-                          <div className="space-y-3">
-                            <div className="text-sm font-medium">Đặc điểm nổi bật</div>
-                            <AmenityFilter
-                              selectedAmenities={selectedAmenities}
-                              onSelectionChange={setSelectedAmenities}
-                              mode="inline"
-                            />
-                            <RuleSelector
-                              selectedRules={selectedRules}
-                              onSelectionChange={(rules) => setSelectedRules(rules as string[])}
-                              mode="inline"
-                            />
-                          </div>
-
-                          <div>
-                            <div className="text-sm font-medium mb-2">Từ khóa</div>
-                            <input
-                              value={searchQuery}
-                              onChange={(e) => setSearchQuery(e.target.value)}
-                              placeholder="Nhập từ khóa..."
-                              className="w-full h-10 px-3 rounded-md border focus:outline-none focus:ring-2 focus:ring-green-600"
-                            />
+                            ))}
+                            <Button
+                              onClick={() => setSelectedCategory('roommate')}
+                              variant={selectedCategory === 'roommate' ? 'default' : 'outline'}
+                              className={`h-9 ${selectedCategory === 'roommate' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                            >
+                              Tìm người ở ghép
+                            </Button>
+                            <Button
+                              onClick={() => setSelectedCategory('room-seeking')}
+                              variant={selectedCategory === 'room-seeking' ? 'default' : 'outline'}
+                              className={`h-9 ${selectedCategory === 'room-seeking' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                            >
+                              Người tìm trọ
+                            </Button>
                           </div>
                         </div>
-                        <DialogFooter>
-                          <Button
-                            onClick={() => setIsFilterOpen(false)}
-                            variant="outline"
-                            className="cursor-pointer"
-                          >
-                            Hủy
-                          </Button>
-                          <Button onClick={handleApplyFilters} className="bg-green-600 hover:bg-green-700 cursor-pointer">Áp dụng</Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
 
-                    
-                  </div>
+                        {/* Lọc theo khu vực */}
+                        <div className="space-y-3">
+                          <div className="text-sm font-medium">Lọc theo khu vực</div>
+                          <AddressSelector
+                            showStreetInput={false}
+                            onChange={(addr) => {
+                              setSelectedProvinceId(addr.province?.id || null)
+                              setSelectedDistrictId(addr.district?.id || null)
+                              setSelectedWardId(addr.ward?.id || null)
+                            }}
+                          />
+                        </div>
+
+                        {/* Khoảng giá */}
+                        <div className="space-y-3">
+                          <div className="text-sm font-medium">Khoảng giá</div>
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              { v: '', l: 'Tất cả' },
+                              { v: '0-1000000', l: 'Dưới 1 triệu' },
+                              { v: '1000000-2000000', l: '1 - 2 triệu' },
+                              { v: '2000000-3000000', l: '2 - 3 triệu' },
+                              { v: '3000000-5000000', l: '3 - 5 triệu' },
+                              { v: '5000000-7000000', l: '5 - 7 triệu' },
+                              { v: '7000000-10000000', l: '7 - 10 triệu' },
+                              { v: '10000000-15000000', l: '10 - 15 triệu' },
+                              { v: '15000000-999999999', l: 'Trên 15 triệu' },
+                            ].map(opt => (
+                              <Button
+                                key={opt.v || 'all'}
+                                onClick={() => setSelectedPriceRange(opt.v)}
+                                variant={selectedPriceRange === opt.v ? 'default' : 'outline'}
+                                className={`h-9 ${selectedPriceRange === opt.v ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                              >
+                                {opt.l}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Khoảng diện tích */}
+                        <div className="space-y-3">
+                          <div className="text-sm font-medium">Khoảng diện tích</div>
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              { v: '', l: 'Tất cả' },
+                              { v: '0-20', l: 'Dưới 20m²' },
+                              { v: '20-30', l: '20 - 30m²' },
+                              { v: '30-50', l: '30 - 50m²' },
+                              { v: '50-70', l: '50 - 70m²' },
+                              { v: '70-90', l: '70 - 90m²' },
+                              { v: '90-999', l: 'Trên 90m²' },
+                            ].map(opt => (
+                              <Button
+                                key={opt.v || 'all'}
+                                onClick={() => setSelectedAreaRange(opt.v)}
+                                variant={selectedAreaRange === opt.v ? 'default' : 'outline'}
+                                className={`h-9 ${selectedAreaRange === opt.v ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                              >
+                                {opt.l}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Đặc điểm nổi bật */}
+                        <div className="space-y-3">
+                          <div className="text-sm font-medium">Đặc điểm nổi bật</div>
+                          <AmenityFilter
+                            selectedAmenities={selectedAmenities}
+                            onSelectionChange={setSelectedAmenities}
+                            mode="inline"
+                          />
+                          <RuleSelector
+                            selectedRules={selectedRules}
+                            onSelectionChange={(rules) => setSelectedRules(rules as string[])}
+                            mode="inline"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="text-sm font-medium mb-2">Từ khóa</div>
+                          <input
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Nhập từ khóa..."
+                            className="w-full h-10 px-3 rounded-md border focus:outline-none focus:ring-2 focus:ring-green-600"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter className="flex-shrink-0 mt-4 pt-4 border-t">
+                        <Button
+                          onClick={() => setIsFilterOpen(false)}
+                          variant="outline"
+                          className="cursor-pointer"
+                        >
+                          Hủy
+                        </Button>
+                        <Button onClick={handleApplyFilters} className="bg-green-600 hover:bg-green-700 cursor-pointer">Áp dụng</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
             {/* Right Section - Login/Signup or User Menu */}
             <div className="flex items-center space-x-3">
               {isAuthenticated && user ? (
@@ -410,7 +409,7 @@ export function Navigation() {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem>
-                        <Link href="/post?type=rental" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                        <Link href="/dashboard/landlord/properties/add" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
                           <div className="text-sm font-medium leading-none">Đăng tin cho thuê</div>
                           <p className="text-xs leading-tight text-muted-foreground">
                             Đăng tin cho thuê phòng trọ, nhà trọ của bạn
