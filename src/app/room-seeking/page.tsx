@@ -69,7 +69,7 @@ function RoomSeekingContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {publicPosts.map(post => (
             <Link key={post.id} href={`/room-seeking/${post.id}`} className="block">
-              <RoomSeekingCard post={post as any} />
+              <RoomSeekingCard post={post} />
             </Link>
           ))}
         </div>

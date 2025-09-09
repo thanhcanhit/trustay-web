@@ -138,8 +138,8 @@ export const useRoomSeekingStore = create<RoomSeekingState>()(
 					});
 
 					set({
-						publicPosts: (response as any).data ?? [],
-						publicPostsPagination: (response as any).meta ?? null,
+						publicPosts: response.data ?? [],
+						publicPostsPagination: response.meta ?? null,
 						publicPostsLoading: false,
 						publicPostsError: null,
 					});

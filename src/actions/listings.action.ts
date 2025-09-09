@@ -11,6 +11,9 @@ import type {
 	RoomSeekingPublicSearchParams,
 } from '@/types/types';
 
+// Re-export types for external use
+export type { RoomListing, RoomDetail, RoomListingsResponse, RoomSearchParams };
+
 // Create server API call function
 const serverApiCall = createServerApiCall(() => TokenUtils.getAccessToken());
 
