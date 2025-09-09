@@ -9,7 +9,14 @@ import { cn } from "@/lib/utils"
 function DropdownMenu({
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  // Disable modal behavior to avoid body scroll locking on open (keeps scrollbar visible)
+  return (
+    <DropdownMenuPrimitive.Root
+      data-slot="dropdown-menu"
+      modal={false}
+      {...props}
+    />
+  )
 }
 
 function DropdownMenuPortal({
