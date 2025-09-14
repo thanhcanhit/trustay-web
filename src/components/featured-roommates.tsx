@@ -38,7 +38,7 @@ export function FeaturedRoommates() {
 
   const handlePostClick = (postId: string) => {
     // Navigate to roommate post detail page
-    window.location.href = `/roommate/${postId}`
+    window.location.href = `/room-seekings/${postId}`
   }
 
   return (
@@ -143,7 +143,7 @@ export function FeaturedRoommates() {
           <Button 
             variant="outline" 
             size="lg"
-            onClick={() => window.location.href = '/search?type=roommate'}
+            onClick={() => window.location.href = '/room-seekings'}
           >
             Xem thêm bài đăng
           </Button>
