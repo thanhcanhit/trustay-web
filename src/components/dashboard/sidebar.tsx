@@ -25,6 +25,7 @@ import {
   Wrench,
   AlertTriangle,
   Star,
+  UserPlus,
 } from "lucide-react"
 import { useUserStore } from "@/stores/userStore"
 
@@ -92,6 +93,11 @@ const tenantItems: SidebarItem[] = [
     icon: Send
   },
   {
+    title: "Lời mời thuê",
+    href: "/profile/booking-requests",
+    icon: UserPlus
+  },
+  {
     title: "Trọ đã lưu",
     href: "/profile/saved",
     icon: Heart
@@ -127,7 +133,13 @@ const landlordItems: SidebarItem[] = [
         title: "Yêu cầu thuê trọ",
         href: "/dashboard/landlord/rental-requests",
         icon: Send,
-        disabled: true
+        disabled: false
+      },
+      {
+        title: "Lời mời thuê",
+        href: "/dashboard/landlord/booking-requests",
+        icon: UserPlus,
+        disabled: false
       },
       {
         title: "Khách thuê",

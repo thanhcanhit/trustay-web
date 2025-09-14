@@ -17,6 +17,7 @@ import {
   Send,
   Shield,
   FileText,
+  UserPlus,
 } from "lucide-react"
 import { useUserStore } from "@/stores/userStore"
 
@@ -96,7 +97,13 @@ const profileItems: ProfileSidebarItem[] = [
     title: "Yêu cầu thuê",
     href: "/profile/requests",
     icon: Send,
-    disabled: true
+    disabled: false
+  },
+  {
+    title: "Lời mời thuê",
+    href: "/profile/booking-requests",
+    icon: UserPlus,
+    disabled: false
   },
   {
     title: "Trọ đã lưu",
