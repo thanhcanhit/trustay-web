@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, SlidersHorizontal } from 'lucide-react'
 import { useRoomSeekingStore } from '@/stores/roomSeekingStore'
 
-function RoomSeekingContent() {
+function RoomSeekingsContent() {
   const searchParams = useSearchParams()
   const isRequestInProgress = useRef(false)
 
@@ -57,7 +57,7 @@ function RoomSeekingContent() {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold mb-2">Người tìm trọ</h1>
+            <h1 className="text-2xl font-bold mb-2">Tìm người thuê phòng</h1>
             <p className="text-gray-600">Các bài đăng tìm chỗ thuê mới nhất</p>
           </div>
           <div className="lg:hidden">
@@ -87,8 +87,8 @@ function RoomSeekingContent() {
         publicPosts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {publicPosts.map(post => (
-              <Link key={post.id} href={`/room-seeking/${post.id}`} className="block">
-                <RoomSeekingCard post={post} />
+              <Link key={post.id} href={`/room-seekings/${post.id}`} className="block">
+                <RoomSeekingCard post={post} asLink={false} />
               </Link>
             ))}
           </div>
@@ -103,13 +103,10 @@ function RoomSeekingContent() {
   )
 }
 
-export default function PublicRoomSeekingListPage() {
+export default function RoomSeekingsPage() {
   return (
     <Suspense fallback={<div className="container mx-auto px-4 py-8 pt-20"><div className="text-center py-12">Đang tải...</div></div>}>
-      <RoomSeekingContent />
+      <RoomSeekingsContent />
     </Suspense>
   )
 }
-
-
-
