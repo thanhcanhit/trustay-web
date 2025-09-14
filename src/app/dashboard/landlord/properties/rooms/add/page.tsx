@@ -25,6 +25,9 @@ import {
   type RoomAmenity,
   type RoomCost,
   type RoomRule,
+  type RoomAmenityCreate,
+  type RoomCostCreate,
+  type RoomRuleCreate,
 } from "@/types/types"
 
 // Interface for API response cost structure
@@ -47,11 +50,23 @@ interface ImageFile {
   id: string
 }
 
-interface CreateRoomFormData extends Omit<CreateRoomRequest, 'amenities' | 'costs' | 'rules'> {
+interface CreateRoomFormData extends Omit<CreateRoomRequest, 'amenities' | 'costs' | 'rules' | 'pricing'> {
   images?: ImageFile[]
   amenities?: string[] | RoomAmenity[]
   costs?: string[] | RoomCost[]
   rules?: string[] | RoomRule[]
+  pricing?: {
+    basePriceMonthly: number | string
+    depositAmount: number | string
+    depositMonths?: number
+    utilityIncluded?: boolean
+    utilityCostMonthly?: number | string
+    cleaningFee?: number | string
+    serviceFeePercentage?: number | string
+    minimumStayMonths?: number
+    maximumStayMonths?: number
+    priceNegotiable?: boolean
+  }
 }
 
 const STEPS = [
@@ -107,10 +122,7 @@ function AddRoomPageContent() {
     roomNumberPrefix: 'A',
     roomNumberStart: 101,
     pricing: {
-      id: '',
-      roomId: '',
       basePriceMonthly: '0',
-      currency: 'VND',
       depositAmount: '0',
       depositMonths: 2,
       utilityIncluded: false,
@@ -119,9 +131,7 @@ function AddRoomPageContent() {
       serviceFeePercentage: '0',
       minimumStayMonths: 1,
       maximumStayMonths: 12,
-      priceNegotiable: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      priceNegotiable: false
     },
     amenities: [],
     costs: [],
@@ -335,10 +345,10 @@ function AddRoomPageContent() {
         }
         break
       case 1:
-        if (!formData.pricing?.basePriceMonthly || parseFloat(formData.pricing.basePriceMonthly) <= 0) {
+        if (!formData.pricing?.basePriceMonthly || parseFloat(String(formData.pricing.basePriceMonthly)) <= 0) {
           newErrors.basePriceMonthly = 'Giá thuê phải lớn hơn 0'
         }
-        if (!formData.pricing?.depositAmount || parseFloat(formData.pricing.depositAmount) < 0) {
+        if (!formData.pricing?.depositAmount || parseFloat(String(formData.pricing.depositAmount)) < 0) {
           newErrors.depositAmount = 'Tiền cọc không được âm'
         }
         break
@@ -378,7 +388,7 @@ function AddRoomPageContent() {
     try {
       setIsLoading(true)
 
-      // Prepare room data
+      // Prepare room data with only allowed fields (see Postman collection)
       const roomData: CreateRoomRequest = {
         name: formData.name!,
         description: formData.description ? 
@@ -393,25 +403,39 @@ function AddRoomPageContent() {
         roomNumberPrefix: formData.roomNumberPrefix!,
         roomNumberStart: parseInt(String(formData.roomNumberStart!)) || 101,
         pricing: {
-          id: '',
-          roomId: '',
-          basePriceMonthly: String(parseFloat(String(formData.pricing!.basePriceMonthly)) || 0),
-          currency: 'VND',
-          depositAmount: String(parseFloat(String(formData.pricing!.depositAmount)) || 0),
-          depositMonths: parseInt(String(formData.pricing!.depositMonths)) || 2,
-          utilityIncluded: Boolean(formData.pricing!.utilityIncluded),
-          utilityCostMonthly: String(parseFloat(String(formData.pricing!.utilityCostMonthly)) || 0),
-          cleaningFee: String(parseFloat(String(formData.pricing!.cleaningFee)) || 0),
-          serviceFeePercentage: String(parseFloat(String(formData.pricing!.serviceFeePercentage)) || 0),
-          minimumStayMonths: parseInt(String(formData.pricing!.minimumStayMonths)) || 1,
-          maximumStayMonths: parseInt(String(formData.pricing!.maximumStayMonths)) || 12,
-          priceNegotiable: Boolean(formData.pricing!.priceNegotiable),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          basePriceMonthly: Number(formData.pricing?.basePriceMonthly ?? 0),
+          depositAmount: Number(formData.pricing?.depositAmount ?? 0),
+          depositMonths: parseInt(String(formData.pricing?.depositMonths ?? 2)),
+          utilityIncluded: Boolean(formData.pricing?.utilityIncluded),
+          utilityCostMonthly: Number(formData.pricing?.utilityCostMonthly ?? 0),
+          cleaningFee: Number(formData.pricing?.cleaningFee ?? 0),
+          serviceFeePercentage: Number(formData.pricing?.serviceFeePercentage ?? 0),
+          minimumStayMonths: parseInt(String(formData.pricing?.minimumStayMonths ?? 1)),
+          maximumStayMonths: parseInt(String(formData.pricing?.maximumStayMonths ?? 12)),
+          priceNegotiable: Boolean(formData.pricing?.priceNegotiable),
         },
-        amenities: convertAmenitiesToObjects(formData.amenities || []),
-        costs: convertCostsToObjects(formData.costs || []),
-        rules: convertRulesToObjects(formData.rules || []),
+        // Map to minimal arrays with only allowed fields
+        amenities: (convertAmenitiesToObjects(formData.amenities || []) as RoomAmenity[]).map(a => ({
+          systemAmenityId: a.systemAmenityId,
+          customValue: a.customValue || undefined,
+          notes: a.notes || undefined,
+        })) as unknown as RoomAmenityCreate[],
+        costs: (convertCostsToObjects(formData.costs || []) as RoomCost[]).map(c => ({
+          systemCostTypeId: c.systemCostTypeId,
+          value: typeof c.value === 'number' ? c.value : Number(c.value || 0),
+          costType: c.costType,
+          unit: c.unit || undefined,
+          billingCycle: c.billingCycle || undefined,
+          includedInRent: Boolean(c.includedInRent),
+          isOptional: Boolean(c.isOptional),
+          notes: c.notes || undefined,
+        })) as unknown as RoomCostCreate[],
+        rules: (convertRulesToObjects(formData.rules || []) as RoomRule[]).map(r => ({
+          systemRuleId: r.systemRuleId,
+          customValue: r.customValue || undefined,
+          isEnforced: Boolean(r.isEnforced),
+          notes: r.notes || undefined,
+        })) as unknown as RoomRuleCreate[],
         isActive: Boolean(formData.isActive)
       }
 
