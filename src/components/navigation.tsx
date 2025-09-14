@@ -57,6 +57,16 @@ export function Navigation() {
   // Get active filters for display
   // const activeFiltersList = getActiveFilters()
 
+  // Handle search input enter key - always goes to /rooms
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      const params = new URLSearchParams()
+      params.set('search', encodeSearchQuery(searchQuery))
+      params.set('page', '1')
+      router.push(`/rooms?${params.toString()}`)
+    }
+  }
+
   // Handle apply for new filter dialog
   const handleApplyFilters = () => {
     // If user selected "người tìm trọ" -> navigate to public room-seeking list
@@ -68,7 +78,20 @@ export function Navigation() {
       if (selectedProvinceId) params.set('provinceId', String(selectedProvinceId))
       if (selectedDistrictId) params.set('districtId', String(selectedDistrictId))
       if (selectedWardId) params.set('wardId', String(selectedWardId))
-      router.push(`/room-seeking${params.toString() ? `?${params.toString()}` : ''}`)
+      router.push(`/room-seekings${params.toString() ? `?${params.toString()}` : ''}`)
+      return
+    }
+
+    // If user selected "tìm người ở ghép" (roommate) -> navigate to roommate posts
+    if (selectedCategory === 'roommate') {
+      setIsFilterOpen(false)
+      const params = new URLSearchParams()
+      const encodedQuery = encodeSearchQuery(searchQuery)
+      if (encodedQuery !== '.') params.set('search', encodedQuery)
+      if (selectedProvinceId) params.set('provinceId', String(selectedProvinceId))
+      if (selectedDistrictId) params.set('districtId', String(selectedDistrictId))
+      if (selectedWardId) params.set('wardId', String(selectedWardId))
+      router.push(`/roommate${params.toString() ? `?${params.toString()}` : ''}`)
       return
     }
 
@@ -94,13 +117,30 @@ export function Navigation() {
       }
       if (selectedAmenities.length > 0) params.set('amenities', selectedAmenities.join(','))
       setIsFilterOpen(false)
-      router.push(`/search?${params.toString()}`)
+      router.push(`/rooms?${params.toString()}`)
       return
     }
 
-    // Default fallback to original search apply
-    applyFilters()
+    // Default fallback - route to /rooms for room search
+    const params = new URLSearchParams()
+    params.set('search', encodeSearchQuery(searchQuery))
+    params.set('page', '1')
+    if (selectedProvinceId) params.set('provinceId', String(selectedProvinceId))
+    if (selectedDistrictId) params.set('districtId', String(selectedDistrictId))
+    if (selectedWardId) params.set('wardId', String(selectedWardId))
+    if (selectedPriceRange) {
+      const [minP, maxP] = selectedPriceRange.split('-')
+      if (minP) params.set('minPrice', minP)
+      if (maxP) params.set('maxPrice', maxP)
+    }
+    if (selectedAreaRange) {
+      const [minA, maxA] = selectedAreaRange.split('-')
+      if (minA) params.set('minArea', minA)
+      if (maxA) params.set('maxArea', maxA)
+    }
+    if (selectedAmenities.length > 0) params.set('amenities', selectedAmenities.join(','))
     setIsFilterOpen(false)
+    router.push(`/rooms?${params.toString()}`)
   }
 
 
@@ -155,7 +195,7 @@ export function Navigation() {
                   <Input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { applyFilters() } }}
+                    onKeyDown={handleSearchKeyDown}
                     placeholder="Tìm kiếm theo từ khóa..."
                     className="flex-1 h-10 w-120 px-4 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-600"
                   />

@@ -147,7 +147,7 @@ export function useSearchFilters() {
 			}
 
 			const search = current.toString();
-			router.push(`/search?${search}`);
+			router.push(`/rooms?${search}`);
 		},
 		[searchParams, router],
 	);
@@ -203,7 +203,7 @@ export function useSearchFilters() {
 			}
 
 			const search = current.toString();
-			router.push(`/search?${search}`);
+			router.push(`/rooms?${search}`);
 		},
 		[searchParams, router],
 	);
@@ -238,7 +238,7 @@ export function useSearchFilters() {
 			}
 
 			const search = current.toString();
-			router.push(`/search?${search}`);
+			router.push(`/rooms?${search}`);
 		},
 		[searchParams, router],
 	);
@@ -251,7 +251,7 @@ export function useSearchFilters() {
 		[clearFilter],
 	);
 
-	// Apply filters (navigate to search page)
+	// Apply filters (navigate to rooms page by default)
 	const applyFilters = useCallback(() => {
 		const current = new URLSearchParams();
 		// Handle search query properly using utility function
@@ -259,7 +259,7 @@ export function useSearchFilters() {
 		current.set('page', '1');
 
 		const query = current.toString();
-		router.push(`/search?${query}`);
+		router.push(`/rooms?${query}`);
 	}, [searchQuery, router]);
 
 	// Update single filter
