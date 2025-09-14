@@ -46,15 +46,8 @@ function NotificationsPageContent() {
 
   return (
     <ProfileLayout>
-      <div className="p-6">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Thông báo</h1>
-          <p className="text-gray-600">Tất cả thông báo và cập nhật từ hệ thống</p>
-        </div>
-
-        <div className="space-y-6">
-          <NotificationsContent />
-        </div>
+      <div className="space-y-6">
+        <NotificationsContent />
       </div>
     </ProfileLayout>
   )
