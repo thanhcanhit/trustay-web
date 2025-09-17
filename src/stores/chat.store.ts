@@ -16,7 +16,7 @@ type ChatState = {
 		messageId?: string;
 		fromUserId: string;
 		toUserId: string;
-		message: any;
+		message: string;
 		sentAt?: string;
 	}) => void;
 };
