@@ -3,9 +3,8 @@
 import { Suspense } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Bell } from "lucide-react"
-import { ProfileLayout } from "@/components/profile/profile-layout"
-import { ProfileNotifications } from "@/components/profile/profile-notifications"
-//import { useUserStore } from "@/stores/userStore"
+import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
+import { DashboardNotifications } from "@/components/dashboard/dashboard-notifications"
 
 function NotificationsContent() {
   return (
@@ -16,29 +15,27 @@ function NotificationsContent() {
           <span>Thông báo</span>
         </CardTitle>
         <CardDescription>
-          Tất cả thông báo và cập nhật
+          Tất cả thông báo về yêu cầu đặt phòng và lời mời
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ProfileNotifications />
+        <DashboardNotifications />
       </CardContent>
     </Card>
   )
 }
 
 function NotificationsPageContent() {
-  //const { user } = useUserStore()
-
   return (
-    <ProfileLayout>
+    <DashboardLayout userType="landlord">
       <div className="space-y-6">
         <NotificationsContent />
       </div>
-    </ProfileLayout>
+    </DashboardLayout>
   )
 }
 
-export default function NotificationsPage() {
+export default function LandlordNotificationsPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
