@@ -13,7 +13,7 @@ export type ChatMessagePayload<TMessage = unknown> = {
 
 export function chatHandler(socket: Socket) {
 	const addIncoming = useChatStore.getState().addIncoming;
-	const onChat = (payload: ChatMessagePayload<any>) => addIncoming(payload);
+	const onChat = (payload: ChatMessagePayload<string>) => addIncoming(payload);
 	socket.on(REALTIME_EVENT.CHAT_MESSAGE, onChat);
 	return () => socket.off(REALTIME_EVENT.CHAT_MESSAGE, onChat);
 }
