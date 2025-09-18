@@ -115,7 +115,7 @@ const profileItems: ProfileSidebarItem[] = [
     title: "Thông báo",
     href: "/profile/notifications",
     icon: Bell,
-    disabled: true
+    disabled: false
   }
 ]
 

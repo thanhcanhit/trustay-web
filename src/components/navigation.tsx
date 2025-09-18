@@ -16,6 +16,7 @@ import { RuleSelector } from "@/components/ui/rule-selector"
 import { getRoomTypeOptions } from "@/utils/room-types"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { SizingImage } from "@/components/sizing-image"
+import { NotificationBell } from "@/components/ui/notification-bell"
 // navigation-menu components are not used here
 
 import {
@@ -49,9 +50,9 @@ export function Navigation() {
   // Use search filters hook
   const {
     searchQuery,
-    setSearchQuery,
+    setSearchQuery
     // getActiveFilters,
-    applyFilters
+    // applyFilters
   } = useSearchFilters()
 
   // Get active filters for display
@@ -351,6 +352,7 @@ export function Navigation() {
             <div className="flex items-center space-x-3">
               {isAuthenticated && user ? (
                 <>
+                <NotificationBell />
                 <div className="relative" ref={dropdownRef}>
                 <Button
                   variant="ghost"

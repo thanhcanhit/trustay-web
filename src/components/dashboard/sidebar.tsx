@@ -207,7 +207,7 @@ const landlordItems: SidebarItem[] = [
     title: "Thông báo",
     href: "/dashboard/landlord/notifications",
     icon: Bell,
-    disabled: true
+    disabled: false
   }
 ]
 
