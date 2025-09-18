@@ -147,14 +147,14 @@ export default function BookingRequestsPage() {
                   <div className="flex items-center space-x-2 text-sm">
                     <DollarSign className="h-4 w-4 text-gray-400" />
                     <span className="text-gray-600">
-                      {parseInt(invitation.monthlyRent).toLocaleString('vi-VN')}đ/tháng
+                      {parseInt(invitation.monthlyRent || '0').toLocaleString('vi-VN')}đ/tháng
                       {invitation.rentalMonths && ` • ${invitation.rentalMonths} tháng`}
                     </span>
                   </div>
 
                   <div className="flex items-center space-x-2 text-sm">
                     <Calendar className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">Ngày vào: {format(new Date(invitation.moveInDate), 'dd/MM/yyyy', { locale: vi })}</span>
+                    <span className="text-gray-600">Ngày vào: {invitation.moveInDate ? format(new Date(invitation.moveInDate), 'dd/MM/yyyy', { locale: vi }) : '-'}</span>
                   </div>
 
                   <div className="flex items-center space-x-2 text-sm">

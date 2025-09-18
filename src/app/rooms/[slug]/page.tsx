@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { getRoomTypeDisplayName } from "@/utils/room-types"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
@@ -913,7 +913,7 @@ export default function PropertyDetailPage() {
                     <Phone className="h-4 w-4 text-gray-600" />
                     <span className="text-sm text-gray-700">Điện thoại: {roomDetail.owner?.phone || 'Chưa cập nhật'}</span>
                     <div className="ml-auto">
-                      {roomDetail.owner?.verifiedPhone ? (
+                      {roomDetail.owner?.isVerifiedPhone ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <XCircle className="h-4 w-4 text-red-500" />
@@ -925,7 +925,7 @@ export default function PropertyDetailPage() {
                     <Mail className="h-4 w-4 text-gray-600" />
                     <span className="text-sm text-gray-700">Email: {roomDetail.owner?.email || 'Chưa cập nhật'}</span>
                     <div className="ml-auto">
-                      {roomDetail.owner?.verifiedEmail ? (
+                      {roomDetail.owner?.isVerifiedEmail ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <XCircle className="h-4 w-4 text-red-500" />
@@ -943,7 +943,7 @@ export default function PropertyDetailPage() {
                       <span className="text-sm text-gray-700">Xác minh giấy tờ kinh doanh</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      {roomDetail.owner?.verifiedEmail ? (
+                      {roomDetail.owner?.isVerifiedEmail ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <XCircle className="h-4 w-4 text-red-500" />
@@ -951,7 +951,7 @@ export default function PropertyDetailPage() {
                       <span className="text-sm text-gray-700">Xác minh email công việc</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      {roomDetail.owner?.verifiedPhone ? (
+                      {roomDetail.owner?.isVerifiedPhone ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <XCircle className="h-4 w-4 text-red-500" />

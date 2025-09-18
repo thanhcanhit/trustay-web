@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Loader2, Calendar, MapPin, Users, DollarSign, Info, ChevronDown, ChevronUp, PhoneCall, CheckCircle, XCircle, Home, Star, Globe, TrendingUp, Heart, Share2, Flag, Mail, MessageCircle, Phone, Send, CalendarClock } from 'lucide-react'
+import { Loader2, Calendar, MapPin, Users, DollarSign, Info, ChevronDown, ChevronUp, CheckCircle, XCircle, Home, Star, Globe, TrendingUp, Heart, Share2, Flag, Mail, MessageCircle, Phone, Send } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'

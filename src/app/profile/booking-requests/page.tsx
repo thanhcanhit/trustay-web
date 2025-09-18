@@ -13,12 +13,13 @@ import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { Textarea } from "@/components/ui/textarea"
 
-function StatusBadge({ status }: { status: 'pending' | 'accepted' | 'declined' | 'expired' }) {
+function StatusBadge({ status }: { status: 'pending' | 'accepted' | 'declined' | 'expired' | 'withdrawn' }) {
   const map = {
     pending: { label: 'Đang chờ', className: 'bg-amber-100 text-amber-800' },
     accepted: { label: 'Đã chấp nhận', className: 'bg-emerald-100 text-emerald-800' },
     declined: { label: 'Từ chối', className: 'bg-red-100 text-red-800' },
     expired: { label: 'Đã hết hạn', className: 'bg-gray-100 text-gray-800' },
+    withdrawn: { label: 'Đã rút lại', className: 'bg-orange-100 text-orange-800' },
   } as const
   const it = map[status]
   return <Badge className={it.className}>{it.label}</Badge>
@@ -136,7 +137,7 @@ function BookingRequestsContent() {
 
                   <div className="flex items-center space-x-2 text-sm">
                     <Calendar className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">Ngày vào: {format(new Date(invitation.moveInDate), 'dd/MM/yyyy', { locale: vi })}</span>
+                    <span className="text-gray-600">Ngày vào: {invitation.moveInDate ? format(new Date(invitation.moveInDate), 'dd/MM/yyyy', { locale: vi }) : '-'}</span>
                   </div>
 
                   <div className="flex items-center space-x-2 text-sm">

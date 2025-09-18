@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator"
 import { AmenityGrid } from "@/components/ui/amenity-grid"
 import { CostCheckboxSelector } from "@/components/ui/cost-checkbox-selector"
 import { RuleGrid } from "@/components/ui/rule-grid"
-import { ImageUpload } from "@/components/ui/image-upload"
+import { ImageUploadWithApi, UploadedImage } from "@/components/ui/image-upload-with-api"
 import { useReferenceStore } from "@/stores/referenceStore"
 import { createRoom } from "@/actions/room.action"
 import { getBuildings } from "@/actions/building.action"
@@ -44,14 +44,10 @@ import { validateReferenceIds } from "@/utils/referenceValidation"
 import { getRoomTypeOptions } from "@/utils/room-types"
 
 // Additional interfaces for form handling
-interface ImageFile {
-  file: File
-  preview: string
-  id: string
-}
+// Using UploadedImage from ImageUploadWithApi component
 
-interface CreateRoomFormData extends Omit<CreateRoomRequest, 'amenities' | 'costs' | 'rules' | 'pricing'> {
-  images?: ImageFile[]
+interface CreateRoomFormData extends Omit<CreateRoomRequest, 'amenities' | 'costs' | 'rules' | 'pricing' | 'images'> {
+  images?: UploadedImage[]
   amenities?: string[] | RoomAmenity[]
   costs?: string[] | RoomCost[]
   rules?: string[] | RoomRule[]
@@ -436,6 +432,14 @@ function AddRoomPageContent() {
           isEnforced: Boolean(r.isEnforced),
           notes: r.notes || undefined,
         })) as unknown as RoomRuleCreate[],
+        images: formData.images && formData.images.length > 0 ? {
+          images: formData.images.map((img, index) => ({
+            path: img.url, // Use uploaded URL as path
+            alt: img.altText || `Room image ${index + 1}`,
+            isPrimary: index === 0,
+            sortOrder: index,
+          }))
+        } : undefined,
         isActive: Boolean(formData.isActive)
       }
 
@@ -901,12 +905,14 @@ function AddRoomPageContent() {
                   </div>
                 </div>
 
-                <ImageUpload
+                <ImageUploadWithApi
                   value={formData.images || []}
                   onChange={(images) => updateFormData('images', images)}
                   maxFiles={5}
                   accept="image/*"
                   disabled={false}
+                  uploadMode="bulk"
+                  autoUpload={true}
                 />
               </CardContent>
             </Card>
