@@ -12,7 +12,7 @@ export const REALTIME_EVENT = {
 
 export type RegisterPayload = { userId: string };
 
-type MountableHandler = (socket: Socket) => void | (() => void);
+type MountableHandler = (socket: Socket, userId?: string) => void | (() => void);
 
 let socket: Socket | null = null;
 
@@ -25,6 +25,7 @@ export function ensureSocket(userId: string) {
 		autoConnect: true,
 	});
 	socket.on('connect', () => {
+		console.log('🔗 [SOCKET] Connected, registering userId:', userId);
 		socket?.emit(REALTIME_EVENT.REGISTER, { userId } satisfies RegisterPayload);
 	});
 	socket.on(REALTIME_EVENT.HEARTBEAT_PING, () => {
@@ -35,7 +36,7 @@ export function ensureSocket(userId: string) {
 
 export function mountHandlers(userId: string, handlers: MountableHandler[]) {
 	const s = ensureSocket(userId);
-	const disposers = handlers.map((h) => h(s)).filter(Boolean) as (() => void)[];
+	const disposers = handlers.map((h) => h(s, userId)).filter(Boolean) as (() => void)[];
 	return () => {
 		disposers.forEach((d) => d());
 	};

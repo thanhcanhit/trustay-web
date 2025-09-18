@@ -83,6 +83,11 @@ export interface UserProfile {
 	idCardNumber?: string;
 	bankAccount?: string;
 	bankName?: string;
+	totalBuildings?: number;
+	totalRoomInstances?: number;
+	isVerifiedPhone?: boolean;
+	isVerifiedEmail?: boolean;
+	isVerifiedIdentity?: boolean;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -324,6 +329,17 @@ export interface RoomRuleCreate {
 	notes?: string;
 }
 
+export interface RoomImageCreate {
+	path: string;
+	alt?: string;
+	isPrimary?: boolean;
+	sortOrder?: number;
+}
+
+export interface RoomImagesCreate {
+	images: RoomImageCreate[];
+}
+
 export interface RoomInstance {
 	id: string;
 	roomId: string;
@@ -392,6 +408,7 @@ export interface CreateRoomRequest {
 	amenities: RoomAmenityCreate[];
 	costs: RoomCostCreate[];
 	rules: RoomRuleCreate[];
+	images?: RoomImagesCreate;
 	isActive: boolean;
 }
 
@@ -426,6 +443,7 @@ export interface UpdateRoomRequest {
 		customValue?: string;
 		notes?: string;
 	}>;
+	images?: RoomImagesCreate;
 	isActive?: boolean;
 }
 
@@ -551,6 +569,7 @@ export interface RoomInvitation {
 	roomInstance?: RoomInstance;
 	tenant?: UserProfile;
 	owner?: UserProfile;
+	recipient?: UserProfile;
 	sender: UserProfile;
 	room?: {
 		id: string;
@@ -723,6 +742,8 @@ export interface RoomDetail {
 		isVerifiedPhone: boolean;
 		isVerifiedEmail: boolean;
 		isVerifiedIdentity: boolean;
+		totalBuildings?: number;
+		totalRoomInstances?: number;
 	};
 	images: Array<{
 		url: string;
