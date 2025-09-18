@@ -6,7 +6,9 @@ import { Navigation } from "@/components/navigation";
 import { FooterGate } from "@/components/footer-gate";
 import { AuthProvider } from "@/components/auth-provider";
 import { AppInitializer } from "@/components/app-initializer";
+import { NotificationProvider } from "@/components/notification-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { ChatProvider } from "@/components/chat/chat-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -99,23 +101,26 @@ export default function RootLayout({
       >
         <AuthProvider>
           <AppInitializer>
-            <Suspense fallback={
-              <div className="bg-white shadow-sm">
-                <div className="container mx-auto px-4 py-4">
-                  <div className="animate-pulse h-8 bg-gray-200 rounded"></div>
+            <NotificationProvider>
+              <Suspense fallback={
+                <div className="bg-white shadow-sm">
+                  <div className="container mx-auto px-4 py-4">
+                    <div className="animate-pulse h-8 bg-gray-200 rounded"></div>
+                  </div>
                 </div>
-              </div>
-            }>
-              <Navigation />
-            </Suspense>
-            <main className="flex-1 page-content">{children}</main>
-            <FooterGate />
-            <Toaster
-              position="top-center"
-              expand={true}
-              richColors
-              closeButton
-            />
+              }>
+                <Navigation />
+              </Suspense>
+              <main className="flex-1 page-content">{children}</main>
+              <FooterGate />
+              <Toaster
+                position="top-center"
+                expand={true}
+                richColors
+                closeButton
+              />
+              <ChatProvider />
+            </NotificationProvider>
           </AppInitializer>
         </AuthProvider>
       </body>

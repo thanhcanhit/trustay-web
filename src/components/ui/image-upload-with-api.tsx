@@ -5,7 +5,7 @@ import { Upload, X, Plus, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from './button'
 import Image from 'next/image'
-import { uploadSingleImage, uploadBulkImages, getImageUrl } from '@/actions/upload.action'
+import { uploadSingleImage, uploadBulkImages } from '@/actions/upload.action'
 import { getOptimizedImageUrl } from '@/lib/utils'
 
 export interface UploadedImage {
@@ -55,17 +55,17 @@ export function ImageUploadWithApi({
         const response = await uploadBulkImages(files, altTexts)
 
         // Update images with server URLs
-        const updatedImages = await Promise.all(allImages.map(async (img) => {
+        const updatedImages = allImages.map((img) => {
           const imageIndex = imageObjects.findIndex(obj => obj.id === img.id)
           if (imageIndex !== -1 && response.imagePaths[imageIndex]) {
             return {
               ...img,
-              url: await getImageUrl(response.imagePaths[imageIndex]),
+              url: response.imagePaths[imageIndex],
               isUploading: false,
             }
           }
           return img
-        }))
+        })
 
         onChange?.(updatedImages)
       } else {
@@ -84,7 +84,7 @@ export function ImageUploadWithApi({
             if (imageIndex !== -1) {
               updatedImages[imageIndex] = {
                 ...updatedImages[imageIndex],
-                url: await getImageUrl(response.imagePath),
+                url: response.imagePath,
                 isUploading: false,
               }
             }

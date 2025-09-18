@@ -44,15 +44,8 @@ function AccommodationPageContent() {
 
   return (
     <ProfileLayout>
-      <div className="p-6">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Quản lý lưu trú</h1>
-          <p className="text-gray-600">Thông tin về nơi ở hiện tại</p>
-        </div>
-
-        <div className="space-y-6">
-          <AccommodationContent />
-        </div>
+      <div className="space-y-6">
+        <AccommodationContent />
       </div>
     </ProfileLayout>
   )

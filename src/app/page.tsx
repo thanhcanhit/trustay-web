@@ -2,14 +2,27 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { Search, MapPin, DollarSign, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FeaturedProperties } from "@/components/featured-properties"
+import { FeaturedRoomSeekings } from "@/components/featured-room-seekings"
 import { FeaturedRoommates } from "@/components/featured-roommates"
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("all")
+  const router = useRouter()
+
+  const handleSearch = () => {
+    if (activeTab === "room") {
+      router.push("/rooms")
+    } else if (activeTab === "roommate") {
+      router.push("/room-seekings")
+    } else {
+      router.push("/rooms")
+    }
+  }
 
   return (
     <div className="min-h-screen">
@@ -142,7 +155,10 @@ export default function Home() {
               </div>
 
               {/* Search Button */}
-              <Button className="h-12 bg-blue-500 hover:bg-blue-600 text-white font-medium text-lg">
+              <Button 
+                onClick={handleSearch}
+                className="h-12 bg-blue-500 hover:bg-blue-600 text-white font-medium text-lg"
+              >
                 <Search className="h-5 w-5 mr-2" />
                 Tìm kiếm
               </Button>
@@ -192,6 +208,9 @@ export default function Home() {
 
       {/* Featured Properties Section */}
       <FeaturedProperties />
+
+      {/* Featured Room Seekings Section */}
+      <FeaturedRoomSeekings />
 
       {/* Featured Roommates Section */}
       <FeaturedRoommates />

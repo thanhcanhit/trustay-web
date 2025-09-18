@@ -10,7 +10,7 @@ import { type RoomSearchParams } from '@/types/types';
 import { RoomCard } from '@/components/ui/room-card';
 import { parseSearchParams } from '@/utils/search-params';
 
-function SearchPageContent() {
+function RoomsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -121,10 +121,8 @@ function SearchPageContent() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [loadMore]);
 
-  // toggleSave is now handled by store (toggleSaveRoom)
-
   const handleRoomClick = (slug: string) => {
-    window.location.href = `/property/${slug}`;
+    window.location.href = `/rooms/${slug}`;
   };
 
   // Handle sorting changes
@@ -135,7 +133,7 @@ function SearchPageContent() {
     
     const search = current.toString();
     const query = search ? `?${search}` : '';
-    router.push(`/search${query}`);
+    router.push(`/rooms${query}`);
   };
 
   // Sorting Sidebar Component
@@ -231,7 +229,7 @@ function SearchPageContent() {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold mb-2">Kết quả tìm kiếm</h1>
+            <h1 className="text-2xl font-bold mb-2">Tìm kiếm phòng trọ</h1>
             <p className="text-gray-600">
               {!isLoading && searchPagination?.total && `Tìm thấy ${searchPagination.total} phòng`}
             </p>
@@ -337,7 +335,7 @@ function SearchPageContent() {
   );
 }
 
-export default function SearchPage() {
+export default function RoomsPage() {
   return (
     <Suspense fallback={
       <div className="container mx-auto px-4 py-8 pt-20">
@@ -347,7 +345,7 @@ export default function SearchPage() {
         </div>
       </div>
     }>
-      <SearchPageContent />
+      <RoomsPageContent />
     </Suspense>
   );
 }

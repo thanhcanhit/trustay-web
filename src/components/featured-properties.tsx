@@ -26,7 +26,7 @@ export function FeaturedProperties() {
 
   const handleRoomClick = (slug: string) => {
     // Navigate to room detail page using slug
-    window.location.href = `/property/${slug}`
+    window.location.href = `/rooms/${slug}`
   }
 
   return (
@@ -83,7 +83,7 @@ export function FeaturedProperties() {
           <Button 
             variant="outline" 
             size="lg"
-            onClick={() => window.location.href = '/search?type=room'}
+            onClick={() => window.location.href = '/rooms'}
           >
             Xem thêm phòng trọ
           </Button>
