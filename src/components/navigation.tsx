@@ -16,6 +16,7 @@ import { RuleSelector } from "@/components/ui/rule-selector"
 import { getRoomTypeOptions } from "@/utils/room-types"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { SizingImage } from "@/components/sizing-image"
+import { NotificationBell } from "@/components/ui/notification-bell"
 // navigation-menu components are not used here
 
 import {
@@ -32,6 +33,7 @@ export function Navigation() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, isAuthenticated, logout } = useUserStore()
+  const [isAvatarError, setIsAvatarError] = useState(false)
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   // Second row removed; scroll-based toggle no longer needed
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -48,13 +50,23 @@ export function Navigation() {
   // Use search filters hook
   const {
     searchQuery,
-    setSearchQuery,
+    setSearchQuery
     // getActiveFilters,
-    applyFilters
+    // applyFilters
   } = useSearchFilters()
 
   // Get active filters for display
   // const activeFiltersList = getActiveFilters()
+
+  // Handle search input enter key - always goes to /rooms
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      const params = new URLSearchParams()
+      params.set('search', encodeSearchQuery(searchQuery))
+      params.set('page', '1')
+      router.push(`/rooms?${params.toString()}`)
+    }
+  }
 
   // Handle apply for new filter dialog
   const handleApplyFilters = () => {
@@ -67,7 +79,20 @@ export function Navigation() {
       if (selectedProvinceId) params.set('provinceId', String(selectedProvinceId))
       if (selectedDistrictId) params.set('districtId', String(selectedDistrictId))
       if (selectedWardId) params.set('wardId', String(selectedWardId))
-      router.push(`/room-seeking${params.toString() ? `?${params.toString()}` : ''}`)
+      router.push(`/room-seekings${params.toString() ? `?${params.toString()}` : ''}`)
+      return
+    }
+
+    // If user selected "tìm người ở ghép" (roommate) -> navigate to roommate posts
+    if (selectedCategory === 'roommate') {
+      setIsFilterOpen(false)
+      const params = new URLSearchParams()
+      const encodedQuery = encodeSearchQuery(searchQuery)
+      if (encodedQuery !== '.') params.set('search', encodedQuery)
+      if (selectedProvinceId) params.set('provinceId', String(selectedProvinceId))
+      if (selectedDistrictId) params.set('districtId', String(selectedDistrictId))
+      if (selectedWardId) params.set('wardId', String(selectedWardId))
+      router.push(`/roommate${params.toString() ? `?${params.toString()}` : ''}`)
       return
     }
 
@@ -93,13 +118,30 @@ export function Navigation() {
       }
       if (selectedAmenities.length > 0) params.set('amenities', selectedAmenities.join(','))
       setIsFilterOpen(false)
-      router.push(`/search?${params.toString()}`)
+      router.push(`/rooms?${params.toString()}`)
       return
     }
 
-    // Default fallback to original search apply
-    applyFilters()
+    // Default fallback - route to /rooms for room search
+    const params = new URLSearchParams()
+    params.set('search', encodeSearchQuery(searchQuery))
+    params.set('page', '1')
+    if (selectedProvinceId) params.set('provinceId', String(selectedProvinceId))
+    if (selectedDistrictId) params.set('districtId', String(selectedDistrictId))
+    if (selectedWardId) params.set('wardId', String(selectedWardId))
+    if (selectedPriceRange) {
+      const [minP, maxP] = selectedPriceRange.split('-')
+      if (minP) params.set('minPrice', minP)
+      if (maxP) params.set('maxPrice', maxP)
+    }
+    if (selectedAreaRange) {
+      const [minA, maxA] = selectedAreaRange.split('-')
+      if (minA) params.set('minArea', minA)
+      if (maxA) params.set('maxArea', maxA)
+    }
+    if (selectedAmenities.length > 0) params.set('amenities', selectedAmenities.join(','))
     setIsFilterOpen(false)
+    router.push(`/rooms?${params.toString()}`)
   }
 
 
@@ -154,7 +196,7 @@ export function Navigation() {
                   <Input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { applyFilters() } }}
+                    onKeyDown={handleSearchKeyDown}
                     placeholder="Tìm kiếm theo từ khóa..."
                     className="flex-1 h-10 w-120 px-4 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-600"
                   />
@@ -309,6 +351,8 @@ export function Navigation() {
             {/* Right Section - Login/Signup or User Menu */}
             <div className="flex items-center space-x-3">
               {isAuthenticated && user ? (
+                <>
+                <NotificationBell />
                 <div className="relative" ref={dropdownRef}>
                 <Button
                   variant="ghost"
@@ -317,14 +361,15 @@ export function Navigation() {
                   className="flex items-center space-x-2 h-10 text-gray-700 hover:text-gray-900 cursor-pointer"
                 >
                   <Avatar className="h-8 w-8">
-                    {user.avatarUrl ? (
+                    {user.avatarUrl && !isAvatarError ? (
                       <div className="w-full h-full relative">
-                        <SizingImage 
-                          src={user.avatarUrl} 
-                          srcSize="256x256" 
-                          alt={`${user.firstName} ${user.lastName}`} 
+                        <SizingImage
+                          src={user.avatarUrl}
+                          srcSize="256x256"
+                          alt={`${user.firstName} ${user.lastName}`}
                           className="object-cover rounded-full"
                           fill
+                          onError={() => setIsAvatarError(true)}
                         />
                       </div>
                     ) : (
@@ -369,6 +414,45 @@ export function Navigation() {
                   </div>
                 )}
                 </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-10 text-white bg-green-600 hover:bg-green-700 font-medium cursor-pointer">
+                      <Plus className="h-4 w-4" />
+                      Đăng bài
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuContent className="w-56 z-[10000]" align="end" side="top">
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem>
+                          <Link href="/post?type=room-seeking" className="select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                            <div className="text-sm font-medium leading-none">Đăng tin tìm chỗ thuê</div>
+                            <p className="text-xs leading-tight text-muted-foreground">
+                              Đăng tin tìm kiếm phòng trọ, nhà trọ
+                            </p>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Link href="/post?type=roommate" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                            <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
+                            <p className="text-xs leading-tight text-muted-foreground">
+                              Tìm bạn cùng phòng, người ở ghép
+                            </p>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Link href="/dashboard/landlord/properties/add" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                            <div className="text-sm font-medium leading-none">Đăng tin cho thuê</div>
+                            <p className="text-xs leading-tight text-muted-foreground">
+                              Đăng tin cho thuê phòng trọ, nhà trọ của bạn
+                            </p>
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenuPortal>
+                </DropdownMenu>
+                </>
               ) : (
                 <div className="flex items-center space-x-2">
                   <Button variant="ghost" size="sm" asChild>
@@ -382,44 +466,7 @@ export function Navigation() {
                 </div>
               )}
                     
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-10 text-white bg-green-600 hover:bg-green-700 font-medium cursor-pointer">
-                    <Plus className="h-4 w-4" />
-                    Đăng bài
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuContent className="w-56 z-[10000]" align="end" side="top">
-                    <DropdownMenuGroup>
-                      <DropdownMenuItem>
-                        <Link href="/post?type=room-seeking" className="select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                          <div className="text-sm font-medium leading-none">Đăng tin tìm chỗ thuê</div>
-                          <p className="text-xs leading-tight text-muted-foreground">
-                            Đăng tin tìm kiếm phòng trọ, nhà trọ
-                          </p>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Link href="/post?type=roommate" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                          <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
-                          <p className="text-xs leading-tight text-muted-foreground">
-                            Tìm bạn cùng phòng, người ở ghép
-                          </p>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Link href="/dashboard/landlord/properties/add" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                          <div className="text-sm font-medium leading-none">Đăng tin cho thuê</div>
-                          <p className="text-xs leading-tight text-muted-foreground">
-                            Đăng tin cho thuê phòng trọ, nhà trọ của bạn
-                          </p>
-                        </Link>
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                  </DropdownMenuContent>
-                </DropdownMenuPortal>
-              </DropdownMenu>
+              
             </div>
           </div>
         </div>

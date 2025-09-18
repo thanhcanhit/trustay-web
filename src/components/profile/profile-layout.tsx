@@ -4,6 +4,7 @@ import { useUserStore } from "@/stores/userStore"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { ProfileSidebar } from "./profile-sidebar"
+import { useRealtime } from "@/hooks/useRealtime"
 
 interface ProfileLayoutProps {
   children: React.ReactNode
@@ -12,6 +13,9 @@ interface ProfileLayoutProps {
 export function ProfileLayout({ children }: ProfileLayoutProps) {
   const { user, isAuthenticated, isLoading, hasHydrated } = useUserStore()
   const router = useRouter()
+
+  // Enable realtime notifications for authenticated users
+  useRealtime(user?.id || '')
 
   useEffect(() => {
     // Don't redirect while loading or before hydration

@@ -96,6 +96,23 @@ export default function FeedbackPage() {
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
 
+  const TenantAvatar = ({ name, src }: { name: string; src?: string }) => {
+    const [error, setError] = useState(false)
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase()
+    const showImage = !!src && src.trim() !== '' && !error
+    return (
+      <Avatar className="h-8 w-8">
+        {showImage ? (
+          <AvatarImage src={src} alt={name} onError={() => setError(true)} />
+        ) : (
+          <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+            {initials}
+          </AvatarFallback>
+        )}
+      </Avatar>
+    )
+  }
+
   const filteredFeedback = MOCK_FEEDBACK.filter(feedback => {
     const matchesSearch = feedback.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          feedback.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -199,12 +216,7 @@ export default function FeedbackPage() {
               <CardContent className="pt-0">
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={feedback.avatar} alt={feedback.tenantName} />
-                      <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                        {feedback.tenantName.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
+                    <TenantAvatar name={feedback.tenantName} src={feedback.avatar} />
                     <div>
                       <span className="font-medium text-sm">{feedback.tenantName}</span>
                       <div className="flex items-center space-x-2 text-xs text-gray-500">

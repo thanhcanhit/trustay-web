@@ -171,10 +171,14 @@ export function ImageUpload({
               key={imageFile.id}
               className="relative group aspect-square rounded-lg overflow-hidden border bg-muted"
             >
+              {/* Use Next.js Image component for optimized image loading */}
               <Image
                 src={imageFile.preview}
                 alt={`Preview ${index + 1}`}
-                className="absolute inset-0 w-full h-full object-cover"
+                className="object-cover"
+                fill
+                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                priority={index === 0}
               />
               
               {/* Overlay */}

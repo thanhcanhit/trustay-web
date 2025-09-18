@@ -223,3 +223,8 @@
 .similar-posts-swiper .swiper-button-prev {
   display: none;
 }
+
+/* Ensure PhotoView lightbox overlays header/navigation */
+.PhotoView-Portal {
+  z-index: 100000 !important;
+}

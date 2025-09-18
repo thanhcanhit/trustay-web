@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Sidebar } from "./sidebar"
 import { Menu } from "lucide-react"
+import { useRealtime } from "@/hooks/useRealtime"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -15,6 +16,9 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const { user, isAuthenticated, isLoading, hasHydrated } = useUserStore()
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  // Enable realtime notifications for authenticated users
+  useRealtime(user?.id || '')
 
   useEffect(() => {
     console.log('DashboardLayout state:', {

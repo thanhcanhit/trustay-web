@@ -38,7 +38,7 @@ export function FeaturedRoommates() {
 
   const handlePostClick = (postId: string) => {
     // Navigate to roommate post detail page
-    window.location.href = `/roommate/${postId}`
+    window.location.href = `/room-seekings/${postId}`
   }
 
   return (
@@ -67,7 +67,7 @@ export function FeaturedRoommates() {
                 <div className="relative h-48">
                   <Image
                     src={post.images?.[0] && typeof post.images[0] === 'string' && post.images[0].trim() !== "" ? 
-                      getOptimizedImageUrl(post.images[0], 'listing') : "/images/roommate1.png"}
+                      getOptimizedImageUrl(post.images[0], 'listing') : "/images/error-image.jpg"}
                     alt={post.title || "Roommate post image"}
                     fill
                     className="object-cover"
@@ -143,7 +143,7 @@ export function FeaturedRoommates() {
           <Button 
             variant="outline" 
             size="lg"
-            onClick={() => window.location.href = '/search?type=roommate'}
+            onClick={() => window.location.href = '/room-seekings'}
           >
             Xem thêm bài đăng
           </Button>

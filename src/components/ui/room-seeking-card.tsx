@@ -1,5 +1,6 @@
 "use client"
 
+import Link from 'next/link'
 import { MapPin, Users, Home } from 'lucide-react'
 import { SizingImage } from '@/components/sizing-image'
 import { getRoomTypeDisplayName } from '@/utils/room-types'
@@ -10,17 +11,18 @@ interface RoomSeekingCardProps {
     requester?: { id: string; firstName?: string; lastName?: string; avatarUrl?: string }
   }
   className?: string
+  asLink?: boolean
 }
 
-export function RoomSeekingCard({ post, className = '' }: RoomSeekingCardProps) {
+export function RoomSeekingCard({ post, className = '', asLink = true }: RoomSeekingCardProps) {
   const requesterName = [post?.requester?.firstName, post?.requester?.lastName]
     .filter(Boolean)
     .join(' ')
 
   const avatarUrl = post?.requester?.avatarUrl
 
-  return (
-    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${className}`}>
+  const cardContent = (
+    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer ${className}`}>
       {/* Header with avatar and author */}
       <div className="flex items-center gap-3 p-4 border-b">
         <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-100">
@@ -75,6 +77,16 @@ export function RoomSeekingCard({ post, className = '' }: RoomSeekingCardProps) 
       </div>
     </div>
   )
+
+  if (asLink) {
+    return (
+      <Link href={`/room-seekings/${post.id}`} className="block">
+        {cardContent}
+      </Link>
+    )
+  }
+
+  return cardContent
 }
 
 

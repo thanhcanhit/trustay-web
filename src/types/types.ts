@@ -83,6 +83,11 @@ export interface UserProfile {
 	idCardNumber?: string;
 	bankAccount?: string;
 	bankName?: string;
+	totalBuildings?: number;
+	totalRoomInstances?: number;
+	isVerifiedPhone?: boolean;
+	isVerifiedEmail?: boolean;
+	isVerifiedIdentity?: boolean;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -286,6 +291,55 @@ export interface RoomPricing {
 	updatedAt: string;
 }
 
+// Minimal DTOs used when creating a room (backend rejects server-only fields)
+export interface RoomPricingCreate {
+	basePriceMonthly: number;
+	depositAmount: number;
+	depositMonths?: number;
+	utilityIncluded?: boolean;
+	utilityCostMonthly?: number;
+	cleaningFee?: number;
+	serviceFeePercentage?: number;
+	minimumStayMonths?: number;
+	maximumStayMonths?: number;
+	priceNegotiable?: boolean;
+}
+
+export interface RoomAmenityCreate {
+	systemAmenityId: string;
+	customValue?: string;
+	notes?: string;
+}
+
+export interface RoomCostCreate {
+	systemCostTypeId: string;
+	value: number;
+	costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
+	unit?: string;
+	billingCycle?: 'monthly' | 'quarterly' | 'yearly';
+	includedInRent?: boolean;
+	isOptional?: boolean;
+	notes?: string;
+}
+
+export interface RoomRuleCreate {
+	systemRuleId: string;
+	customValue?: string;
+	isEnforced?: boolean;
+	notes?: string;
+}
+
+export interface RoomImageCreate {
+	path: string;
+	alt?: string;
+	isPrimary?: boolean;
+	sortOrder?: number;
+}
+
+export interface RoomImagesCreate {
+	images: RoomImageCreate[];
+}
+
 export interface RoomInstance {
 	id: string;
 	roomId: string;
@@ -350,10 +404,11 @@ export interface CreateRoomRequest {
 	floorNumber: number;
 	roomNumberPrefix: string;
 	roomNumberStart: number;
-	pricing: RoomPricing;
-	amenities: RoomAmenity[];
-	costs: RoomCost[];
-	rules: RoomRule[];
+	pricing: RoomPricingCreate;
+	amenities: RoomAmenityCreate[];
+	costs: RoomCostCreate[];
+	rules: RoomRuleCreate[];
+	images?: RoomImagesCreate;
 	isActive: boolean;
 }
 
@@ -388,6 +443,7 @@ export interface UpdateRoomRequest {
 		customValue?: string;
 		notes?: string;
 	}>;
+	images?: RoomImagesCreate;
 	isActive?: boolean;
 }
 
@@ -487,6 +543,156 @@ export interface RoomListing {
 	}>;
 }
 
+// Room Invitation Types
+export interface RoomInvitation {
+	id: string;
+	roomId: string;
+	senderId: string;
+	recipientId: string;
+	recipientEmail: string;
+	roomSeekingPostId?: string | null;
+	monthlyRent?: string | null;
+	depositAmount?: string | null;
+	moveInDate?: string | null;
+	rentalMonths?: number | null;
+	tenantId: string;
+	status: 'pending' | 'accepted' | 'declined' | 'withdrawn' | 'expired';
+	message?: string | null;
+	availableFrom?: string | null;
+	availableUntil?: string | null;
+	invitationMessage?: string | null;
+	proposedRent?: string | null;
+	expiresAt?: string | null;
+	createdAt: string;
+	updatedAt: string;
+	// Related
+	roomInstance?: RoomInstance;
+	tenant?: UserProfile;
+	owner?: UserProfile;
+	recipient?: UserProfile;
+	sender: UserProfile;
+	room?: {
+		id: string;
+		name: string;
+		slug: string;
+		buildingId: string;
+		floorNumber: number;
+		description?: string;
+		roomType: string;
+		areaSqm: string;
+		maxOccupancy: number;
+		totalRooms: number;
+		viewCount: number;
+		isActive: boolean;
+		isVerified: boolean;
+		createdAt: string;
+		updatedAt: string;
+		building?: {
+			id: string;
+			name: string;
+		};
+	};
+}
+
+export interface CreateRoomInvitationRequest {
+	roomId: string;
+	tenantId: string;
+	availableFrom?: string;
+	availableUntil?: string;
+	invitationMessage?: string;
+	proposedRent?: string;
+}
+
+export interface RespondInvitationRequest {
+	status: 'accepted' | 'declined';
+	tenantNotes?: string;
+}
+
+export interface InvitationListResponse {
+	data: RoomInvitation[];
+	meta: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+		hasNext: boolean;
+		hasPrev: boolean;
+		itemCount: number;
+	};
+}
+
+// Booking Request Types
+export interface BookingRequest {
+	id: string;
+	roomId: string;
+	tenantId: string;
+	status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+	moveInDate: string;
+	moveOutDate?: string | null;
+	rentalMonths?: number | null;
+	monthlyRent?: string | null;
+	depositAmount?: string | null;
+	totalAmount?: string | null;
+	messageToOwner?: string | null;
+	ownerNotes?: string | null;
+	cancellationReason?: string | null;
+	createdAt: string;
+	updatedAt: string;
+	// Related
+	room?: {
+		id: string;
+		slug: string;
+		buildingId: string;
+		floorNumber: number;
+		name: string;
+		description: string;
+		roomType: string;
+		areaSqm: string;
+		maxOccupancy: number;
+		totalRooms: number;
+		viewCount: number;
+		isActive: boolean;
+		isVerified: boolean;
+		createdAt: string;
+		updatedAt: string;
+		building: {
+			id: string;
+			name: string;
+		};
+	};
+	tenant?: UserProfile;
+	owner?: UserProfile;
+}
+
+export interface CreateBookingRequestRequest {
+	roomId: string;
+	moveInDate: string;
+	moveOutDate?: string;
+	messageToOwner?: string;
+}
+
+export interface UpdateBookingRequestRequest {
+	ownerNotes?: string;
+	status?: 'approved' | 'rejected';
+}
+
+export interface CancelBookingRequestRequest {
+	cancellationReason: string;
+}
+
+export interface BookingRequestListResponse {
+	data: BookingRequest[];
+	meta: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+		hasNext: boolean;
+		hasPrev: boolean;
+		itemCount: number;
+	};
+}
+
 export interface RoomListingsResponse {
 	data: RoomListing[];
 	meta: {
@@ -515,6 +721,9 @@ export interface RoomDetail {
 	buildingDescription: string;
 	address: string;
 	addressLine2: string | null;
+	availableRooms: number;
+	totalRooms: number;
+	viewCount: number;
 	location: {
 		provinceId: number;
 		provinceName: string;
@@ -525,13 +734,16 @@ export interface RoomDetail {
 	};
 	owner: {
 		id: string;
-		firstName: string;
-		lastName: string;
+		name: string;
+		gender: string;
+		email: string;
 		phone: string;
 		avatarUrl: string | null;
 		isVerifiedPhone: boolean;
 		isVerifiedEmail: boolean;
 		isVerifiedIdentity: boolean;
+		totalBuildings?: number;
+		totalRoomInstances?: number;
 	};
 	images: Array<{
 		url: string;
