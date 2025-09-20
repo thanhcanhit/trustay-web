@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "./ui/input";
 import { useChatStore } from "@/stores/chat.store";
 import { useMemo, useEffect } from "react";
+import { format } from 'date-fns';
 
 export function ChatList() {
   const conversationsObj = useChatStore((state) => state.conversations);
@@ -39,13 +40,18 @@ export function ChatList() {
                 <AvatarFallback>{counterpart.firstName.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="ml-3 flex-1">
-                <p className="font-semibold">{displayName}</p>
-                <p className="text-sm text-gray-500 truncate">
+                <p className={`font-semibold ${convo.unreadCount && convo.unreadCount > 0 ? 'font-bold' : ''}`}>{displayName}</p>
+                <p className={`text-sm text-gray-500 truncate ${convo.unreadCount && convo.unreadCount > 0 ? 'font-bold text-black' : ''}`}>
                   {lastMessage?.content}
                 </p>
               </div>
-              <div className="text-xs text-gray-400">
-                <p>{lastMessage?.sentAt}</p>
+              <div className="flex flex-col items-end text-xs text-gray-400">
+                <p className="mb-1">{lastMessage?.sentAt ? format(new Date(lastMessage.sentAt), 'HH:mm') : ''}</p>
+                {convo.unreadCount && convo.unreadCount > 0 && (
+                  <span className="flex items-center justify-center w-4 h-4 bg-red-500 text-white rounded-full text-xs">
+                    {convo.unreadCount}
+                  </span>
+                )}
               </div>
             </li>
           );

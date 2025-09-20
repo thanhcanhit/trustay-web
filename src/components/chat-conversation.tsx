@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { useChatStore } from "@/stores/chat.store";
 import { useUserStore } from "@/stores/userStore";
 import { useState, useEffect, useRef } from "react";
+import { format, isSameDay } from 'date-fns';
+import { Check, CheckCheck } from 'lucide-react';
 
 export function ChatConversation() {
   const getConversation = useChatStore((state) => state.getConversation);
@@ -88,20 +90,40 @@ export function ChatConversation() {
         ref={messagesContainerRef}
         className="flex-1 p-4 overflow-y-auto"
         onScroll={handleScroll}>
-        {messages.map((msg, index) => (
-          <div
-            key={msg.id || `message-${index}`}
-            className={`flex my-2 ${msg.senderId === user?.id ? "justify-end" : ""}`}>
-            <div
-              className={`p-2 rounded-lg ${
-                msg.senderId === user?.id
-                  ? "bg-primary text-white"
-                  : "bg-gray-200"
-              }`}>
-              <p>{msg.content}</p>
+        {messages.map((msg, index) => {
+          const showDateSeparator = index === 0 || !isSameDay(new Date(messages[index - 1].sentAt), new Date(msg.sentAt));
+          return (
+            <div key={msg.id || `message-${index}`}>
+              {showDateSeparator && (
+                <div className="text-center text-sm text-gray-500 my-2">
+                  {format(new Date(msg.sentAt), 'eeee, dd MMMM, yyyy')}
+                </div>
+              )}
+              <div
+                className={`flex my-2 items-end ${msg.senderId === user?.id ? "justify-end" : ""}`}>
+                <div
+                  className={`p-2 rounded-lg max-w-xs md:max-w-md ${
+                    msg.senderId === user?.id
+                      ? "bg-primary text-white"
+                      : "bg-gray-200"
+                  }`}>
+                  <p>{msg.content}</p>
+                </div>
+                <div className="text-xs text-gray-400 ml-2 flex items-center">
+                  {format(new Date(msg.sentAt), 'HH:mm')}
+                  {msg.senderId === user?.id && (
+                    <span className="ml-1">
+                      {msg.readAt ? <CheckCheck size={16} className="text-blue-500" /> : <Check size={16} />}
+                    </span>
+                  )}
+                </div>
+                {msg.senderId !== user?.id && !msg.readAt && (
+                  <div className="w-2 h-2 bg-red-500 rounded-full ml-1 self-center" />
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
         <div ref={messagesEndRef} />
       </div>
       <div className="p-4 border-t">
