@@ -24,10 +24,11 @@ export function ChatBubble() {
         <div className="fixed bottom-0 right-6 z-50">
           <button
             onClick={toggleChat}
-            className="flex items-center justify-center w-14 h-14 bg-primary hover:bg-orange-600 text-white rounded-full shadow-lg transition-all duration-300 ease-in-out"
+            className="flex items-center justify-center w-30 h-12 bg-primary hover:bg-green-600 text-white shadow-lg transition-all duration-300 ease-in-out cursor-pointer"
             aria-label="Chat"
           >
             <MessageCircle size={24} />
+            <span className="ml-2">Tin nhắn</span>
           </button>
         </div>
       )}
