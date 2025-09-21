@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { MESSAGE_TYPES } from '../constants/chat.constants';
 import { createServerApiCall } from '../lib/api-client';
 
 const getTokenFromCookies = async (): Promise<string | null> => {
@@ -119,7 +120,7 @@ export async function getOrCreateConversation(participantId: string): Promise<Co
 		const result = await sendMessage({
 			recipientId: participantId,
 			content: '',
-			type: 'system',
+			type: MESSAGE_TYPES.TEXT,
 		});
 
 		// Get the conversation data from the message response

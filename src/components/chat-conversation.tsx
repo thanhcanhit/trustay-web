@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useChatStore } from "@/stores/chat.store";
 import { useUserStore } from "@/stores/userStore";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { format, isSameDay } from 'date-fns';
 import { Check, CheckCheck } from 'lucide-react';
+import { MESSAGE_TYPES, SYSTEM_MESSAGE_TYPES, MESSAGE_CONTENT_MAP } from '@/constants/chat.constants';
+import type { SystemMessageType } from '@/constants/chat.constants';
 
 export function ChatConversation() {
   const getConversation = useChatStore((state) => state.getConversation);
-  const loadMessages = useChatStore((state) => state.loadMessages);
   const sendMessage = useChatStore((state) => state.sendMessage);
   const setCurrentUserId = useChatStore((state) => state.setCurrentUserId);
   const currentConversationId = useChatStore((state) => state.currentConversationId);
@@ -21,13 +22,26 @@ export function ChatConversation() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
+  const isSystemMessage = (messageType: string) => {
+    return SYSTEM_MESSAGE_TYPES.includes(messageType as SystemMessageType);
+  };
+
+  const getSystemMessageContent = (messageType: string, originalContent: string) => {
+    if (messageType in MESSAGE_CONTENT_MAP) {
+      return MESSAGE_CONTENT_MAP[messageType as keyof typeof MESSAGE_CONTENT_MAP];
+    }
+    return originalContent;
+  };
+
   const conversation = currentConversationId
     ? getConversation(currentConversationId)
     : null;
 
-  const messages = currentConversationId
-    ? (byConversation[currentConversationId] ?? [])
-    : [];
+  const messages = useMemo(() => {
+    return currentConversationId
+      ? (byConversation[currentConversationId] ?? [])
+      : [];
+  }, [currentConversationId, byConversation]);
 
   // Set current user ID in chat store when user is available
   useEffect(() => {
@@ -66,7 +80,7 @@ export function ChatConversation() {
         recipientId: conversation.counterpart.id,
         conversationId: conversation.conversationId,
         attachmentUrls: [],
-        type: "text",
+        type: MESSAGE_TYPES.TEXT,
       });
       setMessage("");
       // Enable auto-scroll when sending message
@@ -99,28 +113,39 @@ export function ChatConversation() {
                   {format(new Date(msg.sentAt), 'eeee, dd MMMM, yyyy')}
                 </div>
               )}
-              <div
-                className={`flex my-2 items-end ${msg.senderId === user?.id ? "justify-end" : ""}`}>
-                <div
-                  className={`p-2 rounded-lg max-w-xs md:max-w-md ${
-                    msg.senderId === user?.id
-                      ? "bg-primary text-white"
-                      : "bg-gray-200"
-                  }`}>
-                  <p>{msg.content}</p>
+              {isSystemMessage(msg.type) ? (
+                <div className="flex justify-center my-3">
+                  <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2 rounded-lg text-sm max-w-sm text-center">
+                    <p>{getSystemMessageContent(msg.type, msg.content)}</p>
+                    <div className="text-xs text-blue-600 mt-1">
+                      {format(new Date(msg.sentAt), 'HH:mm')}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-xs text-gray-400 ml-2 flex items-center">
-                  {format(new Date(msg.sentAt), 'HH:mm')}
-                  {msg.senderId === user?.id && (
-                    <span className="ml-1">
-                      {msg.readAt ? <CheckCheck size={16} className="text-blue-500" /> : <Check size={16} />}
-                    </span>
+              ) : (
+                <div
+                  className={`flex my-2 items-end ${msg.senderId === user?.id ? "justify-end" : ""}`}>
+                  <div
+                    className={`p-2 rounded-lg max-w-xs md:max-w-md ${
+                      msg.senderId === user?.id
+                        ? "bg-primary text-white"
+                        : "bg-gray-200"
+                    }`}>
+                    <p>{msg.content}</p>
+                  </div>
+                  <div className="text-xs text-gray-400 ml-2 flex items-center">
+                    {format(new Date(msg.sentAt), 'HH:mm')}
+                    {msg.senderId === user?.id && (
+                      <span className="ml-1">
+                        {msg.readAt ? <CheckCheck size={16} className="text-blue-500" /> : <Check size={16} />}
+                      </span>
+                    )}
+                  </div>
+                  {msg.senderId !== user?.id && !msg.readAt && (
+                    <div className="w-2 h-2 bg-red-500 rounded-full ml-1 self-center" />
                   )}
                 </div>
-                {msg.senderId !== user?.id && !msg.readAt && (
-                  <div className="w-2 h-2 bg-red-500 rounded-full ml-1 self-center" />
-                )}
-              </div>
+              )}
             </div>
           )
         })}
