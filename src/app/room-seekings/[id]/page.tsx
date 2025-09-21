@@ -28,6 +28,8 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { MESSAGE_TYPES } from '@/constants/chat.constants'
+import { useChatStore } from '@/stores/chat.store'
 
 export default function RoomSeekingDetailPage() {
   const params = useParams()
@@ -61,12 +63,13 @@ export default function RoomSeekingDetailPage() {
   } = useInvitationStore()
   
   const { user } = useUserStore()
-  const { 
-    buildings, 
-    buildingRooms, 
+  const {
+    buildings,
+    buildingRooms,
     fetchAllBuildings,
-    isLoading: buildingsLoading 
+    isLoading: buildingsLoading
   } = useBuildingStore()
+  const { sendMessage: sendChatMessage } = useChatStore()
 
   // Load room seeking detail from API using store - only once
   useEffect(() => {
@@ -117,6 +120,38 @@ export default function RoomSeekingDetailPage() {
     
     const success = await createInvitation(invitationData)
     if (success) {
+      try {
+        console.log('🚀 Starting to send invitation notification message')
+        console.log('📝 Message payload:', {
+          recipientId: requester.id,
+          content: invitationMessage || 'Tôi có phòng phù hợp với yêu cầu của bạn. Bạn có quan tâm không?',
+          type: MESSAGE_TYPES.INVITATION
+        })
+        console.log('👤 Current user:', user)
+        console.log('🎯 Requester:', requester)
+
+        // Send notification message to room seeker using chat store
+        await sendChatMessage({
+          recipientId: requester.id,
+          content: invitationMessage || 'Tôi có phòng phù hợp với yêu cầu của bạn. Bạn có quan tâm không?',
+          type: MESSAGE_TYPES.INVITATION
+        })
+
+        console.log('✅ Message sent successfully via chat store')
+      } catch (error) {
+        console.error('❌ Failed to send notification message:', error)
+        console.error('🔍 Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          requesterId: requester.id,
+          messageContent: invitationMessage || 'Tôi có phòng phù hợp với yêu cầu của bạn. Bạn có quan tâm không?',
+          currentUser: user
+        })
+
+        // Show error to user so they know what happened
+        toast.error('Không thể gửi tin nhắn thông báo, vui lòng thử lại sau')
+      }
+
       toast.success('Gửi lời mời thành công!')
       setIsInvitationOpen(false)
       // Reset form
@@ -254,7 +289,7 @@ export default function RoomSeekingDetailPage() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-1">
             {/* Header Image - Placeholder for now */}
-            <div className="relative">
+            <div className="relative mb-4">
               <div className="w-full h-80 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl shadow-xl flex items-center justify-center">
                 <div className="text-center">
                   <Home className="h-16 w-16 text-blue-500 mx-auto mb-4" />
@@ -270,7 +305,7 @@ export default function RoomSeekingDetailPage() {
             </div>
 
             {/* Post Header */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm mb-4">
               <CardContent>
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -332,7 +367,7 @@ export default function RoomSeekingDetailPage() {
             </Card>
 
             {/* Post Information */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm mb-4">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Info className="h-5 w-5 text-blue-600" />
@@ -384,7 +419,7 @@ export default function RoomSeekingDetailPage() {
 
             {/* Amenities */}
             {currentPost.amenityIds && currentPost.amenityIds.length > 0 && (
-              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm mb-4">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl">
                     <Home className="h-5 w-5 text-blue-600" />
@@ -402,7 +437,7 @@ export default function RoomSeekingDetailPage() {
             )}
 
             {/* Description */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm mb-4">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <MessageCircle className="h-5 w-5 text-blue-600" />
@@ -433,7 +468,7 @@ export default function RoomSeekingDetailPage() {
             </Card>           
 
             {/* Location */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm mb-4">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <MapPin className="h-5 w-5 text-red-600" />
@@ -513,7 +548,7 @@ export default function RoomSeekingDetailPage() {
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-1">
             {/* Requester Profile Section */}
-            <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-gray-50">
+            <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-gray-50 mb-4">
               <CardContent className="">
                 {/* Requester Profile */}
                 {(() => {
@@ -822,7 +857,7 @@ export default function RoomSeekingDetailPage() {
             </Card>
 
             {/* Budget Section - Sticky */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm sticky top-6">
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm sticky top-6 mb-4">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <DollarSign className="h-5 w-5 text-green-600" />

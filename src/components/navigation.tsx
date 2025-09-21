@@ -177,7 +177,7 @@ export function Navigation() {
   }, [])
 
   return (
-    <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-[9998]">
+    <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-[9998]" suppressHydrationWarning={true}>
       {/* First Row: Logo, Search, Login/Signup */}
       <div className={isAuthPage ? "" : "border-b border-gray-200"}>
         <div className="container mx-auto px-4 relative">
