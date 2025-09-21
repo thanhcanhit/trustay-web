@@ -117,7 +117,11 @@ export const useBookingRequestStore = create<BookingRequestState>((set, get) => 
 			const { received } = get();
 			const updatedReceived = received.map((item) =>
 				item.id === id
-					? { ...item, status: data.status, ownerNotes: data.ownerNotes || item.ownerNotes }
+					? {
+							...item,
+							...(data.status && { status: data.status }),
+							ownerNotes: data.ownerNotes || item.ownerNotes,
+						}
 					: item,
 			);
 			set({ received: updatedReceived, submitting: false });
