@@ -17,7 +17,7 @@ export interface MessageData {
 	senderId: string;
 	content: string;
 	type: string;
-	attachments: Array<any>;
+	attachments: Array<{ id: string; url: string; type: string; name?: string }>;
 	isEdited: boolean;
 	sentAt: string;
 	readAt: string | null;
@@ -60,8 +60,6 @@ export interface ListMessagesResponse {
 export interface ListConversationsResponse {
 	data: ConversationData[];
 }
-
-export interface ApiConversationResponse extends ConversationData {}
 
 export interface GetMessagesParams {
 	cursor?: string;
