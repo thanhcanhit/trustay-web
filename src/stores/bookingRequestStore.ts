@@ -113,8 +113,14 @@ export const useBookingRequestStore = create<BookingRequestState>((set, get) => 
 		set({ submitting: true, submitError: null });
 		const res = await updateBookingRequestAsOwner(id, data);
 		if (res.success) {
-			await get().loadById(id);
-			set({ submitting: false });
+			// Update the specific item in the received array
+			const { received } = get();
+			const updatedReceived = received.map((item) =>
+				item.id === id
+					? { ...item, status: data.status, ownerNotes: data.ownerNotes || item.ownerNotes }
+					: item,
+			);
+			set({ received: updatedReceived, submitting: false });
 			return true;
 		}
 		set({ submitting: false, submitError: res.error });
@@ -125,8 +131,12 @@ export const useBookingRequestStore = create<BookingRequestState>((set, get) => 
 		set({ submitting: true, submitError: null });
 		const res = await cancelMyBookingRequest(id, data);
 		if (res.success) {
-			await get().loadById(id);
-			set({ submitting: false });
+			// Update the specific item in the mine array
+			const { mine } = get();
+			const updatedMine = mine.map((item) =>
+				item.id === id ? { ...item, status: 'cancelled' as const } : item,
+			);
+			set({ mine: updatedMine, submitting: false });
 			return true;
 		}
 		set({ submitting: false, submitError: res.error });

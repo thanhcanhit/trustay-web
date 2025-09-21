@@ -25,6 +25,8 @@ import { BreadcrumbNavigation } from "@/components/breadcrumb-navigation"
 import { useBookingRequestStore } from "@/stores/bookingRequestStore"
 import { useUserStore } from "@/stores/userStore"
 import { toast } from "sonner"
+import { MESSAGE_TYPES } from "@/constants/chat.constants"
+import { useChatStore } from "@/stores/chat.store"
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination } from 'swiper/modules'
 import 'swiper/css'
@@ -47,6 +49,7 @@ export default function PropertyDetailPage() {
   const [messageToOwner, setMessageToOwner] = useState<string>("")
   const { create, submitting, submitError, clearErrors, mine, loadMine } = useBookingRequestStore()
   const { user, isAuthenticated } = useUserStore()
+  const { sendMessage: sendChatMessage } = useChatStore()
   const [hasExistingRequest, setHasExistingRequest] = useState<boolean>(false)
   const [existingRequestStatus, setExistingRequestStatus] = useState<string | null>(null)
 
@@ -226,7 +229,39 @@ export default function PropertyDetailPage() {
       moveOutDate: moveOutDate || undefined,
       messageToOwner: messageToOwner || undefined,
     })
-    if (ok) {
+    if (ok && roomDetail?.owner?.id) {
+      try {
+        console.log('🚀 Starting to send booking request notification message')
+        console.log('📝 Message payload:', {
+          recipientId: roomDetail.owner.id,
+          content: messageToOwner || 'Tôi quan tâm đến phòng của bạn và muốn gửi yêu cầu thuê.',
+          type: MESSAGE_TYPES.REQUEST
+        })
+        console.log('👤 Current user:', user)
+        console.log('🏠 Room owner:', roomDetail.owner)
+
+        // Send notification message to room owner using chat store
+        await sendChatMessage({
+          recipientId: roomDetail.owner.id,
+          content: messageToOwner || 'Tôi quan tâm đến phòng của bạn và muốn gửi yêu cầu thuê.',
+          type: MESSAGE_TYPES.REQUEST
+        })
+
+        console.log('✅ Message sent successfully via chat store')
+      } catch (error) {
+        console.error('❌ Failed to send notification message:', error)
+        console.error('🔍 Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          roomOwnerId: roomDetail.owner.id,
+          messageContent: messageToOwner || 'Tôi quan tâm đến phòng của bạn và muốn gửi yêu cầu thuê.',
+          currentUser: user
+        })
+
+        // Show error to user so they know what happened
+        toast.error('Không thể gửi tin nhắn thông báo, vui lòng thử lại sau')
+      }
+
       toast.success('Đã gửi yêu cầu thuê')
       setIsBookingOpen(false)
       setMessageToOwner("")
@@ -330,9 +365,9 @@ export default function PropertyDetailPage() {
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-1">
+          <div className="lg:col-span-2 space-y-2">
             {/* Image Gallery */}
-            <div className="relative">
+            <div className="relative mb-4">
               <ImageSwiper
                 images={roomDetail.images || []}
                 title={roomDetail.name}
@@ -350,7 +385,7 @@ export default function PropertyDetailPage() {
             </div>
 
             {/* Room Header */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+            <Card className="shadow-lg border-0 mb-4 bg-white/80 backdrop-blur-sm">
               <CardContent>
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -419,7 +454,7 @@ export default function PropertyDetailPage() {
             </Card>
 
             {/* Room Information */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+            <Card className="shadow-lg border-0 mb-4 bg-white/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Home className="h-5 w-5 text-blue-600" />
@@ -499,7 +534,7 @@ export default function PropertyDetailPage() {
             </Card>
 
             {/* Amenities - Restricted for unauthenticated users */}
-            <div className="relative">
+            <div className="relative mb-4">
               <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl">
@@ -548,7 +583,7 @@ export default function PropertyDetailPage() {
             </div>
 
             {/* Pricing & Costs - Restricted for unauthenticated users */}
-            <div className="relative">
+            <div className="relative mb-4">
               <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl">
@@ -663,7 +698,7 @@ export default function PropertyDetailPage() {
             </div>
 
             {/* Remaining sections - Restricted for unauthenticated users */}
-            <div className="relative space-y-1">
+            <div className="relative space-y-1 mb-4">
               {/* Rules */}
               {roomDetail.rules && roomDetail.rules.length > 0 && (
                 <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
@@ -708,7 +743,7 @@ export default function PropertyDetailPage() {
               )}
 
               {/* Description */}
-              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm mb-4">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl">
                     <MessageCircle className="h-5 w-5 text-blue-600" />
@@ -858,7 +893,7 @@ export default function PropertyDetailPage() {
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-1">
             {/* Owner Profile Section */}
-            <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-gray-50">
+            <Card className="shadow-xl border-0 mb-4 bg-gradient-to-br from-white to-gray-50">
               <CardContent className="">
                 {/* Owner Profile */}
                 <div className="flex items-center gap-4 mb-4">

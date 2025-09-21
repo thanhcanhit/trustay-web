@@ -8,7 +8,7 @@ import { AuthProvider } from "@/components/auth-provider";
 import { AppInitializer } from "@/components/app-initializer";
 import { NotificationProvider } from "@/components/notification-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { ChatProvider } from "@/components/chat/chat-provider";
+import { ChatBubble } from "@/components/chat-bubble";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -113,13 +113,13 @@ export default function RootLayout({
               </Suspense>
               <main className="flex-1 page-content">{children}</main>
               <FooterGate />
+              <ChatBubble />
               <Toaster
                 position="top-center"
                 expand={true}
                 richColors
                 closeButton
               />
-              <ChatProvider />
             </NotificationProvider>
           </AppInitializer>
         </AuthProvider>
