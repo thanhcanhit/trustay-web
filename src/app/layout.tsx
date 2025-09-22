@@ -8,7 +8,7 @@ import { AuthProvider } from "@/components/auth-provider";
 import { AppInitializer } from "@/components/app-initializer";
 import { NotificationProvider } from "@/components/notification-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { ChatBubble } from "@/components/chat-bubble";
+import { ChatBubble } from "@/components/chat/chat-bubble";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "./ui/input";
+import { Input } from "@/components/ui/input";
 import { useChatStore } from "@/stores/chat.store";
 import { useMemo, useEffect } from "react";
 import { format } from 'date-fns';
