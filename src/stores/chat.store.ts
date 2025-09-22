@@ -4,6 +4,7 @@ import {
 	getConversations,
 	getMessages,
 	MessageData,
+	markAllMessagesAsRead,
 	sendMessage,
 } from '../actions/chat.action';
 
@@ -29,6 +30,7 @@ type ChatState = {
 		type: string;
 		attachmentUrls?: string[];
 	}) => Promise<void>;
+	markAllRead: (conversationId: string) => Promise<void>;
 };
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -110,6 +112,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
 		} else {
 			console.error('Invalid message data received:', sentMessage);
 			throw new Error('Invalid message response from server');
+		}
+	},
+	markAllRead: async (conversationId: string) => {
+		try {
+			await markAllMessagesAsRead(conversationId);
+			set((state) => ({
+				conversations: {
+					...state.conversations,
+					[conversationId]: {
+						...state.conversations[conversationId],
+						unreadCount: 0,
+					},
+				},
+			}));
+		} catch (error) {
+			console.error('Failed to mark all messages as read:', error);
 		}
 	},
 }));
