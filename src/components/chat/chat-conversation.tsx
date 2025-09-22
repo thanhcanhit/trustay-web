@@ -9,6 +9,7 @@ import { format, isSameDay } from 'date-fns';
 import { Check, CheckCheck } from 'lucide-react';
 import { MESSAGE_TYPES, SYSTEM_MESSAGE_TYPES, MESSAGE_CONTENT_MAP } from '@/constants/chat.constants';
 import type { SystemMessageType } from '@/constants/chat.constants';
+import Image from "next/image";
 
 export function ChatConversation() {
   const getConversation = useChatStore((state) => state.getConversation);
@@ -90,9 +91,16 @@ export function ChatConversation() {
 
   if (!conversation) {
     return (
-      <div className="flex-1 flex flex-col pt-2">
-        <div className="flex-1 p-4 overflow-y-auto">
-          <p>Select a chat to start messaging</p>
+      <div className="flex-1 flex flex-col justify-center items-center pt-2">
+        <div className="flexjustify-center items-center p-4">
+          <Image
+            src="/laptop.png"
+            alt="Empty chat"
+            width={300}
+            height={300}
+            className="mx-auto"
+          />
+          <p className="font-semibold">Chào mừng bạn đến với Trustay Chat</p>
         </div>
       </div>
     );

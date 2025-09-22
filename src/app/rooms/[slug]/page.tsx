@@ -49,7 +49,7 @@ export default function PropertyDetailPage() {
   const [messageToOwner, setMessageToOwner] = useState<string>("")
   const { create, submitting, submitError, clearErrors, mine, loadMine } = useBookingRequestStore()
   const { user, isAuthenticated } = useUserStore()
-  const { sendMessage: sendChatMessage } = useChatStore()
+  const { sendMessage: sendChatMessage, setCurrentUserId } = useChatStore()
   const [hasExistingRequest, setHasExistingRequest] = useState<boolean>(false)
   const [existingRequestStatus, setExistingRequestStatus] = useState<string | null>(null)
 
@@ -95,6 +95,13 @@ export default function PropertyDetailPage() {
     loadMine()
   }, [loadMine])
 
+  // Set current user ID in chat store when user is authenticated
+  useEffect(() => {
+    if (user?.id) {
+      setCurrentUserId(user.id)
+    }
+  }, [user?.id, setCurrentUserId])
+
   // Check if user has existing booking request for this room
   useEffect(() => {
     if (roomDetail?.id && mine.length >= 0) {
@@ -103,10 +110,10 @@ export default function PropertyDetailPage() {
         const roomMatches = request.roomId === roomDetail.id
         // Check for any status except cancelled
         const statusMatches = request.status !== 'cancelled'
-        
+
         return roomMatches && statusMatches
       })
-      
+
       setHasExistingRequest(!!existingRequest)
       setExistingRequestStatus(existingRequest?.status || null)
     }
@@ -1011,13 +1018,12 @@ export default function PropertyDetailPage() {
                 {/* Action Buttons */}
                 <div className="grid grid-cols-2 gap-3">
                   {/* Check if user is owner first */}
-                  {user && roomDetail?.owner?.email && user.email === roomDetail.owner.email ? (
-                    <Button className="bg-gray-400 hover:bg-gray-500 text-white cursor-not-allowed" size="lg" disabled>
-                      <Home className="h-4 w-4 mr-2" />
-                      Đây là phòng của bạn
+                  {user?.role === "landlord" ? (
+                    <Button className="bg-gray-400 hover:bg-gray-500 text-white cursor-not-allowed" size="lg">
+                      CT không thể thuê phòng
                     </Button>
                   ) : hasExistingRequest ? (
-                    <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white" size="lg" disabled>
+                    <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white cursor-not-allowed" size="lg">
                       <CalendarClock className="h-4 w-4 mr-2" />
                       {existingRequestStatus === 'pending' && 'Đã gửi yêu cầu'}
                       {existingRequestStatus === 'approved' && 'Yêu cầu đã được chấp nhận'}
@@ -1033,7 +1039,7 @@ export default function PropertyDetailPage() {
                     }}>
                       <Button
                         onClick={handleRentalRequestClick}
-                        className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
+                        className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white cursor-pointer"
                         size="lg"
                       >
                         <Send className="h-4 w-4 mr-2" />
@@ -1072,7 +1078,7 @@ export default function PropertyDetailPage() {
 
                   <Button 
                     variant="outline"
-                    className="border-gray-300 hover:bg-gray-50"
+                    className="border-gray-300 hover:bg-gray-50 cursor-pointer"
                     size="lg"
                     onClick={() => toast.info('Tính năng trò chuyện sẽ sớm ra mắt')}
                   >
@@ -1291,7 +1297,7 @@ export default function PropertyDetailPage() {
                           isSaved={savedRooms.includes(room.id)}
                           onSaveToggle={toggleSaveRoom}
                           onClick={handleRoomClick}
-                          className="!shadow-lg hover:shadow-xl transition-shadow duration-300"
+                          className="!shadow-lg hover:shadow-xl transition-shadow duration-300 mb-2"
                         />
                       </SwiperSlide>
                     ))}
