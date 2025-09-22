@@ -143,7 +143,7 @@ export default function LandlordProperties() {
                         <Building className="h-6 w-6 text-blue-600" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg">{building.name}</CardTitle>
+                        <CardTitle className="text-lg line-clamp-2">{building.name}</CardTitle>
                         <Badge className={
                           building.isActive 
                             ? 'bg-green-100 text-green-800' 

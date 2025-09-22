@@ -264,7 +264,7 @@ function RoomsManagementPageContent() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg mb-1">{room.name}</CardTitle>
+                      <CardTitle className="text-lg mb-1 line-clamp-2">{room.name}</CardTitle>
                       <div className="flex items-center space-x-2">
                         <Badge variant="outline">
                           {ROOM_TYPE_LABELS[room.roomType as keyof typeof ROOM_TYPE_LABELS]}
@@ -281,7 +281,7 @@ function RoomsManagementPageContent() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Dãy trọ:</span>
-                      <span className="font-medium">{room.building?.name || 'N/A'}</span>
+                      <span className="font-medium line-clamp-2">{room.building?.name || 'N/A'}</span>
                     </div>
                     
                     <div className="flex items-center justify-between text-sm">
