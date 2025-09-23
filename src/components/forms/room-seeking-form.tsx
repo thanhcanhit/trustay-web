@@ -498,7 +498,7 @@ export function RoomSeekingForm({ onBack, postId, initialData, mode = 'create' }
 				<CardContent className="space-y-3">
 					<div>
 						<p className="text-sm text-muted-foreground">Tiêu đề</p>
-						<p className="font-medium">{formData.title || 'Tiêu đề bài đăng'}</p>
+						<p className="font-medium line-clamp-1">{formData.title || 'Tiêu đề bài đăng'}</p>
 					</div>
 					<div>
 						<p className="text-sm text-muted-foreground">Mô tả</p>
