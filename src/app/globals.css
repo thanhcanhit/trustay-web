@@ -228,3 +228,188 @@
 .PhotoView-Portal {
   z-index: 100000 !important;
 }
+
+/* Global Responsive Improvements for Trustay */
+
+/* Container improvements for consistent padding */
+@layer utilities {
+  .container-responsive {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Text responsive sizes */
+  .text-responsive-xs {
+    @apply text-xs sm:text-sm;
+  }
+
+  .text-responsive-sm {
+    @apply text-sm sm:text-base;
+  }
+
+  .text-responsive-base {
+    @apply text-base sm:text-lg;
+  }
+
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl;
+  }
+
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl;
+  }
+
+  .text-responsive-2xl {
+    @apply text-2xl sm:text-3xl lg:text-4xl;
+  }
+
+  /* Button responsive sizes */
+  .btn-responsive-sm {
+    @apply h-8 px-3 text-sm sm:h-9 sm:px-4;
+  }
+
+  .btn-responsive-md {
+    @apply h-9 px-4 text-sm sm:h-10 sm:px-6 sm:text-base;
+  }
+
+  .btn-responsive-lg {
+    @apply h-10 px-6 text-base sm:h-11 sm:px-8 sm:text-lg;
+  }
+
+  /* Card responsive padding */
+  .card-responsive {
+    @apply p-4 sm:p-6 lg:p-8;
+  }
+
+  .card-responsive-sm {
+    @apply p-3 sm:p-4 lg:p-6;
+  }
+
+  /* Grid responsive gaps */
+  .grid-responsive-gap {
+    @apply gap-3 sm:gap-4 lg:gap-6;
+  }
+
+  .grid-responsive-gap-sm {
+    @apply gap-2 sm:gap-3 lg:gap-4;
+  }
+
+  /* Spacing responsive */
+  .space-responsive-y {
+    @apply space-y-4 sm:space-y-6 lg:space-y-8;
+  }
+
+  .space-responsive-x {
+    @apply space-x-2 sm:space-x-3 lg:space-x-4;
+  }
+
+  /* Icon responsive sizes */
+  .icon-responsive-sm {
+    @apply w-4 h-4 sm:w-5 sm:h-5;
+  }
+
+  .icon-responsive-md {
+    @apply w-5 h-5 sm:w-6 sm:h-6;
+  }
+
+  .icon-responsive-lg {
+    @apply w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8;
+  }
+
+  /* Form responsive */
+  .form-responsive {
+    @apply space-y-4 sm:space-y-6;
+  }
+
+  .form-field-responsive {
+    @apply w-full px-3 py-2 sm:px-4 sm:py-2.5;
+  }
+
+  /* Modal responsive */
+  .modal-responsive {
+    @apply mx-4 sm:mx-6 lg:mx-auto;
+    @apply w-full sm:max-w-lg lg:max-w-2xl;
+  }
+
+  /* Navigation responsive */
+  .nav-responsive {
+    @apply px-4 sm:px-6 lg:px-8;
+    @apply h-14 sm:h-16;
+  }
+
+  /* Table responsive */
+  .table-responsive {
+    @apply text-sm sm:text-base;
+  }
+
+  .table-responsive th,
+  .table-responsive td {
+    @apply px-3 py-2 sm:px-4 sm:py-3;
+  }
+}
+
+/* Mobile-first breakpoint specific styles */
+
+/* Mobile (default) */
+@media (max-width: 639px) {
+  /* Ensure touch targets are at least 44px */
+  .btn, button {
+    min-height: 44px;
+  }
+
+  /* Improve mobile scrolling */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Mobile-specific card adjustments */
+  .card {
+    margin: 0.5rem;
+    border-radius: 0.75rem;
+  }
+
+  /* Mobile navigation adjustments */
+  .nav-mobile {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Tablet */
+@media (min-width: 640px) and (max-width: 1023px) {
+  /* Tablet-specific optimizations */
+  .grid-tablet-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-tablet-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  /* Desktop-specific optimizations */
+  .hover-desktop:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease-in-out;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Sharper borders and shadows for retina displays */
+  .border {
+    border-width: 0.5px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+}
