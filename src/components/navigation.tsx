@@ -23,7 +23,9 @@ import {
   LogOut,
   ChevronDown,
   Plus,
-  Funnel
+  Funnel,
+  Search,
+  Home
 } from "lucide-react"
 import Image from "next/image"
 import { Input } from "./ui/input"
@@ -45,7 +47,13 @@ export function Navigation() {
   const [selectedAreaRange, setSelectedAreaRange] = useState<string>("")
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
   const [selectedRules, setSelectedRules] = useState<string[]>([])
+  const [searchType, setSearchType] = useState<string>('rooms')
+  const [isMounted, setIsMounted] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   // Use search filters hook
   const {
@@ -61,11 +69,25 @@ export function Navigation() {
   // Handle search input enter key - always goes to /rooms
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      const params = new URLSearchParams()
-      params.set('search', encodeSearchQuery(searchQuery))
-      params.set('page', '1')
-      router.push(`/rooms?${params.toString()}`)
+      handleSearch()
     }
+  }
+
+  // Handle search button click
+  const handleSearch = () => {
+    const params = new URLSearchParams()
+    const encodedQuery = encodeSearchQuery(searchQuery)
+    if (encodedQuery !== '.') params.set('search', encodedQuery)
+    params.set('page', '1')
+
+    let route = '/rooms'
+    if (searchType === 'room-seeking') {
+      route = '/room-seekings'
+    } else if (searchType === 'roommate') {
+      route = '/roommate'
+    }
+
+    router.push(`${route}${params.toString() ? `?${params.toString()}` : ''}`)
   }
 
   // Handle apply for new filter dialog
@@ -188,23 +210,67 @@ export function Navigation() {
                 <Image src="/logo.png" alt="Trustay" width={140} height={140} />
               </Link>
             </div>
-            {/* Centered Search + Filter (hidden on auth pages) */}
-            {!isAuthPage && (
-              <div className="absolute left-1/2 -translate-x-1/2 -mx-8">
+            {/* Centered Search + Filter (hidden on auth pages and mobile) */}
+            {!isAuthPage && isMounted && (
+              <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 -mx-8">
                 <div className="flex items-center gap-3">
-                  {/* Keyword search input (restored) */}
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={handleSearchKeyDown}
-                    placeholder="Tìm kiếm theo từ khóa..."
-                    className="flex-1 h-10 w-120 px-4 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-600"
-                  />
+                  {/* Search bar container */}
+                  <div className="flex items-center">
+                    {/* Search type dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="h-10 w-40 xl:w-44 px-2 rounded-l-lg rounded-r-none border-r-0 bg-white hover:bg-gray-50 cursor-pointer">
+                          <Home className="h-4 w-4 mr-1" />
+                          {searchType === 'rooms' ? 'Tìm phòng trọ' :
+                           searchType === 'room-seeking' ? 'Người tìm trọ' :
+                           'Tìm người ở ghép'}
+                          <ChevronDown className="h-3 w-3 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuContent className="w-44 z-[10000]" align="start">
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem onClick={() => setSearchType('rooms')}>
+                              <Home className="h-4 w-4 mr-2" />
+                              Tìm phòng trọ
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setSearchType('room-seeking')}>
+                              <Search className="h-4 w-4 mr-2" />
+                              Người tìm trọ
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setSearchType('roommate')}>
+                              <Plus className="h-4 w-4 mr-2" />
+                              Tìm người ở ghép
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenu>
 
+                    {/* Search input */}
+                    <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={handleSearchKeyDown}
+                      placeholder="Nhập để tìm kiếm"
+                      className="h-10 w-48 xl:w-64 px-4 rounded-none border-l-0 border-r-0 focus:outline-none focus:ring-2 focus:ring-green-600 focus:z-10"
+                    />
+
+                    {/* Search button */}
+                    <Button
+                      onClick={handleSearch}
+                      className="h-10 px-4 bg-green-600 hover:bg-green-700 text-white rounded-l-none rounded-r-lg cursor-pointer"
+                    >
+                      <Search className="h-4 w-4 mr-2" />
+                      Tìm kiếm
+                    </Button>
+                  </div>
+
+                  {/* Filter button - separated */}
                   <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-10 w-18 hover:bg-gray-200 rounded-lg cursor-pointer">
-                        <Funnel className="h-4 w-4" />
+                      <Button variant="outline" className="h-10 px-3 bg-white hover:bg-gray-50 rounded-lg cursor-pointer">
+                        <Funnel className="h-4 w-4 mr-2" />
                         Bộ lọc
                       </Button>
                     </DialogTrigger>
@@ -348,8 +414,142 @@ export function Navigation() {
                 </div>
               </div>
             )}
+
+            {/* Mobile Search */}
+            {!isAuthPage && isMounted && (
+              <div className="lg:hidden">
+                <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
+                      <Search className="h-5 w-5 text-gray-600" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col">
+                    <DialogHeader className="flex-shrink-0">
+                      <DialogTitle>Tìm kiếm</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto space-y-4 py-2">
+
+                      {/* Search Type */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Loại tìm kiếm</label>
+                        <div className="space-y-2">
+                          <Button
+                            onClick={() => setSearchType('rooms')}
+                            variant={searchType === 'rooms' ? 'default' : 'outline'}
+                            className={`w-full justify-start h-10 ${searchType === 'rooms' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                          >
+                            <Home className="h-4 w-4 mr-2" />
+                            Tìm phòng trọ
+                          </Button>
+                          <Button
+                            onClick={() => setSearchType('room-seeking')}
+                            variant={searchType === 'room-seeking' ? 'default' : 'outline'}
+                            className={`w-full justify-start h-10 ${searchType === 'room-seeking' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                          >
+                            <Search className="h-4 w-4 mr-2" />
+                            Người tìm trọ
+                          </Button>
+                          <Button
+                            onClick={() => setSearchType('roommate')}
+                            variant={searchType === 'roommate' ? 'default' : 'outline'}
+                            className={`w-full justify-start h-10 ${searchType === 'roommate' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Tìm người ở ghép
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Search Input */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Từ khóa</label>
+                        <Input
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Nhập để tìm kiếm"
+                          className="w-full"
+                        />
+                      </div>
+
+                      {/* Search Button */}
+                      <Button
+                        onClick={() => {
+                          handleSearch()
+                          setIsFilterOpen(false)
+                        }}
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        <Search className="h-4 w-4 mr-2" />
+                        Tìm kiếm
+                      </Button>
+
+                      <hr />
+
+                      {/* Simple Filters */}
+                      <div className="space-y-4">
+                        <h4 className="font-medium">Bộ lọc</h4>
+
+                        {/* Location */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Khu vực</label>
+                          <AddressSelector
+                            showStreetInput={false}
+                            onChange={(addr) => {
+                              setSelectedProvinceId(addr.province?.id || null)
+                              setSelectedDistrictId(addr.district?.id || null)
+                              setSelectedWardId(addr.ward?.id || null)
+                            }}
+                          />
+                        </div>
+
+                        {/* Price Range */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Khoảng giá</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[
+                              { v: '', l: 'Tất cả' },
+                              { v: '0-2000000', l: 'Dưới 2tr' },
+                              { v: '2000000-5000000', l: '2-5tr' },
+                              { v: '5000000-999999999', l: 'Trên 5tr' }
+                            ].map(opt => (
+                              <Button
+                                key={opt.v || 'all'}
+                                onClick={() => setSelectedPriceRange(opt.v)}
+                                variant={selectedPriceRange === opt.v ? 'default' : 'outline'}
+                                size="sm"
+                                className={`${selectedPriceRange === opt.v ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                              >
+                                {opt.l}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <DialogFooter className="flex-shrink-0 mt-4">
+                      <Button
+                        onClick={() => setIsFilterOpen(false)}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        Hủy
+                      </Button>
+                      <Button
+                        onClick={handleApplyFilters}
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                      >
+                        Áp dụng
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            )}
+
             {/* Right Section - Login/Signup or User Menu */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 md:space-x-3">
               {isAuthenticated && user ? (
                 <>
                 <NotificationBell />
@@ -378,7 +578,7 @@ export function Navigation() {
                       </AvatarFallback>
                     )}
                   </Avatar>
-                  <span className="hidden sm:inline-block">{user.firstName} {user.lastName}</span>
+                  {isMounted && <span className="hidden md:inline-block">{user.firstName} {user.lastName}</span>}
                   <ChevronDown className="h-3 w-3" />
                 </Button>
 
