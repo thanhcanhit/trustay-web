@@ -110,7 +110,7 @@ export default function RentalRequestsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={request.tenant?.avatarUrl || ''} alt={`${request.tenant?.firstName || ''} ${request.tenant?.lastName || ''}`} />
+                      <AvatarImage src={request.tenant?.avatarUrl || undefined} alt={`${request.tenant?.firstName || ''} ${request.tenant?.lastName || ''}`} />
                       <AvatarFallback className="bg-blue-100 text-blue-600">
                         {`${(request.tenant?.firstName || 'U')[0]}${(request.tenant?.lastName || 'S')[0]}`}
                       </AvatarFallback>

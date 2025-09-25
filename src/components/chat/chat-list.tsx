@@ -40,7 +40,7 @@ export function ChatList() {
                 markAllRead(convo.conversationId);
               }}>
               <Avatar>
-                <AvatarImage src={counterpart.avatarUrl || ""} />
+                <AvatarImage src={counterpart.avatarUrl || undefined} />
                 <AvatarFallback>{counterpart.firstName.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="ml-3 flex-1 line-clamp-1">

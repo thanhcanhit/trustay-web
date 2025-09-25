@@ -17,7 +17,6 @@ import { mockBookings } from "@/data/mock-data"
 import Link from "next/link"
 import { useEffect } from "react"
 import { useBuildingStore } from "@/stores/buildingStore"
-import { DashboardNotifications } from "@/components/dashboard/dashboard-notifications"
 
 // Client Component for Dashboard Content
 function DashboardContent() {
