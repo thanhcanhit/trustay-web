@@ -249,15 +249,20 @@ function RoomsPageContent() {
         </div>
       </div>
 
+      {/* Mobile Filter Panel - Outside grid */}
+      <div className={`lg:hidden ${showFilters ? 'block' : 'hidden'} mb-6`}>
+        <SortingSidebar />
+      </div>
+
       {/* Main Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Sidebar - Filters */}
-        <div className={`lg:col-span-1 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+        {/* Left Sidebar - Desktop Filters Only */}
+        <div className="hidden lg:block lg:col-span-1">
           <SortingSidebar />
         </div>
 
         {/* Right Content Area */}
-        <div className="lg:col-span-3">
+        <div className="col-span-1 lg:col-span-3">
           {/* Loading State */}
           {isLoading && (
             <div className="text-center py-12">

@@ -715,15 +715,16 @@ export interface RoomDetail {
 	areaSqm: string;
 	maxOccupancy: number;
 	isVerified: boolean;
-	isActive: boolean;
-	floorNumber: number;
 	buildingName: string;
+	buildingVerified: boolean;
 	buildingDescription: string;
 	address: string;
-	addressLine2: string | null;
 	availableRooms: number;
 	totalRooms: number;
+	isActive: boolean;
+	floorNumber: number;
 	viewCount: number;
+	lastUpdated: string;
 	location: {
 		provinceId: number;
 		provinceName: string;
@@ -739,11 +740,11 @@ export interface RoomDetail {
 		email: string;
 		phone: string;
 		avatarUrl: string | null;
-		isVerifiedPhone: boolean;
-		isVerifiedEmail: boolean;
-		isVerifiedIdentity: boolean;
-		totalBuildings?: number;
-		totalRoomInstances?: number;
+		verifiedPhone: boolean;
+		verifiedEmail: boolean;
+		verifiedIdentity: boolean;
+		totalBuildings: number;
+		totalRoomInstances: number;
 	};
 	images: Array<{
 		url: string;
@@ -767,12 +768,8 @@ export interface RoomDetail {
 	}>;
 	pricing: {
 		basePriceMonthly: string;
-		depositAmount: string;
-		depositMonths: number;
+		depositAmount?: string;
 		utilityIncluded: boolean;
-		minimumStayMonths: number;
-		maximumStayMonths: number | null;
-		priceNegotiable: boolean;
 	};
 	rules: Array<{
 		id: string;
@@ -782,7 +779,18 @@ export interface RoomDetail {
 		notes: string | null;
 		isEnforced: boolean;
 	}>;
-	lastUpdated: string;
+	seo: {
+		title: string;
+		description: string;
+		keywords: string;
+	};
+	breadcrumb: {
+		items: Array<{
+			title: string;
+			path: string;
+		}>;
+	};
+	similarRooms: RoomListing[];
 }
 
 export interface RoomSearchParams {
