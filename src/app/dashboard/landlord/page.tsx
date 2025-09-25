@@ -96,12 +96,7 @@ function DashboardContent() {
   }
 
   return (
-    <div className="px-6">
-      {/* Notifications */}
-      <div className="mb-8">
-        <DashboardNotifications />
-      </div>
-      
+    <div className="px-6">      
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
