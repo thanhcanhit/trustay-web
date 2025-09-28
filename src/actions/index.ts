@@ -45,6 +45,17 @@ export {
 	getMyBuildings,
 	updateBuilding,
 } from './building.action';
+// Export contract actions
+export {
+	autoGenerateContract,
+	createContractAmendment,
+	downloadContractPDF,
+	getContractById,
+	getLandlordContracts,
+	getMyContracts,
+	getTenantContracts,
+	updateContract,
+} from './contract.action';
 // Export invitation actions
 export {
 	createRoomInvitation,

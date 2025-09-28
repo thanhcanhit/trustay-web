@@ -830,3 +830,58 @@ export interface RoomSeekingPublicSearchParams {
 	sortBy?: 'createdAt' | 'updatedAt' | 'title' | 'maxBudget' | 'viewCount' | 'contactCount';
 	sortOrder?: 'asc' | 'desc';
 }
+
+// Contract Types
+export interface Contract {
+	id: string;
+	landlordId: string;
+	tenantId: string;
+	roomId: string;
+	rentalId?: string;
+	terms: string;
+	monthlyRent: number;
+	startDate: string;
+	endDate: string;
+	status: 'draft' | 'active' | 'expired' | 'terminated';
+	createdAt: string;
+	updatedAt: string;
+	landlord?: UserProfile;
+	tenant?: UserProfile;
+	room?: Room;
+	amendments?: ContractAmendment[];
+}
+
+export interface ContractAmendment {
+	id: string;
+	contractId: string;
+	type: 'rent_increase' | 'rent_decrease' | 'term_extension' | 'term_modification' | 'other';
+	description: string;
+	changes: Record<string, unknown>;
+	reason: string;
+	status: 'pending' | 'approved' | 'rejected';
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface CreateContractAmendmentRequest {
+	type: 'rent_increase' | 'rent_decrease' | 'term_extension' | 'term_modification' | 'other';
+	description: string;
+	changes: Record<string, unknown>;
+	reason: string;
+}
+
+export interface UpdateContractRequest {
+	terms?: string;
+	monthlyRent?: number;
+	status?: 'draft' | 'active' | 'expired' | 'terminated';
+}
+
+export interface ContractListResponse {
+	data: Contract[];
+	meta: {
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	};
+}
