@@ -210,3 +210,75 @@ export const downloadContractPDF = async (id: string): Promise<ApiResult<Blob>> 
 		};
 	}
 };
+
+// Sign contract (Landlord or Tenant)
+export const signContract = async (
+	contractId: string,
+	signatureData: string,
+	signatureMethod: 'canvas' | 'upload' = 'canvas',
+): Promise<ApiResult<{ data: Contract }>> => {
+	try {
+		// Get device info for signature tracking
+		const deviceInfo = `${navigator.userAgent} - ${window.screen.width}x${window.screen.height}`;
+
+		const response = await apiCall<{ data: Contract }>(`/api/contracts/${contractId}/sign`, {
+			method: 'POST',
+			data: {
+				signatureData,
+				signatureMethod,
+				deviceInfo,
+			},
+		});
+		return { success: true, data: normalizeEntityResponse<Contract>(response) };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể ký hợp đồng'),
+		};
+	}
+};
+
+// Request signatures (Send contract for signing)
+export const requestSignatures = async (
+	contractId: string,
+	signatureDeadline?: string,
+): Promise<ApiResult<{ data: Contract }>> => {
+	try {
+		const response = await apiCall<{ data: Contract }>(
+			`/api/contracts/${contractId}/request-signatures`,
+			{
+				method: 'POST',
+				data: {
+					signatureDeadline,
+				},
+			},
+		);
+		return { success: true, data: normalizeEntityResponse<Contract>(response) };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể gửi yêu cầu ký hợp đồng'),
+		};
+	}
+};
+
+// Verify signature
+export const verifySignature = async (
+	contractId: string,
+	signatureId: string,
+): Promise<ApiResult<{ isValid: boolean; details: string }>> => {
+	try {
+		const response = await apiCall<{ isValid: boolean; details: string }>(
+			`/api/contracts/${contractId}/signatures/${signatureId}/verify`,
+			{
+				method: 'GET',
+			},
+		);
+		return { success: true, data: response };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể xác thực chữ ký'),
+		};
+	}
+};

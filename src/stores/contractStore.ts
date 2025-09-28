@@ -7,7 +7,10 @@ import {
 	getLandlordContracts,
 	getMyContracts,
 	getTenantContracts,
+	requestSignatures,
+	signContract,
 	updateContract,
+	verifySignature,
 } from '@/actions/contract.action';
 import type {
 	Contract,
@@ -30,6 +33,8 @@ interface ContractState {
 	loadingCurrent: boolean;
 	submitting: boolean;
 	downloading: boolean;
+	signing: boolean;
+	verifying: boolean;
 
 	// Error states
 	error: string | null;
@@ -38,6 +43,8 @@ interface ContractState {
 	errorCurrent: string | null;
 	submitError: string | null;
 	downloadError: string | null;
+	signError: string | null;
+	verifyError: string | null;
 
 	// Metadata
 	meta: ContractListResponse['meta'] | null;
@@ -53,6 +60,16 @@ interface ContractState {
 	update: (id: string, data: UpdateContractRequest) => Promise<boolean>;
 	createAmendment: (contractId: string, data: CreateContractAmendmentRequest) => Promise<boolean>;
 	downloadPDF: (id: string) => Promise<Blob | null>;
+	sign: (
+		contractId: string,
+		signatureData: string,
+		signatureMethod?: 'canvas' | 'upload',
+	) => Promise<boolean>;
+	requestSignatures: (contractId: string, signatureDeadline?: string) => Promise<boolean>;
+	verifySignature: (
+		contractId: string,
+		signatureId: string,
+	) => Promise<{ isValid: boolean; details: string } | null>;
 	clearCurrent: () => void;
 	clearErrors: () => void;
 }
@@ -70,6 +87,8 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	loadingCurrent: false,
 	submitting: false,
 	downloading: false,
+	signing: false,
+	verifying: false,
 
 	error: null,
 	errorLandlord: null,
@@ -77,6 +96,8 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	errorCurrent: null,
 	submitError: null,
 	downloadError: null,
+	signError: null,
+	verifyError: null,
 
 	meta: null,
 	landlordMeta: null,
@@ -294,6 +315,88 @@ export const useContractStore = create<ContractState>((set, get) => ({
 		set({ current: null, errorCurrent: null });
 	},
 
+	// Sign contract
+	sign: async (contractId, signatureData, signatureMethod = 'canvas') => {
+		set({ signing: true, signError: null });
+		try {
+			const result = await signContract(contractId, signatureData, signatureMethod);
+			if (result.success) {
+				set({
+					current: result.data.data,
+					signing: false,
+				});
+				// Reload contracts lists to reflect changes
+				await get().loadContracts();
+				return true;
+			} else {
+				set({
+					signError: result.error,
+					signing: false,
+				});
+				return false;
+			}
+		} catch (error) {
+			set({
+				signError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				signing: false,
+			});
+			return false;
+		}
+	},
+
+	// Request signatures from both parties
+	requestSignatures: async (contractId, signatureDeadline) => {
+		set({ submitting: true, submitError: null });
+		try {
+			const result = await requestSignatures(contractId, signatureDeadline);
+			if (result.success) {
+				set({
+					current: result.data.data,
+					submitting: false,
+				});
+				// Reload contracts lists
+				await get().loadContracts();
+				return true;
+			} else {
+				set({
+					submitError: result.error,
+					submitting: false,
+				});
+				return false;
+			}
+		} catch (error) {
+			set({
+				submitError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				submitting: false,
+			});
+			return false;
+		}
+	},
+
+	// Verify signature
+	verifySignature: async (contractId, signatureId) => {
+		set({ verifying: true, verifyError: null });
+		try {
+			const result = await verifySignature(contractId, signatureId);
+			if (result.success) {
+				set({ verifying: false });
+				return result.data;
+			} else {
+				set({
+					verifyError: result.error,
+					verifying: false,
+				});
+				return null;
+			}
+		} catch (error) {
+			set({
+				verifyError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				verifying: false,
+			});
+			return null;
+		}
+	},
+
 	// Clear all errors
 	clearErrors: () => {
 		set({
@@ -303,6 +406,8 @@ export const useContractStore = create<ContractState>((set, get) => ({
 			errorCurrent: null,
 			submitError: null,
 			downloadError: null,
+			signError: null,
+			verifyError: null,
 		});
 	},
 }));
