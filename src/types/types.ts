@@ -842,13 +842,36 @@ export interface Contract {
 	monthlyRent: number;
 	startDate: string;
 	endDate: string;
-	status: 'draft' | 'active' | 'expired' | 'terminated';
+	status: 'draft' | 'pending_signatures' | 'active' | 'expired' | 'terminated';
+
+	// Digital Signature Fields
+	landlordSignature?: ContractSignature;
+	tenantSignature?: ContractSignature;
+	signatureDeadline?: string;
+	fullySignedAt?: string;
+
 	createdAt: string;
 	updatedAt: string;
 	landlord?: UserProfile;
 	tenant?: UserProfile;
 	room?: Room;
 	amendments?: ContractAmendment[];
+}
+
+export interface ContractSignature {
+	signatureData: string; // Base64 encoded signature from canvas
+	signedAt: string; // Timestamp when signed
+	signedBy: string; // User ID của người ký
+	ipAddress?: string; // IP address khi ký
+	deviceInfo?: string; // Device information
+	signatureMethod: 'canvas' | 'upload';
+	isValid: boolean; // Signature validation status
+}
+
+export interface SignContractRequest {
+	contractId: string;
+	signatureData: string; // Base64 từ react-signature-canvas
+	signatureMethod: 'canvas' | 'upload';
 }
 
 export interface ContractAmendment {
@@ -884,4 +907,156 @@ export interface ContractListResponse {
 		limit: number;
 		totalPages: number;
 	};
+}
+
+// Rental Types
+export interface Rental {
+	id: string;
+	roomId: string;
+	tenantId: string;
+	landlordId: string;
+	contractId?: string;
+	monthlyRent: number;
+	depositAmount: number;
+	startDate: string;
+	endDate: string;
+	status: 'active' | 'terminated' | 'expired' | 'pending';
+	notes?: string;
+	terminationDate?: string;
+	terminationReason?: string;
+	depositRefundAmount?: number;
+	createdAt: string;
+	updatedAt: string;
+	room?: Room;
+	tenant?: UserProfile;
+	landlord?: UserProfile;
+	contract?: Contract;
+}
+
+export interface CreateRentalRequest {
+	roomId: string;
+	tenantId: string;
+	monthlyRent: number;
+	depositAmount: number;
+	startDate: string;
+	endDate: string;
+	contractId?: string;
+	notes?: string;
+}
+
+export interface UpdateRentalRequest {
+	monthlyRent?: number;
+	status?: 'active' | 'terminated' | 'expired' | 'pending';
+	notes?: string;
+}
+
+export interface TerminateRentalRequest {
+	status: 'terminated';
+	terminationDate: string;
+	reason: string;
+	depositRefundAmount?: number;
+}
+
+export interface RenewRentalRequest {
+	newEndDate: string;
+	newMonthlyRent?: number;
+	notes?: string;
+}
+
+export interface RentalListResponse {
+	data: Rental[];
+	meta: {
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	};
+}
+
+// Payment Types
+export interface Payment {
+	id: string;
+	contractId?: string;
+	rentalId?: string;
+	payerId: string;
+	receiverId: string;
+	amount: number;
+	paymentType: 'rent' | 'deposit' | 'utility' | 'maintenance' | 'penalty' | 'refund' | 'other';
+	paymentMethod: 'bank_transfer' | 'cash' | 'credit_card' | 'e_wallet' | 'qr_code' | 'other';
+	status: 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
+	description?: string;
+	dueDate?: string;
+	paidDate?: string;
+	currency: string;
+	transactionId?: string;
+	receiptNumber?: string;
+	receiptDate?: string;
+	notes?: string;
+	qrCodeUrl?: string;
+	createdAt: string;
+	updatedAt: string;
+	payer?: UserProfile;
+	receiver?: UserProfile;
+	contract?: Contract;
+	rental?: Rental;
+}
+
+export interface CreatePaymentRequest {
+	contractId?: string;
+	rentalId?: string;
+	amount: number;
+	paymentType: 'rent' | 'deposit' | 'utility' | 'maintenance' | 'penalty' | 'refund' | 'other';
+	paymentMethod: 'bank_transfer' | 'cash' | 'credit_card' | 'e_wallet' | 'qr_code' | 'other';
+	description?: string;
+	dueDate?: string;
+	currency: string;
+}
+
+export interface UpdatePaymentRequest {
+	status?: 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
+	paidDate?: string;
+	transactionId?: string;
+	paymentMethod?: 'bank_transfer' | 'cash' | 'credit_card' | 'e_wallet' | 'qr_code' | 'other';
+	notes?: string;
+}
+
+export interface CreatePaymentReceiptRequest {
+	paymentId: string;
+	receiptNumber: string;
+	receiptDate: string;
+	receivedAmount: number;
+	notes?: string;
+}
+
+export interface ProcessRefundRequest {
+	originalPaymentId: string;
+	refundAmount: number;
+	reason: string;
+	refundMethod: 'bank_transfer' | 'cash' | 'credit_card' | 'e_wallet' | 'other';
+}
+
+export interface PaymentListResponse {
+	data: Payment[];
+	meta: {
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	};
+}
+
+export interface PaymentStatistics {
+	totalPaid: number;
+	totalPending: number;
+	totalOverdue: number;
+	monthlyBreakdown: Array<{
+		month: string;
+		amount: number;
+		count: number;
+	}>;
+	paymentTypeBreakdown: Array<{
+		type: string;
+		amount: number;
+		count: number;
+	}>;
 }

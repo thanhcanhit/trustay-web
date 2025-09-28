@@ -54,7 +54,10 @@ export {
 	getLandlordContracts,
 	getMyContracts,
 	getTenantContracts,
+	requestSignatures,
+	signContract,
 	updateContract,
+	verifySignature,
 } from './contract.action';
 // Export invitation actions
 export {
@@ -80,6 +83,18 @@ export {
 	getProvinces,
 	getWardsByDistrict,
 } from './location.action';
+// Export payment actions
+export {
+	createPayment,
+	createPaymentReceipt,
+	generatePaymentQRCode,
+	getPaymentById,
+	getPaymentHistory,
+	getPaymentStatistics,
+	getPayments,
+	processRefund,
+	updatePayment,
+} from './payment.action';
 // Export reference data actions
 export {
 	getAmenities,
@@ -87,6 +102,17 @@ export {
 	getCostTypes,
 	getRules,
 } from './reference.action';
+// Export rental actions
+export {
+	createRental,
+	getLandlordRentals,
+	getMyRentals,
+	getRentalById,
+	getTenantRentals,
+	renewRental,
+	terminateRental,
+	updateRental,
+} from './rental.action';
 // Export room actions
 export {
 	bulkUpdateRoomInstancesStatus,
