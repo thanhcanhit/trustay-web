@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Calendar, Home, Phone, Mail, Clock } from "lucide-react"
+import { toast } from "sonner"
+import { Search, Calendar, Home, Phone, Mail, Clock, CheckCircle } from "lucide-react"
 import { useBookingRequestStore } from "@/stores/bookingRequestStore"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
@@ -28,10 +30,12 @@ const STATUS_LABELS = {
 }
 
 export default function RentalRequestsPage() {
-  const { received, receivedMeta, loadingReceived, errorReceived, loadReceived, ownerUpdate } = useBookingRequestStore()
+  const { received, receivedMeta, loadingReceived, errorReceived, submitting, loadReceived, ownerUpdate, approveAndCreateRental } = useBookingRequestStore()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
+  const [processingId, setProcessingId] = useState<string | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
@@ -51,10 +55,28 @@ export default function RentalRequestsPage() {
     })
   }, [received, searchTerm])
 
-  const handleApprove = async (id: string) => {
-    await ownerUpdate(id, { status: 'approved' })
-    loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
+  const handleApproveAndCreateRental = async (id: string) => {
+    setProcessingId(id)
+    try {
+      const result = await approveAndCreateRental(id)
+      if (result) {
+        toast.success("Đã chấp nhận yêu cầu và tạo hợp đồng tự động. Đang chuyển đến trang hợp đồng...")
+
+        // Redirect to contracts page after a short delay
+        setTimeout(() => {
+          router.push(`/dashboard/landlord/contracts`)
+        }, 1500)
+      } else {
+        toast.error("Không thể hoàn thành quy trình tự động. Vui lòng thử lại.")
+      }
+    } catch {
+      toast.error("Đã có lỗi xảy ra. Vui lòng thử lại.")
+    } finally {
+      setProcessingId(null)
+      loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
+    }
   }
+
   const handleReject = async (id: string) => {
     await ownerUpdate(id, { status: 'rejected' })
     loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
@@ -164,22 +186,36 @@ export default function RentalRequestsPage() {
                 </div>
                 
                 {request.status === 'pending' && (
-                  <div className="mt-4 flex space-x-2">
-                    <Button 
-                      size="sm" 
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                      onClick={() => handleApprove(request.id)}
+                  <div className="mt-4 space-y-2">
+                    <Button
+                      size="sm"
+                      className="w-full bg-green-600 hover:bg-green-700 flex items-center gap-2"
+                      onClick={() => handleApproveAndCreateRental(request.id)}
+                      disabled={submitting || processingId === request.id}
                     >
-                      Chấp nhận
+                      {processingId === request.id ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Đang xử lý...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4" />
+                          Chấp nhận & Tạo hợp đồng
+                        </>
+                      )}
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
-                      onClick={() => handleReject(request.id)}
-                    >
-                      Từ chối
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
+                        onClick={() => handleReject(request.id)}
+                        disabled={submitting || processingId === request.id}
+                      >
+                        Từ chối
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import {
+	approveBookingRequestAndCreateRental,
 	cancelMyBookingRequest,
 	createBookingRequest,
 	getBookingRequestById,
@@ -44,6 +45,10 @@ interface BookingRequestState {
 	loadById: (id: string) => Promise<void>;
 	create: (data: CreateBookingRequestRequest) => Promise<boolean>;
 	ownerUpdate: (id: string, data: UpdateBookingRequestRequest) => Promise<boolean>;
+	approveAndCreateRental: (
+		id: string,
+		ownerNotes?: string,
+	) => Promise<{ rentalId: string; contractId: string } | null>;
 	cancelMine: (id: string, data: CancelBookingRequestRequest) => Promise<boolean>;
 	clearCurrent: () => void;
 	clearErrors: () => void;
@@ -129,6 +134,28 @@ export const useBookingRequestStore = create<BookingRequestState>((set, get) => 
 		}
 		set({ submitting: false, submitError: res.error });
 		return false;
+	},
+
+	approveAndCreateRental: async (id, ownerNotes) => {
+		set({ submitting: true, submitError: null });
+		const res = await approveBookingRequestAndCreateRental(id, ownerNotes);
+		if (res.success) {
+			// Update the specific item in the received array
+			const { received } = get();
+			const updatedReceived = received.map((item) =>
+				item.id === id
+					? {
+							...item,
+							status: 'approved' as const,
+							ownerNotes: ownerNotes || item.ownerNotes,
+						}
+					: item,
+			);
+			set({ received: updatedReceived, submitting: false });
+			return res.data;
+		}
+		set({ submitting: false, submitError: res.error });
+		return null;
 	},
 
 	cancelMine: async (id, data) => {

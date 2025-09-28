@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { ContractSignature } from '@/types/types';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -43,9 +44,11 @@ const SignatureDisplay: React.FC<SignatureDisplayProps> = ({
 
 			<div className="signature-image mb-3">
 				<div className="border border-gray-200 rounded bg-white p-2 max-w-xs">
-					<img
+					<Image
 						src={signature.signatureData}
 						alt={`Chữ ký của ${signerName}`}
+						width={200}
+						height={100}
 						className="max-w-full h-auto"
 						style={{ maxHeight: '100px' }}
 					/>

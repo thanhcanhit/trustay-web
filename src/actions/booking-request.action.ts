@@ -238,3 +238,83 @@ export const getMyBookingRequestsMe = async (params?: {
 		};
 	}
 };
+
+export const approveBookingRequestAndCreateRental = async (
+	bookingRequestId: string,
+	ownerNotes?: string,
+): Promise<ApiResult<{ rentalId: string; contractId: string }>> => {
+	try {
+		// First, get the booking request details
+		const bookingRequestResult = await getBookingRequestById(bookingRequestId);
+		if (!bookingRequestResult.success) {
+			return { success: false, error: bookingRequestResult.error };
+		}
+
+		const bookingRequest = bookingRequestResult.data.data;
+
+		// Step 1: Approve the booking request
+		const approveResult = await updateBookingRequestAsOwner(bookingRequestId, {
+			status: 'approved',
+			ownerNotes,
+		});
+
+		if (!approveResult.success) {
+			return { success: false, error: approveResult.error };
+		}
+
+		// Step 2: Create rental from booking request
+		if (!bookingRequest.room) {
+			return { success: false, error: 'Room information is missing from booking request' };
+		}
+
+		if (!bookingRequest.tenant) {
+			return { success: false, error: 'Tenant information is missing from booking request' };
+		}
+
+		const createRentalResult = await apiCall<{ data: { id: string } }>('/api/rentals', {
+			method: 'POST',
+			data: {
+				roomId: bookingRequest.room.id,
+				tenantId: bookingRequest.tenant.id,
+				startDate: bookingRequest.moveInDate,
+				endDate: bookingRequest.moveOutDate,
+				monthlyRent: bookingRequest.monthlyRent ? parseFloat(bookingRequest.monthlyRent) : 0,
+				depositAmount: bookingRequest.depositAmount ? parseFloat(bookingRequest.depositAmount) : 0,
+				notes: bookingRequest.messageToOwner,
+			},
+		});
+
+		if (!createRentalResult.data?.id) {
+			return { success: false, error: 'Không thể tạo hợp đồng thuê' };
+		}
+
+		const rentalId = createRentalResult.data.id;
+
+		// Step 3: Auto-generate contract from rental
+		const contractResult = await apiCall<{ data: { id: string } }>(
+			`/api/contracts/auto-generate/${rentalId}`,
+			{
+				method: 'POST',
+			},
+		);
+
+		if (!contractResult.data?.id) {
+			return { success: false, error: 'Không thể tạo hợp đồng' };
+		}
+
+		const contractId = contractResult.data.id;
+
+		return {
+			success: true,
+			data: {
+				rentalId,
+				contractId,
+			},
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể hoàn thành quy trình chấp nhận yêu cầu'),
+		};
+	}
+};

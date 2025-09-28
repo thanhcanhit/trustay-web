@@ -5,7 +5,7 @@ import { Contract } from '@/types/types';
 import { useContractStore } from '@/stores/contractStore';
 import SignaturePad, { SignaturePadRef } from './SignaturePad';
 import SignatureDisplay from './SignatureDisplay';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface ContractSigningWorkflowProps {
 	contract: Contract;
@@ -16,7 +16,6 @@ interface ContractSigningWorkflowProps {
 
 const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 	contract,
-	currentUserId,
 	currentUserRole,
 	onSigningComplete
 }) => {
@@ -72,7 +71,7 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 			} else {
 				toast.error(signError || 'Không thể ký hợp đồng');
 			}
-		} catch (error) {
+		} catch {
 			toast.error('Đã có lỗi xảy ra khi ký hợp đồng');
 		} finally {
 			setIsConfirming(false);
@@ -93,7 +92,7 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 			} else {
 				toast.error('Không thể gửi yêu cầu ký hợp đồng');
 			}
-		} catch (error) {
+		} catch {
 			toast.error('Đã có lỗi xảy ra');
 		}
 	};
@@ -192,7 +191,7 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 				<div className="bg-white p-6 rounded-lg border">
 					<h3 className="text-lg font-medium mb-4">Gửi yêu cầu ký hợp đồng</h3>
 					<p className="text-gray-600 mb-4">
-						Gửi hợp đồng này cho cả hai bên để ký. Sau khi gửi, hợp đồng sẽ chuyển sang trạng thái "Chờ ký".
+						Gửi hợp đồng này cho cả hai bên để ký. Sau khi gửi, hợp đồng sẽ chuyển sang trạng thái &quot;Chờ ký&quot;.
 					</p>
 					<button
 						onClick={handleRequestSignatures}

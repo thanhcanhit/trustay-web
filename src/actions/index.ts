@@ -28,6 +28,7 @@ export {
 } from './auth.action';
 // Export booking request actions
 export {
+	approveBookingRequestAndCreateRental,
 	cancelMyBookingRequest,
 	createBookingRequest,
 	getBookingRequestById,
