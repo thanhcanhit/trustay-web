@@ -8,6 +8,7 @@ import {
 	getReceivedBookingRequests,
 	updateBookingRequestAsOwner,
 } from '@/actions/booking-request.action';
+import { TokenManager } from '@/lib/api-client';
 import type {
 	BookingRequest,
 	BookingRequestListResponse,
@@ -74,7 +75,8 @@ export const useBookingRequestStore = create<BookingRequestState>((set, get) => 
 
 	loadReceived: async (params = {}) => {
 		set({ loadingReceived: true, errorReceived: null });
-		const res = await getReceivedBookingRequests(params);
+		const token = TokenManager.getAccessToken();
+		const res = await getReceivedBookingRequests(params, token);
 		if (res.success) {
 			set({ received: res.data.data, receivedMeta: res.data.meta, loadingReceived: false });
 		} else {
@@ -84,7 +86,8 @@ export const useBookingRequestStore = create<BookingRequestState>((set, get) => 
 
 	loadMine: async (params = {}) => {
 		set({ loadingMine: true, errorMine: null });
-		const res = await getMyBookingRequests(params);
+		const token = TokenManager.getAccessToken();
+		const res = await getMyBookingRequests(params, token);
 		if (res.success) {
 			set({ mine: res.data.data, mineMeta: res.data.meta, loadingMine: false });
 		} else {
@@ -94,7 +97,8 @@ export const useBookingRequestStore = create<BookingRequestState>((set, get) => 
 
 	loadById: async (id: string) => {
 		set({ loadingCurrent: true, errorCurrent: null });
-		const res = await getBookingRequestById(id);
+		const token = TokenManager.getAccessToken();
+		const res = await getBookingRequestById(id, token);
 		if (res.success) {
 			set({ current: res.data.data, loadingCurrent: false });
 		} else {
@@ -104,7 +108,8 @@ export const useBookingRequestStore = create<BookingRequestState>((set, get) => 
 
 	create: async (data: CreateBookingRequestRequest) => {
 		set({ submitting: true, submitError: null });
-		const res = await createBookingRequest(data);
+		const token = TokenManager.getAccessToken();
+		const res = await createBookingRequest(data, token);
 		if (res.success) {
 			const { mine } = get();
 			set({ mine: [res.data.data, ...mine], submitting: false });
@@ -116,7 +121,8 @@ export const useBookingRequestStore = create<BookingRequestState>((set, get) => 
 
 	ownerUpdate: async (id, data) => {
 		set({ submitting: true, submitError: null });
-		const res = await updateBookingRequestAsOwner(id, data);
+		const token = TokenManager.getAccessToken();
+		const res = await updateBookingRequestAsOwner(id, data, token);
 		if (res.success) {
 			// Update the specific item in the received array
 			const { received } = get();
@@ -138,7 +144,8 @@ export const useBookingRequestStore = create<BookingRequestState>((set, get) => 
 
 	approveAndCreateRental: async (id, ownerNotes) => {
 		set({ submitting: true, submitError: null });
-		const res = await approveBookingRequestAndCreateRental(id, ownerNotes);
+		const token = TokenManager.getAccessToken();
+		const res = await approveBookingRequestAndCreateRental(id, ownerNotes, token);
 		if (res.success) {
 			// Update the specific item in the received array
 			const { received } = get();
@@ -160,7 +167,8 @@ export const useBookingRequestStore = create<BookingRequestState>((set, get) => 
 
 	cancelMine: async (id, data) => {
 		set({ submitting: true, submitError: null });
-		const res = await cancelMyBookingRequest(id, data);
+		const token = TokenManager.getAccessToken();
+		const res = await cancelMyBookingRequest(id, data, token);
 		if (res.success) {
 			// Update the specific item in the mine array
 			const { mine } = get();

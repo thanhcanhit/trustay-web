@@ -9,6 +9,7 @@ import {
 	terminateRental,
 	updateRental,
 } from '@/actions/rental.action';
+import { TokenManager } from '@/lib/api-client';
 import type {
 	CreateRentalRequest,
 	RenewRentalRequest,
@@ -84,7 +85,8 @@ export const useRentalStore = create<RentalState>((set, get) => ({
 	loadRentals: async (params) => {
 		set({ loading: true, error: null });
 		try {
-			const result = await getMyRentals(params);
+			const token = TokenManager.getAccessToken();
+			const result = await getMyRentals(params, token);
 			if (result.success) {
 				set({
 					rentals: result.data.data,
@@ -109,7 +111,8 @@ export const useRentalStore = create<RentalState>((set, get) => ({
 	loadLandlordRentals: async (params) => {
 		set({ loadingLandlord: true, errorLandlord: null });
 		try {
-			const result = await getLandlordRentals(params);
+			const token = TokenManager.getAccessToken();
+			const result = await getLandlordRentals(params, token);
 			if (result.success) {
 				set({
 					landlordRentals: result.data.data,
@@ -134,7 +137,8 @@ export const useRentalStore = create<RentalState>((set, get) => ({
 	loadTenantRentals: async (params) => {
 		set({ loadingTenant: true, errorTenant: null });
 		try {
-			const result = await getTenantRentals(params);
+			const token = TokenManager.getAccessToken();
+			const result = await getTenantRentals(params, token);
 			if (result.success) {
 				set({
 					tenantRentals: result.data.data,
@@ -159,7 +163,8 @@ export const useRentalStore = create<RentalState>((set, get) => ({
 	loadById: async (id) => {
 		set({ loadingCurrent: true, errorCurrent: null });
 		try {
-			const result = await getRentalById(id);
+			const token = TokenManager.getAccessToken();
+			const result = await getRentalById(id, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -183,7 +188,8 @@ export const useRentalStore = create<RentalState>((set, get) => ({
 	create: async (data) => {
 		set({ submitting: true, submitError: null });
 		try {
-			const result = await createRental(data);
+			const token = TokenManager.getAccessToken();
+			const result = await createRental(data, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -212,7 +218,8 @@ export const useRentalStore = create<RentalState>((set, get) => ({
 	update: async (id, data) => {
 		set({ submitting: true, submitError: null });
 		try {
-			const result = await updateRental(id, data);
+			const token = TokenManager.getAccessToken();
+			const result = await updateRental(id, data, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -241,7 +248,8 @@ export const useRentalStore = create<RentalState>((set, get) => ({
 	terminate: async (id, data) => {
 		set({ submitting: true, submitError: null });
 		try {
-			const result = await terminateRental(id, data);
+			const token = TokenManager.getAccessToken();
+			const result = await terminateRental(id, data, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -270,7 +278,8 @@ export const useRentalStore = create<RentalState>((set, get) => ({
 	renew: async (id, data) => {
 		set({ submitting: true, submitError: null });
 		try {
-			const result = await renewRental(id, data);
+			const token = TokenManager.getAccessToken();
+			const result = await renewRental(id, data, token);
 			if (result.success) {
 				set({
 					current: result.data.data,

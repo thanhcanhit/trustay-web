@@ -1,7 +1,5 @@
 'use server';
 
-import { AxiosError } from 'axios';
-import { cookies } from 'next/headers';
 import { createServerApiCall } from '../lib/api-client';
 import {
 	BulkUpdateRoomInstancesRequest,
@@ -12,6 +10,7 @@ import {
 	UpdateRoomInstanceStatusRequest,
 	UpdateRoomRequest,
 } from '../types/types';
+import { extractErrorMessage } from '../utils/api-error-handler';
 
 // Types for error handling
 interface ApiErrorResult {
@@ -27,96 +26,18 @@ interface ApiSuccessResult<T> {
 
 type ApiResult<T> = ApiSuccessResult<T> | ApiErrorResult;
 
-// Helper function to extract error message from API response
-const extractErrorMessage = (error: unknown, defaultMessage: string): string => {
-	console.error('Room API Error Debug:', error);
-
-	if (error instanceof AxiosError) {
-		const status = error.response?.status;
-		const data = error.response?.data;
-
-		console.error('AxiosError Details:', {
-			status,
-			data,
-			message: error.message,
-		});
-
-		// Handle specific status codes
-		switch (status) {
-			case 400:
-				if (typeof data === 'string') return data;
-				if (data?.message) {
-					// Handle nested message structure
-					if (typeof data.message === 'object' && data.message !== null) {
-						const nestedMessage = data.message as { message?: string | string[]; error?: string };
-						if (nestedMessage.message) {
-							if (Array.isArray(nestedMessage.message)) {
-								return `Dữ liệu không hợp lệ:\n${nestedMessage.message.join('\n')}`;
-							}
-							return nestedMessage.message;
-						}
-						if (nestedMessage.error) {
-							return nestedMessage.error;
-						}
-					}
-					// Handle array of validation errors
-					if (Array.isArray(data.message)) {
-						return `Dữ liệu không hợp lệ:\n${data.message.join('\n')}`;
-					}
-					return data.message;
-				}
-				return 'Dữ liệu không hợp lệ';
-			case 401:
-				return 'Bạn cần đăng nhập để thực hiện thao tác này';
-			case 403:
-				return 'Bạn không có quyền thực hiện thao tác này';
-			case 404:
-				return 'Không tìm thấy phòng';
-			case 409:
-				return 'Phòng đã tồn tại';
-			case 422:
-				if (data?.message) {
-					if (Array.isArray(data.message)) {
-						return `Dữ liệu không hợp lệ:\n${data.message.join('\n')}`;
-					}
-					return data.message;
-				}
-				return 'Dữ liệu không hợp lệ';
-			case 500:
-				return 'Lỗi hệ thống, vui lòng thử lại sau';
-			default:
-				if (data?.message) {
-					if (Array.isArray(data.message)) {
-						return `Lỗi:\n${data.message.join('\n')}`;
-					}
-					return data.message;
-				}
-				if (data?.error) return data.error;
-				return defaultMessage;
-		}
-	}
-
-	if (error instanceof Error) {
-		return error.message;
-	}
-
-	return defaultMessage;
-};
-
 // Create API call function for server actions
-// Helper function to get token from cookies
-const getTokenFromCookies = async (): Promise<string | null> => {
-	const cookieStore = await cookies();
-	return cookieStore.get('accessToken')?.value || null;
-};
-
-const apiCall = createServerApiCall(getTokenFromCookies);
+// No token function - token will be passed directly from client
+const apiCall = createServerApiCall();
 
 // Get my rooms (landlord's rooms)
-export const getMyRooms = async (params?: {
-	page?: number;
-	limit?: number;
-}): Promise<ApiResult<RoomsListResponse>> => {
+export const getMyRooms = async (
+	params?: {
+		page?: number;
+		limit?: number;
+	},
+	token?: string,
+): Promise<ApiResult<RoomsListResponse>> => {
 	try {
 		const searchParams = new URLSearchParams();
 		if (params?.page) searchParams.append('page', params.page.toString());
@@ -127,9 +48,13 @@ export const getMyRooms = async (params?: {
 			success: boolean;
 			message: string;
 			data: RoomsListResponse;
-		}>(endpoint, {
-			method: 'GET',
-		});
+		}>(
+			endpoint,
+			{
+				method: 'GET',
+			},
+			token,
+		);
 
 		console.log('My Rooms API Response:', response);
 
@@ -149,12 +74,17 @@ export const getMyRooms = async (params?: {
 export const createRoom = async (
 	buildingId: string,
 	data: CreateRoomRequest,
+	token?: string,
 ): Promise<ApiResult<{ data: Room }>> => {
 	try {
-		const response = await apiCall<{ data: Room }>(`/api/rooms/${buildingId}/rooms`, {
-			method: 'POST',
-			data,
-		});
+		const response = await apiCall<{ data: Room }>(
+			`/api/rooms/${buildingId}/rooms`,
+			{
+				method: 'POST',
+				data,
+			},
+			token,
+		);
 
 		return {
 			success: true,
@@ -169,11 +99,18 @@ export const createRoom = async (
 };
 
 // Get room by ID
-export const getRoomById = async (id: string): Promise<ApiResult<{ data: Room }>> => {
+export const getRoomById = async (
+	id: string,
+	token?: string,
+): Promise<ApiResult<{ data: Room }>> => {
 	try {
-		const response = await apiCall<{ data: Room }>(`/api/rooms/${id}`, {
-			method: 'GET',
-		});
+		const response = await apiCall<{ data: Room }>(
+			`/api/rooms/${id}`,
+			{
+				method: 'GET',
+			},
+			token,
+		);
 
 		return {
 			success: true,
@@ -188,11 +125,18 @@ export const getRoomById = async (id: string): Promise<ApiResult<{ data: Room }>
 };
 
 // Get room by slug
-export const getRoomBySlug = async (slug: string): Promise<ApiResult<{ data: Room }>> => {
+export const getRoomBySlug = async (
+	slug: string,
+	token?: string,
+): Promise<ApiResult<{ data: Room }>> => {
 	try {
-		const response = await apiCall<{ data: Room }>(`/api/rooms/${slug}`, {
-			method: 'GET',
-		});
+		const response = await apiCall<{ data: Room }>(
+			`/api/rooms/${slug}`,
+			{
+				method: 'GET',
+			},
+			token,
+		);
 
 		return {
 			success: true,
@@ -210,14 +154,19 @@ export const getRoomBySlug = async (slug: string): Promise<ApiResult<{ data: Roo
 export const updateRoom = async (
 	id: string,
 	data: UpdateRoomRequest,
+	token?: string,
 ): Promise<ApiResult<{ data: Room }>> => {
 	try {
 		console.log('Room update data:', data);
 
-		const response = await apiCall<{ data: Room }>(`/api/rooms/${id}`, {
-			method: 'PUT',
-			data,
-		});
+		const response = await apiCall<{ data: Room }>(
+			`/api/rooms/${id}`,
+			{
+				method: 'PUT',
+				data,
+			},
+			token,
+		);
 
 		return {
 			success: true,
@@ -238,6 +187,7 @@ export const getRoomsByBuilding = async (
 		page?: number;
 		limit?: number;
 	},
+	token?: string,
 ): Promise<ApiResult<RoomsListResponse>> => {
 	try {
 		const searchParams = new URLSearchParams();
@@ -251,9 +201,13 @@ export const getRoomsByBuilding = async (
 			success: boolean;
 			message: string;
 			data: RoomsListResponse;
-		}>(endpoint, {
-			method: 'GET',
-		});
+		}>(
+			endpoint,
+			{
+				method: 'GET',
+			},
+			token,
+		);
 
 		return {
 			success: true,
@@ -271,6 +225,7 @@ export const getRoomsByBuilding = async (
 export const getRoomInstancesByStatus = async (
 	roomId: string,
 	status?: string,
+	token?: string,
 ): Promise<ApiResult<RoomInstancesResponse>> => {
 	try {
 		const searchParams = new URLSearchParams();
@@ -279,9 +234,13 @@ export const getRoomInstancesByStatus = async (
 		const endpoint = `/api/rooms/${roomId}/instances/status${
 			searchParams.toString() ? `?${searchParams.toString()}` : ''
 		}`;
-		const response = await apiCall<RoomInstancesResponse>(endpoint, {
-			method: 'GET',
-		});
+		const response = await apiCall<RoomInstancesResponse>(
+			endpoint,
+			{
+				method: 'GET',
+			},
+			token,
+		);
 
 		return {
 			success: true,
@@ -299,6 +258,7 @@ export const getRoomInstancesByStatus = async (
 export const updateRoomInstanceStatus = async (
 	instanceId: string,
 	data: UpdateRoomInstanceStatusRequest,
+	token?: string,
 ): Promise<ApiResult<{ message: string }>> => {
 	try {
 		const response = await apiCall<{ message: string }>(
@@ -307,6 +267,7 @@ export const updateRoomInstanceStatus = async (
 				method: 'PUT',
 				data,
 			},
+			token,
 		);
 
 		return {
@@ -325,6 +286,7 @@ export const updateRoomInstanceStatus = async (
 export const bulkUpdateRoomInstancesStatus = async (
 	roomId: string,
 	data: BulkUpdateRoomInstancesRequest,
+	token?: string,
 ): Promise<ApiResult<{ message: string }>> => {
 	try {
 		const response = await apiCall<{ message: string }>(
@@ -333,6 +295,7 @@ export const bulkUpdateRoomInstancesStatus = async (
 				method: 'PUT',
 				data,
 			},
+			token,
 		);
 
 		return {
@@ -348,11 +311,18 @@ export const bulkUpdateRoomInstancesStatus = async (
 };
 
 // Delete room type
-export const deleteRoom = async (id: string): Promise<ApiResult<{ message: string }>> => {
+export const deleteRoom = async (
+	id: string,
+	token?: string,
+): Promise<ApiResult<{ message: string }>> => {
 	try {
-		const response = await apiCall<{ message: string }>(`/api/rooms/${id}`, {
-			method: 'DELETE',
-		});
+		const response = await apiCall<{ message: string }>(
+			`/api/rooms/${id}`,
+			{
+				method: 'DELETE',
+			},
+			token,
+		);
 
 		return {
 			success: true,

@@ -2,7 +2,14 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { LoginRequest, UserProfile } from '@/actions';
 import { login as apiLogin, logout as apiLogout, getCurrentUser } from '@/actions';
+import {
+	changePassword as apiChangePassword,
+	updateUserProfile as apiUpdateProfile,
+	uploadAvatar as apiUploadAvatar,
+} from '@/actions/user.action';
+import { TokenManager } from '@/lib/api-client';
 import { TokenUtils } from '@/lib/token-utils';
+import type { ChangePasswordRequest, UpdateProfileRequest } from '@/types/types';
 import { UserProfile as User } from '@/types/types';
 import { useBuildingStore } from './buildingStore';
 
@@ -20,6 +27,9 @@ interface UserState {
 	logout: () => Promise<void>;
 	loadUser: () => Promise<void>;
 	fetchUser: () => Promise<void>;
+	updateProfile: (profileData: UpdateProfileRequest) => Promise<void>;
+	uploadAvatar: (file: File) => Promise<string>;
+	changePassword: (passwordData: ChangePasswordRequest) => Promise<void>;
 	clearError: () => void;
 	switchRole: (newRole: 'tenant' | 'landlord') => void;
 	setHasHydrated: (state: boolean) => void;
@@ -61,6 +71,14 @@ export const useUserStore = create<UserState>()(
 
 					if (result.success) {
 						const user = convertUserProfile(result.data.user);
+
+						// Save tokens to localStorage
+						if (result.data.access_token) {
+							TokenManager.setAccessToken(result.data.access_token);
+						}
+						if (result.data.refresh_token) {
+							TokenManager.setRefreshToken(result.data.refresh_token);
+						}
 
 						set({
 							user,
@@ -154,7 +172,13 @@ export const useUserStore = create<UserState>()(
 
 			fetchUser: async () => {
 				try {
-					const userProfile = await getCurrentUser();
+					const token = TokenManager.getAccessToken();
+					if (!token) {
+						console.error('No access token found');
+						return;
+					}
+
+					const userProfile = await getCurrentUser(token);
 					console.log('Raw user profile from API:', userProfile);
 					const user = convertUserProfile(userProfile);
 					console.log('Converted user data:', user);
@@ -176,6 +200,87 @@ export const useUserStore = create<UserState>()(
 				})),
 
 			setHasHydrated: (state: boolean) => set({ hasHydrated: state }),
+
+			updateProfile: async (profileData: UpdateProfileRequest) => {
+				set({ isLoading: true, error: null });
+
+				try {
+					const token = TokenManager.getAccessToken();
+					if (!token) {
+						throw new Error('No access token found');
+					}
+
+					const updatedProfile = await apiUpdateProfile(profileData, token);
+					const user = convertUserProfile(updatedProfile);
+
+					set({
+						user,
+						isLoading: false,
+						error: null,
+					});
+				} catch (error: unknown) {
+					const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
+					set({
+						isLoading: false,
+						error: errorMessage,
+					});
+					throw error;
+				}
+			},
+
+			uploadAvatar: async (file: File): Promise<string> => {
+				set({ isLoading: true, error: null });
+
+				try {
+					const token = TokenManager.getAccessToken();
+					if (!token) {
+						throw new Error('No access token found');
+					}
+
+					const response = await apiUploadAvatar(file, token);
+
+					// Update user with new avatar URL
+					set((state) => ({
+						user: state.user ? { ...state.user, avatarUrl: response.avatarUrl } : null,
+						isLoading: false,
+						error: null,
+					}));
+
+					return response.avatarUrl;
+				} catch (error: unknown) {
+					const errorMessage = error instanceof Error ? error.message : 'Failed to upload avatar';
+					set({
+						isLoading: false,
+						error: errorMessage,
+					});
+					throw error;
+				}
+			},
+
+			changePassword: async (passwordData: ChangePasswordRequest) => {
+				set({ isLoading: true, error: null });
+
+				try {
+					const token = TokenManager.getAccessToken();
+					if (!token) {
+						throw new Error('No access token found');
+					}
+
+					await apiChangePassword(passwordData, token);
+
+					set({
+						isLoading: false,
+						error: null,
+					});
+				} catch (error: unknown) {
+					const errorMessage = error instanceof Error ? error.message : 'Failed to change password';
+					set({
+						isLoading: false,
+						error: errorMessage,
+					});
+					throw error;
+				}
+			},
 		}),
 		{
 			name: 'user-storage',

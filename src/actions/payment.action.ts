@@ -1,7 +1,5 @@
 'use server';
 
-import { AxiosError } from 'axios';
-import { cookies } from 'next/headers';
 import { createServerApiCall } from '@/lib/api-client';
 import type {
 	CreatePaymentReceiptRequest,
@@ -12,6 +10,7 @@ import type {
 	ProcessRefundRequest,
 	UpdatePaymentRequest,
 } from '@/types/types';
+import { extractErrorMessage } from '@/utils/api-error-handler';
 
 interface ApiErrorResult {
 	success: false;
@@ -26,41 +25,7 @@ interface ApiSuccessResult<T> {
 
 type ApiResult<T> = ApiSuccessResult<T> | ApiErrorResult;
 
-const extractErrorMessage = (error: unknown, defaultMessage: string): string => {
-	if (error instanceof AxiosError) {
-		const status = error.response?.status;
-		const data = error.response?.data as { message?: unknown; error?: string } | undefined;
-		switch (status) {
-			case 400:
-			case 422:
-				if (!data) return 'Dữ liệu không hợp lệ';
-				if (Array.isArray(data.message)) return `Dữ liệu không hợp lệ:\n${data.message.join('\n')}`;
-				if (typeof data.message === 'string') return data.message;
-				return 'Dữ liệu không hợp lệ';
-			case 401:
-				return 'Bạn cần đăng nhập để thực hiện thao tác này';
-			case 403:
-				return 'Bạn không có quyền thực hiện thao tác này';
-			case 404:
-				return 'Không tìm thấy thanh toán';
-			case 409:
-				return 'Trạng thái thanh toán không hợp lệ';
-			default:
-				if (data?.message && typeof data.message === 'string') return data.message;
-				if (data?.error) return data.error;
-				return defaultMessage;
-		}
-	}
-	if (error instanceof Error) return error.message;
-	return defaultMessage;
-};
-
-const getTokenFromCookies = async (): Promise<string | null> => {
-	const cookieStore = await cookies();
-	return cookieStore.get('accessToken')?.value || null;
-};
-
-const apiCall = createServerApiCall(getTokenFromCookies);
+const apiCall = createServerApiCall();
 
 const normalizeEntityResponse = <T extends object>(response: unknown): { data: T } => {
 	if (response && typeof response === 'object' && 'data' in (response as Record<string, unknown>)) {
@@ -72,12 +37,17 @@ const normalizeEntityResponse = <T extends object>(response: unknown): { data: T
 // Create payment
 export const createPayment = async (
 	data: CreatePaymentRequest,
+	token?: string,
 ): Promise<ApiResult<{ data: Payment }>> => {
 	try {
-		const response = await apiCall<{ data: Payment }>('/api/payments', {
-			method: 'POST',
-			data,
-		});
+		const response = await apiCall<{ data: Payment }>(
+			'/api/payments',
+			{
+				method: 'POST',
+				data,
+			},
+			token,
+		);
 		return { success: true, data: normalizeEntityResponse<Payment>(response) };
 	} catch (error) {
 		return { success: false, error: extractErrorMessage(error, 'Không thể tạo thanh toán') };
@@ -85,14 +55,17 @@ export const createPayment = async (
 };
 
 // Get payments list with pagination and filtering
-export const getPayments = async (params?: {
-	page?: number;
-	limit?: number;
-	status?: string;
-	paymentType?: string;
-	contractId?: string;
-	rentalId?: string;
-}): Promise<ApiResult<PaymentListResponse>> => {
+export const getPayments = async (
+	params?: {
+		page?: number;
+		limit?: number;
+		status?: string;
+		paymentType?: string;
+		contractId?: string;
+		rentalId?: string;
+	},
+	token?: string,
+): Promise<ApiResult<PaymentListResponse>> => {
 	try {
 		const q = new URLSearchParams();
 		if (params?.page) q.append('page', String(params.page));
@@ -103,7 +76,7 @@ export const getPayments = async (params?: {
 		if (params?.rentalId) q.append('rentalId', params.rentalId);
 
 		const endpoint = `/api/payments${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<PaymentListResponse>(endpoint, { method: 'GET' });
+		const response = await apiCall<PaymentListResponse>(endpoint, { method: 'GET' }, token);
 		return { success: true, data: response };
 	} catch (error) {
 		return {
@@ -114,14 +87,17 @@ export const getPayments = async (params?: {
 };
 
 // Get payment history with date filtering
-export const getPaymentHistory = async (params?: {
-	contractId?: string;
-	rentalId?: string;
-	startDate?: string;
-	endDate?: string;
-	page?: number;
-	limit?: number;
-}): Promise<ApiResult<PaymentListResponse>> => {
+export const getPaymentHistory = async (
+	params?: {
+		contractId?: string;
+		rentalId?: string;
+		startDate?: string;
+		endDate?: string;
+		page?: number;
+		limit?: number;
+	},
+	token?: string,
+): Promise<ApiResult<PaymentListResponse>> => {
 	try {
 		const q = new URLSearchParams();
 		if (params?.contractId) q.append('contractId', params.contractId);
@@ -132,7 +108,7 @@ export const getPaymentHistory = async (params?: {
 		if (params?.limit) q.append('limit', String(params.limit));
 
 		const endpoint = `/api/payments/history${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<PaymentListResponse>(endpoint, { method: 'GET' });
+		const response = await apiCall<PaymentListResponse>(endpoint, { method: 'GET' }, token);
 		return { success: true, data: response };
 	} catch (error) {
 		return {
@@ -143,11 +119,18 @@ export const getPaymentHistory = async (params?: {
 };
 
 // Get payment details by ID
-export const getPaymentById = async (id: string): Promise<ApiResult<{ data: Payment }>> => {
+export const getPaymentById = async (
+	id: string,
+	token?: string,
+): Promise<ApiResult<{ data: Payment }>> => {
 	try {
-		const response = await apiCall<{ data: Payment }>(`/api/payments/${id}`, {
-			method: 'GET',
-		});
+		const response = await apiCall<{ data: Payment }>(
+			`/api/payments/${id}`,
+			{
+				method: 'GET',
+			},
+			token,
+		);
 		return { success: true, data: normalizeEntityResponse<Payment>(response) };
 	} catch (error) {
 		return {
@@ -161,12 +144,17 @@ export const getPaymentById = async (id: string): Promise<ApiResult<{ data: Paym
 export const updatePayment = async (
 	id: string,
 	data: UpdatePaymentRequest,
+	token?: string,
 ): Promise<ApiResult<{ data: Payment }>> => {
 	try {
-		const response = await apiCall<{ data: Payment }>(`/api/payments/${id}`, {
-			method: 'PATCH',
-			data,
-		});
+		const response = await apiCall<{ data: Payment }>(
+			`/api/payments/${id}`,
+			{
+				method: 'PATCH',
+				data,
+			},
+			token,
+		);
 		return { success: true, data: normalizeEntityResponse<Payment>(response) };
 	} catch (error) {
 		return {
@@ -180,12 +168,17 @@ export const updatePayment = async (
 export const createPaymentReceipt = async (
 	paymentId: string,
 	data: Omit<CreatePaymentReceiptRequest, 'paymentId'>,
+	token?: string,
 ): Promise<ApiResult<{ message: string }>> => {
 	try {
-		const response = await apiCall<{ message: string }>(`/api/payments/${paymentId}/receipt`, {
-			method: 'POST',
-			data: { ...data, paymentId },
-		});
+		const response = await apiCall<{ message: string }>(
+			`/api/payments/${paymentId}/receipt`,
+			{
+				method: 'POST',
+				data: { ...data, paymentId },
+			},
+			token,
+		);
 		return { success: true, data: response };
 	} catch (error) {
 		return {
@@ -198,12 +191,17 @@ export const createPaymentReceipt = async (
 // Process refund
 export const processRefund = async (
 	data: ProcessRefundRequest,
+	token?: string,
 ): Promise<ApiResult<{ data: Payment }>> => {
 	try {
-		const response = await apiCall<{ data: Payment }>('/api/payments/refund', {
-			method: 'POST',
-			data,
-		});
+		const response = await apiCall<{ data: Payment }>(
+			'/api/payments/refund',
+			{
+				method: 'POST',
+				data,
+			},
+			token,
+		);
 		return { success: true, data: normalizeEntityResponse<Payment>(response) };
 	} catch (error) {
 		return {
@@ -214,12 +212,15 @@ export const processRefund = async (
 };
 
 // Get payment statistics
-export const getPaymentStatistics = async (params?: {
-	contractId?: string;
-	rentalId?: string;
-	year?: number;
-	month?: number;
-}): Promise<ApiResult<PaymentStatistics>> => {
+export const getPaymentStatistics = async (
+	params?: {
+		contractId?: string;
+		rentalId?: string;
+		year?: number;
+		month?: number;
+	},
+	token?: string,
+): Promise<ApiResult<PaymentStatistics>> => {
 	try {
 		const q = new URLSearchParams();
 		if (params?.contractId) q.append('contractId', params.contractId);
@@ -228,7 +229,7 @@ export const getPaymentStatistics = async (params?: {
 		if (params?.month) q.append('month', String(params.month));
 
 		const endpoint = `/api/payments/stats${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<PaymentStatistics>(endpoint, { method: 'GET' });
+		const response = await apiCall<PaymentStatistics>(endpoint, { method: 'GET' }, token);
 		return { success: true, data: response };
 	} catch (error) {
 		return {
@@ -241,11 +242,16 @@ export const getPaymentStatistics = async (params?: {
 // Generate QR code for payment
 export const generatePaymentQRCode = async (
 	id: string,
+	token?: string,
 ): Promise<ApiResult<{ qrCodeUrl: string }>> => {
 	try {
-		const response = await apiCall<{ qrCodeUrl: string }>(`/api/payments/${id}/qr-code`, {
-			method: 'GET',
-		});
+		const response = await apiCall<{ qrCodeUrl: string }>(
+			`/api/payments/${id}/qr-code`,
+			{
+				method: 'GET',
+			},
+			token,
+		);
 		return { success: true, data: response };
 	} catch (error) {
 		return {

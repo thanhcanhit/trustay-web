@@ -1,26 +1,21 @@
 'use server';
 
 // User management actions for Trustay API
-import { cookies } from 'next/headers';
-import { createServerApiCall } from '../lib/api-client';
+import { serverApiCall } from '../lib/api-client';
 import { ChangePasswordRequest, UpdateProfileRequest, UserProfile } from '../types/types';
 
-// Helper function to get token from cookies
-const getTokenFromCookies = async (): Promise<string | null> => {
-	const cookieStore = await cookies();
-	const token = cookieStore.get('accessToken')?.value || null;
-	console.log('Token from cookies:', token ? 'Found' : 'Not found');
-	return token;
-};
-
-// Create server API call function
-const apiCall = createServerApiCall(getTokenFromCookies);
-
 // Get user profile
-export const getUserProfile = async (): Promise<UserProfile> => {
-	const result = await apiCall<UserProfile>('/api/users/profile', {
-		method: 'GET',
-	});
+export const getUserProfile = async (token?: string): Promise<UserProfile> => {
+	if (!token) {
+		throw new Error('No access token found');
+	}
+	const result = await serverApiCall<UserProfile>(
+		'/api/users/profile',
+		{
+			method: 'GET',
+		},
+		token,
+	);
 	console.log('getUserProfile raw result:', result);
 	return result;
 };
@@ -28,30 +23,53 @@ export const getUserProfile = async (): Promise<UserProfile> => {
 // Update user profile
 export const updateUserProfile = async (
 	profileData: UpdateProfileRequest,
+	token?: string,
 ): Promise<UserProfile> => {
-	return await apiCall<UserProfile>('/api/users/profile', {
-		method: 'PUT',
-		data: profileData,
-	});
+	if (!token) {
+		throw new Error('No access token found');
+	}
+	return await serverApiCall<UserProfile>(
+		'/api/users/profile',
+		{
+			method: 'PUT',
+			data: profileData,
+		},
+		token,
+	);
 };
 
 // Change user password
 export const changePassword = async (
 	passwordData: ChangePasswordRequest,
+	token?: string,
 ): Promise<{ message: string }> => {
-	return await apiCall<{ message: string }>('/api/auth/change-password', {
-		method: 'PUT',
-		data: passwordData,
-	});
+	if (!token) {
+		throw new Error('No access token found');
+	}
+	return await serverApiCall<{ message: string }>(
+		'/api/auth/change-password',
+		{
+			method: 'PUT',
+			data: passwordData,
+		},
+		token,
+	);
 };
 
 // Upload user avatar
-export const uploadAvatar = async (file: File): Promise<{ avatarUrl: string }> => {
+export const uploadAvatar = async (file: File, token?: string): Promise<{ avatarUrl: string }> => {
+	if (!token) {
+		throw new Error('No access token found');
+	}
 	const formData = new FormData();
 	formData.append('file', file);
 
-	return await apiCall<{ avatarUrl: string }>('/api/users/avatar', {
-		method: 'PUT',
-		data: formData,
-	});
+	return await serverApiCall<{ avatarUrl: string }>(
+		'/api/users/avatar',
+		{
+			method: 'PUT',
+			data: formData,
+		},
+		token,
+	);
 };

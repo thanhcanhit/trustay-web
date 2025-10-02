@@ -10,6 +10,7 @@ import {
 	processRefund,
 	updatePayment,
 } from '@/actions/payment.action';
+import { TokenManager } from '@/lib/api-client';
 import type {
 	CreatePaymentReceiptRequest,
 	CreatePaymentRequest,
@@ -114,7 +115,8 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
 	loadPayments: async (params) => {
 		set({ loading: true, error: null });
 		try {
-			const result = await getPayments(params);
+			const token = TokenManager.getAccessToken();
+			const result = await getPayments(params, token);
 			if (result.success) {
 				set({
 					payments: result.data.data,
@@ -139,7 +141,8 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
 	loadPaymentHistory: async (params) => {
 		set({ loadingHistory: true, errorHistory: null });
 		try {
-			const result = await getPaymentHistory(params);
+			const token = TokenManager.getAccessToken();
+			const result = await getPaymentHistory(params, token);
 			if (result.success) {
 				set({
 					paymentHistory: result.data.data,
@@ -164,7 +167,8 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
 	loadById: async (id) => {
 		set({ loadingCurrent: true, errorCurrent: null });
 		try {
-			const result = await getPaymentById(id);
+			const token = TokenManager.getAccessToken();
+			const result = await getPaymentById(id, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -188,7 +192,8 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
 	loadStatistics: async (params) => {
 		set({ loadingStats: true, errorStats: null });
 		try {
-			const result = await getPaymentStatistics(params);
+			const token = TokenManager.getAccessToken();
+			const result = await getPaymentStatistics(params, token);
 			if (result.success) {
 				set({
 					statistics: result.data,
@@ -212,7 +217,8 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
 	create: async (data) => {
 		set({ submitting: true, submitError: null });
 		try {
-			const result = await createPayment(data);
+			const token = TokenManager.getAccessToken();
+			const result = await createPayment(data, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -241,7 +247,8 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
 	update: async (id, data) => {
 		set({ submitting: true, submitError: null });
 		try {
-			const result = await updatePayment(id, data);
+			const token = TokenManager.getAccessToken();
+			const result = await updatePayment(id, data, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -270,7 +277,8 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
 	createReceipt: async (paymentId, data) => {
 		set({ submitting: true, submitError: null });
 		try {
-			const result = await createPaymentReceipt(paymentId, data);
+			const token = TokenManager.getAccessToken();
+			const result = await createPaymentReceipt(paymentId, data, token);
 			if (result.success) {
 				set({ submitting: false });
 				// Reload current payment to get updated receipt info
@@ -296,7 +304,8 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
 	refund: async (data) => {
 		set({ submitting: true, submitError: null });
 		try {
-			const result = await processRefund(data);
+			const token = TokenManager.getAccessToken();
+			const result = await processRefund(data, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -325,7 +334,8 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
 	generateQR: async (id) => {
 		set({ generating: true, generateError: null });
 		try {
-			const result = await generatePaymentQRCode(id);
+			const token = TokenManager.getAccessToken();
+			const result = await generatePaymentQRCode(id, token);
 			if (result.success) {
 				set({
 					qrCodeUrl: result.data.qrCodeUrl,

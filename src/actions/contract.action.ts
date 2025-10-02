@@ -1,7 +1,5 @@
 'use server';
 
-import { AxiosError } from 'axios';
-import { cookies } from 'next/headers';
 import { createServerApiCall } from '@/lib/api-client';
 import type {
 	Contract,
@@ -9,6 +7,7 @@ import type {
 	CreateContractAmendmentRequest,
 	UpdateContractRequest,
 } from '@/types/types';
+import { extractErrorMessage } from '@/utils/api-error-handler';
 
 interface ApiErrorResult {
 	success: false;
@@ -23,41 +22,7 @@ interface ApiSuccessResult<T> {
 
 type ApiResult<T> = ApiSuccessResult<T> | ApiErrorResult;
 
-const extractErrorMessage = (error: unknown, defaultMessage: string): string => {
-	if (error instanceof AxiosError) {
-		const status = error.response?.status;
-		const data = error.response?.data as { message?: unknown; error?: string } | undefined;
-		switch (status) {
-			case 400:
-			case 422:
-				if (!data) return 'Dữ liệu không hợp lệ';
-				if (Array.isArray(data.message)) return `Dữ liệu không hợp lệ:\n${data.message.join('\n')}`;
-				if (typeof data.message === 'string') return data.message;
-				return 'Dữ liệu không hợp lệ';
-			case 401:
-				return 'Bạn cần đăng nhập để thực hiện thao tác này';
-			case 403:
-				return 'Bạn không có quyền thực hiện thao tác này';
-			case 404:
-				return 'Không tìm thấy hợp đồng';
-			case 409:
-				return 'Trạng thái hợp đồng không hợp lệ';
-			default:
-				if (data?.message && typeof data.message === 'string') return data.message;
-				if (data?.error) return data.error;
-				return defaultMessage;
-		}
-	}
-	if (error instanceof Error) return error.message;
-	return defaultMessage;
-};
-
-const getTokenFromCookies = async (): Promise<string | null> => {
-	const cookieStore = await cookies();
-	return cookieStore.get('accessToken')?.value || null;
-};
-
-const apiCall = createServerApiCall(getTokenFromCookies);
+const apiCall = createServerApiCall();
 
 const normalizeEntityResponse = <T extends object>(response: unknown): { data: T } => {
 	if (response && typeof response === 'object' && 'data' in (response as Record<string, unknown>)) {
@@ -69,11 +34,16 @@ const normalizeEntityResponse = <T extends object>(response: unknown): { data: T
 // Auto-generate contract from rental (Landlord only)
 export const autoGenerateContract = async (
 	rentalId: string,
+	token?: string,
 ): Promise<ApiResult<{ data: Contract }>> => {
 	try {
-		const response = await apiCall<{ data: Contract }>(`/api/contracts/auto-generate/${rentalId}`, {
-			method: 'POST',
-		});
+		const response = await apiCall<{ data: Contract }>(
+			`/api/contracts/auto-generate/${rentalId}`,
+			{
+				method: 'POST',
+			},
+			token,
+		);
 		return { success: true, data: normalizeEntityResponse<Contract>(response) };
 	} catch (error) {
 		return { success: false, error: extractErrorMessage(error, 'Không thể tạo hợp đồng tự động') };
@@ -81,11 +51,14 @@ export const autoGenerateContract = async (
 };
 
 // Get contracts based on user role
-export const getMyContracts = async (params?: {
-	page?: number;
-	limit?: number;
-	status?: string;
-}): Promise<ApiResult<ContractListResponse>> => {
+export const getMyContracts = async (
+	params?: {
+		page?: number;
+		limit?: number;
+		status?: string;
+	},
+	token?: string,
+): Promise<ApiResult<ContractListResponse>> => {
 	try {
 		const q = new URLSearchParams();
 		if (params?.page) q.append('page', String(params.page));
@@ -93,7 +66,7 @@ export const getMyContracts = async (params?: {
 		if (params?.status) q.append('status', params.status);
 
 		const endpoint = `/api/contracts${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<ContractListResponse>(endpoint, { method: 'GET' });
+		const response = await apiCall<ContractListResponse>(endpoint, { method: 'GET' }, token);
 		return { success: true, data: response };
 	} catch (error) {
 		return {
@@ -104,17 +77,20 @@ export const getMyContracts = async (params?: {
 };
 
 // Get landlord contracts
-export const getLandlordContracts = async (params?: {
-	page?: number;
-	limit?: number;
-}): Promise<ApiResult<ContractListResponse>> => {
+export const getLandlordContracts = async (
+	params?: {
+		page?: number;
+		limit?: number;
+	},
+	token?: string,
+): Promise<ApiResult<ContractListResponse>> => {
 	try {
 		const q = new URLSearchParams();
 		if (params?.page) q.append('page', String(params.page));
 		if (params?.limit) q.append('limit', String(params.limit));
 
 		const endpoint = `/api/contracts/my-contracts${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<ContractListResponse>(endpoint, { method: 'GET' });
+		const response = await apiCall<ContractListResponse>(endpoint, { method: 'GET' }, token);
 		return { success: true, data: response };
 	} catch (error) {
 		return {
@@ -125,17 +101,20 @@ export const getLandlordContracts = async (params?: {
 };
 
 // Get tenant contracts
-export const getTenantContracts = async (params?: {
-	page?: number;
-	limit?: number;
-}): Promise<ApiResult<ContractListResponse>> => {
+export const getTenantContracts = async (
+	params?: {
+		page?: number;
+		limit?: number;
+	},
+	token?: string,
+): Promise<ApiResult<ContractListResponse>> => {
 	try {
 		const q = new URLSearchParams();
 		if (params?.page) q.append('page', String(params.page));
 		if (params?.limit) q.append('limit', String(params.limit));
 
 		const endpoint = `/api/contracts/as-tenant${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<ContractListResponse>(endpoint, { method: 'GET' });
+		const response = await apiCall<ContractListResponse>(endpoint, { method: 'GET' }, token);
 		return { success: true, data: response };
 	} catch (error) {
 		return {
@@ -146,11 +125,18 @@ export const getTenantContracts = async (params?: {
 };
 
 // Get contract details by ID
-export const getContractById = async (id: string): Promise<ApiResult<{ data: Contract }>> => {
+export const getContractById = async (
+	id: string,
+	token?: string,
+): Promise<ApiResult<{ data: Contract }>> => {
 	try {
-		const response = await apiCall<{ data: Contract }>(`/api/contracts/${id}`, {
-			method: 'GET',
-		});
+		const response = await apiCall<{ data: Contract }>(
+			`/api/contracts/${id}`,
+			{
+				method: 'GET',
+			},
+			token,
+		);
 		return { success: true, data: normalizeEntityResponse<Contract>(response) };
 	} catch (error) {
 		return { success: false, error: extractErrorMessage(error, 'Không thể tải chi tiết hợp đồng') };
@@ -161,12 +147,17 @@ export const getContractById = async (id: string): Promise<ApiResult<{ data: Con
 export const updateContract = async (
 	id: string,
 	data: UpdateContractRequest,
+	token?: string,
 ): Promise<ApiResult<{ data: Contract }>> => {
 	try {
-		const response = await apiCall<{ data: Contract }>(`/api/contracts/${id}`, {
-			method: 'PUT',
-			data,
-		});
+		const response = await apiCall<{ data: Contract }>(
+			`/api/contracts/${id}`,
+			{
+				method: 'PUT',
+				data,
+			},
+			token,
+		);
 		return { success: true, data: normalizeEntityResponse<Contract>(response) };
 	} catch (error) {
 		return {
@@ -180,12 +171,17 @@ export const updateContract = async (
 export const createContractAmendment = async (
 	contractId: string,
 	data: CreateContractAmendmentRequest,
+	token?: string,
 ): Promise<ApiResult<{ message: string }>> => {
 	try {
-		const response = await apiCall<{ message: string }>(`/api/contracts/${contractId}/amendments`, {
-			method: 'POST',
-			data,
-		});
+		const response = await apiCall<{ message: string }>(
+			`/api/contracts/${contractId}/amendments`,
+			{
+				method: 'POST',
+				data,
+			},
+			token,
+		);
 		return { success: true, data: response };
 	} catch (error) {
 		return {
@@ -196,12 +192,16 @@ export const createContractAmendment = async (
 };
 
 // Download contract as PDF
-export const downloadContractPDF = async (id: string): Promise<ApiResult<Blob>> => {
+export const downloadContractPDF = async (id: string, token?: string): Promise<ApiResult<Blob>> => {
 	try {
-		const response = await apiCall<Blob>(`/api/contracts/${id}/download`, {
-			method: 'GET',
-			responseType: 'blob',
-		});
+		const response = await apiCall<Blob>(
+			`/api/contracts/${id}/download`,
+			{
+				method: 'GET',
+				responseType: 'blob',
+			},
+			token,
+		);
 		return { success: true, data: response };
 	} catch (error) {
 		return {
@@ -216,19 +216,24 @@ export const signContract = async (
 	contractId: string,
 	signatureData: string,
 	signatureMethod: 'canvas' | 'upload' = 'canvas',
+	token?: string,
 ): Promise<ApiResult<{ data: Contract }>> => {
 	try {
 		// Get device info for signature tracking
 		const deviceInfo = `${navigator.userAgent} - ${window.screen.width}x${window.screen.height}`;
 
-		const response = await apiCall<{ data: Contract }>(`/api/contracts/${contractId}/sign`, {
-			method: 'POST',
-			data: {
-				signatureData,
-				signatureMethod,
-				deviceInfo,
+		const response = await apiCall<{ data: Contract }>(
+			`/api/contracts/${contractId}/sign`,
+			{
+				method: 'POST',
+				data: {
+					signatureData,
+					signatureMethod,
+					deviceInfo,
+				},
 			},
-		});
+			token,
+		);
 		return { success: true, data: normalizeEntityResponse<Contract>(response) };
 	} catch (error) {
 		return {
@@ -242,6 +247,7 @@ export const signContract = async (
 export const requestSignatures = async (
 	contractId: string,
 	signatureDeadline?: string,
+	token?: string,
 ): Promise<ApiResult<{ data: Contract }>> => {
 	try {
 		const response = await apiCall<{ data: Contract }>(
@@ -252,6 +258,7 @@ export const requestSignatures = async (
 					signatureDeadline,
 				},
 			},
+			token,
 		);
 		return { success: true, data: normalizeEntityResponse<Contract>(response) };
 	} catch (error) {
@@ -266,6 +273,7 @@ export const requestSignatures = async (
 export const verifySignature = async (
 	contractId: string,
 	signatureId: string,
+	token?: string,
 ): Promise<ApiResult<{ isValid: boolean; details: string }>> => {
 	try {
 		const response = await apiCall<{ isValid: boolean; details: string }>(
@@ -273,6 +281,7 @@ export const verifySignature = async (
 			{
 				method: 'GET',
 			},
+			token,
 		);
 		return { success: true, data: response };
 	} catch (error) {

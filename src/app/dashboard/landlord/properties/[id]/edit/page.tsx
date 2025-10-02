@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { BuildingForm } from "@/components/forms/building-form"
-import { getBuildingById } from "@/actions/building.action"
+import { useBuildingStore } from "@/stores/buildingStore"
 import { type Building } from "@/types/types"
 import { toast } from "sonner"
 
@@ -12,6 +12,7 @@ export default function EditBuildingPage() {
   const params = useParams()
   const buildingId = params.id as string
 
+  const { loadBuildingById } = useBuildingStore()
   const [building, setBuilding] = useState<Building | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -19,14 +20,8 @@ export default function EditBuildingPage() {
     const fetchBuilding = async () => {
       try {
         setLoading(true)
-        const response = await getBuildingById(buildingId)
-        
-        if (!response.success) {
-          toast.error(response.error)
-          return
-        }
-        
-        setBuilding(response.data.data)
+        const fetchedBuilding = await loadBuildingById(buildingId)
+        setBuilding(fetchedBuilding)
       } catch (error) {
         console.error('Error fetching building:', error)
         toast.error('Không thể tải thông tin dãy trọ')
@@ -38,7 +33,7 @@ export default function EditBuildingPage() {
     if (buildingId) {
       fetchBuilding()
     }
-  }, [buildingId])
+  }, [buildingId, loadBuildingById])
 
   if (loading) {
     return (

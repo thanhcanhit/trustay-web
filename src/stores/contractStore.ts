@@ -12,6 +12,7 @@ import {
 	updateContract,
 	verifySignature,
 } from '@/actions/contract.action';
+import { TokenManager } from '@/lib/api-client';
 import type {
 	Contract,
 	ContractListResponse,
@@ -107,7 +108,8 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	loadContracts: async (params) => {
 		set({ loading: true, error: null });
 		try {
-			const result = await getMyContracts(params);
+			const token = TokenManager.getAccessToken();
+			const result = await getMyContracts(params, token);
 			if (result.success) {
 				set({
 					contracts: result.data.data,
@@ -132,7 +134,8 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	loadLandlordContracts: async (params) => {
 		set({ loadingLandlord: true, errorLandlord: null });
 		try {
-			const result = await getLandlordContracts(params);
+			const token = TokenManager.getAccessToken();
+			const result = await getLandlordContracts(params, token);
 			if (result.success) {
 				set({
 					landlordContracts: result.data.data,
@@ -157,7 +160,8 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	loadTenantContracts: async (params) => {
 		set({ loadingTenant: true, errorTenant: null });
 		try {
-			const result = await getTenantContracts(params);
+			const token = TokenManager.getAccessToken();
+			const result = await getTenantContracts(params, token);
 			if (result.success) {
 				set({
 					tenantContracts: result.data.data,
@@ -182,7 +186,8 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	loadById: async (id) => {
 		set({ loadingCurrent: true, errorCurrent: null });
 		try {
-			const result = await getContractById(id);
+			const token = TokenManager.getAccessToken();
+			const result = await getContractById(id, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -206,7 +211,8 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	autoGenerate: async (rentalId) => {
 		set({ submitting: true, submitError: null });
 		try {
-			const result = await autoGenerateContract(rentalId);
+			const token = TokenManager.getAccessToken();
+			const result = await autoGenerateContract(rentalId, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -235,7 +241,8 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	update: async (id, data) => {
 		set({ submitting: true, submitError: null });
 		try {
-			const result = await updateContract(id, data);
+			const token = TokenManager.getAccessToken();
+			const result = await updateContract(id, data, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -264,7 +271,8 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	createAmendment: async (contractId, data) => {
 		set({ submitting: true, submitError: null });
 		try {
-			const result = await createContractAmendment(contractId, data);
+			const token = TokenManager.getAccessToken();
+			const result = await createContractAmendment(contractId, data, token);
 			if (result.success) {
 				set({ submitting: false });
 				// Reload current contract to get updated amendments
@@ -290,7 +298,8 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	downloadPDF: async (id) => {
 		set({ downloading: true, downloadError: null });
 		try {
-			const result = await downloadContractPDF(id);
+			const token = TokenManager.getAccessToken();
+			const result = await downloadContractPDF(id, token);
 			if (result.success) {
 				set({ downloading: false });
 				return result.data;
@@ -319,7 +328,8 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	sign: async (contractId, signatureData, signatureMethod = 'canvas') => {
 		set({ signing: true, signError: null });
 		try {
-			const result = await signContract(contractId, signatureData, signatureMethod);
+			const token = TokenManager.getAccessToken();
+			const result = await signContract(contractId, signatureData, signatureMethod, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -348,7 +358,8 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	requestSignatures: async (contractId, signatureDeadline) => {
 		set({ submitting: true, submitError: null });
 		try {
-			const result = await requestSignatures(contractId, signatureDeadline);
+			const token = TokenManager.getAccessToken();
+			const result = await requestSignatures(contractId, signatureDeadline, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -377,7 +388,8 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	verifySignature: async (contractId, signatureId) => {
 		set({ verifying: true, verifyError: null });
 		try {
-			const result = await verifySignature(contractId, signatureId);
+			const token = TokenManager.getAccessToken();
+			const result = await verifySignature(contractId, signatureId, token);
 			if (result.success) {
 				set({ verifying: false });
 				return result.data;

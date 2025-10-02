@@ -7,6 +7,7 @@ import {
 	markAllMessagesAsRead,
 	sendMessage,
 } from '../actions/chat.action';
+import { TokenManager } from '../lib/api-client';
 
 export type ChatMessage = MessageData;
 
@@ -54,7 +55,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 	},
 	loadConversations: async () => {
 		try {
-			const conversationList = await getConversations();
+			const token = TokenManager.getAccessToken();
+			const conversationList = await getConversations(token);
 			const conversationsObj = conversationList.reduce(
 				(acc, conv) => {
 					acc[conv.conversationId] = conv;
@@ -70,7 +72,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 	loadMessages: async (conversationId: string) => {
 		try {
 			console.log('Store: Loading messages for conversation:', conversationId);
-			const messages = await getMessages(conversationId);
+			const token = TokenManager.getAccessToken();
+			const messages = await getMessages(conversationId, {}, token);
 			console.log('Store: Received messages:', messages);
 			set((state) => ({
 				byConversation: {
@@ -102,7 +105,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 		const state = get();
 		if (!state.currentUserId) throw new Error('No current user set');
 
-		const sentMessage = await sendMessage(payload);
+		const token = TokenManager.getAccessToken();
+		const sentMessage = await sendMessage(payload, token);
 
 		// Handle both possible response structures
 		const messageData = sentMessage?.data || sentMessage;
@@ -116,7 +120,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 	},
 	markAllRead: async (conversationId: string) => {
 		try {
-			await markAllMessagesAsRead(conversationId);
+			const token = TokenManager.getAccessToken();
+			await markAllMessagesAsRead(conversationId, token);
 			set((state) => ({
 				conversations: {
 					...state.conversations,

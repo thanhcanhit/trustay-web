@@ -1,7 +1,5 @@
 'use server';
 
-import { AxiosError } from 'axios';
-import { cookies } from 'next/headers';
 import { createServerApiCall } from '../lib/api-client';
 import {
 	Building,
@@ -9,6 +7,7 @@ import {
 	CreateBuildingRequest,
 	UpdateBuildingRequest,
 } from '../types/types';
+import { extractErrorMessage } from '../utils/api-error-handler';
 
 // Types for error handling
 interface ApiErrorResult {
@@ -24,69 +23,20 @@ interface ApiSuccessResult<T> {
 
 type ApiResult<T> = ApiSuccessResult<T> | ApiErrorResult;
 
-// Helper function to extract error message from API response
-const extractErrorMessage = (error: unknown, defaultMessage: string): string => {
-	console.error('Building API Error Debug:', error);
-
-	if (error instanceof AxiosError) {
-		const status = error.response?.status;
-		const data = error.response?.data;
-
-		console.error('AxiosError Details:', {
-			status,
-			data,
-			message: error.message,
-		});
-
-		// Handle specific status codes
-		switch (status) {
-			case 400:
-				if (typeof data === 'string') return data;
-				if (data?.message) return data.message;
-				return 'Dữ liệu không hợp lệ';
-			case 401:
-				return 'Bạn cần đăng nhập để thực hiện thao tác này';
-			case 403:
-				return 'Bạn không có quyền thực hiện thao tác này';
-			case 404:
-				return 'Không tìm thấy dãy trọ';
-			case 409:
-				return 'Dãy trọ đã tồn tại';
-			case 422:
-				if (data?.message) return data.message;
-				return 'Dữ liệu không hợp lệ';
-			case 500:
-				return 'Lỗi hệ thống, vui lòng thử lại sau';
-			default:
-				if (data?.message) return data.message;
-				if (data?.error) return data.error;
-				return defaultMessage;
-		}
-	}
-
-	if (error instanceof Error) {
-		return error.message;
-	}
-
-	return defaultMessage;
-};
-
 // Create API call function for server actions
-// Helper function to get token from cookies
-const getTokenFromCookies = async (): Promise<string | null> => {
-	const cookieStore = await cookies();
-	return cookieStore.get('accessToken')?.value || null;
-};
-
-const apiCall = createServerApiCall(getTokenFromCookies);
+// No token function - token will be passed directly from client
+const apiCall = createServerApiCall();
 
 // Get list of buildings with pagination
-export const getBuildings = async (params?: {
-	page?: number;
-	limit?: number;
-	search?: string;
-	isActive?: boolean;
-}): Promise<ApiResult<BuildingsListResponse>> => {
+export const getBuildings = async (
+	params?: {
+		page?: number;
+		limit?: number;
+		search?: string;
+		isActive?: boolean;
+	},
+	token?: string,
+): Promise<ApiResult<BuildingsListResponse>> => {
 	try {
 		const searchParams = new URLSearchParams();
 		if (params?.page) searchParams.append('page', params.page.toString());
@@ -99,9 +49,13 @@ export const getBuildings = async (params?: {
 			success: boolean;
 			message: string;
 			data: BuildingsListResponse;
-		}>(endpoint, {
-			method: 'GET',
-		});
+		}>(
+			endpoint,
+			{
+				method: 'GET',
+			},
+			token,
+		);
 
 		console.log('Full API Response:', response);
 
@@ -118,10 +72,13 @@ export const getBuildings = async (params?: {
 };
 
 // Get my buildings (landlord's buildings)
-export const getMyBuildings = async (params?: {
-	page?: number;
-	limit?: number;
-}): Promise<ApiResult<BuildingsListResponse>> => {
+export const getMyBuildings = async (
+	params?: {
+		page?: number;
+		limit?: number;
+	},
+	token?: string,
+): Promise<ApiResult<BuildingsListResponse>> => {
 	try {
 		const searchParams = new URLSearchParams();
 		if (params?.page) searchParams.append('page', params.page.toString());
@@ -132,9 +89,13 @@ export const getMyBuildings = async (params?: {
 			success: boolean;
 			message: string;
 			data: BuildingsListResponse;
-		}>(endpoint, {
-			method: 'GET',
-		});
+		}>(
+			endpoint,
+			{
+				method: 'GET',
+			},
+			token,
+		);
 
 		console.log('My Buildings API Response:', response);
 
@@ -151,15 +112,22 @@ export const getMyBuildings = async (params?: {
 };
 
 // Get building by ID
-export const getBuildingById = async (id: string): Promise<ApiResult<{ data: Building }>> => {
+export const getBuildingById = async (
+	id: string,
+	token?: string,
+): Promise<ApiResult<{ data: Building }>> => {
 	try {
 		const response = await apiCall<{
 			success: boolean;
 			message: string;
 			data: Building;
-		}>(`/api/buildings/${id}`, {
-			method: 'GET',
-		});
+		}>(
+			`/api/buildings/${id}`,
+			{
+				method: 'GET',
+			},
+			token,
+		);
 
 		console.log('Building Detail API Response:', response);
 
@@ -178,12 +146,17 @@ export const getBuildingById = async (id: string): Promise<ApiResult<{ data: Bui
 // Create new building
 export const createBuilding = async (
 	data: CreateBuildingRequest,
+	token?: string,
 ): Promise<ApiResult<{ data: Building }>> => {
 	try {
-		const response = await apiCall<{ data: Building }>('/api/buildings', {
-			method: 'POST',
-			data,
-		});
+		const response = await apiCall<{ data: Building }>(
+			'/api/buildings',
+			{
+				method: 'POST',
+				data,
+			},
+			token,
+		);
 
 		return {
 			success: true,
@@ -201,12 +174,17 @@ export const createBuilding = async (
 export const updateBuilding = async (
 	id: string,
 	data: UpdateBuildingRequest,
+	token?: string,
 ): Promise<ApiResult<{ data: Building }>> => {
 	try {
-		const response = await apiCall<{ data: Building }>(`/api/buildings/${id}`, {
-			method: 'PUT',
-			data,
-		});
+		const response = await apiCall<{ data: Building }>(
+			`/api/buildings/${id}`,
+			{
+				method: 'PUT',
+				data,
+			},
+			token,
+		);
 
 		return {
 			success: true,
@@ -221,11 +199,18 @@ export const updateBuilding = async (
 };
 
 // Delete building
-export const deleteBuilding = async (id: string): Promise<ApiResult<{ message: string }>> => {
+export const deleteBuilding = async (
+	id: string,
+	token?: string,
+): Promise<ApiResult<{ message: string }>> => {
 	try {
-		const response = await apiCall<{ message: string }>(`/api/buildings/${id}`, {
-			method: 'DELETE',
-		});
+		const response = await apiCall<{ message: string }>(
+			`/api/buildings/${id}`,
+			{
+				method: 'DELETE',
+			},
+			token,
+		);
 
 		return {
 			success: true,

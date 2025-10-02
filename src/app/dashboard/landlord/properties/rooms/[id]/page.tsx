@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Home, Edit, Trash2, ArrowLeft, Users, DollarSign, Settings, Building } from "lucide-react"
-import { getRoomById, deleteRoom, getRoomInstancesByStatus } from "@/actions/room.action"
+import { useRoomStore } from "@/stores/roomStore"
 import { type Room } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -26,6 +26,7 @@ export default function RoomDetailPage() {
   const router = useRouter()
   const roomId = params.id as string
 
+  const { loadRoomById, deleteMyRoom, loadRoomInstances } = useRoomStore()
   const [room, setRoom] = useState<Room | null>(null)
   const [loading, setLoading] = useState(true)
   const [actualStatusCounts, setActualStatusCounts] = useState<{
@@ -45,27 +46,27 @@ export default function RoomDetailPage() {
   const fetchRoomDetail = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await getRoomById(roomId)
-      
-      if (!response.success) {
-        toast.error(response.error)
+      const roomData = await loadRoomById(roomId)
+
+      if (!roomData) {
+        toast.error('Không tìm thấy phòng')
         router.push('/dashboard/landlord/properties/rooms')
         return
       }
-      
-      setRoom(response.data.data)
-      
+
+      setRoom(roomData)
+
       // Fetch actual status counts from room instances
       try {
-        const instancesResponse = await getRoomInstancesByStatus(roomId, 'all')
-        if (instancesResponse.success) {
-          setActualStatusCounts(instancesResponse.data.data.statusCounts)
+        const instancesData = await loadRoomInstances(roomId, 'all')
+        if (instancesData) {
+          setActualStatusCounts(instancesData.statusCounts)
         }
       } catch (instancesError) {
         console.error('Error fetching room instances:', instancesError)
         // Fallback to room.statusCounts if instances fetch fails
-        if (response.data.data.statusCounts) {
-          setActualStatusCounts(response.data.data.statusCounts)
+        if (roomData.statusCounts) {
+          setActualStatusCounts(roomData.statusCounts)
         }
       }
     } catch (error) {
@@ -75,7 +76,7 @@ export default function RoomDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [roomId, router])
+  }, [roomId, router, loadRoomById, loadRoomInstances])
 
   useEffect(() => {
     if (roomId) {
@@ -91,12 +92,12 @@ export default function RoomDetailPage() {
     }
 
     try {
-      const response = await deleteRoom(room.id)
-      if (!response.success) {
-        toast.error(response.error)
+      const success = await deleteMyRoom(room.id)
+      if (!success) {
+        toast.error('Không thể xóa loại phòng')
         return
       }
-      
+
       toast.success('Xóa loại phòng thành công')
       router.push('/dashboard/landlord/properties/rooms')
     } catch (error) {

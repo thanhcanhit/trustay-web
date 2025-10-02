@@ -9,9 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Search, Edit, Trash2, Eye, Home} from "lucide-react"
-import { getMyRooms, deleteRoom } from "@/actions/room.action"
-import { getBuildings } from "@/actions/building.action"
-import { type Room, type Building } from "@/types/types"
+import { useRoomStore } from "@/stores/roomStore"
+import { useBuildingStore } from "@/stores/buildingStore"
 import Link from "next/link"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
@@ -27,92 +26,51 @@ const ROOM_TYPE_LABELS = {
 function RoomsManagementPageContent() {
   const searchParams = useSearchParams()
   const selectedBuildingId = searchParams.get('buildingId')
-  
-  const [rooms, setRooms] = useState<Room[]>([])
-  const [buildings, setBuildings] = useState<Building[]>([])
-  const [loading, setLoading] = useState(true)
+
+  // Room store
+  const {
+    myRooms: rooms,
+    myRoomsLoading: loading,
+    myRoomsError: roomsError,
+    myRoomsPagination,
+    fetchMyRooms,
+    deleteMyRoom
+  } = useRoomStore()
+
+  // Building store
+  const {
+    buildings,
+    error: buildingsError,
+    fetchAllBuildings
+  } = useBuildingStore()
+
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [buildingFilter, setBuildingFilter] = useState(selectedBuildingId || 'all')
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [hasBuildings, setHasBuildings] = useState(false)
-  const [roomsCache, setRoomsCache] = useState<Map<string, { rooms: Room[], totalPages: number, lastFetched: number }>>(new Map())
   const pageLimit = 12
 
+  const totalPages = myRoomsPagination?.totalPages || 1
+  const hasBuildings = buildings && Array.isArray(buildings) && buildings.length > 0
+
   // Fetch buildings for filter dropdown
-  const fetchBuildings = async () => {
-    try {
-      // Only fetch a reasonable number of buildings for the dropdown
-      const response = await getBuildings({ limit: 50 })
-      
-      if (response.success && response.data.buildings && Array.isArray(response.data.buildings)) {
-        setBuildings(response.data.buildings)
-        setHasBuildings(response.data.buildings.length > 0)
-      } else {
-        console.error('Buildings fetch failed:', !response.success ? response.error : 'Unknown error')
-        setBuildings([])
-        setHasBuildings(false)
-      }
-    } catch (error) {
-      console.error('Error fetching buildings:', error)
-      setBuildings([])
-      setHasBuildings(false)
-    }
-  }
+  const fetchBuildings = useCallback(async () => {
+    await fetchAllBuildings()
+  }, [fetchAllBuildings])
 
-  // Fetch all my rooms with pagination and caching
-  const fetchRooms = useCallback(async (forceRefresh = false) => {
-    try {
-      setLoading(true)
-      
-      const cacheKey = `my-rooms-${currentPage}`
-        const cached = roomsCache.get(cacheKey)
-        const now = Date.now()
-        const cacheExpiry = 5 * 60 * 1000 // 5 minutes
-
-        // Use cache if available and not expired, unless force refresh
-        if (cached && !forceRefresh && (now - cached.lastFetched) < cacheExpiry) {
-        setRooms(cached.rooms)
-          setTotalPages(cached.totalPages)
-          setLoading(false)
-          return
-        }
-
-      // Fetch all my rooms with pagination
-      const response = await getMyRooms({
-          page: currentPage,
-          limit: pageLimit
-        })
-        
-        if (response.success && response.data.rooms && Array.isArray(response.data.rooms)) {
-        setRooms(response.data.rooms)
-          setTotalPages(response.data.totalPages || 1)
-          
-          // Cache the result
-          setRoomsCache(prev => new Map(prev).set(cacheKey, {
-            rooms: response.data.rooms,
-            totalPages: response.data.totalPages || 1,
-            lastFetched: now
-          }))
-        } else {
-          setRooms([])
-          setTotalPages(1)
-      }
-    } catch (error) {
-      console.error('Error fetching rooms:', error)
-      toast.error('Không thể tải danh sách phòng')
-      setRooms([])
-    } finally {
-      setLoading(false)
-    }
-  }, [currentPage, pageLimit, roomsCache])
+  // Fetch all my rooms with pagination
+  const fetchRooms = useCallback(async () => {
+    await fetchMyRooms({
+      page: currentPage,
+      limit: pageLimit
+    })
+  }, [fetchMyRooms, currentPage, pageLimit])
 
   useEffect(() => {
     fetchBuildings()
     // Fetch rooms immediately when component mounts
     fetchRooms()
-  }, [fetchRooms])
+  }, [fetchBuildings, fetchRooms])
 
   useEffect(() => {
     // Fetch rooms when page changes
@@ -130,37 +88,32 @@ function RoomsManagementPageContent() {
     return matchesSearch && matchesStatus && matchesBuilding
   })
 
-  // Clear cache for my rooms
-  const clearRoomsCache = () => {
-    setRoomsCache(prev => {
-      const newCache = new Map(prev)
-      // Remove all cache entries for my rooms
-      for (const key of newCache.keys()) {
-        if (key.startsWith('my-rooms-')) {
-          newCache.delete(key)
-        }
-      }
-      return newCache
-    })
-  }
-
   const handleDeleteRoom = async (roomId: string) => {
     try {
-      const response = await deleteRoom(roomId)
-      if (!response.success) {
-        toast.error(response.error)
-        return
+      const success = await deleteMyRoom(roomId)
+      if (success) {
+        toast.success('Xóa loại phòng thành công')
+      } else {
+        toast.error('Không thể xóa loại phòng')
       }
-      
-      toast.success('Xóa loại phòng thành công')
-      // Clear cache and refresh
-      clearRoomsCache()
-      fetchRooms(true) // Force refresh
     } catch (error) {
       console.error('Error deleting room:', error)
       toast.error('Không thể xóa loại phòng. Vui lòng kiểm tra lại.')
     }
   }
+
+  // Handle errors
+  useEffect(() => {
+    if (roomsError) {
+      toast.error(roomsError)
+    }
+  }, [roomsError])
+
+  useEffect(() => {
+    if (buildingsError) {
+      toast.error(buildingsError)
+    }
+  }, [buildingsError])
 
   return (
     <DashboardLayout userType="landlord">
@@ -245,12 +198,6 @@ function RoomsManagementPageContent() {
                 )}
                 {totalPages > 1 && (
                   <span> • Trang {currentPage}/{totalPages}</span>
-                )}
-                {/* Show cache status in development */}
-                {process.env.NODE_ENV === 'development' && (
-                  <span className="ml-2 text-xs text-blue-500">
-                    (Cache: {roomsCache.has(`my-rooms-${currentPage}`) ? 'Hit' : 'Miss'})
-                  </span>
                 )}
               </div>
             )}
