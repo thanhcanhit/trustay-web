@@ -57,10 +57,10 @@ export function ImageUploadWithApi({
         // Update images with server URLs
         const updatedImages = allImages.map((img) => {
           const imageIndex = imageObjects.findIndex(obj => obj.id === img.id)
-          if (imageIndex !== -1 && response.imagePaths[imageIndex]) {
+          if (imageIndex !== -1 && response.results[imageIndex]) {
             return {
               ...img,
-              url: response.imagePaths[imageIndex],
+              url: response.results[imageIndex].imagePath,
               isUploading: false,
             }
           }
