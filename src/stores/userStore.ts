@@ -24,6 +24,11 @@ interface UserState {
 
 	// Actions
 	login: (credentials: LoginRequest) => Promise<void>;
+	setAuthFromResponse: (authResponse: {
+		user: UserProfile;
+		access_token: string;
+		refresh_token: string;
+	}) => void;
 	logout: () => Promise<void>;
 	loadUser: () => Promise<void>;
 	fetchUser: () => Promise<void>;
@@ -116,6 +121,25 @@ export const useUserStore = create<UserState>()(
 					});
 					throw error;
 				}
+			},
+
+			// Set authentication state from AuthResponse (used after registration)
+			setAuthFromResponse: (authResponse) => {
+				const user = convertUserProfile(authResponse.user);
+
+				// Save accessToken to localStorage
+				if (authResponse.access_token) {
+					TokenManager.setAccessToken(authResponse.access_token);
+				}
+
+				// Update user store with user data and refreshToken
+				set({
+					user,
+					refreshToken: authResponse.refresh_token || null,
+					isAuthenticated: true,
+					isLoading: false,
+					error: null,
+				});
 			},
 
 			logout: async () => {
