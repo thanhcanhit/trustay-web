@@ -370,14 +370,16 @@ export interface Room {
 	viewCount: number;
 	isActive: boolean;
 	isVerified: boolean;
+	lastUpdated: string;
 	createdAt: string;
 	updatedAt: string;
 	// Related data
-	building?: {
-		id: string;
-		name: string;
-		addressLine1?: string;
-	};
+	buildingName: string;
+	buildingVerified: boolean;
+	address?: string;
+	availableRooms?: number;
+
+	buildingAddressLine1?: string;
 	pricing?: RoomPricing;
 	amenities?: RoomAmenity[];
 	costs?: RoomCost[];
@@ -636,6 +638,8 @@ export interface BookingRequest {
 	messageToOwner?: string | null;
 	ownerNotes?: string | null;
 	cancellationReason?: string | null;
+	isConfirmedByTenant?: boolean;
+	confirmedAt?: string | null;
 	createdAt: string;
 	updatedAt: string;
 	// Related
@@ -678,6 +682,10 @@ export interface UpdateBookingRequestRequest {
 
 export interface CancelBookingRequestRequest {
 	cancellationReason: string;
+}
+
+export interface ConfirmBookingRequestRequest {
+	tenantNotes?: string;
 }
 
 export interface BookingRequestListResponse {
@@ -840,6 +848,7 @@ export interface Contract {
 	rentalId?: string;
 	terms: string;
 	monthlyRent: number;
+	depositAmount?: number;
 	startDate: string;
 	endDate: string;
 	status: 'draft' | 'pending_signatures' | 'active' | 'expired' | 'terminated';

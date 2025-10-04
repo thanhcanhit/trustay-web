@@ -5,6 +5,7 @@ import type {
 	BookingRequest,
 	BookingRequestListResponse,
 	CancelBookingRequestRequest,
+	ConfirmBookingRequestRequest,
 	CreateBookingRequestRequest,
 	UpdateBookingRequestRequest,
 } from '@/types/types';
@@ -238,6 +239,34 @@ export const getMyBookingRequestsMe = async (
 	}
 };
 
+export const confirmBookingRequest = async (
+	id: string,
+	data: ConfirmBookingRequestRequest,
+	token?: string,
+): Promise<ApiResult<{ data: BookingRequest; rental?: { id: string } }>> => {
+	try {
+		const response = await apiCall<{ data: BookingRequest; rental?: { id: string } }>(
+			`/api/booking-requests/${id}/confirm`,
+			{
+				method: 'POST',
+				data,
+			},
+			token,
+		);
+		return { success: true, data: response };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể xác nhận yêu cầu đặt phòng'),
+		};
+	}
+};
+
+/**
+ * @deprecated This function is for the old flow where landlord approve auto-creates rental + contract.
+ * New flow: Landlord approve → Tenant confirm → Auto create rental (via /confirm endpoint)
+ * Keep this for backward compatibility or migration period.
+ */
 export const approveBookingRequestAndCreateRental = async (
 	bookingRequestId: string,
 	ownerNotes?: string,

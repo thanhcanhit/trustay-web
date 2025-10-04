@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import {
 	approveBookingRequestAndCreateRental,
 	cancelMyBookingRequest,
+	confirmBookingRequest,
 	createBookingRequest,
 	getBookingRequestById,
 	getMyBookingRequests,
@@ -13,6 +14,7 @@ import type {
 	BookingRequest,
 	BookingRequestListResponse,
 	CancelBookingRequestRequest,
+	ConfirmBookingRequestRequest,
 	CreateBookingRequestRequest,
 	UpdateBookingRequestRequest,
 } from '@/types/types';
@@ -46,6 +48,7 @@ interface BookingRequestState {
 	loadById: (id: string) => Promise<void>;
 	create: (data: CreateBookingRequestRequest) => Promise<boolean>;
 	ownerUpdate: (id: string, data: UpdateBookingRequestRequest) => Promise<boolean>;
+	confirm: (id: string, data: ConfirmBookingRequestRequest) => Promise<boolean>;
 	approveAndCreateRental: (
 		id: string,
 		ownerNotes?: string,
@@ -142,6 +145,32 @@ export const useBookingRequestStore = create<BookingRequestState>((set, get) => 
 		return false;
 	},
 
+	confirm: async (id, data) => {
+		set({ submitting: true, submitError: null });
+		const token = TokenManager.getAccessToken();
+		const res = await confirmBookingRequest(id, data, token);
+		if (res.success) {
+			// Update the specific item in the mine array
+			const { mine } = get();
+			const updatedMine = mine.map((item) =>
+				item.id === id
+					? {
+							...item,
+							isConfirmedByTenant: true,
+							confirmedAt: new Date().toISOString(),
+						}
+					: item,
+			);
+			set({ mine: updatedMine, submitting: false });
+			return true;
+		}
+		set({ submitting: false, submitError: res.error });
+		return false;
+	},
+
+	/**
+	 * @deprecated Use ownerUpdate + tenant confirm flow instead
+	 */
 	approveAndCreateRental: async (id, ownerNotes) => {
 		set({ submitting: true, submitError: null });
 		const token = TokenManager.getAccessToken();

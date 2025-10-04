@@ -1,5 +1,6 @@
 'use server';
 
+import { AxiosError } from 'axios';
 // Authentication actions for Trustay API
 import { redirect } from 'next/navigation';
 import { apiClient, createServerApiCall } from '../lib/api-client';

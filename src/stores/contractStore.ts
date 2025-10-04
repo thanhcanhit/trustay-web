@@ -57,6 +57,7 @@ interface ContractState {
 	loadLandlordContracts: (params?: { page?: number; limit?: number }) => Promise<void>;
 	loadTenantContracts: (params?: { page?: number; limit?: number }) => Promise<void>;
 	loadById: (id: string) => Promise<void>;
+	loadContractById: (id: string) => Promise<Contract | null>;
 	autoGenerate: (rentalId: string) => Promise<boolean>;
 	update: (id: string, data: UpdateContractRequest) => Promise<boolean>;
 	createAmendment: (contractId: string, data: CreateContractAmendmentRequest) => Promise<boolean>;
@@ -204,6 +205,31 @@ export const useContractStore = create<ContractState>((set, get) => ({
 				errorCurrent: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
 				loadingCurrent: false,
 			});
+		}
+	},
+
+	// Load contract by ID and return it
+	loadContractById: async (id) => {
+		set({ loading: true, error: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await getContractById(id, token);
+			if (result.success) {
+				set({ loading: false });
+				return result.data.data;
+			} else {
+				set({
+					error: result.error,
+					loading: false,
+				});
+				return null;
+			}
+		} catch (error) {
+			set({
+				error: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				loading: false,
+			});
+			return null;
 		}
 	},
 

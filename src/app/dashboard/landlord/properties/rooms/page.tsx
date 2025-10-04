@@ -15,12 +15,13 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
-
-const ROOM_TYPE_LABELS = {
+import {RoomType} from "@/types/types"
+const ROOM_TYPE_LABELS: Record<RoomType, string> = {
   boarding_house: 'Nhà trọ',
+  sleepbox: 'Phòng ngủ',
+  dormitory: 'Ký túc xá',
   apartment: 'Căn hộ',
-  house: 'Nhà nguyên căn',
-  studio: 'Studio'
+  whole_house: 'Nhà nguyên căn'
 }
 
 function RoomsManagementPageContent() {
@@ -79,6 +80,7 @@ function RoomsManagementPageContent() {
 
   // Filter rooms based on search, status, and building
   const filteredRooms = (rooms && Array.isArray(rooms) ? rooms : []).filter(room => {
+    console.log('Filtering room:', room)
     const matchesSearch = room.name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || 
       (statusFilter === 'active' && room.isActive) || 
@@ -228,7 +230,7 @@ function RoomsManagementPageContent() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Dãy trọ:</span>
-                      <span className="font-medium line-clamp-2">{room.building?.name || 'N/A'}</span>
+                      <span className="font-medium line-clamp-2">{room.buildingName || 'N/A'}</span>
                     </div>
                     
                     <div className="flex items-center justify-between text-sm">
@@ -278,7 +280,7 @@ function RoomsManagementPageContent() {
                     
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Cập nhật:</span>
-                      <span className="text-gray-500">{new Date(room.updatedAt).toLocaleDateString('vi-VN')}</span>
+                      <span className="text-gray-500">{new Date(room.lastUpdated).toLocaleDateString('vi-VN')}</span>
                     </div>
                   </div>
                   

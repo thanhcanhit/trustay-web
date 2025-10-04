@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -30,12 +29,10 @@ const STATUS_LABELS = {
 }
 
 export default function RentalRequestsPage() {
-  const { received, receivedMeta, loadingReceived, errorReceived, submitting, loadReceived, ownerUpdate, approveAndCreateRental } = useBookingRequestStore()
+  const { received, receivedMeta, loadingReceived, errorReceived, submitting, loadReceived, ownerUpdate } = useBookingRequestStore()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
-  const [processingId, setProcessingId] = useState<string | null>(null)
-  const router = useRouter()
 
   useEffect(() => {
     loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
@@ -55,31 +52,23 @@ export default function RentalRequestsPage() {
     })
   }, [received, searchTerm])
 
-  const handleApproveAndCreateRental = async (id: string) => {
-    setProcessingId(id)
-    try {
-      const result = await approveAndCreateRental(id)
-      if (result) {
-        toast.success("Đã chấp nhận yêu cầu và tạo hợp đồng tự động. Đang chuyển đến trang hợp đồng...")
-
-        // Redirect to contracts page after a short delay
-        setTimeout(() => {
-          router.push(`/dashboard/landlord/contracts`)
-        }, 1500)
-      } else {
-        toast.error("Không thể hoàn thành quy trình tự động. Vui lòng thử lại.")
-      }
-    } catch {
-      toast.error("Đã có lỗi xảy ra. Vui lòng thử lại.")
-    } finally {
-      setProcessingId(null)
+  const handleApprove = async (id: string) => {
+    const success = await ownerUpdate(id, { status: 'approved' })
+    if (success) {
+      toast.success(
+        '✅ Đã chấp nhận yêu cầu!\n\nĐang chờ tenant xác nhận để tạo hợp đồng thuê.',
+        { duration: 3000 }
+      )
       loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
     }
   }
 
   const handleReject = async (id: string) => {
-    await ownerUpdate(id, { status: 'rejected' })
-    loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
+    const success = await ownerUpdate(id, { status: 'rejected' })
+    if (success) {
+      toast.success('Đã từ chối yêu cầu')
+      loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
+    }
   }
 
   return (
@@ -190,32 +179,74 @@ export default function RentalRequestsPage() {
                     <Button
                       size="sm"
                       className="w-full bg-green-600 hover:bg-green-700 flex items-center gap-2"
-                      onClick={() => handleApproveAndCreateRental(request.id)}
-                      disabled={submitting || processingId === request.id}
+                      onClick={() => handleApprove(request.id)}
+                      disabled={submitting}
                     >
-                      {processingId === request.id ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Đang xử lý...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="h-4 w-4" />
-                          Chấp nhận & Tạo hợp đồng
-                        </>
-                      )}
+                      <CheckCircle className="h-4 w-4" />
+                      Chấp nhận yêu cầu
                     </Button>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
-                        onClick={() => handleReject(request.id)}
-                        disabled={submitting || processingId === request.id}
-                      >
-                        Từ chối
-                      </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-red-600 border-red-300 hover:bg-red-50"
+                      onClick={() => handleReject(request.id)}
+                      disabled={submitting}
+                    >
+                      Từ chối
+                    </Button>
+                  </div>
+                )}
+
+                {request.status === 'approved' && !request.isConfirmedByTenant && (
+                  <div className="mt-4">
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-5 w-5 text-yellow-600" />
+                        <div>
+                          <p className="text-sm font-medium text-yellow-800">Chờ tenant xác nhận</p>
+                          <p className="text-xs text-yellow-700 mt-1">
+                            Đã gửi yêu cầu đến tenant. Khi tenant xác nhận, hợp đồng thuê sẽ được tạo tự động.
+                          </p>
+                        </div>
+                      </div>
                     </div>
+                  </div>
+                )}
+
+                {request.status === 'approved' && request.isConfirmedByTenant && (
+                  <div className="mt-4">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="text-sm font-medium text-green-800">Đã xác nhận</p>
+                          <p className="text-xs text-green-700 mt-1">
+                            Tenant đã xác nhận. Hợp đồng thuê đã được tạo tự động!
+                          </p>
+                          {request.confirmedAt && (
+                            <p className="text-xs text-green-600 mt-1">
+                              Xác nhận lúc: {format(new Date(request.confirmedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {request.status === 'rejected' && (
+                  <div className="mt-4 text-center">
+                    <Badge className="bg-red-100 text-red-800">
+                      Đã từ chối
+                    </Badge>
+                  </div>
+                )}
+
+                {request.status === 'cancelled' && (
+                  <div className="mt-4 text-center">
+                    <Badge className="bg-gray-100 text-gray-800">
+                      Đã hủy bởi tenant
+                    </Badge>
                   </div>
                 )}
               </CardContent>

@@ -298,7 +298,7 @@ export default function RoomDetailPage() {
                     <h4 className="font-medium text-gray-900 mb-1">Dãy trọ</h4>
                     <div className="flex items-center space-x-2">
                       <Building className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600">{room.building?.name || 'N/A'}</span>
+                      <span className="text-gray-600">{room.buildingName || 'N/A'}</span>
                     </div>
                   </div>
                 </CardContent>

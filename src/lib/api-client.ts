@@ -19,6 +19,8 @@ export interface ApiResponse<T = unknown> {
 }
 
 // Token management for client-side
+// Only store accessToken in localStorage for persistence
+// refreshToken should be stored in-memory (via Zustand store) for security
 export const TokenManager = {
 	getAccessToken: (): string | undefined => {
 		if (typeof window === 'undefined') return undefined;
@@ -30,20 +32,9 @@ export const TokenManager = {
 		localStorage.setItem('accessToken', token);
 	},
 
-	getRefreshToken: (): string | undefined => {
-		if (typeof window === 'undefined') return undefined;
-		return localStorage.getItem('refreshToken') ?? undefined;
-	},
-
-	setRefreshToken: (token: string): void => {
-		if (typeof window === 'undefined') return;
-		localStorage.setItem('refreshToken', token);
-	},
-
-	clearTokens: (): void => {
+	clearAccessToken: (): void => {
 		if (typeof window === 'undefined') return;
 		localStorage.removeItem('accessToken');
-		localStorage.removeItem('refreshToken');
 	},
 };
 
@@ -73,8 +64,12 @@ axiosInstance.interceptors.request.use(
 );
 
 // Helper function to handle token refresh
+// This will be called by the response interceptor when a 401 error occurs
 const handleTokenRefresh = async (originalRequest: AxiosRequestConfig) => {
-	const refreshToken = TokenManager.getRefreshToken();
+	// Import userStore dynamically to avoid circular dependency
+	const { useUserStore } = await import('@/stores/userStore');
+	const refreshToken = useUserStore.getState().getRefreshToken();
+
 	if (!refreshToken) {
 		return null;
 	}
@@ -85,9 +80,13 @@ const handleTokenRefresh = async (originalRequest: AxiosRequestConfig) => {
 		});
 
 		const { access_token, refresh_token } = response.data;
+
+		// Save new accessToken to localStorage
 		TokenManager.setAccessToken(access_token);
+
+		// Update refreshToken in store if provided
 		if (refresh_token) {
-			TokenManager.setRefreshToken(refresh_token);
+			useUserStore.setState({ refreshToken: refresh_token });
 		}
 
 		// Retry original request with new token
@@ -98,7 +97,12 @@ const handleTokenRefresh = async (originalRequest: AxiosRequestConfig) => {
 		return axiosInstance(originalRequest);
 	} catch (refreshError) {
 		// Refresh failed, clear tokens and redirect to login
-		TokenManager.clearTokens();
+		TokenManager.clearAccessToken();
+
+		// Clear store tokens
+		const { useUserStore } = await import('@/stores/userStore');
+		useUserStore.setState({ refreshToken: null, user: null, isAuthenticated: false });
+
 		if (typeof window !== 'undefined') {
 			window.location.href = '/login';
 		}

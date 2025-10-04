@@ -8,7 +8,6 @@ import {
 	uploadAvatar as apiUploadAvatar,
 } from '@/actions/user.action';
 import { TokenManager } from '@/lib/api-client';
-import { TokenUtils } from '@/lib/token-utils';
 import type { ChangePasswordRequest, UpdateProfileRequest } from '@/types/types';
 import { UserProfile as User } from '@/types/types';
 import { useBuildingStore } from './buildingStore';
@@ -17,6 +16,7 @@ export type { User };
 
 interface UserState {
 	user: User | null;
+	refreshToken: string | null; // Store refreshToken in-memory for security
 	isAuthenticated: boolean;
 	isLoading: boolean;
 	error: string | null;
@@ -33,6 +33,7 @@ interface UserState {
 	clearError: () => void;
 	switchRole: (newRole: 'tenant' | 'landlord') => void;
 	setHasHydrated: (state: boolean) => void;
+	getRefreshToken: () => string | null;
 }
 
 // Helper function to convert API UserProfile to User
@@ -56,12 +57,15 @@ const convertUserProfile = (profile: UserProfile): User => ({
 
 export const useUserStore = create<UserState>()(
 	persist(
-		(set) => ({
+		(set, get) => ({
 			user: null,
+			refreshToken: null,
 			isAuthenticated: false,
 			isLoading: false,
 			error: null,
 			hasHydrated: false,
+
+			getRefreshToken: () => get().refreshToken,
 
 			login: async (credentials: LoginRequest) => {
 				set({ isLoading: true, error: null });
@@ -72,35 +76,35 @@ export const useUserStore = create<UserState>()(
 					if (result.success) {
 						const user = convertUserProfile(result.data.user);
 
-						// Save tokens to localStorage
+						// Save accessToken to localStorage only
 						if (result.data.access_token) {
 							TokenManager.setAccessToken(result.data.access_token);
 						}
-						if (result.data.refresh_token) {
-							TokenManager.setRefreshToken(result.data.refresh_token);
-						}
 
+						// Save refreshToken in-memory store for security
 						set({
 							user,
+							refreshToken: result.data.refresh_token || null,
 							isAuthenticated: true,
 							isLoading: false,
 							error: null,
 						});
 					} else {
 						// Clear tokens if login fails
-						TokenUtils.clearTokens();
+						TokenManager.clearAccessToken();
 
 						set({
 							isLoading: false,
 							error: result.error,
 							isAuthenticated: false,
 							user: null,
+							refreshToken: null,
 						});
 						throw new Error(result.error);
 					}
 				} catch (error: unknown) {
 					// Clear tokens if login fails
-					TokenUtils.clearTokens();
+					TokenManager.clearAccessToken();
 
 					const errorMessage = error instanceof Error ? error.message : 'Login failed';
 					set({
@@ -108,6 +112,7 @@ export const useUserStore = create<UserState>()(
 						error: errorMessage,
 						isAuthenticated: false,
 						user: null,
+						refreshToken: null,
 					});
 					throw error;
 				}
@@ -121,11 +126,15 @@ export const useUserStore = create<UserState>()(
 				} catch (error) {
 					console.warn('Logout API call failed:', error);
 				} finally {
+					// Clear accessToken from localStorage
+					TokenManager.clearAccessToken();
+
 					// Reset building store when logging out
 					useBuildingStore.getState().reset();
 
 					set({
 						user: null,
+						refreshToken: null,
 						isAuthenticated: false,
 						isLoading: false,
 						error: null,
@@ -134,9 +143,9 @@ export const useUserStore = create<UserState>()(
 			},
 
 			loadUser: async () => {
-				const token = TokenUtils.getAccessToken();
+				const token = TokenManager.getAccessToken();
 				if (!token) {
-					set({ isAuthenticated: false, user: null, isLoading: false });
+					set({ isAuthenticated: false, user: null, refreshToken: null, isLoading: false });
 					return;
 				}
 
@@ -154,7 +163,7 @@ export const useUserStore = create<UserState>()(
 					});
 				} catch (error: unknown) {
 					// If token is invalid, clear it
-					TokenUtils.clearTokens();
+					TokenManager.clearAccessToken();
 
 					// Don't show error for token expiration during auto-load
 					const errorObj = error as { status?: number; message?: string };
@@ -163,6 +172,7 @@ export const useUserStore = create<UserState>()(
 
 					set({
 						user: null,
+						refreshToken: null,
 						isAuthenticated: false,
 						isLoading: false,
 						error: isTokenExpired ? null : errorObj.message || 'Failed to load user',
@@ -284,10 +294,12 @@ export const useUserStore = create<UserState>()(
 		}),
 		{
 			name: 'user-storage',
-			// Only persist user data, not loading states
+			// Only persist user data and refreshToken, not loading states
+			// refreshToken is persisted here (in-memory via Zustand) for better security than localStorage
 			partialize: (state) => ({
 				user: state.user,
 				isAuthenticated: state.isAuthenticated,
+				refreshToken: state.refreshToken,
 			}),
 			onRehydrateStorage: () => (state) => {
 				state?.setHasHydrated(true);

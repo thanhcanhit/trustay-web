@@ -6,11 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 // import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Send, XCircle, Clock, CheckCircle2, Home, Calendar, Square } from "lucide-react"
+import { Send, XCircle, Clock, CheckCircle2, Home, Calendar, Square, AlertCircle, Loader2, FileText } from "lucide-react"
 import { ProfileLayout } from "@/components/profile/profile-layout"
 import { useBookingRequestStore } from "@/stores/bookingRequestStore"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
+import { Textarea } from "@/components/ui/textarea"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { toast } from "sonner"
 
 function StatusBadge({ status }: { status: 'pending' | 'approved' | 'rejected' | 'cancelled' }) {
   const map = {
@@ -24,9 +27,11 @@ function StatusBadge({ status }: { status: 'pending' | 'approved' | 'rejected' |
 }
 
 function RequestsContent() {
-  const { mine, mineMeta, loadingMine, errorMine, loadMine, cancelMine, submitting } = useBookingRequestStore()
+  const { mine, mineMeta, loadingMine, errorMine, loadMine, cancelMine, confirm, submitting } = useBookingRequestStore()
   const [status, setStatus] = useState<string>('all')
   const [page, setPage] = useState(1)
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
+  const [notes, setNotes] = useState('')
 
   useEffect(() => {
     loadMine({ page, limit: 10, status: status === 'all' ? undefined : status })
@@ -34,6 +39,19 @@ function RequestsContent() {
 
   const canPrev = useMemo(() => mineMeta?.hasPrev, [mineMeta])
   const canNext = useMemo(() => mineMeta?.hasNext, [mineMeta])
+
+  const handleConfirm = async (id: string) => {
+    const success = await confirm(id, { tenantNotes: notes })
+    if (success) {
+      toast.success(
+        '✅ Xác nhận thành công!\n\nHợp đồng thuê đã được tạo tự động.\nBạn có thể xem trong mục "Hợp đồng thuê".',
+        { duration: 4000 }
+      )
+      setNotes('')
+      setConfirmingId(null)
+      loadMine({ page, limit: 10, status: status === 'all' ? undefined : status })
+    }
+  }
 
   return (
     <Card>
@@ -153,13 +171,90 @@ function RequestsContent() {
                       <XCircle className="h-4 w-4 mr-1" /> Hủy yêu cầu
                     </Button>
                   )}
-                  {req.status === 'approved' && (
-                    <div className="text-center">
-                      <div className="inline-flex items-center text-emerald-700 text-sm font-medium">
-                        <CheckCircle2 className="h-4 w-4 mr-1" /> Đã được duyệt
-                      </div>
+
+                  {req.status === 'approved' && !req.isConfirmedByTenant && (
+                    <div className="space-y-3">
+                      <Alert className="bg-blue-50 border-blue-200">
+                        <AlertCircle className="h-4 w-4 text-blue-600" />
+                        <AlertDescription className="text-blue-800">
+                          <strong>Chủ nhà đã chấp nhận yêu cầu của bạn!</strong>
+                          <br />
+                          <span className="text-sm">Hãy xác nhận để tạo hợp đồng thuê tự động.</span>
+                        </AlertDescription>
+                      </Alert>
+
+                      {confirmingId === req.id && (
+                        <Textarea
+                          placeholder="Ghi chú cho chủ nhà (tùy chọn)"
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          className="h-20 text-sm"
+                        />
+                      )}
+
+                      <Button
+                        className="w-full bg-green-600 hover:bg-green-700"
+                        size="sm"
+                        onClick={() => {
+                          if (confirmingId === req.id) {
+                            handleConfirm(req.id)
+                          } else {
+                            setConfirmingId(req.id)
+                          }
+                        }}
+                        disabled={submitting}
+                      >
+                        {confirmingId === req.id ? (
+                          submitting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Đang xử lý...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 className="mr-2 h-4 w-4" />
+                              Xác nhận và tạo hợp đồng
+                            </>
+                          )
+                        ) : (
+                          <>
+                            <FileText className="mr-2 h-4 w-4" />
+                            Xem chi tiết và xác nhận
+                          </>
+                        )}
+                      </Button>
+
+                      {confirmingId === req.id && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => {
+                            setConfirmingId(null)
+                            setNotes('')
+                          }}
+                        >
+                          Hủy
+                        </Button>
+                      )}
                     </div>
                   )}
+
+                  {req.status === 'approved' && req.isConfirmedByTenant && (
+                    <Alert className="bg-green-50 border-green-200">
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <AlertDescription className="text-green-800">
+                        <strong>Đã xác nhận!</strong>
+                        <br />
+                        <span className="text-sm">
+                          Xác nhận lúc: {req.confirmedAt && format(new Date(req.confirmedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                        </span>
+                        <br />
+                        <span className="text-sm">Hợp đồng thuê đã được tạo tự động.</span>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   {req.status === 'rejected' && (
                     <div className="text-center">
                       <div className="inline-flex items-center text-red-600 text-sm font-medium">
@@ -167,6 +262,7 @@ function RequestsContent() {
                       </div>
                     </div>
                   )}
+
                   {req.status === 'cancelled' && (
                     <div className="text-center">
                       <div className="inline-flex items-center text-gray-600 text-sm font-medium">
