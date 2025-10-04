@@ -17,7 +17,6 @@ import { mockBookings } from "@/data/mock-data"
 import Link from "next/link"
 import { useEffect } from "react"
 import { useBuildingStore } from "@/stores/buildingStore"
-import { DashboardNotifications } from "@/components/dashboard/dashboard-notifications"
 
 // Client Component for Dashboard Content
 function DashboardContent() {
@@ -96,12 +95,7 @@ function DashboardContent() {
   }
 
   return (
-    <div className="px-6">
-      {/* Notifications */}
-      <div className="mb-8">
-        <DashboardNotifications />
-      </div>
-      
+    <div className="px-6">      
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>

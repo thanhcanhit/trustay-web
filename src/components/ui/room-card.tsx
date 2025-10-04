@@ -144,13 +144,13 @@ export function RoomCard({
 
         {/* Electricity & Water Costs */}
         {(electricityCost || waterCost) && (
-          <div className="flex items-center justify-between gap-3 text-xs text-gray-600 mb-2">
+          <div className="flex items-center justify-between text-xs text-gray-600 mb -2">
             <div>
               {/* Price */}
               <div className="bg-white text-green-600 font-bold text-lg">
                 {formatPrice(room.pricing.basePriceMonthly)}tr/tháng
               </div>
-              <div className="flex items-center gap-1 min-w-[50px]">
+              <div className="h-6 flex items-center min-w-[50px]">
               {wifiAvailable && 
                 <Badge
                   className="bg-green-100 text-green-700 font-bold border border-green-200"
@@ -158,10 +158,7 @@ export function RoomCard({
                   <Wifi className="h-3 w-3" />
                   Wifi
                 </Badge>}
-
-              {}
-            </div>
-            
+              </div>
             </div>
             
             <div className='flex flex-col gap-1 '>
@@ -178,7 +175,6 @@ export function RoomCard({
                 </div>
               )}
             </div>
-            
           </div>
         )}
 

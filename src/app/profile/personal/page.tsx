@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { useUserStore } from "@/stores/userStore"
 import { UserProfile } from "@/actions"
-import { uploadAvatar, updateUserProfile } from "@/actions/user.action"
 import { toast } from "sonner"
 import { User, ChevronDownIcon } from "lucide-react"
 import Image from "next/image"
@@ -20,6 +19,7 @@ import Link from "next/link"
 import { Users, Building2 } from "lucide-react"
 
 function ProfileContent({ user }: { user: UserProfile | null }) {
+  const { updateProfile, uploadAvatar } = useUserStore()
   const [isEditing, setIsEditing] = useState(false)
   const [profileData, setProfileData] = useState({
     firstName: user?.firstName || '',
@@ -90,8 +90,7 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
       let finalAvatarUrl = profileData.avatarUrl
       if (pendingAvatarFile && pendingAvatarFile instanceof File && pendingAvatarFile.size > 0) {
         try {
-          const response = await uploadAvatar(pendingAvatarFile)
-          finalAvatarUrl = response.avatarUrl
+          finalAvatarUrl = await uploadAvatar(pendingAvatarFile)
         } catch (avatarError) {
           toast.error("Lỗi upload avatar: " + (avatarError instanceof Error ? avatarError.message : "Unknown error"))
           return
@@ -134,66 +133,40 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
         updateData.bankName = profileData.bankName
       }
 
-      let updatedUser = null
       if (Object.keys(updateData).length > 0) {
-        updatedUser = await updateUserProfile(updateData)
+        await updateProfile(updateData)
       }
 
-      if (updatedUser) {
-        const convertedUser = {
-          id: updatedUser.id,
-          firstName: updatedUser.firstName,
-          lastName: updatedUser.lastName,
-          email: updatedUser.email,
-          phone: updatedUser.phone,
-          gender: updatedUser.gender,
-          role: updatedUser.role,
-          bio: updatedUser.bio,
-          dateOfBirth: updatedUser.dateOfBirth,
-          avatarUrl: updatedUser.avatarUrl,
-          idCardNumber: updatedUser.idCardNumber,
-          bankAccount: updatedUser.bankAccount,
-          bankName: updatedUser.bankName,
-          createdAt: updatedUser.createdAt,
-          updatedAt: updatedUser.updatedAt,
-        }
-        
-        const storeState = useUserStore.getState()
-        useUserStore.setState({
-          ...storeState,
-          user: convertedUser,
-          isAuthenticated: true,
-          isLoading: false,
-          error: null,
-        })
-
+      // Update local state to reflect changes made via store
+      const storeUser = useUserStore.getState().user
+      if (storeUser) {
         setProfileData({
-          firstName: convertedUser.firstName,
-          lastName: convertedUser.lastName,
-          email: convertedUser.email || '',
-          phone: convertedUser.phone || '',
-          avatarUrl: convertedUser.avatarUrl || '',
-          dateOfBirth: convertedUser.dateOfBirth || '',
-          gender: convertedUser.gender || '',
-          role: convertedUser.role || 'tenant',
-          bio: convertedUser.bio || '',
-          idCardNumber: convertedUser.idCardNumber || '',
-          bankAccount: convertedUser.bankAccount || '',
-          bankName: convertedUser.bankName || '',
+          firstName: storeUser.firstName,
+          lastName: storeUser.lastName,
+          email: storeUser.email || '',
+          phone: storeUser.phone || '',
+          avatarUrl: storeUser.avatarUrl || '',
+          dateOfBirth: storeUser.dateOfBirth || '',
+          gender: storeUser.gender || '',
+          role: storeUser.role || 'tenant',
+          bio: storeUser.bio || '',
+          idCardNumber: storeUser.idCardNumber || '',
+          bankAccount: storeUser.bankAccount || '',
+          bankName: storeUser.bankName || '',
         })
         setOriginalData({
-          firstName: convertedUser.firstName,
-          lastName: convertedUser.lastName,
-          email: convertedUser.email || '',
-          phone: convertedUser.phone || '',
-          avatarUrl: convertedUser.avatarUrl || '',
-          dateOfBirth: convertedUser.dateOfBirth || '',
-          gender: convertedUser.gender || '',
-          role: convertedUser.role || 'tenant',
-          bio: convertedUser.bio || '',
-          idCardNumber: convertedUser.idCardNumber || '',
-          bankAccount: convertedUser.bankAccount || '',
-          bankName: convertedUser.bankName || '',
+          firstName: storeUser.firstName,
+          lastName: storeUser.lastName,
+          email: storeUser.email || '',
+          phone: storeUser.phone || '',
+          avatarUrl: storeUser.avatarUrl || '',
+          dateOfBirth: storeUser.dateOfBirth || '',
+          gender: storeUser.gender || '',
+          role: storeUser.role || 'tenant',
+          bio: storeUser.bio || '',
+          idCardNumber: storeUser.idCardNumber || '',
+          bankAccount: storeUser.bankAccount || '',
+          bankName: storeUser.bankName || '',
         })
       }
 

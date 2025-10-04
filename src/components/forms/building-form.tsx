@@ -10,7 +10,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { AddressSelector, type AddressData } from "@/components/ui/address-selector"
-import { createBuilding, updateBuilding } from "@/actions/building.action"
+import { useBuildingStore } from "@/stores/buildingStore"
 import { type Building, type CreateBuildingRequest, type UpdateBuildingRequest } from "@/types/types"
 import { MapPin, Building as BuildingIcon, Save, X } from "lucide-react"
 import { toast } from "sonner"
@@ -34,6 +34,7 @@ interface FormData {
 
 export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFormProps) {
   const router = useRouter()
+  const { createBuilding, updateBuilding } = useBuildingStore()
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [addressData, setAddressData] = useState<AddressData | null>(null)
@@ -158,22 +159,20 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
         isActive: formData.isActive,
       }
 
-      let result: Building
+      let result: Building | null
       if (mode === 'create') {
-        const response = await createBuilding(buildingData as CreateBuildingRequest)
-        if (!response.success) {
-          toast.error(response.error)
+        result = await createBuilding(buildingData as CreateBuildingRequest)
+        if (!result) {
+          toast.error('Không thể tạo dãy trọ')
           return
         }
-        result = response.data.data
         toast.success('Tạo dãy trọ thành công!')
       } else {
-        const response = await updateBuilding(building!.id, buildingData)
-        if (!response.success) {
-          toast.error(response.error)
+        result = await updateBuilding(building!.id, buildingData)
+        if (!result) {
+          toast.error('Không thể cập nhật dãy trọ')
           return
         }
-        result = response.data.data
         toast.success('Cập nhật dãy trọ thành công!')
       }
 

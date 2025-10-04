@@ -18,9 +18,9 @@ interface ChatWindowProps {
 export function ChatWindow({ onClose }: ChatWindowProps) {
   return (
     <div className="fixed bottom-0 right-6 z-50">
-      <Card className="w-[600px] h-[500px] flex flex-col !rounded-none !p-0 !gap-0">
-        <CardHeader className="flex flex-row items-center justify-between p-1 bg-primary text-white">
-          <CardTitle className="text-lg">Chat</CardTitle>
+      <Card className="w-[700px] h-[500px] flex flex-col !rounded-none !p-0 !gap-0">
+        <CardHeader className="flex flex-row items-center justify-between px-3 py-1 bg-primary text-white">
+          <CardTitle className="text-lg">Tin nhắn</CardTitle>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <ArrowDown className="h-6 w-6" />
           </Button>

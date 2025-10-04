@@ -1,7 +1,6 @@
 'use server';
 
-import { createServerApiCall } from '@/lib/api-client';
-import { TokenUtils } from '@/lib/token-utils';
+import { createServerApiCall, TokenManager } from '@/lib/api-client';
 import type { RoomSeekingPostListResponse } from '@/types/room-seeking';
 import type {
 	RoomDetail,
@@ -13,7 +12,7 @@ import type {
 import { encodeSearchQuery } from '@/utils/search-params';
 
 // Create server API call function
-const serverApiCall = createServerApiCall(() => TokenUtils.getAccessToken());
+const serverApiCall = createServerApiCall(() => TokenManager.getAccessToken() ?? null);
 
 /**
  * Search room listings with filters

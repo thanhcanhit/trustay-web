@@ -1,16 +1,9 @@
 'use server';
 
-import { cookies } from 'next/headers';
 import { MESSAGE_TYPES } from '../constants/chat.constants';
 import { createServerApiCall } from '../lib/api-client';
 
-const getTokenFromCookies = async (): Promise<string | null> => {
-	const cookieStore = await cookies();
-	const token = cookieStore.get('accessToken')?.value || null;
-	return token;
-};
-
-const apiCall = createServerApiCall(getTokenFromCookies);
+const apiCall = createServerApiCall();
 
 export interface MessageData {
 	id: string;
@@ -22,6 +15,20 @@ export interface MessageData {
 	isEdited: boolean;
 	sentAt: string;
 	readAt: string | null;
+	metadata?: {
+		roomId?: string;
+		roomSlug?: string;
+		roomName?: string;
+		roomImage?: string;
+		roomPrice?: string;
+		roomLocation?: string;
+		roomSeekingPostId?: string;
+		roomSeekingTitle?: string;
+		roomSeekingBudget?: string;
+		roomSeekingLocation?: string;
+		bookingRequestId?: string;
+		roomInvitationId?: string;
+	};
 }
 
 export interface ConversationData {
@@ -67,16 +74,24 @@ export interface GetMessagesParams {
 	limit?: number;
 }
 
-export async function sendMessage(messageData: SendMessageData): Promise<SendMessageResponse> {
-	return await apiCall<SendMessageResponse>('/api/chat/messages', {
-		method: 'POST',
-		data: messageData,
-	});
+export async function sendMessage(
+	messageData: SendMessageData,
+	token?: string,
+): Promise<SendMessageResponse> {
+	return await apiCall<SendMessageResponse>(
+		'/api/chat/messages',
+		{
+			method: 'POST',
+			data: messageData,
+		},
+		token,
+	);
 }
 
 export async function getMessages(
 	conversationId: string,
 	params: GetMessagesParams = {},
+	token?: string,
 ): Promise<MessageData[]> {
 	const queryParams = new URLSearchParams();
 	if (params.cursor) queryParams.set('cursor', params.cursor);
@@ -84,27 +99,42 @@ export async function getMessages(
 
 	const url = `/api/chat/conversations/${conversationId}/messages${queryParams.toString() ? `?${queryParams}` : ''}`;
 
-	return await apiCall<MessageData[]>(url, {
-		method: 'GET',
-	});
+	return await apiCall<MessageData[]>(
+		url,
+		{
+			method: 'GET',
+		},
+		token,
+	);
 }
 
-export async function markAllMessagesAsRead(conversationId: string): Promise<void> {
-	await apiCall<void>(`/api/chat/conversations/${conversationId}/read-all`, {
-		method: 'POST',
-	});
+export async function markAllMessagesAsRead(conversationId: string, token?: string): Promise<void> {
+	await apiCall<void>(
+		`/api/chat/conversations/${conversationId}/read-all`,
+		{
+			method: 'POST',
+		},
+		token,
+	);
 }
 
-export async function getConversations(): Promise<ConversationData[]> {
-	const response = await apiCall<ConversationData[]>('/api/chat/conversations', {
-		method: 'GET',
-	});
+export async function getConversations(token?: string): Promise<ConversationData[]> {
+	const response = await apiCall<ConversationData[]>(
+		'/api/chat/conversations',
+		{
+			method: 'GET',
+		},
+		token,
+	);
 	return response;
 }
 
-export async function getOrCreateConversation(participantId: string): Promise<ConversationData> {
+export async function getOrCreateConversation(
+	participantId: string,
+	token?: string,
+): Promise<ConversationData> {
 	try {
-		const conversations = await getConversations();
+		const conversations = await getConversations(token);
 
 		// Find existing conversation with this participant
 		const existingConversation = conversations.find(
@@ -117,17 +147,20 @@ export async function getOrCreateConversation(participantId: string): Promise<Co
 
 		// If no existing conversation, send a message to create one
 		// This is a common pattern where sending the first message creates the conversation
-		const result = await sendMessage({
-			recipientId: participantId,
-			content: '',
-			type: MESSAGE_TYPES.TEXT,
-		});
+		const result = await sendMessage(
+			{
+				recipientId: participantId,
+				content: '',
+				type: MESSAGE_TYPES.TEXT,
+			},
+			token,
+		);
 
 		// Get the conversation data from the message response
 		const conversationId = result.data.conversationId;
 
 		// Fetch the full conversation data
-		const conversationsResponse = await getConversations();
+		const conversationsResponse = await getConversations(token);
 		const newConversation = conversationsResponse.find(
 			(conv) => conv.conversationId === conversationId,
 		);
@@ -140,5 +173,36 @@ export async function getOrCreateConversation(participantId: string): Promise<Co
 	} catch (error) {
 		console.error('Get or create conversation error:', error);
 		throw error;
+	}
+}
+
+// Upload attachment files and return URLs using existing upload endpoint
+export async function uploadChatAttachments(files: File[]): Promise<string[]> {
+	const { uploadBulkImages } = await import('./upload.action');
+
+	console.log('[Upload] Starting upload for files:', files.length);
+
+	try {
+		const response = await uploadBulkImages(files);
+		console.log('[Upload] Upload response:', response);
+
+		// Extract imagePath from results array
+		const urls = response.results?.map((result) => result.imagePath) || [];
+		console.log('[Upload] Extracted URLs:', urls);
+
+		if (urls.length === 0) {
+			console.warn('[Upload] No URLs returned from upload');
+		}
+
+		return urls;
+	} catch (error) {
+		console.error('[Upload] Failed to upload chat attachments:', error);
+
+		// Re-throw with specific error message for better handling
+		if (error instanceof Error) {
+			throw error; // Preserve the error type (TIMEOUT, FILE_TOO_LARGE, etc.)
+		}
+
+		throw new Error('UPLOAD_FAILED');
 	}
 }

@@ -106,7 +106,7 @@ export default function BookingRequestsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={invitation.recipient?.avatarUrl || ''} alt={`${invitation.recipient?.firstName || ''} ${invitation.recipient?.lastName || ''}`} />
+                      <AvatarImage src={invitation.recipient?.avatarUrl || undefined} alt={`${invitation.recipient?.firstName || ''} ${invitation.recipient?.lastName || ''}`} />
                       <AvatarFallback className="bg-blue-100 text-blue-600">
                         {`${(invitation.recipient?.firstName || 'U')[0]}${(invitation.recipient?.lastName || 'S')[0]}`}
                       </AvatarFallback>
@@ -139,8 +139,8 @@ export default function BookingRequestsPage() {
                   <div className="flex items-center space-x-2 text-sm">
                     <Home className="h-4 w-4 text-gray-400" />
                     <div className="text-gray-600">
-                      <div className="font-medium">{invitation.room?.name}</div>
-                      <div className="text-xs text-gray-500">{invitation.room?.building?.name}</div>
+                      <div className="font-medium line-clamp-2">{invitation.room?.name}</div>
+                      <div className="text-xs text-gray-500 line-clamp-2">{invitation.room?.building?.name}</div>
                     </div>
                   </div>
 

@@ -36,12 +36,12 @@ export function stripHtmlTagsAndEntities(html: string): string {
 	});
 
 	// Handle numeric entities like &#160;
-	text = text.replace(/&#(\d+);/g, (match, dec) => {
+	text = text.replace(/&#(\d+);/g, (_match, dec) => {
 		return String.fromCharCode(dec);
 	});
 
 	// Handle hex entities like &#x20;
-	text = text.replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => {
+	text = text.replace(/&#x([0-9a-fA-F]+);/g, (_match, hex) => {
 		return String.fromCharCode(parseInt(hex, 16));
 	});
 

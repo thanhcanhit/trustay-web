@@ -442,24 +442,9 @@ export default function RegisterPage() {
             return
           }
 
-          // Success - convert to user store format and login
+          // Success - set authentication state using store method
           const authResponse = authResult.data
-          const user = {
-            id: authResponse.user.id,
-            firstName: authResponse.user.firstName,
-            lastName: authResponse.user.lastName,
-            email: authResponse.user.email,
-            phone: authResponse.user.phone,
-            gender: authResponse.user.gender,
-            role: authResponse.user.role,
-            bio: authResponse.user.bio,
-            dateOfBirth: authResponse.user.dateOfBirth,
-            avatarUrl: authResponse.user.avatarUrl,
-            createdAt: authResponse.user.createdAt,
-            updatedAt: authResponse.user.updatedAt,
-          }
-
-          useUserStore.setState({ user, isAuthenticated: true })
+          useUserStore.getState().setAuthFromResponse(authResponse)
 
           // Show success toast for email verification
           toast.success('Xác thực email thành công! Chào mừng bạn đến với Trustay!', {
@@ -574,24 +559,9 @@ export default function RegisterPage() {
         return
       }
 
-      // Success - convert to user store format and login
+      // Success - set authentication state using store method
       const authResponse = authResult.data
-      const user = {
-        id: authResponse.user.id,
-        firstName: authResponse.user.firstName,
-        lastName: authResponse.user.lastName,
-        email: authResponse.user.email,
-        phone: authResponse.user.phone,
-        gender: authResponse.user.gender,
-        role: authResponse.user.role,
-        bio: authResponse.user.bio,
-        dateOfBirth: authResponse.user.dateOfBirth,
-        avatarUrl: authResponse.user.avatarUrl,
-        createdAt: authResponse.user.createdAt,
-        updatedAt: authResponse.user.updatedAt,
-      }
-
-      useUserStore.setState({ user, isAuthenticated: true })
+      useUserStore.getState().setAuthFromResponse(authResponse)
 
       toast.success('Đăng ký thành công! Chào mừng bạn đến với Trustay!', {
         duration: 3000,
@@ -788,24 +758,9 @@ export default function RegisterPage() {
         return
       }
 
-      // Success - convert to user store format and login
+      // Success - set authentication state using store method
       const authResponse = authResult.data
-      const user = {
-        id: authResponse.user.id,
-        firstName: authResponse.user.firstName,
-        lastName: authResponse.user.lastName,
-        email: authResponse.user.email,
-        phone: authResponse.user.phone,
-        gender: authResponse.user.gender,
-        role: authResponse.user.role,
-        bio: authResponse.user.bio,
-        dateOfBirth: authResponse.user.dateOfBirth,
-        avatarUrl: authResponse.user.avatarUrl,
-        createdAt: authResponse.user.createdAt,
-        updatedAt: authResponse.user.updatedAt,
-      }
-
-      useUserStore.setState({ user, isAuthenticated: true })
+      useUserStore.getState().setAuthFromResponse(authResponse)
 
       toast.success('Đăng ký thành công! Chào mừng bạn đến với Trustay!', {
         duration: 3000,

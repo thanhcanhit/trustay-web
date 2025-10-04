@@ -9,6 +9,7 @@ import {
 	markAllNotificationsAsRead as markAllAsReadAPI,
 	markNotificationAsRead as markAsReadAPI,
 } from '@/actions/notification.action';
+import { TokenManager } from '@/lib/api-client';
 import { useNotificationStore } from '@/stores/notification.store';
 import { useUserStore } from '@/stores/userStore';
 
@@ -45,7 +46,8 @@ export function useNotifications() {
 				setLoading(true);
 				setError(null);
 
-				const response = await getNotifications(params);
+				const token = TokenManager.getAccessToken();
+				const response = await getNotifications(params, token ?? undefined);
 				if (response?.data && Array.isArray(response.data)) {
 					// Filter notifications to only include ones belonging to current user
 					const userNotifications = response.data.filter(
@@ -123,7 +125,8 @@ export function useNotifications() {
 			setUnreadCount(0);
 
 			// Then sync with server
-			await markAllAsReadAPI();
+			const token = TokenManager.getAccessToken();
+			await markAllAsReadAPI(token ?? undefined);
 		} catch (err) {
 			console.error('Failed to mark all as read:', err);
 			setError(err instanceof Error ? err.message : 'Failed to mark all as read');
@@ -169,7 +172,8 @@ export function useNotifications() {
 				markAsReadStore(notificationId);
 
 				// Then sync with server
-				await markAsReadAPI(notificationId);
+				const token = TokenManager.getAccessToken();
+				await markAsReadAPI(notificationId, token ?? undefined);
 			} catch (err) {
 				console.error('Failed to mark as read:', err);
 				setError(err instanceof Error ? err.message : 'Failed to mark as read');
@@ -204,7 +208,8 @@ export function useNotifications() {
 			}
 
 			try {
-				await deleteNotificationAPI(notificationId);
+				const token = TokenManager.getAccessToken();
+				await deleteNotificationAPI(notificationId, token ?? undefined);
 				removeNotification(notificationId);
 			} catch (err) {
 				console.error('Failed to delete notification:', err);

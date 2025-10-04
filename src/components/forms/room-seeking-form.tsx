@@ -20,7 +20,7 @@ import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { CalendarIcon, ArrowLeft, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { createRoomSeekingPost, updateRoomSeekingPost } from '@/actions/room-seeking.action'
+import { useRoomSeekingStore } from '@/stores/roomSeekingStore'
 import { toast } from 'sonner'
 import { 
 	//	RoomSeekingFormData, 
@@ -62,6 +62,7 @@ interface FormData {
 
 export function RoomSeekingForm({ onBack, postId, initialData, mode = 'create' }: RoomSeekingFormProps) {
 	const router = useRouter()
+	const { createPost, updatePost } = useRoomSeekingStore()
 	const [currentStep, setCurrentStep] = useState(1)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [errors, setErrors] = useState<Record<string, string>>({})
@@ -218,19 +219,19 @@ export function RoomSeekingForm({ onBack, postId, initialData, mode = 'create' }
 				amenityIds: formData.amenityIds || []
 			}
 
-			let result
+			let success
 			if (mode === 'edit' && postId) {
-				result = await updateRoomSeekingPost(postId, submitData)
+				success = await updatePost(postId, submitData)
 			} else {
-				result = await createRoomSeekingPost(submitData)
+				success = await createPost(submitData)
 			}
 
-			if (result.success) {
+			if (success) {
 				toast.success(mode === 'edit' ? 'Cập nhật bài đăng thành công!' : 'Tạo bài đăng tìm trọ thành công!')
 				if (onBack) onBack()
 				else router.push('/profile/posts/room-seeking')
 			} else {
-				toast.error(result.error || (mode === 'edit' ? 'Có lỗi khi cập nhật' : 'Có lỗi xảy ra khi tạo bài đăng'))
+				toast.error(mode === 'edit' ? 'Có lỗi khi cập nhật' : 'Có lỗi xảy ra khi tạo bài đăng')
 			}
 		} catch (error) {
 			console.error('Error creating room seeking post:', error)
@@ -498,7 +499,7 @@ export function RoomSeekingForm({ onBack, postId, initialData, mode = 'create' }
 				<CardContent className="space-y-3">
 					<div>
 						<p className="text-sm text-muted-foreground">Tiêu đề</p>
-						<p className="font-medium">{formData.title || 'Tiêu đề bài đăng'}</p>
+						<p className="font-medium line-clamp-1">{formData.title || 'Tiêu đề bài đăng'}</p>
 					</div>
 					<div>
 						<p className="text-sm text-muted-foreground">Mô tả</p>

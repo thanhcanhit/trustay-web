@@ -22,12 +22,7 @@ import {
   Clock,
   XCircle
 } from "lucide-react"
-import { 
-  getRoomById, 
-  getRoomInstancesByStatus, 
-  updateRoomInstanceStatus, 
-  bulkUpdateRoomInstancesStatus 
-} from "@/actions/room.action"
+import { useRoomStore } from "@/stores/roomStore"
 import { 
   type Room, 
   type RoomInstance, 
@@ -96,6 +91,7 @@ export default function RoomInstancesPage() {
   const router = useRouter()
   const roomId = params.id as string
 
+  const { loadRoomById, loadRoomInstances, updateRoomInstance, bulkUpdateRoomInstances } = useRoomStore()
   const [room, setRoom] = useState<Room | null>(null)
   const [instances, setInstances] = useState<RoomInstance[]>([])
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({})
@@ -149,32 +145,32 @@ export default function RoomInstancesPage() {
   const fetchRoomAndInstances = useCallback(async () => {
     try {
       setLoading(true)
-      
+
       // Fetch room details
-      const roomResponse = await getRoomById(roomId)
-      if (!roomResponse.success) {
-        toast.error(roomResponse.error)
+      const roomData = await loadRoomById(roomId)
+      if (!roomData) {
+        toast.error('Không tìm thấy phòng')
         router.push('/dashboard/landlord/properties/rooms')
         return
       }
-      setRoom(roomResponse.data.data)
-      
+      setRoom(roomData)
+
       // Fetch room instances
-      const instancesResponse = await getRoomInstancesByStatus(roomId, statusFilter)
-      if (!instancesResponse.success) {
-        toast.error(instancesResponse.error)
+      const instancesData = await loadRoomInstances(roomId, statusFilter)
+      if (!instancesData) {
+        toast.error('Không thể tải danh sách phòng')
         return
       }
-      
-      setInstances(instancesResponse.data.data.instances)
-      setStatusCounts(instancesResponse.data.data.statusCounts)
+
+      setInstances(instancesData.instances)
+      setStatusCounts(instancesData.statusCounts)
     } catch (error) {
       console.error('Error fetching room instances:', error)
       toast.error('Không thể tải danh sách phòng')
     } finally {
       setLoading(false)
     }
-  }, [roomId, statusFilter, router])
+  }, [roomId, statusFilter, router, loadRoomById, loadRoomInstances])
 
   useEffect(() => {
     if (roomId) {
@@ -228,9 +224,9 @@ export default function RoomInstancesPage() {
         reason: editForm.reason || undefined
       }
 
-      const response = await updateRoomInstanceStatus(editingInstance, updateData)
-      if (!response.success) {
-        toast.error(response.error)
+      const success = await updateRoomInstance(editingInstance, updateData)
+      if (!success) {
+        toast.error('Không thể cập nhật trạng thái phòng')
         return
       }
 
@@ -278,9 +274,9 @@ export default function RoomInstancesPage() {
         reason: bulkEditForm.reason || undefined
       }
 
-      const response = await bulkUpdateRoomInstancesStatus(roomId, updateData)
-      if (!response.success) {
-        toast.error(response.error)
+      const success = await bulkUpdateRoomInstances(roomId, updateData)
+      if (!success) {
+        toast.error('Không thể cập nhật trạng thái phòng')
         return
       }
 

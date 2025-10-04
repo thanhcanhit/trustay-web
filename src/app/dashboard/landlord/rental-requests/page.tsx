@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Calendar, Home, Phone, Mail, Clock } from "lucide-react"
+import { toast } from "sonner"
+import { Search, Calendar, Home, Phone, Mail, Clock, CheckCircle } from "lucide-react"
 import { useBookingRequestStore } from "@/stores/bookingRequestStore"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
@@ -28,7 +29,7 @@ const STATUS_LABELS = {
 }
 
 export default function RentalRequestsPage() {
-  const { received, receivedMeta, loadingReceived, errorReceived, loadReceived, ownerUpdate } = useBookingRequestStore()
+  const { received, receivedMeta, loadingReceived, errorReceived, submitting, loadReceived, ownerUpdate } = useBookingRequestStore()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
@@ -52,12 +53,22 @@ export default function RentalRequestsPage() {
   }, [received, searchTerm])
 
   const handleApprove = async (id: string) => {
-    await ownerUpdate(id, { status: 'approved' })
-    loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
+    const success = await ownerUpdate(id, { status: 'approved' })
+    if (success) {
+      toast.success(
+        '✅ Đã chấp nhận yêu cầu!\n\nĐang chờ tenant xác nhận để tạo hợp đồng thuê.',
+        { duration: 3000 }
+      )
+      loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
+    }
   }
+
   const handleReject = async (id: string) => {
-    await ownerUpdate(id, { status: 'rejected' })
-    loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
+    const success = await ownerUpdate(id, { status: 'rejected' })
+    if (success) {
+      toast.success('Đã từ chối yêu cầu')
+      loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
+    }
   }
 
   return (
@@ -110,7 +121,7 @@ export default function RentalRequestsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={request.tenant?.avatarUrl || ''} alt={`${request.tenant?.firstName || ''} ${request.tenant?.lastName || ''}`} />
+                      <AvatarImage src={request.tenant?.avatarUrl || undefined} alt={`${request.tenant?.firstName || ''} ${request.tenant?.lastName || ''}`} />
                       <AvatarFallback className="bg-blue-100 text-blue-600">
                         {`${(request.tenant?.firstName || 'U')[0]}${(request.tenant?.lastName || 'S')[0]}`}
                       </AvatarFallback>
@@ -164,22 +175,78 @@ export default function RentalRequestsPage() {
                 </div>
                 
                 {request.status === 'pending' && (
-                  <div className="mt-4 flex space-x-2">
-                    <Button 
-                      size="sm" 
-                      className="flex-1 bg-green-600 hover:bg-green-700"
+                  <div className="mt-4 space-y-2">
+                    <Button
+                      size="sm"
+                      className="w-full bg-green-600 hover:bg-green-700 flex items-center gap-2"
                       onClick={() => handleApprove(request.id)}
+                      disabled={submitting}
                     >
-                      Chấp nhận
+                      <CheckCircle className="h-4 w-4" />
+                      Chấp nhận yêu cầu
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-red-600 border-red-300 hover:bg-red-50"
                       onClick={() => handleReject(request.id)}
+                      disabled={submitting}
                     >
                       Từ chối
                     </Button>
+                  </div>
+                )}
+
+                {request.status === 'approved' && !request.isConfirmedByTenant && (
+                  <div className="mt-4">
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-5 w-5 text-yellow-600" />
+                        <div>
+                          <p className="text-sm font-medium text-yellow-800">Chờ tenant xác nhận</p>
+                          <p className="text-xs text-yellow-700 mt-1">
+                            Đã gửi yêu cầu đến tenant. Khi tenant xác nhận, hợp đồng thuê sẽ được tạo tự động.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {request.status === 'approved' && request.isConfirmedByTenant && (
+                  <div className="mt-4">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="text-sm font-medium text-green-800">Đã xác nhận</p>
+                          <p className="text-xs text-green-700 mt-1">
+                            Tenant đã xác nhận. Hợp đồng thuê đã được tạo tự động!
+                          </p>
+                          {request.confirmedAt && (
+                            <p className="text-xs text-green-600 mt-1">
+                              Xác nhận lúc: {format(new Date(request.confirmedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {request.status === 'rejected' && (
+                  <div className="mt-4 text-center">
+                    <Badge className="bg-red-100 text-red-800">
+                      Đã từ chối
+                    </Badge>
+                  </div>
+                )}
+
+                {request.status === 'cancelled' && (
+                  <div className="mt-4 text-center">
+                    <Badge className="bg-gray-100 text-gray-800">
+                      Đã hủy bởi tenant
+                    </Badge>
                   </div>
                 )}
               </CardContent>
