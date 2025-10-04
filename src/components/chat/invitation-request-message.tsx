@@ -23,7 +23,7 @@ export function InvitationRequestMessage({ message, isOwnMessage }: InvitationRe
   // Render room card for invitation
   if (isInvitation && metadata?.roomId) {
     return (
-      <div className="flex flex-col gap-2 max-w-sm">
+      <div className="flex flex-col gap-2 max-w-xs">
         <div className="font-semibold text-sm">
           Lời mời thuê
         </div>
@@ -69,8 +69,8 @@ export function InvitationRequestMessage({ message, isOwnMessage }: InvitationRe
 
         {/* Message content */}
         {message.content && (
-          <div className={`p-3 rounded-lg ${isOwnMessage ? 'bg-primary text-white' : 'bg-gray-100 text-gray-900'}`}>
-            <p className="text-sm">{message.content}</p>
+          <div className={`p-3 rounded-lg break-words ${isOwnMessage ? 'bg-primary text-white' : 'bg-gray-100 text-gray-900'}`}>
+            <p className="text-sm break-words">{message.content}</p>
           </div>
         )}
       </div>
@@ -80,7 +80,7 @@ export function InvitationRequestMessage({ message, isOwnMessage }: InvitationRe
   // Render room seeking card for request
   if (isRequest && metadata?.roomSeekingPostId) {
     return (
-      <div className="flex flex-col gap-2 max-w-sm">
+      <div className="flex flex-col gap-2 max-w-xs">
         <div className="font-semibold text-sm">
           Yêu cầu thuê
         </div>
@@ -114,8 +114,8 @@ export function InvitationRequestMessage({ message, isOwnMessage }: InvitationRe
 
         {/* Message content */}
         {message.content && (
-          <div className={`p-3 rounded-lg ${isOwnMessage ? 'bg-primary text-white' : 'bg-gray-100 text-gray-900'}`}>
-            <p className="text-sm">{message.content}</p>
+          <div className={`p-3 rounded-lg break-words ${isOwnMessage ? 'bg-primary text-white' : 'bg-gray-100 text-gray-900'}`}>
+            <p className="text-sm break-words">{message.content}</p>
           </div>
         )}
       </div>

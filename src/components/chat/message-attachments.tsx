@@ -44,7 +44,7 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
 
   return (
     <>
-      <div className="flex flex-wrap gap-2 mt-2">
+      <div className="flex flex-wrap gap-2 mt-2 max-w-full">
         {attachments.map((attachment) => {
           // Skip if no URL
           if (!attachment.url) return null;
@@ -57,7 +57,7 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
           return (
             <div
               key={attachment.id}
-              className="relative rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+              className="relative rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity max-w-full"
               onClick={() => handleMediaClick(attachment.url, type)}
             >
               {isImage && (
@@ -67,15 +67,15 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
                   alt={attachment.name || "Attachment"}
                   width={200}
                   height={200}
-                  className="object-cover max-h-48 rounded-lg"
+                  className="object-cover max-h-48 rounded-lg max-w-full"
                 />
               )}
 
               {isVideo && (
-                <div className="relative">
+                <div className="relative max-w-full">
                   <video
                     src={attachment.url}
-                    className="object-cover max-h-48 rounded-lg w-48"
+                    className="object-cover max-h-48 rounded-lg max-w-full"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                     <div className="bg-white/90 rounded-full p-3">

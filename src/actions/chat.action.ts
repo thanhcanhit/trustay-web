@@ -197,6 +197,12 @@ export async function uploadChatAttachments(files: File[]): Promise<string[]> {
 		return urls;
 	} catch (error) {
 		console.error('[Upload] Failed to upload chat attachments:', error);
-		throw new Error('Không thể upload file đính kèm');
+
+		// Re-throw with specific error message for better handling
+		if (error instanceof Error) {
+			throw error; // Preserve the error type (TIMEOUT, FILE_TOO_LARGE, etc.)
+		}
+
+		throw new Error('UPLOAD_FAILED');
 	}
 }

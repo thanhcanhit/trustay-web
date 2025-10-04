@@ -188,19 +188,21 @@ export function ChatConversation() {
                   )}
 
                   {/* Message content container */}
-                  <div className={`flex flex-col gap-1 ${isOwnMessage ? "items-end" : "items-start"} max-w-xs md:max-w-md`}>
+                  <div className={`flex flex-col gap-1 ${isOwnMessage ? "items-end" : "items-start"} max-w-xs overflow-hidden`}>
                     {msg.attachments && msg.attachments.length > 0 && (
-                      <MessageAttachments attachments={msg.attachments} />
+                      <div className="w-full max-w-full">
+                        <MessageAttachments attachments={msg.attachments} />
+                      </div>
                     )}
 
                     {msg.content && (
                       <div
-                        className={`p-2 rounded-lg ${
+                        className={`p-2 rounded-lg break-words overflow-wrap-anywhere w-full ${
                           isOwnMessage
                             ? "bg-primary text-white"
                             : "bg-gray-200"
                         }`}>
-                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                        <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere">{msg.content}</p>
                       </div>
                     )}
 

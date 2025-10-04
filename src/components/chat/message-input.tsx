@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Image as ImageIcon, X } from "lucide-react";
 import Image from "next/image";
+import { toast } from "sonner";
 
 interface AttachmentPreview {
   file: File;
@@ -27,6 +28,7 @@ export function MessageInput({ onSendMessage, disabled = false }: MessageInputPr
     if (!files) return;
 
     const newAttachments: AttachmentPreview[] = [];
+    let hasError = false;
 
     Array.from(files).forEach((file) => {
       // Check file type
@@ -34,14 +36,16 @@ export function MessageInput({ onSendMessage, disabled = false }: MessageInputPr
       const isVideo = file.type.startsWith('video/');
 
       if (!isImage && !isVideo) {
-        alert('Chỉ hỗ trợ file ảnh và video');
+        toast.error('Chỉ hỗ trợ file ảnh và video');
+        hasError = true;
         return;
       }
 
-      // Check file size (max 10MB)
-      const maxSize = 10 * 1024 * 1024;
+      // Check file size (max 5MB per file)
+      const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
-        alert('File quá lớn. Kích thước tối đa 10MB');
+        toast.error(`File "${file.name}" quá lớn. Kích thước tối đa 5MB/file`);
+        hasError = true;
         return;
       }
 
@@ -53,7 +57,21 @@ export function MessageInput({ onSendMessage, disabled = false }: MessageInputPr
       });
     });
 
-    setAttachments([...attachments, ...newAttachments]);
+    if (!hasError && newAttachments.length > 0) {
+      const updatedAttachments = [...attachments, ...newAttachments];
+      
+      // Check total size of all attachments (max 8MB total to be safe)
+      const totalSize = updatedAttachments.reduce((sum, att) => sum + att.file.size, 0);
+      const maxTotalSize = 8 * 1024 * 1024; // 8MB
+      
+      if (totalSize > maxTotalSize) {
+        toast.error('Tổng dung lượng file vượt quá 8MB. Vui lòng giảm số lượng hoặc chọn file nhỏ hơn');
+        // Cleanup new attachments
+        newAttachments.forEach(a => URL.revokeObjectURL(a.url));
+      } else {
+        setAttachments(updatedAttachments);
+      }
+    }
 
     // Reset input
     if (fileInputRef.current) {
@@ -73,6 +91,15 @@ export function MessageInput({ onSendMessage, disabled = false }: MessageInputPr
 
     const files = attachments.map(a => a.file);
 
+    // Final check before sending
+    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+    const maxTotalSize = 8 * 1024 * 1024; // 8MB
+    
+    if (totalSize > maxTotalSize) {
+      toast.error('Tổng dung lượng file vượt quá 8MB. Vui lòng giảm số lượng file');
+      return;
+    }
+
     try {
       await onSendMessage(message, files);
 
@@ -80,9 +107,24 @@ export function MessageInput({ onSendMessage, disabled = false }: MessageInputPr
       attachments.forEach(a => URL.revokeObjectURL(a.url));
       setAttachments([]);
       setMessage("");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to send message:', error);
-      alert('Không thể gửi tin nhắn. Vui lòng thử lại.');
+      
+      // Check for specific error types
+      const err = error as { statusCode?: number; message?: string };
+      
+      // Check error message for specific types
+      if (err?.message?.includes('TIMEOUT')) {
+        toast.error('Upload hình ảnh quá lâu. Vui lòng kiểm tra kết nối mạng và thử lại');
+      } else if (err?.message?.includes('FILE_TOO_LARGE') || err?.statusCode === 413 || err?.message?.includes('Body exceeded')) {
+        toast.error('File quá lớn! Vui lòng giảm số lượng hoặc chọn file nhỏ hơn (tối đa 8MB)');
+      } else if (err?.message?.includes('UPLOAD_FAILED')) {
+        toast.error('Không thể upload file. Vui lòng thử lại');
+      } else if (err?.message?.includes('Network') || err?.message?.includes('fetch')) {
+        toast.error('Lỗi kết nối mạng. Vui lòng kiểm tra và thử lại');
+      } else {
+        toast.error('Không thể gửi tin nhắn. Vui lòng thử lại');
+      }
     }
   };
 
