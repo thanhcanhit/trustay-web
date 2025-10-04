@@ -15,6 +15,20 @@ export interface MessageData {
 	isEdited: boolean;
 	sentAt: string;
 	readAt: string | null;
+	metadata?: {
+		roomId?: string;
+		roomSlug?: string;
+		roomName?: string;
+		roomImage?: string;
+		roomPrice?: string;
+		roomLocation?: string;
+		roomSeekingPostId?: string;
+		roomSeekingTitle?: string;
+		roomSeekingBudget?: string;
+		roomSeekingLocation?: string;
+		bookingRequestId?: string;
+		roomInvitationId?: string;
+	};
 }
 
 export interface ConversationData {
@@ -159,5 +173,18 @@ export async function getOrCreateConversation(
 	} catch (error) {
 		console.error('Get or create conversation error:', error);
 		throw error;
+	}
+}
+
+// Upload attachment files and return URLs using existing upload endpoint
+export async function uploadChatAttachments(files: File[]): Promise<string[]> {
+	const { uploadBulkImages } = await import('./upload.action');
+
+	try {
+		const response = await uploadBulkImages(files);
+		return response.imagePaths || [];
+	} catch (error) {
+		console.error('Failed to upload chat attachments:', error);
+		throw new Error('Không thể upload file đính kèm');
 	}
 }

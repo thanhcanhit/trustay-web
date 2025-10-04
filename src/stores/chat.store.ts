@@ -6,6 +6,7 @@ import {
 	MessageData,
 	markAllMessagesAsRead,
 	sendMessage,
+	uploadChatAttachments,
 } from '../actions/chat.action';
 import { TokenManager } from '../lib/api-client';
 
@@ -30,6 +31,7 @@ type ChatState = {
 		content: string;
 		type: string;
 		attachmentUrls?: string[];
+		attachmentFiles?: File[];
 	}) => Promise<void>;
 	markAllRead: (conversationId: string) => Promise<void>;
 };
@@ -106,7 +108,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
 		if (!state.currentUserId) throw new Error('No current user set');
 
 		const token = TokenManager.getAccessToken();
-		const sentMessage = await sendMessage(payload, token);
+
+		// Upload attachments if provided
+		let attachmentUrls = payload.attachmentUrls || [];
+		if (payload.attachmentFiles && payload.attachmentFiles.length > 0) {
+			try {
+				const uploadedUrls = await uploadChatAttachments(payload.attachmentFiles);
+				attachmentUrls = [...attachmentUrls, ...uploadedUrls];
+			} catch (error) {
+				console.error('Failed to upload attachments:', error);
+				throw new Error('Không thể upload file đính kèm');
+			}
+		}
+
+		// Send message with attachment URLs
+		const sentMessage = await sendMessage(
+			{
+				recipientId: payload.recipientId,
+				conversationId: payload.conversationId,
+				content: payload.content,
+				type: payload.type,
+				attachmentUrls,
+			},
+			token,
+		);
 
 		// Handle both possible response structures
 		const messageData = sentMessage?.data || sentMessage;
