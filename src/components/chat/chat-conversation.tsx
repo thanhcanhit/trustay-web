@@ -1,15 +1,18 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useChatStore } from "@/stores/chat.store";
 import { useUserStore } from "@/stores/userStore";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useMemo, useState } from "react";
 import { format, isSameDay } from 'date-fns';
 import { Check, CheckCheck } from 'lucide-react';
 import { MESSAGE_TYPES, SYSTEM_MESSAGE_TYPES, MESSAGE_CONTENT_MAP } from '@/constants/chat.constants';
 import type { SystemMessageType } from '@/constants/chat.constants';
 import Image from "next/image";
+import { InvitationRequestMessage } from "./invitation-request-message";
+import { MessageInput } from "./message-input";
+import { MessageAttachments } from "./message-attachments";
+import { getMessageMetadata } from "@/lib/message-metadata";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export function ChatConversation() {
   const getConversation = useChatStore((state) => state.getConversation);
@@ -18,7 +21,6 @@ export function ChatConversation() {
   const currentConversationId = useChatStore((state) => state.currentConversationId);
   const byConversation = useChatStore((state) => state.byConversation);
   const { user } = useUserStore();
-  const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
@@ -39,9 +41,15 @@ export function ChatConversation() {
     : null;
 
   const messages = useMemo(() => {
-    return currentConversationId
+    const msgs = currentConversationId
       ? (byConversation[currentConversationId] ?? [])
       : [];
+
+    // Attach metadata from local storage to messages
+    return msgs.map(msg => {
+      const metadata = getMessageMetadata(msg.id);
+      return metadata ? { ...msg, metadata } : msg;
+    });
   }, [currentConversationId, byConversation]);
 
   // Set current user ID in chat store when user is available
@@ -74,18 +82,30 @@ export function ChatConversation() {
     messages
   });
 
-  const handleSendMessage = () => {
-    if (message.trim() && conversation && user) {
-      sendMessage({
-        content: message,
+  const handleSendMessage = async (content: string, attachmentFiles: File[]) => {
+    if ((!content.trim() && attachmentFiles.length === 0) || !conversation || !user) {
+      console.log('Cannot send message: missing content or conversation');
+      return;
+    }
+
+    console.log('Sending message:', { content, attachmentFiles, conversationId: conversation.conversationId });
+
+    try {
+      await sendMessage({
+        content,
         recipientId: conversation.counterpart.id,
         conversationId: conversation.conversationId,
-        attachmentUrls: [],
+        attachmentFiles,
         type: MESSAGE_TYPES.TEXT,
       });
-      setMessage("");
+
+      console.log('Message sent successfully');
+
       // Enable auto-scroll when sending message
       setShouldAutoScroll(true);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error; // Re-throw to let MessageInput handle it
     }
   };
 
@@ -114,6 +134,9 @@ export function ChatConversation() {
         onScroll={handleScroll}>
         {messages.map((msg, index) => {
           const showDateSeparator = index === 0 || !isSameDay(new Date(messages[index - 1].sentAt), new Date(msg.sentAt));
+          const isOwnMessage = msg.senderId === user?.id;
+          const isInvitationOrRequest = msg.type === MESSAGE_TYPES.INVITATION || msg.type === MESSAGE_TYPES.REQUEST;
+
           return (
             <div key={msg.id || `message-${index}`}>
               {showDateSeparator && (
@@ -121,7 +144,26 @@ export function ChatConversation() {
                   {format(new Date(msg.sentAt), 'eeee, dd MMMM, yyyy')}
                 </div>
               )}
-              {isSystemMessage(msg.type) ? (
+              {isInvitationOrRequest ? (
+                // Render invitation/request as user message with card
+                <div className={`flex my-2 items-end ${isOwnMessage ? "justify-end" : ""}`}>
+                  <div className="flex flex-col gap-1">
+                    <InvitationRequestMessage message={msg} isOwnMessage={isOwnMessage} />
+                    <div className={`text-xs text-gray-400 flex items-center ${isOwnMessage ? 'justify-end' : ''}`}>
+                      {format(new Date(msg.sentAt), 'HH:mm')}
+                      {isOwnMessage && (
+                        <span className="ml-1">
+                          {msg.readAt ? <CheckCheck size={16} className="text-blue-500" /> : <Check size={16} />}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {!isOwnMessage && !msg.readAt && (
+                    <div className="w-2 h-2 bg-red-500 rounded-full ml-1 self-center" />
+                  )}
+                </div>
+              ) : isSystemMessage(msg.type) ? (
+                // Render other system messages centered
                 <div className="flex justify-center my-3">
                   <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2 rounded-lg text-sm max-w-sm text-center">
                     <p>{getSystemMessageContent(msg.type, msg.content)}</p>
@@ -131,26 +173,56 @@ export function ChatConversation() {
                   </div>
                 </div>
               ) : (
-                <div
-                  className={`flex my-2 items-end ${msg.senderId === user?.id ? "justify-end" : ""}`}>
-                  <div
-                    className={`p-2 rounded-lg max-w-xs md:max-w-md ${
-                      msg.senderId === user?.id
-                        ? "bg-primary text-white"
-                        : "bg-gray-200"
-                    }`}>
-                    <p>{msg.content}</p>
-                  </div>
-                  <div className="text-xs text-gray-400 ml-2 flex items-center">
-                    {format(new Date(msg.sentAt), 'HH:mm')}
-                    {msg.senderId === user?.id && (
-                      <span className="ml-1">
-                        {msg.readAt ? <CheckCheck size={16} className="text-blue-500" /> : <Check size={16} />}
-                      </span>
+                // Render normal text messages
+                <div className={`flex my-2 gap-2 ${isOwnMessage ? "justify-end" : ""}`}>
+                  {!isOwnMessage && (
+                    <div className="flex-shrink-0">
+                      <Avatar className="rounded-lg">
+                        <AvatarImage
+                          src={conversation.counterpart.avatarUrl || ""}
+                          alt="@evilrabbit"
+                        />
+                        <AvatarFallback>{conversation.counterpart.lastName.charAt(0)}{conversation.counterpart.firstName.charAt(0)}  </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  )}
+
+                  {/* Message content container */}
+                  <div className={`flex flex-col gap-1 ${isOwnMessage ? "items-end" : "items-start"} max-w-xs overflow-hidden`}>
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <div className="w-full max-w-full">
+                        <MessageAttachments attachments={msg.attachments} />
+                      </div>
                     )}
+
+                    {msg.content && (
+                      <div
+                        className={`p-2 rounded-lg break-words overflow-wrap-anywhere w-full ${
+                          isOwnMessage
+                            ? "bg-primary text-white"
+                            : "bg-gray-200"
+                        }`}>
+                        <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere">{msg.content}</p>
+                      </div>
+                    )}
+
+                    {/* Timestamp and read status */}
+                    <div className={`text-xs text-gray-400 flex items-center gap-1 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
+                      {format(new Date(msg.sentAt), 'HH:mm')}
+                      {isOwnMessage && (
+                        <span>
+                          {msg.readAt ? <CheckCheck size={16} className="text-blue-500" /> : <Check size={16} />}
+                        </span>
+                      )}
+                      {!isOwnMessage && !msg.readAt && (
+                        <div className="w-2 h-2 bg-red-500 rounded-full" />
+                      )}
+                    </div>
                   </div>
-                  {msg.senderId !== user?.id && !msg.readAt && (
-                    <div className="w-2 h-2 bg-red-500 rounded-full ml-1 self-center" />
+
+                  {/* Avatar cho tin nhắn của mình */}
+                  {!isOwnMessage && !msg.readAt && (
+                   <div className="w-2 h-2 bg-red-500 rounded-full ml-1 self-center" />
                   )}
                 </div>
               )}
@@ -159,20 +231,7 @@ export function ChatConversation() {
         })}
         <div ref={messagesEndRef} />
       </div>
-      <div className="p-4 border-t">
-        <div className="flex w-full items-center space-x-2">
-          <Input
-            type="text"
-            placeholder="Type a message..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-          />
-          <Button type="submit" onClick={handleSendMessage}>
-            Send
-          </Button>
-        </div>
-      </div>
+      <MessageInput onSendMessage={handleSendMessage} />
     </div>
   );
 }

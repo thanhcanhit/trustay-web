@@ -69,7 +69,7 @@ export default function RoomSeekingDetailPage() {
     fetchAllBuildings,
     isLoading: buildingsLoading
   } = useBuildingStore()
-  const { sendMessage: sendChatMessage } = useChatStore()
+  const { sendMessage: sendChatMessage, setCurrentUserId } = useChatStore()
 
   // Load room seeking detail from API using store - only once
   useEffect(() => {
@@ -79,6 +79,12 @@ export default function RoomSeekingDetailPage() {
     }
     return () => clearCurrentPost()
   }, [id, hasLoaded, loadPostDetail, clearCurrentPost])
+
+  useEffect(() => {
+    if (user?.id) {
+      setCurrentUserId(user.id)
+    }
+  }, [user?.id, setCurrentUserId])
 
   // Load similar room seeking posts
   useEffect(() => {

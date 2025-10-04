@@ -10,6 +10,7 @@ import {
 	updateRoomSeekingPost,
 	updateRoomSeekingPostStatus,
 } from '@/actions/room-seeking.action';
+import { TokenManager } from '@/lib/api-client';
 import type {
 	CreateRoomSeekingPostRequest,
 	RoomSeekingPost,
@@ -98,7 +99,8 @@ export const useRoomSeekingStore = create<RoomSeekingState>()(
 				set({ userPostsLoading: true, userPostsError: null });
 
 				try {
-					const response = await getMyRoomSeekingPosts(params);
+					const token = TokenManager.getAccessToken();
+					const response = await getMyRoomSeekingPosts(params, token);
 
 					if (response.success) {
 						set({
@@ -162,7 +164,8 @@ export const useRoomSeekingStore = create<RoomSeekingState>()(
 				set({ postLoading: true, postError: null });
 
 				try {
-					const response = await getRoomSeekingPostById(id);
+					const token = TokenManager.getAccessToken();
+					const response = await getRoomSeekingPostById(id, token);
 
 					if (response.success) {
 						set({
@@ -192,7 +195,8 @@ export const useRoomSeekingStore = create<RoomSeekingState>()(
 				set({ formLoading: true, formError: null });
 
 				try {
-					const response = await createRoomSeekingPost(data);
+					const token = TokenManager.getAccessToken();
+					const response = await createRoomSeekingPost(data, token);
 
 					if (response.success) {
 						// Add the new post to user posts list
@@ -226,7 +230,8 @@ export const useRoomSeekingStore = create<RoomSeekingState>()(
 				set({ formLoading: true, formError: null });
 
 				try {
-					const response = await updateRoomSeekingPost(id, data);
+					const token = TokenManager.getAccessToken();
+					const response = await updateRoomSeekingPost(id, data, token);
 
 					if (response.success) {
 						const { userPosts, currentPost } = get();
@@ -266,7 +271,8 @@ export const useRoomSeekingStore = create<RoomSeekingState>()(
 			// Delete room seeking post
 			deletePost: async (id: string): Promise<boolean> => {
 				try {
-					const response = await deleteRoomSeekingPost(id);
+					const token = TokenManager.getAccessToken();
+					const response = await deleteRoomSeekingPost(id, token);
 
 					if (response.success) {
 						const { userPosts, currentPost } = get();
@@ -298,7 +304,8 @@ export const useRoomSeekingStore = create<RoomSeekingState>()(
 					const { userPosts, currentPost } = get();
 					const target = userPosts.find((p) => p.id === id) || currentPost;
 					const nextStatus: 'active' | 'paused' = target?.status === 'active' ? 'paused' : 'active';
-					const response = await updateRoomSeekingPostStatus(id, nextStatus);
+					const token = TokenManager.getAccessToken();
+					const response = await updateRoomSeekingPostStatus(id, nextStatus, token);
 
 					if (response.success) {
 						const { userPosts, currentPost } = get();
@@ -328,7 +335,8 @@ export const useRoomSeekingStore = create<RoomSeekingState>()(
 			// Increment contact count
 			incrementContact: async (id: string): Promise<boolean> => {
 				try {
-					const response = await incrementRoomSeekingPostContact(id);
+					const token = TokenManager.getAccessToken();
+					const response = await incrementRoomSeekingPostContact(id, token);
 
 					if (response.success) {
 						const { currentPost } = get();

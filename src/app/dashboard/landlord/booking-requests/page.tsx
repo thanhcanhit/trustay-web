@@ -106,7 +106,7 @@ export default function BookingRequestsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={invitation.recipient?.avatarUrl || ''} alt={`${invitation.recipient?.firstName || ''} ${invitation.recipient?.lastName || ''}`} />
+                      <AvatarImage src={invitation.recipient?.avatarUrl || undefined} alt={`${invitation.recipient?.firstName || ''} ${invitation.recipient?.lastName || ''}`} />
                       <AvatarFallback className="bg-blue-100 text-blue-600">
                         {`${(invitation.recipient?.firstName || 'U')[0]}${(invitation.recipient?.lastName || 'S')[0]}`}
                       </AvatarFallback>

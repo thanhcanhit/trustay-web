@@ -6,58 +6,31 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Building, Plus, Search, MapPin, Users, DollarSign, Home, Edit, Trash2, Eye } from "lucide-react"
-import { getBuildings, deleteBuilding } from "@/actions/building.action"
-import { type Building as BuildingType } from "@/types/types"
+import { useBuildingStore } from "@/stores/buildingStore"
 import Link from "next/link"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogTitle, AlertDialogHeader, AlertDialogDescription, AlertDialogCancel, AlertDialogAction, AlertDialogContent, AlertDialogFooter, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 export default function LandlordProperties() {
-  const [buildings, setBuildings] = useState<BuildingType[]>([])
-  const [loading, setLoading] = useState(true)
+  const { buildings, isLoading, error, fetchAllBuildings, deleteBuilding: deleteBuildingFromStore } = useBuildingStore()
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
   const pageLimit = 12
+  const totalPages = Math.ceil(buildings.length / pageLimit)
 
   const fetchBuildings = useCallback(async () => {
-    try {
-      setLoading(true)
-      const response = await getBuildings({
-        page: currentPage,
-        limit: pageLimit,
-        search: searchTerm || undefined,
-        isActive: true
-      })
-      
-      console.log('Buildings API Response:', response)
-      
-      if (!response.success) {
-        toast.error(response.error)
-        setBuildings([])
-        setTotalPages(1)
-        return
-      }
-      
-      // Ensure we have valid data
-      const buildingsData = response.data.buildings || []
-      const totalPagesData = response.data.totalPages || 1
-      
-      setBuildings(buildingsData)
-      setTotalPages(totalPagesData)
-    } catch (error) {
-      console.error('Error fetching buildings:', error)
-      toast.error('Không thể tải danh sách dãy trọ')
-      setBuildings([])
-      setTotalPages(1)
-    } finally {
-      setLoading(false)
-    }
-  }, [currentPage, pageLimit, searchTerm])
+    await fetchAllBuildings()
+  }, [fetchAllBuildings])
 
   useEffect(() => {
     fetchBuildings()
-  }, [currentPage, searchTerm, fetchBuildings])
+  }, [fetchBuildings])
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error)
+    }
+  }, [error])
 
   const handleSearch = () => {
     setCurrentPage(1)
@@ -66,14 +39,12 @@ export default function LandlordProperties() {
 
   const handleDeleteBuilding = async (buildingId: string) => {
     try {
-      const response = await deleteBuilding(buildingId)
-      if (!response.success) {
-        toast.error(response.error)
-        return
+      const success = await deleteBuildingFromStore(buildingId)
+      if (success) {
+        toast.success('Xóa dãy trọ thành công')
+      } else {
+        toast.error('Không thể xóa dãy trọ')
       }
-      
-      toast.success('Xóa dãy trọ thành công')
-      fetchBuildings() // Refresh list
     } catch (error) {
       console.error('Error deleting building:', error)
       toast.error('Không thể xóa dãy trọ. Vui lòng kiểm tra lại.')
@@ -118,7 +89,7 @@ export default function LandlordProperties() {
         </div>
 
         {/* Loading State */}
-        {loading && (
+        {isLoading && (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
@@ -128,7 +99,7 @@ export default function LandlordProperties() {
         )}
 
         {/* Properties Grid */}
-        {!loading && buildings && Array.isArray(buildings) && (
+        {!isLoading && buildings && Array.isArray(buildings) && (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {buildings.map((building) => (
               <Card key={building.id} className={`hover:shadow-lg transition-shadow ${
@@ -275,7 +246,7 @@ export default function LandlordProperties() {
         )}
 
         {/* Empty State */}
-        {!loading && (!buildings || !Array.isArray(buildings) || buildings.length === 0) && (
+        {!isLoading && (!buildings || !Array.isArray(buildings) || buildings.length === 0) && (
           <div className="text-center py-12">
             <div className="text-gray-500 mb-4">
               {searchTerm ? 'Không tìm thấy dãy trọ nào phù hợp' : 'Bạn chưa có dãy trọ nào'}
@@ -287,7 +258,7 @@ export default function LandlordProperties() {
         )}
 
         {/* Pagination */}
-        {!loading && buildings && Array.isArray(buildings) && buildings.length > 0 && totalPages > 1 && (
+        {!isLoading && buildings && Array.isArray(buildings) && buildings.length > 0 && totalPages > 1 && (
           <div className="flex justify-center mt-8">
             <div className="flex space-x-2">
               <Button 

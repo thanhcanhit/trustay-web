@@ -166,11 +166,16 @@ export default function PropertyDetailPage() {
     })
   }
 
-  // Get similar posts from available room listings
+  // Get similar posts from API response or fallback to featured rooms
   const getSimilarPosts = (): RoomListing[] => {
-    // Combine featured rooms and search results, excluding current room
+    // First try to use similarRooms from API response
+    if (roomDetail?.similarRooms && roomDetail.similarRooms.length > 0) {
+      return roomDetail.similarRooms.slice(0, 8)
+    }
+
+    // Fallback: Combine featured rooms and search results, excluding current room
     const allRooms = [...featuredRooms, ...searchResults]
-    
+
     // Remove duplicates by ID and exclude current room
     const uniqueRooms = allRooms.reduce((acc, room) => {
       if (room.id !== roomDetail?.id && !acc.find((r: RoomListing) => r.id === room.id)) {
@@ -178,7 +183,7 @@ export default function PropertyDetailPage() {
       }
       return acc
     }, [] as RoomListing[])
-    
+
     return uniqueRooms.slice(0, 8) // Limit to 8 similar posts
   }
 
@@ -332,8 +337,17 @@ export default function PropertyDetailPage() {
     }, 1000)
   }
 
-  // Generate breadcrumb items based on the room data
+  // Generate breadcrumb items from API response or fallback to generated ones
   const generateBreadcrumbItems = () => {
+    // First try to use breadcrumb from API response
+    if (roomDetail?.breadcrumb?.items) {
+      return roomDetail.breadcrumb.items.map(item => ({
+        title: item.title,
+        href: item.path === `/rooms/${roomDetail.slug}` ? undefined : item.path
+      }))
+    }
+
+    // Fallback: Generate breadcrumb items based on the room data
     const items: Array<{ title: string; href?: string }> = [
       { title: "Tìm kiếm phòng", href: "/rooms" }
     ]
@@ -440,7 +454,7 @@ export default function PropertyDetailPage() {
                   <div className="text-right text-sm text-gray-500">
                     <div className="flex items-center gap-1">
                       <TrendingUp className="h-4 w-4" />
-                      <span>0 lượt xem</span>
+                      <span>{roomDetail.viewCount || 0} lượt xem</span>
                     </div>
                   </div>
                 </div>
@@ -955,7 +969,7 @@ export default function PropertyDetailPage() {
                     <Phone className="h-4 w-4 text-gray-600" />
                     <span className="text-sm text-gray-700">Điện thoại: {roomDetail.owner?.phone || 'Chưa cập nhật'}</span>
                     <div className="ml-auto">
-                      {roomDetail.owner?.isVerifiedPhone ? (
+                      {roomDetail.owner?.verifiedPhone ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <XCircle className="h-4 w-4 text-red-500" />
@@ -967,7 +981,7 @@ export default function PropertyDetailPage() {
                     <Mail className="h-4 w-4 text-gray-600" />
                     <span className="text-sm text-gray-700">Email: {roomDetail.owner?.email || 'Chưa cập nhật'}</span>
                     <div className="ml-auto">
-                      {roomDetail.owner?.isVerifiedEmail ? (
+                      {roomDetail.owner?.verifiedEmail ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <XCircle className="h-4 w-4 text-red-500" />
@@ -985,7 +999,7 @@ export default function PropertyDetailPage() {
                       <span className="text-sm text-gray-700">Xác minh giấy tờ kinh doanh</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      {roomDetail.owner?.isVerifiedEmail ? (
+                      {roomDetail.owner?.verifiedEmail ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <XCircle className="h-4 w-4 text-red-500" />
@@ -993,7 +1007,7 @@ export default function PropertyDetailPage() {
                       <span className="text-sm text-gray-700">Xác minh email công việc</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      {roomDetail.owner?.isVerifiedPhone ? (
+                      {roomDetail.owner?.verifiedPhone ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <XCircle className="h-4 w-4 text-red-500" />

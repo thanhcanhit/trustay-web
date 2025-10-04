@@ -2,9 +2,8 @@
 
 import { AxiosError } from 'axios';
 // Authentication actions for Trustay API
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { apiClient } from '../lib/api-client';
+import { apiClient, createServerApiCall } from '../lib/api-client';
 import {
 	AuthResponse,
 	LoginRequest,
@@ -13,12 +12,7 @@ import {
 	UserProfile,
 	VerificationResponse,
 } from '../types/types';
-
-// Helper function to get token from cookies
-// const getTokenFromCookies = async (): Promise<string | null> => {
-//   const cookieStore = await cookies();
-//   return cookieStore.get('accessToken')?.value || null;
-// };
+import { extractErrorMessage } from '../utils/api-error-handler';
 
 // Types for error handling
 interface ApiErrorResult {
@@ -34,91 +28,18 @@ interface ApiSuccessResult<T> {
 
 type ApiResult<T> = ApiSuccessResult<T> | ApiErrorResult;
 
-// Helper function to extract error message from API response
-const extractErrorMessage = (error: unknown, defaultMessage: string): string => {
-	console.error('API Error Debug:', error);
-
-	if (error instanceof AxiosError) {
-		const status = error.response?.status;
-		const data = error.response?.data;
-
-		console.error('AxiosError Details:', {
-			status,
-			data,
-			message: error.message,
-			config: {
-				url: error.config?.url,
-				method: error.config?.method,
-				baseURL: error.config?.baseURL,
-			},
-		});
-
-		// Handle specific error response formats
-		if (data) {
-			// If data is a string, use it directly
-			if (typeof data === 'string') {
-				return data;
-			}
-
-			// If data is an object, try different message fields
-			if (typeof data === 'object') {
-				const errorMessage = data.message || data.error || data.msg;
-
-				if (typeof errorMessage === 'string') {
-					return errorMessage;
-				}
-
-				if (typeof errorMessage === 'object' && errorMessage.message) {
-					return errorMessage.message;
-				}
-			}
-		}
-
-		// Handle by status code if no specific message
-		switch (status) {
-			case 400:
-				return 'Dữ liệu gửi lên không hợp lệ';
-			case 409:
-				return 'Dữ liệu đã tồn tại';
-			case 422:
-				return 'Dữ liệu không hợp lệ';
-			case 500:
-				return 'Lỗi máy chủ. Vui lòng thử lại sau';
-			default:
-				return error.message || defaultMessage;
-		}
-	}
-
-	if (error instanceof Error) {
-		return error.message;
-	}
-
-	return defaultMessage;
-};
-
 // Helper function to handle API errors and return error result instead of throwing
 const handleApiError = (error: unknown, defaultMessage: string): never => {
 	const errorMessage = extractErrorMessage(error, defaultMessage);
 	throw new Error(errorMessage);
 };
 
-// Helper function to set auth cookies
-async function setAuthCookies(accessToken: string, refreshToken: string) {
-	const cookieStore = await cookies();
-
-	cookieStore.set('accessToken', accessToken, {
-		httpOnly: true,
-		secure: process.env.NODE_ENV === 'production',
-		sameSite: 'strict',
-		maxAge: 60 * 60 * 24 * 7, // 7 days
-	});
-
-	cookieStore.set('refreshToken', refreshToken, {
-		httpOnly: true,
-		secure: process.env.NODE_ENV === 'production',
-		sameSite: 'strict',
-		maxAge: 60 * 60 * 24 * 30, // 30 days
-	});
+// Helper function to return tokens for client-side storage
+function getTokensForClient(accessToken: string, refreshToken: string) {
+	return {
+		accessToken,
+		refreshToken,
+	};
 }
 
 // Send email verification code
@@ -175,10 +96,10 @@ export const registerWithVerification = async (
 			},
 		});
 
-		// Store tokens in cookies
-		await setAuthCookies(response.data.access_token, response.data.refresh_token);
+		// Return tokens for client-side storage
+		const tokens = getTokensForClient(response.data.access_token, response.data.refresh_token);
 
-		return { success: true, data: response.data };
+		return { success: true, data: { ...response.data, ...tokens } };
 	} catch (error: unknown) {
 		const errorMessage = extractErrorMessage(error, 'Failed to register with verification');
 		return {
@@ -201,10 +122,10 @@ export const registerWithVerificationNoPhone = async (
 			},
 		});
 
-		// Store tokens in cookies
-		await setAuthCookies(response.data.access_token, response.data.refresh_token);
+		// Return tokens for client-side storage
+		const tokens = getTokensForClient(response.data.access_token, response.data.refresh_token);
 
-		return { success: true, data: response.data };
+		return { success: true, data: { ...response.data, ...tokens } };
 	} catch (error: unknown) {
 		const errorMessage = extractErrorMessage(error, 'Failed to register with verification');
 		return {
@@ -220,10 +141,10 @@ export const registerDirect = async (userData: RegisterDirectRequest): Promise<A
 	try {
 		const response = await apiClient.post<AuthResponse>('/api/auth/register-direct', userData);
 
-		// Store tokens in cookies
-		await setAuthCookies(response.data.access_token, response.data.refresh_token);
+		// Return tokens for client-side storage
+		const tokens = getTokensForClient(response.data.access_token, response.data.refresh_token);
 
-		return response.data;
+		return { ...response.data, ...tokens };
 	} catch (error: unknown) {
 		return handleApiError(error, 'Failed to register directly');
 	}
@@ -234,10 +155,10 @@ export const login = async (credentials: LoginRequest): Promise<ApiResult<AuthRe
 	try {
 		const response = await apiClient.post<AuthResponse>('/api/auth/login', credentials);
 
-		// Store tokens in cookies
-		await setAuthCookies(response.data.access_token, response.data.refresh_token);
+		// Return tokens for client-side storage
+		const tokens = getTokensForClient(response.data.access_token, response.data.refresh_token);
 
-		return { success: true, data: response.data };
+		return { success: true, data: { ...response.data, ...tokens } };
 	} catch (error: unknown) {
 		const errorMessage = extractErrorMessage(error, 'Failed to login');
 		return {
@@ -248,46 +169,49 @@ export const login = async (credentials: LoginRequest): Promise<ApiResult<AuthRe
 	}
 };
 
-// Get current user
-export const getCurrentUser = async (): Promise<UserProfile> => {
+// Create API call function for server actions
+const apiCall = createServerApiCall();
+
+// Get current user (accepts token parameter for server-side usage)
+export const getCurrentUser = async (token?: string): Promise<UserProfile> => {
 	try {
-		const cookieStore = await cookies();
-		const accessToken = cookieStore.get('accessToken')?.value;
-
-		if (!accessToken) {
-			throw new Error('No access token found');
+		let response: UserProfile;
+		if (token) {
+			// Use server API call with token for server-side calls
+			response = await apiCall<UserProfile>(
+				'/api/auth/me',
+				{
+					method: 'GET',
+				},
+				token,
+			);
+		} else {
+			// This function will be called from client-side store, so we can use apiClient directly
+			const clientResponse = await apiClient.get<UserProfile>('/api/auth/me');
+			response = clientResponse.data;
 		}
-
-		const response = await apiClient.get<UserProfile>('/api/auth/me', {
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-			},
-		});
-		console.log('getCurrentUser raw response:', response.data);
-		return response.data;
+		console.log('getCurrentUser raw response:', response);
+		return response;
 	} catch (error: unknown) {
 		return handleApiError(error, 'Failed to get current user');
 	}
 };
 
 // Refresh token
-export const refreshToken = async (): Promise<AuthResponse> => {
+export const refreshToken = async (refreshTokenValue: string): Promise<AuthResponse> => {
 	try {
-		const cookieStore = await cookies();
-		const refreshTokenValue = cookieStore.get('refreshToken')?.value;
-
 		if (!refreshTokenValue) {
-			throw new Error('No refresh token available');
+			throw new Error('No refresh token provided');
 		}
 
 		const response = await apiClient.post<AuthResponse>('/api/auth/refresh', {
 			refreshToken: refreshTokenValue,
 		});
 
-		// Update stored tokens
-		await setAuthCookies(response.data.access_token, response.data.refresh_token);
+		// Return tokens for client-side storage
+		const tokens = getTokensForClient(response.data.access_token, response.data.refresh_token);
 
-		return response.data;
+		return { ...response.data, ...tokens };
 	} catch (error: unknown) {
 		return handleApiError(error, 'Failed to refresh token');
 	}
@@ -307,11 +231,10 @@ export const checkPasswordStrength = async (password: string): Promise<number> =
 	}
 };
 
-// Logout
+// Logout (client-side should handle clearing localStorage)
 export const logout = async (): Promise<void> => {
-	const cookieStore = await cookies();
-	cookieStore.delete('accessToken');
-	cookieStore.delete('refreshToken');
+	// Server-side logout logic can be added here if needed
+	// Client should handle clearing localStorage
 };
 
 // Complete registration and redirect

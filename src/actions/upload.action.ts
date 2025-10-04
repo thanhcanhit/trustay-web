@@ -9,8 +9,11 @@ export interface UploadResponse {
 }
 
 export interface BulkUploadResponse {
-	imagePaths: string[];
-	savedToDb: boolean;
+	results: Array<{
+		imagePath: string;
+		savedToDb: boolean;
+	}>;
+	total: number;
 }
 
 /**
@@ -68,12 +71,26 @@ export const uploadBulkImages = async (
 			headers: {
 				'Content-Type': 'multipart/form-data',
 			},
+			timeout: 60000, // 60 seconds for bulk upload (increased from default 10s)
 		});
 
 		return response.data;
 	} catch (error: unknown) {
 		console.error('Failed to upload images:', error);
-		throw new Error('Failed to upload images');
+
+		// Handle specific error types
+		if (error && typeof error === 'object' && 'code' in error) {
+			const axiosError = error as { code?: string; response?: { status?: number } };
+
+			if (axiosError.code === 'ECONNABORTED') {
+				throw new Error('TIMEOUT');
+			}
+			if (axiosError.response?.status === 413) {
+				throw new Error('FILE_TOO_LARGE');
+			}
+		}
+
+		throw new Error('UPLOAD_FAILED');
 	}
 };
 

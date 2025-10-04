@@ -8,8 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { MapPin, Home, Users, DollarSign, TrendingUp } from "lucide-react"
-import { getBuildingById, deleteBuilding } from "@/actions/building.action"
-import { getRoomsByBuilding } from "@/actions/room.action"
+import { useBuildingStore } from "@/stores/buildingStore"
 import { type Building as BuildingType } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -20,6 +19,7 @@ export default function BuildingDetailPage() {
   const router = useRouter()
   const buildingId = params.id as string
 
+  const { loadBuildingById, deleteBuilding: deleteBuildingAction, loadRoomsByBuilding } = useBuildingStore()
   const [building, setBuilding] = useState<BuildingType | null>(null)
   const [loading, setLoading] = useState(true)
   const [roomsCount, setRoomsCount] = useState({
@@ -32,36 +32,36 @@ export default function BuildingDetailPage() {
   const fetchBuildingDetail = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await getBuildingById(buildingId)
-      
-      if (!response.success) {
-        toast.error(response.error)
+      const buildingData = await loadBuildingById(buildingId)
+
+      if (!buildingData) {
+        toast.error('Không tìm thấy dãy trọ')
         router.push('/dashboard/landlord/properties')
         return
       }
-      
-      setBuilding(response.data.data)
-      
+
+      setBuilding(buildingData)
+
       // Fetch rooms data for this building
       try {
-        const roomsResponse = await getRoomsByBuilding(buildingId, { limit: 1000 })
-        
-        if (roomsResponse.success && roomsResponse.data.rooms && Array.isArray(roomsResponse.data.rooms)) {
-          const totalRooms = roomsResponse.data.rooms.reduce((sum: number, room: { totalRooms?: number }) => sum + (room.totalRooms || 0), 0)
-          
+        const roomsData = await loadRoomsByBuilding(buildingId, { limit: 1000 })
+
+        if (roomsData && Array.isArray(roomsData)) {
+          const totalRooms = roomsData.reduce((sum: number, room: { totalRooms?: number }) => sum + (room.totalRooms || 0), 0)
+
           // Get status counts for all rooms
           let availableCount = 0
           let occupiedCount = 0
           let maintenanceCount = 0
-          
-          for (const room of roomsResponse.data.rooms) {
+
+          for (const room of roomsData) {
             if (room.statusCounts) {
               availableCount += room.statusCounts.available
               occupiedCount += room.statusCounts.occupied
               maintenanceCount += room.statusCounts.maintenance
             }
           }
-          
+
           setRoomsCount({
             total: totalRooms,
             available: availableCount,
@@ -79,7 +79,7 @@ export default function BuildingDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [buildingId, router])
+  }, [buildingId, router, loadBuildingById, loadRoomsByBuilding])
 
   useEffect(() => {
     if (buildingId) {
@@ -89,18 +89,18 @@ export default function BuildingDetailPage() {
 
   const handleDeleteBuilding = async () => {
     if (!building) return
-    
+
     if (!confirm(`Bạn có chắc chắn muốn xóa dãy trọ "${building.name}"? Hành động này không thể hoàn tác.`)) {
       return
     }
 
     try {
-      const response = await deleteBuilding(building.id)
-      if (!response.success) {
-        toast.error(response.error)
+      const success = await deleteBuildingAction(building.id)
+      if (!success) {
+        toast.error('Không thể xóa dãy trọ')
         return
       }
-      
+
       toast.success('Xóa dãy trọ thành công')
       router.push('/dashboard/landlord/properties')
     } catch (error) {

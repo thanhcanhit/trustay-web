@@ -1,7 +1,5 @@
 'use server';
 
-import { AxiosError } from 'axios';
-import { cookies } from 'next/headers';
 import { createServerApiCall } from '../lib/api-client';
 import type {
 	CreateRoomSeekingPostRequest,
@@ -10,6 +8,7 @@ import type {
 	RoomSeekingSearchParams,
 	UpdateRoomSeekingPostRequest,
 } from '../types/room-seeking';
+import { extractErrorMessage } from '../utils/api-error-handler';
 
 // Types for error handling
 interface ApiErrorResult {
@@ -25,76 +24,7 @@ interface ApiSuccessResult<T> {
 
 type ApiResult<T> = ApiSuccessResult<T> | ApiErrorResult;
 
-// Helper function to extract error message from API response
-const extractErrorMessage = (error: unknown, defaultMessage: string): string => {
-	console.error('Room Seeking API Error Debug:', error);
-
-	if (error instanceof AxiosError) {
-		const status = error.response?.status;
-		const data = error.response?.data;
-
-		console.error('AxiosError Details:', {
-			status,
-			data,
-			message: error.message,
-		});
-
-		// Handle specific status codes
-		switch (status) {
-			case 400:
-				if (typeof data === 'string') return data;
-				if (data?.message) {
-					// Handle array of validation errors
-					if (Array.isArray(data.message)) {
-						return `Dữ liệu không hợp lệ:\n${data.message.join('\n')}`;
-					}
-					return data.message;
-				}
-				return 'Dữ liệu không hợp lệ';
-			case 401:
-				return 'Bạn cần đăng nhập để thực hiện thao tác này';
-			case 403:
-				return 'Bạn không có quyền thực hiện thao tác này';
-			case 404:
-				return 'Không tìm thấy bài đăng tìm trọ';
-			case 409:
-				return 'Bài đăng tìm trọ đã tồn tại';
-			case 422:
-				if (data?.message) {
-					if (Array.isArray(data.message)) {
-						return `Dữ liệu không hợp lệ:\n${data.message.join('\n')}`;
-					}
-					return data.message;
-				}
-				return 'Dữ liệu không hợp lệ';
-			case 500:
-				return 'Lỗi hệ thống, vui lòng thử lại sau';
-			default:
-				if (data?.message) {
-					if (Array.isArray(data.message)) {
-						return `Lỗi:\n${data.message.join('\n')}`;
-					}
-					return data.message;
-				}
-				if (data?.error) return data.error;
-				return defaultMessage;
-		}
-	}
-
-	if (error instanceof Error) {
-		return error.message;
-	}
-
-	return defaultMessage;
-};
-
-// Helper function to get token from cookies
-const getTokenFromCookies = async (): Promise<string | null> => {
-	const cookieStore = await cookies();
-	return cookieStore.get('accessToken')?.value || null;
-};
-
-const apiCall = createServerApiCall(getTokenFromCookies);
+const apiCall = createServerApiCall();
 
 // Normalize single-entity API responses to { data: T }
 const normalizeEntityResponse = <T extends object>(response: unknown): { data: T } => {
@@ -107,6 +37,7 @@ const normalizeEntityResponse = <T extends object>(response: unknown): { data: T
 // Create new room seeking post
 export const createRoomSeekingPost = async (
 	data: CreateRoomSeekingPostRequest,
+	token?: string,
 ): Promise<ApiResult<{ data: RoomSeekingPost }>> => {
 	try {
 		// Debug: Log the data being sent to API
@@ -118,21 +49,29 @@ export const createRoomSeekingPost = async (
 		}
 
 		if (
-			isNaN(data.preferredProvinceId) ||
-			isNaN(data.preferredDistrictId) ||
-			isNaN(data.preferredWardId)
+			Number.isNaN(data.preferredProvinceId) ||
+			Number.isNaN(data.preferredDistrictId) ||
+			Number.isNaN(data.preferredWardId)
 		) {
 			throw new Error('Invalid address data');
 		}
 
-		if (isNaN(data.minBudget) || isNaN(data.maxBudget) || isNaN(data.occupancy)) {
+		if (
+			Number.isNaN(data.minBudget) ||
+			Number.isNaN(data.maxBudget) ||
+			Number.isNaN(data.occupancy)
+		) {
 			throw new Error('Invalid numeric data');
 		}
 
-		const response = await apiCall<{ data: RoomSeekingPost }>('/api/room-seeking-posts', {
-			method: 'POST',
-			data,
-		});
+		const response = await apiCall<{ data: RoomSeekingPost }>(
+			'/api/room-seeking-posts',
+			{
+				method: 'POST',
+				data,
+			},
+			token,
+		);
 
 		return {
 			success: true,
@@ -149,11 +88,16 @@ export const createRoomSeekingPost = async (
 // Get room seeking post by ID
 export const getRoomSeekingPostById = async (
 	id: string,
+	token?: string,
 ): Promise<ApiResult<{ data: RoomSeekingPost }>> => {
 	try {
-		const response = await apiCall<{ data: RoomSeekingPost }>(`/api/room-seeking-posts/${id}`, {
-			method: 'GET',
-		});
+		const response = await apiCall<{ data: RoomSeekingPost }>(
+			`/api/room-seeking-posts/${id}`,
+			{
+				method: 'GET',
+			},
+			token,
+		);
 
 		return {
 			success: true,
@@ -171,12 +115,17 @@ export const getRoomSeekingPostById = async (
 export const updateRoomSeekingPost = async (
 	id: string,
 	data: UpdateRoomSeekingPostRequest,
+	token?: string,
 ): Promise<ApiResult<{ data: RoomSeekingPost }>> => {
 	try {
-		const response = await apiCall<{ data: RoomSeekingPost }>(`/api/room-seeking-posts/${id}`, {
-			method: 'PATCH',
-			data,
-		});
+		const response = await apiCall<{ data: RoomSeekingPost }>(
+			`/api/room-seeking-posts/${id}`,
+			{
+				method: 'PATCH',
+				data,
+			},
+			token,
+		);
 
 		return {
 			success: true,
@@ -194,6 +143,7 @@ export const updateRoomSeekingPost = async (
 export const updateRoomSeekingPostStatus = async (
 	id: string,
 	status: 'active' | 'paused' | 'closed' | 'expired',
+	token?: string,
 ): Promise<ApiResult<{ data: RoomSeekingPost }>> => {
 	try {
 		const response = await apiCall<{ data: RoomSeekingPost }>(
@@ -202,6 +152,7 @@ export const updateRoomSeekingPostStatus = async (
 				method: 'PATCH',
 				data: { status },
 			},
+			token,
 		);
 
 		return {
@@ -219,11 +170,16 @@ export const updateRoomSeekingPostStatus = async (
 // Delete room seeking post
 export const deleteRoomSeekingPost = async (
 	id: string,
+	token?: string,
 ): Promise<ApiResult<{ message: string }>> => {
 	try {
-		const response = await apiCall<{ message: string }>(`/api/room-seeking-posts/${id}`, {
-			method: 'DELETE',
-		});
+		const response = await apiCall<{ message: string }>(
+			`/api/room-seeking-posts/${id}`,
+			{
+				method: 'DELETE',
+			},
+			token,
+		);
 
 		return {
 			success: true,
@@ -240,12 +196,17 @@ export const deleteRoomSeekingPost = async (
 // Increment contact count for room seeking post
 export const incrementRoomSeekingPostContact = async (
 	id: string,
+	token?: string,
 ): Promise<ApiResult<{ message: string }>> => {
 	try {
-		const response = await apiCall<{ message: string }>(`/api/room-seeking-posts/${id}/contact`, {
-			method: 'POST',
-			data: '',
-		});
+		const response = await apiCall<{ message: string }>(
+			`/api/room-seeking-posts/${id}/contact`,
+			{
+				method: 'POST',
+				data: '',
+			},
+			token,
+		);
 
 		return {
 			success: true,
@@ -260,22 +221,25 @@ export const incrementRoomSeekingPostContact = async (
 };
 
 // Get room seeking posts with pagination (optional - for listing)
-export const getRoomSeekingPosts = async (params?: {
-	page?: number;
-	limit?: number;
-	status?: string;
-	userId?: string;
-	search?: string;
-	sortBy?: RoomSeekingSearchParams['sortBy'];
-	sortOrder?: RoomSeekingSearchParams['sortOrder'];
-	preferredProvinceId?: number;
-	preferredDistrictId?: number;
-	preferredWardId?: number;
-	minBudget?: number;
-	maxBudget?: number;
-	preferredRoomType?: string;
-	occupancy?: number;
-}): Promise<ApiResult<RoomSeekingPostListResponse>> => {
+export const getRoomSeekingPosts = async (
+	params?: {
+		page?: number;
+		limit?: number;
+		status?: string;
+		userId?: string;
+		search?: string;
+		sortBy?: RoomSeekingSearchParams['sortBy'];
+		sortOrder?: RoomSeekingSearchParams['sortOrder'];
+		preferredProvinceId?: number;
+		preferredDistrictId?: number;
+		preferredWardId?: number;
+		minBudget?: number;
+		maxBudget?: number;
+		preferredRoomType?: string;
+		occupancy?: number;
+	},
+	token?: string,
+): Promise<ApiResult<RoomSeekingPostListResponse>> => {
 	try {
 		const searchParams = new URLSearchParams();
 		if (params?.page) searchParams.append('page', params.page.toString());
@@ -303,9 +267,13 @@ export const getRoomSeekingPosts = async (params?: {
 		const endpoint = `/api/room-seeking-posts${
 			searchParams.toString() ? `?${searchParams.toString()}` : ''
 		}`;
-		const response = await apiCall<RoomSeekingPostListResponse>(endpoint, {
-			method: 'GET',
-		});
+		const response = await apiCall<RoomSeekingPostListResponse>(
+			endpoint,
+			{
+				method: 'GET',
+			},
+			token,
+		);
 
 		return {
 			success: true,
@@ -322,6 +290,7 @@ export const getRoomSeekingPosts = async (params?: {
 // Get current user's room seeking posts (convenience)
 export const getMyRoomSeekingPosts = async (
 	params?: Omit<RoomSeekingSearchParams, 'userId'>,
+	token?: string,
 ): Promise<ApiResult<RoomSeekingPostListResponse>> => {
 	try {
 		const searchParams = new URLSearchParams();
@@ -333,7 +302,7 @@ export const getMyRoomSeekingPosts = async (
 		if (params?.sortOrder) searchParams.append('sortOrder', params.sortOrder);
 
 		const endpoint = `/api/room-seeking-posts/me${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-		const response = await apiCall<RoomSeekingPostListResponse>(endpoint, { method: 'GET' });
+		const response = await apiCall<RoomSeekingPostListResponse>(endpoint, { method: 'GET' }, token);
 		return { success: true, data: response };
 	} catch (error) {
 		return {

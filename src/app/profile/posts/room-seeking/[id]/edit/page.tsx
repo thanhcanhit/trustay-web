@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Separator } from '@/components/ui/separator'
 import { AddressSelector, type AddressData } from '@/components/ui/address-selector'
 import { AmenityGrid } from '@/components/ui/amenity-grid'
-import { getRoomSeekingPostById, updateRoomSeekingPost } from '@/actions/room-seeking.action'
+import { useRoomSeekingStore } from '@/stores/roomSeekingStore'
 import { ROOM_TYPE_LABELS, type RoomSeekingPost } from '@/types'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -45,6 +45,7 @@ export default function EditRoomSeekingPostPage() {
     const router = useRouter()
     const postId = params.id as string
 
+    const { loadPostDetail, updatePost } = useRoomSeekingStore()
     const [post, setPost] = useState<RoomSeekingPost | null>(null)
     const [loading, setLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -72,15 +73,17 @@ export default function EditRoomSeekingPostPage() {
         const fetchPost = async () => {
             try {
                 setLoading(true)
-                const result = await getRoomSeekingPostById(postId)
-                
-                if (!result.success) {
-                    toast.error(result.error)
+                await loadPostDetail(postId)
+
+                // Get the loaded post from store
+                const postData = useRoomSeekingStore.getState().currentPost
+
+                if (!postData) {
+                    toast.error('Không thể tải thông tin bài đăng')
                     router.push('/profile/posts/room-seeking')
                     return
                 }
-                
-                const postData = result.data.data
+
                 setPost(postData)
                 
                 // Initialize form with post data
@@ -140,7 +143,7 @@ export default function EditRoomSeekingPostPage() {
         if (postId) {
             fetchPost()
         }
-    }, [postId, router])
+    }, [postId, router, loadPostDetail])
 
     const updateFormData = <K extends keyof FormData>(field: K, value: FormData[K]) => {
         setFormData(prev => ({
@@ -234,10 +237,11 @@ export default function EditRoomSeekingPostPage() {
                 amenityIds: formData.amenityIds || []
             }
 
-            const result = await updateRoomSeekingPost(postId, submitData)
+            const success = await updatePost(postId, submitData)
 
-            if (!result.success) {
-                toast.error(result.error)
+            if (!success) {
+                const error = useRoomSeekingStore.getState().formError
+                toast.error(error || 'Không thể cập nhật bài đăng')
                 return
             }
 
