@@ -12,6 +12,7 @@ import { InvitationRequestMessage } from "./invitation-request-message";
 import { MessageInput } from "./message-input";
 import { MessageAttachments } from "./message-attachments";
 import { getMessageMetadata } from "@/lib/message-metadata";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export function ChatConversation() {
   const getConversation = useChatStore((state) => state.getConversation);
@@ -173,27 +174,53 @@ export function ChatConversation() {
                 </div>
               ) : (
                 // Render normal text messages
-                <div
-                  className={`flex my-2 items-end ${isOwnMessage ? "justify-end" : ""}`}>
-                  <div
-                    className={`p-2 rounded-lg max-w-xs md:max-w-md ${
-                      isOwnMessage
-                        ? "bg-primary text-white"
-                        : "bg-gray-200"
-                    }`}>
-                    {msg.content && <p>{msg.content}</p>}
-                    <MessageAttachments attachments={msg.attachments} />
-                  </div>
-                  <div className="text-xs text-gray-400 ml-2 flex items-center">
-                    {format(new Date(msg.sentAt), 'HH:mm')}
-                    {isOwnMessage && (
-                      <span className="ml-1">
-                        {msg.readAt ? <CheckCheck size={16} className="text-blue-500" /> : <Check size={16} />}
-                      </span>
+                <div className={`flex my-2 gap-2 ${isOwnMessage ? "justify-end" : ""}`}>
+                  {!isOwnMessage && (
+                    <div className="flex-shrink-0">
+                      <Avatar className="rounded-lg">
+                        <AvatarImage
+                          src={conversation.counterpart.avatarUrl || ""}
+                          alt="@evilrabbit"
+                        />
+                        <AvatarFallback>{conversation.counterpart.lastName.charAt(0)}{conversation.counterpart.firstName.charAt(0)}  </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  )}
+
+                  {/* Message content container */}
+                  <div className={`flex flex-col gap-1 ${isOwnMessage ? "items-end" : "items-start"} max-w-xs md:max-w-md`}>
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <MessageAttachments attachments={msg.attachments} />
                     )}
+
+                    {msg.content && (
+                      <div
+                        className={`p-2 rounded-lg ${
+                          isOwnMessage
+                            ? "bg-primary text-white"
+                            : "bg-gray-200"
+                        }`}>
+                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                      </div>
+                    )}
+
+                    {/* Timestamp and read status */}
+                    <div className={`text-xs text-gray-400 flex items-center gap-1 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
+                      {format(new Date(msg.sentAt), 'HH:mm')}
+                      {isOwnMessage && (
+                        <span>
+                          {msg.readAt ? <CheckCheck size={16} className="text-blue-500" /> : <Check size={16} />}
+                        </span>
+                      )}
+                      {!isOwnMessage && !msg.readAt && (
+                        <div className="w-2 h-2 bg-red-500 rounded-full" />
+                      )}
+                    </div>
                   </div>
+
+                  {/* Avatar cho tin nhắn của mình */}
                   {!isOwnMessage && !msg.readAt && (
-                    <div className="w-2 h-2 bg-red-500 rounded-full ml-1 self-center" />
+                   <div className="w-2 h-2 bg-red-500 rounded-full ml-1 self-center" />
                   )}
                 </div>
               )}
