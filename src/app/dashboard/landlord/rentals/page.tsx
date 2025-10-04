@@ -69,7 +69,7 @@ export default function RentalsPage() {
     loadLandlordRentals()
   }, [loadLandlordRentals])
 
-  const filteredRentals = landlordRentals.filter(rental => {
+  const filteredRentals = (landlordRentals || []).filter(rental => {
     const searchLower = searchTerm.toLowerCase()
     const matchesSearch =
       rental.tenant?.firstName?.toLowerCase().includes(searchLower) ||
@@ -222,8 +222,9 @@ export default function RentalsPage() {
                 ? `${rental.tenant.firstName} ${rental.tenant.lastName}`
                 : 'Chưa có thông tin'
 
+              // Display room info from rental.room (which contains room instance data)
               const roomInfo = rental.room
-                ? `${rental.room.name || 'N/A'} - ${rental.room.roomType || 'N/A'}`
+                ? `${rental.room.name || 'N/A'}${rental.room.roomType ? ` - ${rental.room.roomType}` : ''}`
                 : 'Chưa có thông tin'
 
               return (
@@ -422,7 +423,7 @@ export default function RentalsPage() {
         {!loadingLandlord && filteredRentals.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-500 mb-4">
-              {landlordRentals.length === 0
+              {(landlordRentals || []).length === 0
                 ? 'Chưa có hợp đồng cho thuê nào'
                 : 'Không tìm thấy hợp đồng cho thuê phù hợp'
               }

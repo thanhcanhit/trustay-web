@@ -58,7 +58,7 @@ interface ContractState {
 	loadTenantContracts: (params?: { page?: number; limit?: number }) => Promise<void>;
 	loadById: (id: string) => Promise<void>;
 	loadContractById: (id: string) => Promise<Contract | null>;
-	autoGenerate: (rentalId: string) => Promise<boolean>;
+	autoGenerate: (rentalId: string, additionalTerms?: string) => Promise<boolean>;
 	update: (id: string, data: UpdateContractRequest) => Promise<boolean>;
 	createAmendment: (contractId: string, data: CreateContractAmendmentRequest) => Promise<boolean>;
 	downloadPDF: (id: string) => Promise<Blob | null>;
@@ -234,11 +234,11 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	},
 
 	// Auto-generate contract from rental
-	autoGenerate: async (rentalId) => {
+	autoGenerate: async (rentalId, additionalTerms) => {
 		set({ submitting: true, submitError: null });
 		try {
 			const token = TokenManager.getAccessToken();
-			const result = await autoGenerateContract(rentalId, token);
+			const result = await autoGenerateContract(rentalId, additionalTerms, token);
 			if (result.success) {
 				set({
 					current: result.data.data,

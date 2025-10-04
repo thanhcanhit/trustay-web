@@ -51,7 +51,7 @@ export default function ContractsPage() {
     loadLandlordContracts()
   }, [loadLandlordContracts])
 
-  const filteredContracts = landlordContracts.filter(contract => {
+  const filteredContracts = (landlordContracts || []).filter(contract => {
     const searchLower = searchTerm.toLowerCase()
     const matchesSearch =
       contract.id?.toLowerCase().includes(searchLower) ||
@@ -284,7 +284,7 @@ export default function ContractsPage() {
                           <div>
                             <p className="text-gray-600">Tiền cọc</p>
                             <p className="font-medium text-blue-600">
-                              N/A
+                              {(contract.depositAmount || 0).toLocaleString('vi-VN')} VNĐ
                             </p>
                           </div>
                         </div>
@@ -339,7 +339,7 @@ export default function ContractsPage() {
         {!loadingLandlord && filteredContracts.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-500 mb-4">
-              {landlordContracts.length === 0
+              {(landlordContracts || []).length === 0
                 ? 'Chưa có hợp đồng nào'
                 : 'Không tìm thấy hợp đồng phù hợp'
               }

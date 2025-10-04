@@ -34,13 +34,15 @@ const normalizeEntityResponse = <T extends object>(response: unknown): { data: T
 // Auto-generate contract from rental (Landlord only)
 export const autoGenerateContract = async (
 	rentalId: string,
+	additionalTerms?: string,
 	token?: string,
 ): Promise<ApiResult<{ data: Contract }>> => {
 	try {
 		const response = await apiCall<{ data: Contract }>(
-			`/api/contracts/auto-generate/${rentalId}`,
+			`/api/contracts/from-rental/${rentalId}`,
 			{
 				method: 'POST',
+				data: additionalTerms ? { additionalTerms } : {},
 			},
 			token,
 		);
@@ -81,6 +83,7 @@ export const getLandlordContracts = async (
 	params?: {
 		page?: number;
 		limit?: number;
+		status?: string;
 	},
 	token?: string,
 ): Promise<ApiResult<ContractListResponse>> => {
@@ -88,8 +91,9 @@ export const getLandlordContracts = async (
 		const q = new URLSearchParams();
 		if (params?.page) q.append('page', String(params.page));
 		if (params?.limit) q.append('limit', String(params.limit));
+		if (params?.status) q.append('status', params.status);
 
-		const endpoint = `/api/contracts/my-contracts${q.toString() ? `?${q.toString()}` : ''}`;
+		const endpoint = `/api/contracts${q.toString() ? `?${q.toString()}` : ''}`;
 		const response = await apiCall<ContractListResponse>(endpoint, { method: 'GET' }, token);
 		return { success: true, data: response };
 	} catch (error) {
@@ -105,6 +109,7 @@ export const getTenantContracts = async (
 	params?: {
 		page?: number;
 		limit?: number;
+		status?: string;
 	},
 	token?: string,
 ): Promise<ApiResult<ContractListResponse>> => {
@@ -112,8 +117,9 @@ export const getTenantContracts = async (
 		const q = new URLSearchParams();
 		if (params?.page) q.append('page', String(params.page));
 		if (params?.limit) q.append('limit', String(params.limit));
+		if (params?.status) q.append('status', params.status);
 
-		const endpoint = `/api/contracts/as-tenant${q.toString() ? `?${q.toString()}` : ''}`;
+		const endpoint = `/api/contracts${q.toString() ? `?${q.toString()}` : ''}`;
 		const response = await apiCall<ContractListResponse>(endpoint, { method: 'GET' }, token);
 		return { success: true, data: response };
 	} catch (error) {
