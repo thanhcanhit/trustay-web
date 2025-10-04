@@ -1,11 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { MapPin, Home } from "lucide-react";
 import type { MessageData } from "@/actions/chat.action";
 import { MESSAGE_TYPES } from "@/constants/chat.constants";
-//import { getRoomTypeDisplayName } from "@/utils/room-types";
-import { getOptimizedImageUrl } from "@/lib/utils";
+import { SizingImage } from "@/components/sizing-image";
 
 interface InvitationRequestMessageProps {
   message: MessageData;
@@ -39,8 +37,9 @@ export function InvitationRequestMessage({ message, isOwnMessage }: InvitationRe
         >
           {metadata.roomImage && (
             <div className="relative h-32 w-full">
-              <Image
-                src={getOptimizedImageUrl(metadata.roomImage, 'listing')}
+              <SizingImage
+                src={metadata.roomImage}
+                srcSize="512x512"
                 alt={metadata.roomName || "Room"}
                 fill
                 className="object-cover"

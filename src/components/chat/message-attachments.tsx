@@ -1,11 +1,30 @@
 "use client";
 
-import Image from "next/image";
 import { Play } from "lucide-react";
 import { useState } from "react";
+import { SizingImage } from "@/components/sizing-image";
 
 interface MessageAttachmentsProps {
   attachments: Array<{ id: string; url: string; type: string; name?: string }>;
+}
+
+// Helper function to determine file type from URL
+function getTypeFromUrl(url: string): string {
+  const extension = url.split('.').pop()?.toLowerCase() || '';
+
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+  const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'];
+
+  if (imageExtensions.includes(extension)) {
+    return 'image/' + extension;
+  }
+
+  if (videoExtensions.includes(extension)) {
+    return 'video/' + extension;
+  }
+
+  // Default to image if unknown
+  return 'image/jpeg';
 }
 
 export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
@@ -27,18 +46,24 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
     <>
       <div className="flex flex-wrap gap-2 mt-2">
         {attachments.map((attachment) => {
-          const isImage = attachment.type.startsWith('image');
-          const isVideo = attachment.type.startsWith('video');
+          // Skip if no URL
+          if (!attachment.url) return null;
+
+          // Determine type from URL extension if type is missing
+          const type = attachment.type || getTypeFromUrl(attachment.url);
+          const isImage = type.startsWith('image');
+          const isVideo = type.startsWith('video');
 
           return (
             <div
               key={attachment.id}
               className="relative rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
-              onClick={() => handleMediaClick(attachment.url, attachment.type)}
+              onClick={() => handleMediaClick(attachment.url, type)}
             >
               {isImage && (
-                <Image
+                <SizingImage
                   src={attachment.url}
+                  srcSize="512x512"
                   alt={attachment.name || "Attachment"}
                   width={200}
                   height={200}
@@ -79,8 +104,9 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
 
           <div className="max-w-4xl max-h-full" onClick={(e) => e.stopPropagation()}>
             {selectedMedia.type.startsWith('image') ? (
-              <Image
+              <SizingImage
                 src={selectedMedia.url}
+                srcSize="1920x1080"
                 alt="Full size"
                 width={1200}
                 height={800}

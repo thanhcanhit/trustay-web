@@ -66,7 +66,7 @@ const profileItems: ProfileSidebarItem[] = [
         title: "Trọ của tôi",
         href: "/profile/accommodation",
         icon: Home,
-        disabled: true
+        disabled: false
       },
       {
         title: "Hóa đơn",

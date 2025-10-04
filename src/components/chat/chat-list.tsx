@@ -5,6 +5,35 @@ import { Input } from "@/components/ui/input";
 import { useChatStore } from "@/stores/chat.store";
 import { useMemo, useEffect } from "react";
 import { format } from 'date-fns';
+import { MESSAGE_TYPES, MESSAGE_CONTENT_MAP } from '@/constants/chat.constants';
+import { Image as ImageIcon } from 'lucide-react';
+
+// Helper to get preview text for last message
+function getMessagePreview(lastMessage: { content: string; type: string } | undefined): { text: string; icon?: React.ReactNode } {
+  if (!lastMessage) return { text: '' };
+
+  // Handle special message types
+  if (lastMessage.type === MESSAGE_TYPES.INVITATION) {
+    return { text: 'Lời mời thuê', icon: <ImageIcon size={14} className="inline mr-1" /> };
+  }
+
+  if (lastMessage.type === MESSAGE_TYPES.REQUEST) {
+    return { text: 'Yêu cầu thuê', icon: <ImageIcon size={14} className="inline mr-1" /> };
+  }
+
+  // Handle system messages
+  if (lastMessage.type in MESSAGE_CONTENT_MAP) {
+    return { text: MESSAGE_CONTENT_MAP[lastMessage.type as keyof typeof MESSAGE_CONTENT_MAP] };
+  }
+
+  // For text messages, show content
+  if (lastMessage.content) {
+    return { text: lastMessage.content };
+  }
+
+  // If no content, might be attachments only
+  return { text: 'Đã gửi file đính kèm', icon: <ImageIcon size={14} className="inline mr-1" /> };
+}
 
 export function ChatList() {
   const conversationsObj = useChatStore((state) => state.conversations);
@@ -30,6 +59,8 @@ export function ChatList() {
           const counterpart = convo.counterpart;
           const displayName = `${counterpart.firstName} ${counterpart.lastName}`;
           const isSelected = convo.conversationId === currentCoversationId;
+          const messagePreview = getMessagePreview(lastMessage);
+
           return (
             <li
               key={convo.conversationId}
@@ -45,8 +76,9 @@ export function ChatList() {
               </Avatar>
               <div className="ml-3 flex-1 line-clamp-1">
                 <p className={`font-semibold ${convo.unreadCount && convo.unreadCount > 0 ? 'font-bold' : ''}`}>{displayName}</p>
-                <p className={`text-sm text-gray-500 truncate ${convo.unreadCount && convo.unreadCount > 0 ? 'font-bold text-black' : ''}`}>
-                  {lastMessage?.content}
+                <p className={`text-sm text-gray-500 truncate flex items-center ${convo.unreadCount && convo.unreadCount > 0 ? 'font-bold text-black' : ''}`}>
+                  {messagePreview.icon}
+                  {messagePreview.text}
                 </p>
               </div>
               <div className="flex flex-col items-end text-xs text-gray-400">

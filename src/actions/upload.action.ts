@@ -9,8 +9,11 @@ export interface UploadResponse {
 }
 
 export interface BulkUploadResponse {
-	imagePaths: string[];
-	savedToDb: boolean;
+	results: Array<{
+		imagePath: string;
+		savedToDb: boolean;
+	}>;
+	total: number;
 }
 
 /**

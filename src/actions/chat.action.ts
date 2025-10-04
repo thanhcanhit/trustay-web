@@ -180,11 +180,23 @@ export async function getOrCreateConversation(
 export async function uploadChatAttachments(files: File[]): Promise<string[]> {
 	const { uploadBulkImages } = await import('./upload.action');
 
+	console.log('[Upload] Starting upload for files:', files.length);
+
 	try {
 		const response = await uploadBulkImages(files);
-		return response.imagePaths || [];
+		console.log('[Upload] Upload response:', response);
+
+		// Extract imagePath from results array
+		const urls = response.results?.map((result) => result.imagePath) || [];
+		console.log('[Upload] Extracted URLs:', urls);
+
+		if (urls.length === 0) {
+			console.warn('[Upload] No URLs returned from upload');
+		}
+
+		return urls;
 	} catch (error) {
-		console.error('Failed to upload chat attachments:', error);
+		console.error('[Upload] Failed to upload chat attachments:', error);
 		throw new Error('Không thể upload file đính kèm');
 	}
 }

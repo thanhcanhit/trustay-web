@@ -13,7 +13,7 @@ interface AttachmentPreview {
 }
 
 interface MessageInputProps {
-  onSendMessage: (content: string, attachments: File[]) => void;
+  onSendMessage: (content: string, attachments: File[]) => Promise<void> | void;
   disabled?: boolean;
 }
 
@@ -68,16 +68,22 @@ export function MessageInput({ onSendMessage, disabled = false }: MessageInputPr
     setAttachments(newAttachments);
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!message.trim() && attachments.length === 0) return;
 
     const files = attachments.map(a => a.file);
-    onSendMessage(message, files);
 
-    // Cleanup
-    attachments.forEach(a => URL.revokeObjectURL(a.url));
-    setAttachments([]);
-    setMessage("");
+    try {
+      await onSendMessage(message, files);
+
+      // Cleanup after successful send
+      attachments.forEach(a => URL.revokeObjectURL(a.url));
+      setAttachments([]);
+      setMessage("");
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      alert('Không thể gửi tin nhắn. Vui lòng thử lại.');
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

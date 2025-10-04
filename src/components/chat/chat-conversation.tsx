@@ -81,21 +81,31 @@ export function ChatConversation() {
     messages
   });
 
-  const handleSendMessage = (content: string, attachmentFiles: File[]) => {
+  const handleSendMessage = async (content: string, attachmentFiles: File[]) => {
     if ((!content.trim() && attachmentFiles.length === 0) || !conversation || !user) {
+      console.log('Cannot send message: missing content or conversation');
       return;
     }
 
-    sendMessage({
-      content,
-      recipientId: conversation.counterpart.id,
-      conversationId: conversation.conversationId,
-      attachmentFiles,
-      type: MESSAGE_TYPES.TEXT,
-    });
+    console.log('Sending message:', { content, attachmentFiles, conversationId: conversation.conversationId });
 
-    // Enable auto-scroll when sending message
-    setShouldAutoScroll(true);
+    try {
+      await sendMessage({
+        content,
+        recipientId: conversation.counterpart.id,
+        conversationId: conversation.conversationId,
+        attachmentFiles,
+        type: MESSAGE_TYPES.TEXT,
+      });
+
+      console.log('Message sent successfully');
+
+      // Enable auto-scroll when sending message
+      setShouldAutoScroll(true);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error; // Re-throw to let MessageInput handle it
+    }
   };
 
   if (!conversation) {
