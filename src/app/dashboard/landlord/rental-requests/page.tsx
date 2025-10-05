@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { toast } from "sonner"
@@ -15,6 +14,7 @@ import { Search, Calendar, Phone, Mail, Clock, CheckCircle, MessageSquare, X } f
 import { useBookingRequestStore } from "@/stores/bookingRequestStore"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
+import { ClickableUserAvatar } from "@/components/profile/clickable-user-avatar"
 
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -150,15 +150,12 @@ export default function RentalRequestsPage() {
                   <TableRow key={request.id}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage
-                            src={request.tenant?.avatarUrl || undefined}
-                            alt={`${request.tenant?.firstName || ''} ${request.tenant?.lastName || ''}`}
-                          />
-                          <AvatarFallback className="bg-blue-100 text-blue-600">
-                            {`${(request.tenant?.firstName || 'U')[0]}${(request.tenant?.lastName || 'S')[0]}`}
-                          </AvatarFallback>
-                        </Avatar>
+                        <ClickableUserAvatar
+                          userId={request.tenant?.id || ''}
+                          avatarUrl={request.tenant?.avatarUrl}
+                          userName={`${request.tenant?.firstName || ''} ${request.tenant?.lastName || ''}`}
+                          size="md"
+                        />
                         <div className="min-w-0">
                           <p className="font-medium text-sm truncate">
                             {request.tenant?.firstName} {request.tenant?.lastName}

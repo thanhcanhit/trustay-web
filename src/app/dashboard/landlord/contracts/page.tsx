@@ -30,6 +30,7 @@ import {
 import { toast } from "sonner"
 import ContractPreviewDialog from "@/components/contract/ContractPreviewDialog"
 import { STATUS_COLORS, CONTRACT_SIGN } from "@/constants/basic"
+import { UserProfileModal } from "@/components/profile/user-profile-modal"
 
 export default function ContractsPage() {
   const router = useRouter()
@@ -38,6 +39,8 @@ export default function ContractsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [selectedRentalId, setSelectedRentalId] = useState<string>('')
   const [previewContractId, setPreviewContractId] = useState<string | null>(null)
+  const [profileModalOpen, setProfileModalOpen] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
   const {
     contracts,
@@ -344,7 +347,18 @@ export default function ContractsPage() {
                         {contract.id ? `HĐ-${contract.id.slice(-8)}` : 'N/A'}
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">{tenantName}</div>
+                        <button
+                          onClick={() => {
+                            if (contract.tenant?.id) {
+                              setSelectedUserId(contract.tenant.id)
+                              setProfileModalOpen(true)
+                            }
+                          }}
+                          className="font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left"
+                          disabled={!contract.tenant?.id}
+                        >
+                          {tenantName}
+                        </button>
                       </TableCell>
                       <TableCell>{roomName}</TableCell>
                       <TableCell className="text-right font-medium text-green-600">
@@ -455,6 +469,15 @@ export default function ContractsPage() {
               setPreviewContractId(null)
               router.push(`/dashboard/landlord/contracts/${previewContractId}`)
             }}
+          />
+        )}
+
+        {/* User Profile Modal */}
+        {selectedUserId && (
+          <UserProfileModal
+            userId={selectedUserId}
+            open={profileModalOpen}
+            onOpenChange={setProfileModalOpen}
           />
         )}
       </div>

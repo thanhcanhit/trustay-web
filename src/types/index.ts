@@ -28,6 +28,7 @@ export type {
 	// Authentication Types
 	LoginRequest,
 	PasswordStrengthResponse,
+	PublicUserProfile,
 	RefreshTokenRequest,
 	RegisterDirectRequest,
 	RegisterRequest,

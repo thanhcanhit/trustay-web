@@ -92,6 +92,25 @@ export interface UserProfile {
 	updatedAt: string;
 }
 
+export interface PublicUserProfile {
+	id: string;
+	name: string;
+	email: string;
+	phone: string;
+	avatarUrl: string | null;
+	gender: 'male' | 'female' | 'other';
+	role: 'tenant' | 'landlord';
+	bio: string | null;
+	isVerifiedPhone: boolean;
+	isVerifiedEmail: boolean;
+	isVerifiedIdentity: boolean;
+	isVerifiedBank: boolean;
+	overallRating: number;
+	totalRatings: number;
+	createdAt: string;
+	updatedAt: string;
+}
+
 export interface UpdateProfileRequest {
 	firstName?: string;
 	lastName?: string;

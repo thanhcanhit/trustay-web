@@ -6,12 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 //import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { UserPlus, XCircle, Clock, CheckCircle2, Home, Calendar, DollarSign, User } from "lucide-react"
+import { UserPlus, XCircle, Clock, CheckCircle2, Home, Calendar, DollarSign } from "lucide-react"
 import { ProfileLayout } from "@/components/profile/profile-layout"
 import { useInvitationStore } from "@/stores/invitationStore"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { Textarea } from "@/components/ui/textarea"
+import { ClickableUserAvatar } from "@/components/profile/clickable-user-avatar"
 
 function StatusBadge({ status }: { status: 'pending' | 'accepted' | 'declined' | 'expired' | 'withdrawn' }) {
   const map = {
@@ -112,11 +113,17 @@ function BookingRequestsContent() {
 
               <CardContent className="pt-0">
                 <div className="space-y-3">
-                  <div className="flex items-start space-x-2 text-sm">
-                    <User className="h-4 w-4 text-gray-400 mt-0.5" />
+                  <div className="flex items-start space-x-3 text-sm">
+                    <ClickableUserAvatar
+                      userId={invitation.sender?.id || ''}
+                      avatarUrl={invitation.sender?.avatarUrl}
+                      userName={`${invitation.sender?.firstName} ${invitation.sender?.lastName}`}
+                      size="md"
+                    />
                     <div>
                       <div className="text-gray-900 font-medium">{invitation.sender?.firstName} {invitation.sender?.lastName}</div>
                       <div className="text-xs text-gray-600">{invitation.sender?.email}</div>
+                      <div className="text-xs text-gray-500">Chủ nhà</div>
                     </div>
                   </div>
 

@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Search, MessageSquare } from "lucide-react"
 import { useInvitationStore } from "@/stores/invitationStore"
@@ -19,6 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { ClickableUserAvatar } from "@/components/profile/clickable-user-avatar"
 
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -139,15 +139,12 @@ export default function BookingRequestsPage() {
                   <TableRow key={invitation.id} className="hover:bg-gray-50">
                     <TableCell>
                       <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage
-                            src={invitation.recipient?.avatarUrl || undefined}
-                            alt={`${invitation.recipient?.firstName || ''} ${invitation.recipient?.lastName || ''}`}
-                          />
-                          <AvatarFallback className="bg-blue-100 text-blue-600">
-                            {`${(invitation.recipient?.firstName || 'U')[0]}${(invitation.recipient?.lastName || 'S')[0]}`}
-                          </AvatarFallback>
-                        </Avatar>
+                        <ClickableUserAvatar
+                          userId={invitation.recipient?.id || ''}
+                          avatarUrl={invitation.recipient?.avatarUrl}
+                          userName={`${invitation.recipient?.firstName || ''} ${invitation.recipient?.lastName || ''}`}
+                          size="md"
+                        />
                         <div className="min-w-0">
                           <div className="font-medium text-gray-900 truncate">
                             {invitation.recipient?.firstName} {invitation.recipient?.lastName}

@@ -148,6 +148,7 @@ export {
 } from './upload.action';
 // Export user actions (prefer user-actions updateUserProfile, exclude ApiError)
 export {
+	getPublicUserProfile,
 	getUserProfile,
 	updateUserProfile,
 } from './user.action';
