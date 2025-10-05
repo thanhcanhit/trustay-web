@@ -8,11 +8,11 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Home, Users, DollarSign, Settings, Building as BuildingIcon } from "lucide-react"
 import { useRoomStore } from "@/stores/roomStore"
-import { type RoomResponse as Room } from "@/types/response/room"
+import { type Room } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
 import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
-import { ROOM_TYPE_LABELS } from "@/types/basic"
+import { ROOM_TYPE_LABELS } from "@/constants/basic"
 
 export default function RoomDetailPage() {
   const params = useParams()

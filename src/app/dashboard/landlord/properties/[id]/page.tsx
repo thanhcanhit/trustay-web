@@ -6,10 +6,10 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { MapPin, Home, Users, DollarSign, TrendingUp, Building as BuildingIcon, MoreVertical } from "lucide-react"
+import { MapPin, Home, Users, DollarSign, TrendingUp, Building as BuildingIcon, MoreVertical, Trash } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useBuildingStore } from "@/stores/buildingStore"
-import { type BuildingResponse as BuildingType } from "@/types/response/room"
+import { type Building as BuildingType } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
 import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
@@ -180,9 +180,9 @@ export default function BuildingDetailPage() {
                       Thêm loại phòng
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer">
-                    <Users className="h-4 w-4 mr-2" />
-                    Xem khách thuê
+                  <DropdownMenuItem onSelect={handleDeleteBuilding} className="cursor-pointer text-red-600 hover:bg-red-100">
+                    <Trash className="h-4 w-4 mr-2" />
+                    Xóa dãy trọ
                   </DropdownMenuItem>
                   <DropdownMenuItem className="cursor-pointer">
                     <DollarSign className="h-4 w-4 mr-2" />
