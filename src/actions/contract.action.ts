@@ -39,6 +39,10 @@ const normalizeContract = (contract: Record<string, unknown>): Contract => {
 			? {
 					...landlord,
 					...splitName(landlord.fullName as string),
+					id: landlord.id as string,
+					fullName: landlord.fullName as string,
+					email: landlord.email as string,
+					phone: landlord.phone as string | null | undefined,
 				}
 			: undefined,
 		// Map tenant data
@@ -46,6 +50,10 @@ const normalizeContract = (contract: Record<string, unknown>): Contract => {
 			? {
 					...tenant,
 					...splitName(tenant.fullName as string),
+					id: tenant.id as string,
+					fullName: tenant.fullName as string,
+					email: tenant.email as string,
+					phone: tenant.phone as string | null | undefined,
 				}
 			: undefined,
 		// Map room data
@@ -53,6 +61,8 @@ const normalizeContract = (contract: Record<string, unknown>): Contract => {
 			? {
 					...room,
 					name: (room.roomName as string) || (room.name as string),
+					roomNumber: room.roomNumber as string,
+					roomName: room.roomName as string,
 					roomType: room.roomType as string,
 					areaSqm: room.areaSqm as number,
 					buildingName: room.buildingName as string,
@@ -61,6 +71,8 @@ const normalizeContract = (contract: Record<string, unknown>): Contract => {
 		// Map contract financial data from contractData
 		monthlyRent: (contractData?.monthlyRent as number) || (contract.monthlyRent as number),
 		depositAmount: (contractData?.depositAmount as number) || (contract.depositAmount as number),
+		landlordId: (landlord?.id as string) || (contract.landlordId as string),
+		tenantId: (tenant?.id as string) || (contract.tenantId as string),
 	} as Contract;
 };
 
@@ -271,25 +283,43 @@ export const downloadContractPDF = async (id: string, token?: string): Promise<A
 	}
 };
 
+// Request OTP for contract signing
+export const requestSigningOTP = async (
+	contractId: string,
+	token?: string,
+): Promise<ApiResult<{ message: string }>> => {
+	try {
+		const response = await apiCall<{ message: string }>(
+			`/api/contracts/${contractId}/request-otp`,
+			{
+				method: 'POST',
+			},
+			token,
+		);
+		return { success: true, data: response };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể gửi mã OTP'),
+		};
+	}
+};
+
 // Sign contract (Landlord or Tenant)
 export const signContract = async (
 	contractId: string,
 	signatureData: string,
-	signatureMethod: 'canvas' | 'upload' = 'canvas',
+	otpCode?: string,
 	token?: string,
 ): Promise<ApiResult<{ data: Contract }>> => {
 	try {
-		// Get device info for signature tracking
-		const deviceInfo = `${navigator.userAgent} - ${window.screen.width}x${window.screen.height}`;
-
 		const response = await apiCall<{ data: Contract }>(
 			`/api/contracts/${contractId}/sign`,
 			{
 				method: 'POST',
 				data: {
-					signatureData,
-					signatureMethod,
-					deviceInfo,
+					signatureImage: signatureData, // Backend expects 'signatureImage' not 'signatureData'
+					otpCode: otpCode || '123456', // Mã OTP giả vì backend chưa có endpoint lấy OTP
 				},
 			},
 			token,

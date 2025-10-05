@@ -20,19 +20,18 @@ import {
   Download,
   AlertCircle,
   CheckCircle,
-  Loader2,
-  Eye
+  Loader2
 } from "lucide-react"
 import { useContractStore } from "@/stores/contractStore"
 import { Contract } from "@/types/types"
 import ContractSigningWorkflow from "@/components/contract/ContractSigningWorkflow"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 
 const STATUS_COLORS = {
   draft: 'bg-gray-100 text-gray-800',
   pending_signatures: 'bg-yellow-100 text-yellow-800',
+  partially_signed: 'bg-orange-100 text-orange-800',
   active: 'bg-green-100 text-green-800',
   expired: 'bg-red-100 text-red-800',
   terminated: 'bg-red-100 text-red-800',
@@ -43,11 +42,18 @@ const STATUS_COLORS = {
 const STATUS_LABELS = {
   draft: 'Bản nháp',
   pending_signatures: 'Chờ ký',
+  partially_signed: 'Đã ký một phần',
   active: 'Đang hiệu lực',
   expired: 'Hết hạn',
   terminated: 'Đã chấm dứt',
   signed: 'Đã ký',
   cancelled: 'Đã hủy'
+}
+
+const CONTRACT_TYPE_LABELS = {
+  monthly_rental: 'Thuê theo tháng',
+  fixed_term_rental: 'Thuê có thời hạn',
+  short_term_rental: 'Thuê ngắn hạn'
 }
 
 export default function ContractDetailPage() {
@@ -56,9 +62,6 @@ export default function ContractDetailPage() {
   const contractId = params.id as string
   const [contract, setContract] = useState<Contract | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string>('')
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [loadingPreview, setLoadingPreview] = useState(false)
-  const [previewError, setPreviewError] = useState<string | null>(null)
 
   const {
     loadContractById,
@@ -78,45 +81,11 @@ export default function ContractDetailPage() {
     }
   }, [contractId, loadContractById])
 
-  const loadPreview = useCallback(async () => {
-    setLoadingPreview(true)
-    setPreviewError(null)
-
-    try {
-      const response = await fetch(`/api/contracts/${contractId}/pdf/preview`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error('Không thể tải bản xem trước')
-      }
-
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      setPreviewUrl(url)
-    } catch (err) {
-      setPreviewError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra')
-    } finally {
-      setLoadingPreview(false)
-    }
-  }, [contractId])
-
   useEffect(() => {
     if (contractId) {
       loadContract()
-      loadPreview()
     }
-  }, [contractId, loadContract, loadPreview])
-
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl)
-      }
-    }
-  }, [previewUrl])
+  }, [contractId, loadContract])
 
   const handleDownload = async () => {
     if (!contract) return
@@ -186,23 +155,20 @@ export default function ContractDetailPage() {
     )
   }
 
-  const tenantName = contract.tenant
-    ? `${contract.tenant.firstName} ${contract.tenant.lastName}`
-    : 'Chưa có thông tin'
+  const tenantName = contract.tenant?.fullName || 
+    (contract.tenant ? `${contract.tenant.firstName} ${contract.tenant.lastName}` : 'Chưa có thông tin')
 
-  const landlordName = contract.landlord
-    ? `${contract.landlord.firstName} ${contract.landlord.lastName}`
-    : 'Chưa có thông tin'
+  const landlordName = contract.landlord?.fullName || 
+    (contract.landlord ? `${contract.landlord.firstName} ${contract.landlord.lastName}` : 'Chưa có thông tin')
 
-  const roomInfo = contract.room
-    ? `${contract.room.name || 'N/A'}`
-    : 'Chưa có thông tin'
-
-  const buildingInfo = contract.room?.buildingName || 'N/A'
+  const roomInfo = contract.room?.roomName || contract.room?.name || 'Chưa có thông tin'
+  const roomNumber = contract.room?.roomNumber || 'N/A'
+  const buildingInfo = contract.room?.buildingName || contract.contractData?.buildingName || 'N/A'
+  const buildingAddress = contract.contractData?.buildingAddress || 'N/A'
 
   return (
     <DashboardLayout userType="landlord">
-      <div className="px-6 max-w-6xl mx-auto">
+      <div className="px-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <Button
@@ -217,7 +183,7 @@ export default function ContractDetailPage() {
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Hợp đồng #{contract.id?.slice(-8)}
+                {contract.contractCode || `Hợp đồng #${contract.id?.slice(-8)}`}
               </h1>
               <p className="text-gray-600">Chi tiết và ký hợp đồng thuê trọ</p>
             </div>
@@ -225,6 +191,11 @@ export default function ContractDetailPage() {
               <Badge className={STATUS_COLORS[contract.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'}>
                 {STATUS_LABELS[contract.status as keyof typeof STATUS_LABELS] || contract.status}
               </Badge>
+              {contract.contractType && (
+                <Badge variant="outline">
+                  {CONTRACT_TYPE_LABELS[contract.contractType as keyof typeof CONTRACT_TYPE_LABELS] || contract.contractType}
+                </Badge>
+              )}
               <Button
                 variant="outline"
                 onClick={handleDownload}
@@ -237,255 +208,288 @@ export default function ContractDetailPage() {
           </div>
         </div>
 
-        {/* Contract Info */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {/* Tenant Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <User className="h-5 w-5 mr-2 text-blue-600" />
-                Người thuê
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-3 mb-3">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={contract.tenant?.avatarUrl || ''} alt={tenantName} />
-                  <AvatarFallback className="bg-blue-100 text-blue-600">
-                    {tenantName.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold">{tenantName}</p>
-                  <p className="text-sm text-gray-600">{contract.tenant?.email}</p>
-                </div>
-              </div>
-              {contract.tenant?.phone && (
-                <p className="text-sm text-gray-600">
-                  📱 {contract.tenant.phone}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Landlord Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <User className="h-5 w-5 mr-2 text-green-600" />
-                Chủ nhà
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-3 mb-3">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={contract.landlord?.avatarUrl || ''} alt={landlordName} />
-                  <AvatarFallback className="bg-green-100 text-green-600">
-                    {landlordName.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold">{landlordName}</p>
-                  <p className="text-sm text-gray-600">{contract.landlord?.email}</p>
-                </div>
-              </div>
-              {contract.landlord?.phone && (
-                <p className="text-sm text-gray-600">
-                  📱 {contract.landlord.phone}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Room Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <MapPin className="h-5 w-5 mr-2 text-orange-600" />
-                Phòng
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div>
-                  <p className="font-semibold text-lg">{roomInfo}</p>
-                  <p className="text-sm text-gray-600">{buildingInfo}</p>
-                </div>
-                {contract.room?.roomType && (
-                  <p className="text-sm text-gray-600">
-                    Loại: {contract.room.roomType}
-                  </p>
-                )}
-                {contract.room?.areaSqm && (
-                  <p className="text-sm text-gray-600">
-                    Diện tích: {contract.room.areaSqm}m²
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Contract Preview */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Eye className="h-5 w-5 mr-2" />
-              Xem trước hợp đồng
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingPreview && (
-              <div className="flex items-center justify-center py-12">
-                <div className="flex items-center space-x-2">
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-                  <span className="text-gray-500">Đang tải bản xem trước...</span>
-                </div>
-              </div>
-            )}
-
-            {previewError && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{previewError}</AlertDescription>
-              </Alert>
-            )}
-
-            {previewUrl && !loadingPreview && !previewError && (
-              <div className="border rounded-lg overflow-hidden bg-gray-50">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={previewUrl}
-                  alt="Contract Preview"
-                  className="w-full h-auto"
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Contract Terms */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <FileText className="h-5 w-5 mr-2" />
-              Điều khoản hợp đồng
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center space-x-3">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <DollarSign className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Tiền thuê hàng tháng</p>
-                  <p className="text-xl font-bold text-green-600">
-                    {(contract.monthlyRent || 0).toLocaleString('vi-VN')} VNĐ
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <DollarSign className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Tiền cọc</p>
-                  <p className="text-xl font-bold text-blue-600">
-                    {contract.depositAmount
-                      ? contract.depositAmount.toLocaleString('vi-VN') + ' VNĐ'
-                      : 'Chưa có thông tin'
-                    }
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <Calendar className="h-6 w-6 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Ngày bắt đầu</p>
-                  <p className="text-lg font-semibold">
-                    {contract.startDate
-                      ? format(new Date(contract.startDate), 'dd/MM/yyyy', { locale: vi })
-                      : 'N/A'
-                    }
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="p-3 bg-orange-100 rounded-lg">
-                  <Calendar className="h-6 w-6 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Ngày kết thúc</p>
-                  <p className="text-lg font-semibold">
-                    {contract.endDate
-                      ? format(new Date(contract.endDate), 'dd/MM/yyyy', { locale: vi })
-                      : 'N/A'
-                    }
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {contract.terms && (
-              <>
-                <Separator className="my-6" />
-                <div>
-                  <h4 className="font-semibold mb-3">Điều khoản chi tiết:</h4>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {contract.terms}
-                    </p>
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Contract Details (2/3 width) */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* People Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Tenant Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center">
+                    <User className="h-5 w-5 mr-2 text-blue-600" />
+                    Người thuê
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center space-x-3 mb-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={contract.tenant?.avatarUrl || ''} alt={tenantName} />
+                      <AvatarFallback className="bg-blue-100 text-blue-600">
+                        {tenantName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold">{tenantName}</p>
+                      <p className="text-sm text-gray-600">{contract.tenant?.email}</p>
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
-
-            {contract.createdAt && (
-              <div className="mt-4 pt-4 border-t flex items-center text-sm text-gray-600">
-                <Clock className="h-4 w-4 mr-2" />
-                <span>Tạo lúc: {format(new Date(contract.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Signing Section */}
-        <ContractSigningWorkflow
-          contract={contract}
-          currentUserId={currentUserId}
-          currentUserRole="landlord"
-          onSigningComplete={handleSigningComplete}
-        />
-
-        {/* Contract Fully Signed Notice */}
-        {contract.landlordSignature && contract.tenantSignature && (
-          <Card className="mt-6 bg-green-50 border-green-200">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-3">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-                <div>
-                  <h3 className="text-lg font-semibold text-green-800">
-                    Hợp đồng đã hoàn tất!
-                  </h3>
-                  <p className="text-green-700">
-                    Cả hai bên đã ký hợp đồng. Hợp đồng đang có hiệu lực.
-                  </p>
-                  {contract.fullySignedAt && (
-                    <p className="text-sm text-green-600 mt-1">
-                      Hoàn thành lúc: {format(new Date(contract.fullySignedAt), 'dd/MM/yyyy HH:mm:ss', { locale: vi })}
+                  {contract.tenant?.phone && (
+                    <p className="text-sm text-gray-600">
+                      📱 {contract.tenant.phone}
                     </p>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Landlord Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center">
+                    <User className="h-5 w-5 mr-2 text-green-600" />
+                    Chủ nhà
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center space-x-3 mb-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={contract.landlord?.avatarUrl || ''} alt={landlordName} />
+                      <AvatarFallback className="bg-green-100 text-green-600">
+                        {landlordName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold">{landlordName}</p>
+                      <p className="text-sm text-gray-600">{contract.landlord?.email}</p>
+                    </div>
+                  </div>
+                  {contract.landlord?.phone && (
+                    <p className="text-sm text-gray-600">
+                      📱 {contract.landlord.phone}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Room Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <MapPin className="h-5 w-5 mr-2 text-orange-600" />
+                  Thông tin phòng
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Tên phòng</p>
+                    <p className="font-semibold text-lg">{roomInfo}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Số phòng</p>
+                    <p className="font-semibold text-lg">{roomNumber}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Tòa nhà</p>
+                    <p className="font-semibold">{buildingInfo}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Địa chỉ</p>
+                    <p className="font-semibold">{buildingAddress}</p>
+                  </div>
+                  {contract.room?.roomType && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Loại phòng</p>
+                      <p className="font-semibold">{contract.room.roomType}</p>
+                    </div>
+                  )}
+                  {contract.room?.areaSqm && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Diện tích</p>
+                      <p className="font-semibold">{contract.room.areaSqm}m²</p>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+
+            {/* Contract Financial Terms */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <DollarSign className="h-5 w-5 mr-2" />
+                  Điều khoản tài chính
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-green-100 rounded-lg">
+                      <DollarSign className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Tiền thuê hàng tháng</p>
+                      <p className="text-xl font-bold text-green-600">
+                        {(contract.monthlyRent || contract.contractData?.monthlyRent || 0).toLocaleString('vi-VN')} VNĐ
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-blue-100 rounded-lg">
+                      <DollarSign className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Tiền cọc</p>
+                      <p className="text-xl font-bold text-blue-600">
+                        {(contract.depositAmount || contract.contractData?.depositAmount || 0).toLocaleString('vi-VN')} VNĐ
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-purple-100 rounded-lg">
+                      <Calendar className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Ngày bắt đầu</p>
+                      <p className="text-lg font-semibold">
+                        {contract.startDate
+                          ? format(new Date(contract.startDate), 'dd/MM/yyyy', { locale: vi })
+                          : 'N/A'
+                        }
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-orange-100 rounded-lg">
+                      <Calendar className="h-6 w-6 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Ngày kết thúc</p>
+                      <p className="text-lg font-semibold">
+                        {contract.endDate
+                          ? format(new Date(contract.endDate), 'dd/MM/yyyy', { locale: vi })
+                          : 'Không giới hạn'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {contract.terms && (
+                  <>
+                    <Separator className="my-6" />
+                    <div>
+                      <h4 className="font-semibold mb-3">Điều khoản chi tiết:</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                          {contract.terms}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Signature Status */}
+            {contract.signatures && contract.signatures.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <FileText className="h-5 w-5 mr-2" />
+                    Trạng thái ký
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {contract.signatures.map((sig, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                          <div>
+                            <p className="font-semibold">
+                              {sig.signerRole === 'landlord' ? 'Chủ nhà' : 'Người thuê'} đã ký
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {format(new Date(sig.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Metadata */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                  {contract.createdAt && (
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 mr-2" />
+                      <span>Tạo lúc: {format(new Date(contract.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
+                    </div>
+                  )}
+                  {contract.updatedAt && (
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 mr-2" />
+                      <span>Cập nhật: {format(new Date(contract.updatedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
+                    </div>
+                  )}
+                  {contract.signedAt && (
+                    <div className="flex items-center">
+                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                      <span>Hoàn tất ký: {format(new Date(contract.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Signing Section (1/3 width) */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-6">
+              <ContractSigningWorkflow
+                contract={contract}
+                currentUserId={currentUserId}
+                currentUserRole="landlord"
+                onSigningComplete={handleSigningComplete}
+              />
+
+              {/* Contract Fully Signed Notice */}
+              {contract.landlordSignature && contract.tenantSignature && (
+                <Card className="mt-6 bg-green-50 border-green-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-start space-x-3">
+                      <CheckCircle className="h-6 w-6 text-green-600 mt-1" />
+                      <div>
+                        <h3 className="text-lg font-semibold text-green-800">
+                          Hợp đồng đã hoàn tất!
+                        </h3>
+                        <p className="text-green-700 text-sm mt-1">
+                          Cả hai bên đã ký hợp đồng. Hợp đồng đang có hiệu lực.
+                        </p>
+                        {(contract.fullySignedAt || contract.signedAt) && (
+                          <p className="text-xs text-green-600 mt-2">
+                            Hoàn thành: {format(new Date(contract.fullySignedAt || contract.signedAt!), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   )

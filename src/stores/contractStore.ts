@@ -8,6 +8,7 @@ import {
 	getContractPreview,
 	getContractStatus,
 	getMyContracts,
+	requestSigningOTP,
 	signContract,
 	verifyPDFIntegrity,
 } from '@/actions/contract.action';
@@ -30,6 +31,7 @@ interface ContractState {
 	generating: boolean;
 	signing: boolean;
 	verifying: boolean;
+	requestingOTP: boolean;
 
 	// Error states
 	error: string | null;
@@ -39,6 +41,7 @@ interface ContractState {
 	generateError: string | null;
 	signError: string | null;
 	verifyError: string | null;
+	otpError: string | null;
 
 	// Metadata
 	meta: ContractListResponse['meta'] | null;
@@ -72,12 +75,8 @@ interface ContractState {
 	downloadPDF: (id: string) => Promise<Blob | null>;
 	getPreview: (contractId: string) => Promise<boolean>;
 	verifyPDF: (contractId: string) => Promise<boolean>;
-	sign: (
-		contractId: string,
-		signatureData: string,
-		signatureMethod?: 'canvas' | 'upload',
-		otpCode?: string,
-	) => Promise<boolean>;
+	requestOTP: (contractId: string) => Promise<boolean>;
+	sign: (contractId: string, signatureData: string, otpCode?: string) => Promise<boolean>;
 	clearCurrent: () => void;
 	clearErrors: () => void;
 }
@@ -97,6 +96,7 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	generating: false,
 	signing: false,
 	verifying: false,
+	requestingOTP: false,
 
 	error: null,
 	errorCurrent: null,
@@ -105,6 +105,7 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	generateError: null,
 	signError: null,
 	verifyError: null,
+	otpError: null,
 
 	meta: null,
 
@@ -383,15 +384,39 @@ export const useContractStore = create<ContractState>((set, get) => ({
 		}
 	},
 
+	// Request OTP for signing
+	requestOTP: async (contractId) => {
+		set({ requestingOTP: true, otpError: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await requestSigningOTP(contractId, token);
+			if (result.success) {
+				set({
+					requestingOTP: false,
+				});
+				return true;
+			} else {
+				set({
+					otpError: result.error,
+					requestingOTP: false,
+				});
+				return false;
+			}
+		} catch (error) {
+			set({
+				otpError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				requestingOTP: false,
+			});
+			return false;
+		}
+	},
+
 	// Sign contract
-	sign: async (contractId, signatureData, signatureMethod = 'canvas', otpCode) => {
+	sign: async (contractId, signatureData, otpCode) => {
 		set({ signing: true, signError: null });
 		try {
 			const token = TokenManager.getAccessToken();
-			// TODO: Update signContract action to accept otpCode when backend is ready
-			// For now, pass otpCode as comment but don't use it yet
-			console.log('OTP Code (not sent to backend yet):', otpCode);
-			const result = await signContract(contractId, signatureData, signatureMethod, token);
+			const result = await signContract(contractId, signatureData, otpCode, token);
 			if (result.success) {
 				set({
 					current: result.data.data,

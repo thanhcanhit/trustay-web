@@ -6,8 +6,6 @@ import { useContractStore } from '@/stores/contractStore';
 import SignaturePad, { SignaturePadRef } from './SignaturePad';
 import SignatureDisplay from './SignatureDisplay';
 import { toast } from 'sonner';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 interface ContractSigningWorkflowProps {
 	contract: Contract;
@@ -24,34 +22,38 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 	const signaturePadRef = useRef<SignaturePadRef>(null);
 	const [showSignaturePad, setShowSignaturePad] = useState(false);
 	const [isConfirming, setIsConfirming] = useState(false);
-	const [otpCode, setOtpCode] = useState('');
 
 	const { sign, signing, signError } = useContractStore();
 
-	// Kiểm tra trạng thái ký của từng bên
-	const isLandlordSigned = !!contract.landlordSignature;
-	const isTenantSigned = !!contract.tenantSignature;
+	// Kiểm tra trạng thái ký của từng bên - check cả 2 nguồn: field riêng và signatures array
+	const isLandlordSigned = !!contract.landlordSignature || 
+		contract.signatures?.some(sig => sig.signerRole === 'landlord') || 
+		false;
+	const isTenantSigned = !!contract.tenantSignature || 
+		contract.signatures?.some(sig => sig.signerRole === 'tenant') || 
+		false;
 	const isFullySigned = isLandlordSigned && isTenantSigned;
 
 	// Kiểm tra xem user hiện tại đã ký chưa
 	const hasCurrentUserSigned = currentUserRole === 'landlord' ? isLandlordSigned : isTenantSigned;
 
-	// Kiểm tra xem có thể ký không
-	const canSign = contract.status === 'pending_signatures' && !hasCurrentUserSigned;
+	// Kiểm tra xem có thể ký không - cho phép ký khi status là draft, pending_signatures, hoặc partially_signed
+	// và user hiện tại chưa ký
+	const canSign = (contract.status === 'pending_signatures' || contract.status === 'draft' || contract.status === 'partially_signed') && !hasCurrentUserSigned;
 
 	// Lấy thông tin chữ ký của user hiện tại
 	const currentUserSignature = currentUserRole === 'landlord'
 		? contract.landlordSignature
 		: contract.tenantSignature;
 
-	const handleStartSigning = () => {
+	const handleStartSigning = async () => {
+		// Bỏ qua bước request OTP - hiển thị form ký ngay
 		setShowSignaturePad(true);
 	};
 
 	const handleCancelSigning = () => {
 		setShowSignaturePad(false);
 		signaturePadRef.current?.clear();
-		setOtpCode('');
 	};
 
 	const handleConfirmSigning = async () => {
@@ -63,22 +65,21 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 			return;
 		}
 
-		if (!otpCode || otpCode.length !== 6) {
-			toast.error('Vui lòng nhập mã OTP (6 chữ số)');
-			return;
-		}
+		// OTP là optional - không bắt buộc phải nhập
+		// if (!otpCode || otpCode.length !== 6) {
+		// 	toast.error('Vui lòng nhập mã OTP (6 chữ số)');
+		// 	return;
+		// }
 
 		setIsConfirming(true);
 
 		try {
-			// TODO: Backend cần update API để nhận OTP
-			// Tạm thời vẫn gọi API cũ, cần update khi backend sẵn sàng
-			const success = await sign(contract.id, signatureData, 'canvas', otpCode);
+			// Ký với OTP mặc định (backend chưa có endpoint lấy OTP)
+			const success = await sign(contract.id, signatureData);
 
 			if (success) {
 				toast.success('Ký hợp đồng thành công!');
 				setShowSignaturePad(false);
-				setOtpCode('');
 				onSigningComplete?.();
 			} else {
 				toast.error(signError || 'Không thể ký hợp đồng');
@@ -92,7 +93,7 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 
 	// Render contract status badge
 	const renderStatusBadge = () => {
-		const statusConfig = {
+		const statusConfig: Record<string, { label: string; color: string }> = {
 			draft: { label: 'Bản nháp', color: 'bg-gray-100 text-gray-800' },
 			pending_signatures: { label: 'Chờ ký', color: 'bg-yellow-100 text-yellow-800' },
 			active: { label: 'Đang hiệu lực', color: 'bg-green-100 text-green-800' },
@@ -100,7 +101,11 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 			terminated: { label: 'Đã chấm dứt', color: 'bg-red-100 text-red-800' }
 		};
 
-		const config = statusConfig[contract.status];
+		const config = statusConfig[contract.status] || { 
+			label: contract.status || 'Không xác định', 
+			color: 'bg-gray-100 text-gray-800' 
+		};
+		
 		return (
 			<span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
 				{config.label}
@@ -199,7 +204,7 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 					) : (
 						<div>
 							<p className="text-gray-600 mb-4">
-								Vui lòng ký vào khung bên dưới và nhập mã OTP để xác nhận:
+								Vui lòng vẽ chữ ký của bạn vào khung bên dưới để xác nhận:
 							</p>
 
 							<SignaturePad
@@ -209,30 +214,11 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 								className="mb-4"
 							/>
 
-							<div className="mb-4">
-								<Label htmlFor="otpCode" className="block text-sm font-medium mb-2">
-									Mã OTP (6 chữ số)
-								</Label>
-								<Input
-									id="otpCode"
-									type="text"
-									placeholder="Nhập mã OTP"
-									value={otpCode}
-									onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-									maxLength={6}
-									className="max-w-xs"
-									disabled={signing || isConfirming}
-								/>
-								<p className="text-xs text-gray-500 mt-1">
-									Mã OTP đã được gửi đến email/số điện thoại của bạn
-								</p>
-							</div>
-
 							<div className="flex space-x-4">
 								<button
 									onClick={handleConfirmSigning}
 									disabled={signing || isConfirming}
-									className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+									className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
 								>
 									{signing || isConfirming ? 'Đang ký...' : 'Xác nhận ký'}
 								</button>

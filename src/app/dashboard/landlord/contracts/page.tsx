@@ -29,6 +29,8 @@ const STATUS_COLORS = {
   active: 'bg-green-100 text-green-800',
   expired: 'bg-red-100 text-red-800',
   pending: 'bg-yellow-100 text-yellow-800',
+  pending_signatures: 'bg-yellow-100 text-yellow-800',
+  partially_signed: 'bg-orange-100 text-orange-800',
   terminated: 'bg-gray-100 text-gray-800',
   draft: 'bg-blue-100 text-blue-800',
   signed: 'bg-green-100 text-green-800',
@@ -39,6 +41,8 @@ const STATUS_LABELS = {
   active: 'Đang hiệu lực',
   expired: 'Hết hạn',
   pending: 'Chờ ký',
+  pending_signatures: 'Chờ ký',
+  partially_signed: 'Đã ký một phần',
   terminated: 'Đã chấm dứt',
   draft: 'Bản nháp',
   signed: 'Đã ký',
@@ -192,7 +196,8 @@ export default function ContractsPage() {
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 <SelectItem value="active">Đang hiệu lực</SelectItem>
                 <SelectItem value="draft">Bản nháp</SelectItem>
-                <SelectItem value="pending">Chờ ký</SelectItem>
+                <SelectItem value="pending_signatures">Chờ ký</SelectItem>
+                <SelectItem value="partially_signed">Đã ký một phần</SelectItem>
                 <SelectItem value="signed">Đã ký</SelectItem>
                 <SelectItem value="expired">Hết hạn</SelectItem>
                 <SelectItem value="terminated">Đã chấm dứt</SelectItem>
@@ -406,7 +411,9 @@ export default function ContractsPage() {
                             <Eye className="h-4 w-4 mr-1" />
                             Xem
                           </Button>
-                          {contract.status === 'draft' && (
+                          {/* Hiển thị nút Ký nếu status là draft, pending_signatures, hoặc partially_signed VÀ landlord chưa ký */}
+                          {(contract.status === 'draft' || contract.status === 'pending_signatures' || contract.status === 'partially_signed') && 
+                           !contract.landlordSignature && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -467,7 +474,12 @@ export default function ContractsPage() {
             open={!!previewContractId}
             onOpenChange={(open) => !open && setPreviewContractId(null)}
             showSignButton={
-              contracts?.find(c => c.id === previewContractId)?.status === 'draft'
+              // Hiển thị nút ký nếu status là draft, pending_signatures, hoặc partially_signed VÀ landlord chưa ký
+              (() => {
+                const contract = contracts?.find(c => c.id === previewContractId)
+                return (contract?.status === 'draft' || contract?.status === 'pending_signatures' || contract?.status === 'partially_signed') && 
+                       !contract?.landlordSignature
+              })()
             }
             onSignClick={() => {
               setPreviewContractId(null)

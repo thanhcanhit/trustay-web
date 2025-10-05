@@ -842,28 +842,72 @@ export interface RoomSeekingPublicSearchParams {
 // Contract Types
 export interface Contract {
 	id: string;
-	landlordId: string;
-	tenantId: string;
-	roomId: string;
+	contractCode?: string;
+	landlordId?: string;
+	tenantId?: string;
+	roomId?: string;
 	rentalId?: string;
-	terms: string;
-	monthlyRent: number;
+	terms?: string;
+	monthlyRent?: number;
 	depositAmount?: number;
 	startDate: string;
-	endDate: string;
-	status: 'draft' | 'pending_signatures' | 'active' | 'expired' | 'terminated';
+	endDate?: string | null;
+	status: 'draft' | 'pending_signatures' | 'partially_signed' | 'active' | 'expired' | 'terminated';
+	contractType?: 'monthly_rental' | 'fixed_term_rental' | 'short_term_rental';
 
 	// Digital Signature Fields
 	landlordSignature?: ContractSignature;
 	tenantSignature?: ContractSignature;
 	signatureDeadline?: string;
 	fullySignedAt?: string;
+	signedAt?: string | null;
+	pdfUrl?: string | null;
+
+	// Nested objects from API
+	landlord?: {
+		id: string;
+		fullName: string;
+		email: string;
+		phone?: string | null;
+		avatarUrl?: string;
+		// Computed fields
+		firstName?: string;
+		lastName?: string;
+	};
+	tenant?: {
+		id: string;
+		fullName: string;
+		email: string;
+		phone?: string | null;
+		avatarUrl?: string;
+		// Computed fields
+		firstName?: string;
+		lastName?: string;
+	};
+	room?: {
+		roomNumber: string;
+		roomName: string;
+		buildingName: string;
+		// Computed fields
+		name?: string;
+		roomType?: string;
+		areaSqm?: number;
+	};
+	contractData?: {
+		roomName: string;
+		roomNumber: string;
+		monthlyRent: number;
+		buildingName: string;
+		depositAmount: number;
+		buildingAddress: string;
+	};
+	signatures?: {
+		signerRole: 'landlord' | 'tenant';
+		signedAt: string;
+	}[];
 
 	createdAt: string;
 	updatedAt: string;
-	landlord?: UserProfile;
-	tenant?: UserProfile;
-	room?: Room;
 	amendments?: ContractAmendment[];
 }
 
