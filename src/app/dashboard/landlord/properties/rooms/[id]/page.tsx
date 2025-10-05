@@ -4,28 +4,22 @@ import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Home, Edit, Trash2, ArrowLeft, Users, DollarSign, Settings, Building } from "lucide-react"
-import { getRoomById, deleteRoom, getRoomInstancesByStatus } from "@/actions/room.action"
+import { Home, Users, DollarSign, Settings, Building as BuildingIcon } from "lucide-react"
+import { useRoomStore } from "@/stores/roomStore"
 import { type Room } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
-
-const ROOM_TYPE_LABELS = {
-  boarding_house: 'Nhà trọ',
-  apartment: 'Căn hộ',
-  house: 'Nhà nguyên căn',
-  studio: 'Studio'
-}
+import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
+import { ROOM_TYPE_LABELS } from "@/constants/basic"
 
 export default function RoomDetailPage() {
   const params = useParams()
   const router = useRouter()
   const roomId = params.id as string
 
+  const { loadRoomById, deleteMyRoom, loadRoomInstances } = useRoomStore()
   const [room, setRoom] = useState<Room | null>(null)
   const [loading, setLoading] = useState(true)
   const [actualStatusCounts, setActualStatusCounts] = useState<{
@@ -45,27 +39,27 @@ export default function RoomDetailPage() {
   const fetchRoomDetail = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await getRoomById(roomId)
-      
-      if (!response.success) {
-        toast.error(response.error)
+      const roomData = await loadRoomById(roomId)
+
+      if (!roomData) {
+        toast.error('Không tìm thấy phòng')
         router.push('/dashboard/landlord/properties/rooms')
         return
       }
-      
-      setRoom(response.data.data)
-      
+
+      setRoom(roomData)
+
       // Fetch actual status counts from room instances
       try {
-        const instancesResponse = await getRoomInstancesByStatus(roomId, 'all')
-        if (instancesResponse.success) {
-          setActualStatusCounts(instancesResponse.data.data.statusCounts)
+        const instancesData = await loadRoomInstances(roomId, 'all')
+        if (instancesData) {
+          setActualStatusCounts(instancesData.statusCounts)
         }
       } catch (instancesError) {
         console.error('Error fetching room instances:', instancesError)
         // Fallback to room.statusCounts if instances fetch fails
-        if (response.data.data.statusCounts) {
-          setActualStatusCounts(response.data.data.statusCounts)
+        if (roomData.statusCounts) {
+          setActualStatusCounts(roomData.statusCounts)
         }
       }
     } catch (error) {
@@ -75,7 +69,7 @@ export default function RoomDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [roomId, router])
+  }, [roomId, router, loadRoomById, loadRoomInstances])
 
   useEffect(() => {
     if (roomId) {
@@ -85,18 +79,18 @@ export default function RoomDetailPage() {
 
   const handleDeleteRoom = async () => {
     if (!room) return
-    
+
     if (!confirm(`Bạn có chắc chắn muốn xóa loại phòng "${room.name}"? Hành động này không thể hoàn tác.`)) {
       return
     }
 
     try {
-      const response = await deleteRoom(room.id)
-      if (!response.success) {
-        toast.error(response.error)
+      const success = await deleteMyRoom(room.id)
+      if (!success) {
+        toast.error('Không thể xóa loại phòng')
         return
       }
-      
+
       toast.success('Xóa loại phòng thành công')
       router.push('/dashboard/landlord/properties/rooms')
     } catch (error) {
@@ -138,428 +132,268 @@ export default function RoomDetailPage() {
   return (
     <DashboardLayout userType="landlord">
       <div className="p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <Link href="/dashboard/landlord/properties/rooms">
-              <Button variant="outline" size="sm" className="cursor-pointer">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Quay lại
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{room.name}</h1>
-              <div className="flex items-center space-x-2 mt-1">
-                <Badge variant="outline">
-                  {ROOM_TYPE_LABELS[room.roomType as keyof typeof ROOM_TYPE_LABELS]}
-                </Badge>
-                <Badge className={room.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                  {room.isActive ? 'Hoạt động' : 'Tạm dừng'}
-                </Badge>
-                <span className="text-sm text-gray-500">
-                  Cập nhật: {new Date(room.updatedAt).toLocaleDateString('vi-VN')}
-                </span>
-              </div>
+        <PageHeader
+          title={room.name}
+          subtitle={
+            <div className="flex items-center space-x-2">
+              <Badge variant="outline">
+                {ROOM_TYPE_LABELS[room.roomType as keyof typeof ROOM_TYPE_LABELS]}
+              </Badge>
+              <Badge className={room.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                {room.isActive ? 'Hoạt động' : 'Tạm dừng'}
+              </Badge>
+              <span className="text-sm text-gray-500">
+                Cập nhật: {new Date(room.lastUpdated).toLocaleDateString('vi-VN')}
+              </span>
             </div>
-          </div>
-          
-          <div className="flex space-x-3">
-            <Link href={`/dashboard/landlord/properties/rooms/${room.id}/edit`}>
-              <Button className="cursor-pointer">
-                <Edit className="h-4 w-4 mr-2" />
-                Chỉnh sửa
-              </Button>
-            </Link>
-            <Button variant="destructive" onClick={handleDeleteRoom} className="cursor-pointer">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Xóa
-            </Button>
-          </div>
-        </div>
+          }
+          backUrl="/dashboard/landlord/properties/rooms"
+          backLabel="Quay lại"
+          actions={
+            <>
+              <Link href={`/dashboard/landlord/properties/rooms/${room.id}/instances`}>
+                <Button variant="outline" className="cursor-pointer">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Quản lý phòng
+                </Button>
+              </Link>
+              <PageHeaderActions.Edit href={`/dashboard/landlord/properties/rooms/${room.id}/edit`} />
+              <PageHeaderActions.Delete onClick={handleDeleteRoom} />
+            </>
+          }
+        />
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
+        {/* Stats Overview */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
                 <Home className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Tổng số phòng</p>
-                  <p className="text-2xl font-bold text-gray-900">{room.totalRooms || 0}</p>
-                </div>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
+              <div>
+                <p className="text-xs text-gray-600">Tổng số phòng</p>
+                <p className="text-xl font-bold text-gray-900">{room.totalRooms || 0}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-green-100 rounded-lg">
                 <Users className="h-5 w-5 text-green-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Đã cho thuê</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                      {actualStatusCounts.occupied || 0}
-                  </p>
-                </div>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
+              <div>
+                <p className="text-xs text-gray-600">Đã cho thuê</p>
+                <p className="text-xl font-bold text-gray-900">{actualStatusCounts.occupied || 0}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
                 <Home className="h-5 w-5 text-purple-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Còn trống</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {actualStatusCounts.available || 0}
-                  </p>
-                </div>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
+              <div>
+                <p className="text-xs text-gray-600">Còn trống</p>
+                <p className="text-xl font-bold text-gray-900">{actualStatusCounts.available || 0}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-orange-100 rounded-lg">
                 <DollarSign className="h-5 w-5 text-orange-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Giá thuê/tháng</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {room.pricing?.basePriceMonthly ? 
-                      Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN') : 
-                      'Chưa cập nhật'} VNĐ
-                  </p>
-                </div>
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-xs text-gray-600">Giá thuê/tháng</p>
+                <p className="text-xl font-bold text-gray-900">
+                  {room.pricing?.basePriceMonthly ?
+                    Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN') + ' VNĐ' :
+                    'N/A'}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Details Tabs */}
-        <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="info">Thông tin</TabsTrigger>
-            <TabsTrigger value="pricing">Giá cả</TabsTrigger>
-            <TabsTrigger value="amenities">Tiện nghi</TabsTrigger>
-            <TabsTrigger value="instances">Quản lý phòng</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="info" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Basic Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Thông tin cơ bản</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-1">Tên loại phòng</h4>
-                    <p className="text-gray-600">{room.name}</p>
-                  </div>
-                  
-                  {room.description && (
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1">Mô tả</h4>
-                      <p className="text-gray-600">{room.description}</p>
-                    </div>
-                  )}
-                  
-                  <Separator />
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1">Loại phòng</h4>
-                      <p className="text-gray-600">
-                        {ROOM_TYPE_LABELS[room.roomType as keyof typeof ROOM_TYPE_LABELS]}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1">Diện tích</h4>
-                      <p className="text-gray-600">{room.areaSqm || 'Chưa cập nhật'} m²</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1">Sức chứa</h4>
-                      <p className="text-gray-600">{room.maxOccupancy || 'Chưa cập nhật'} người</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1">Tầng</h4>
-                      <p className="text-gray-600">Tầng {room.floorNumber || 'Chưa cập nhật'}</p>
-                    </div>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-1">Dãy trọ</h4>
-                    <div className="flex items-center space-x-2">
-                      <Building className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600">{room.building?.name || 'N/A'}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Room Generation Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Thông tin sinh phòng</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1">Số lượng phòng</h4>
-                      <p className="text-gray-600">{room.totalRooms || 'Chưa cập nhật'} phòng</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1">Tiền tố</h4>
-                      <p className="text-gray-600">{room.roomNumberPrefix || 'Chưa cập nhật'}</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1">Số bắt đầu</h4>
-                      <p className="text-gray-600">{room.roomNumberStart || 'Chưa cập nhật'}</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1">Ví dụ số phòng</h4>
-                      <p className="text-gray-600">
-                        {room.roomNumberPrefix && room.roomNumberStart ? 
-                          `${room.roomNumberPrefix}${room.roomNumberStart}, ${room.roomNumberPrefix}${room.roomNumberStart + 1}, ...` : 
-                          'Chưa cập nhật'}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {(actualStatusCounts.available > 0 || actualStatusCounts.occupied > 0 || actualStatusCounts.maintenance > 0 || actualStatusCounts.reserved > 0 || actualStatusCounts.unavailable > 0) && (
-                    <>
-                      <Separator />
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-3">Thống kê trạng thái</h4>
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Còn trống:</span>
-                            <span className="font-medium text-green-600">
-                              {actualStatusCounts.available || 0}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Đã đặt:</span>
-                            <span className="font-medium text-purple-600">{actualStatusCounts.reserved || 0}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Bảo trì:</span>
-                            <span className="font-medium text-yellow-600">{actualStatusCounts.maintenance || 0}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Đã cho thuê:</span>
-                            <span className="font-medium text-blue-600">
-                              {actualStatusCounts.occupied || 0}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Không hoạt động:</span>
-                            <span className="font-medium text-red-600">{actualStatusCounts.unavailable || 0}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="pricing" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Thông tin giá cả</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-1">Giá thuê hàng tháng</h4>
-                    <p className="text-2xl font-bold text-green-600">
-                      {room.pricing?.basePriceMonthly ? 
-                        Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN') : 
-                        'Chưa cập nhật'} VNĐ
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-1">Tiền cọc</h4>
-                    <p className="text-xl font-bold text-blue-600">
-                      {room.pricing?.depositAmount ? 
-                        Number(room.pricing.depositAmount).toLocaleString('vi-VN') : 
-                        'Chưa cập nhật'} VNĐ
-                    </p>
-                    <p className="text-sm text-gray-500">({room.pricing?.depositMonths || 'Chưa cập nhật'} tháng)</p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-1">Thời gian thuê</h4>
-                    <p className="text-gray-600">
-                      {room.pricing?.minimumStayMonths || 'Chưa cập nhật'} - {room.pricing?.maximumStayMonths || '∞'} tháng
-                    </p>
-                  </div>
-                  
-                  {room.pricing?.utilityCostMonthly && Number(room.pricing.utilityCostMonthly) > 0 && (
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1">Chi phí tiện ích</h4>
-                      <p className="text-gray-600">
-                        {Number(room.pricing.utilityCostMonthly).toLocaleString('vi-VN')} VNĐ/tháng
-                      </p>
-                    </div>
-                  )}
-                  
-                  {room.pricing?.cleaningFee && Number(room.pricing.cleaningFee) > 0 && (
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1">Phí vệ sinh</h4>
-                      <p className="text-gray-600">
-                        {Number(room.pricing.cleaningFee).toLocaleString('vi-VN')} VNĐ
-                      </p>
-                    </div>
-                  )}
-                  
-                  {room.pricing?.serviceFeePercentage && Number(room.pricing.serviceFeePercentage) > 0 && (
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1">Phí dịch vụ</h4>
-                      <p className="text-gray-600">{room.pricing.serviceFeePercentage}%</p>
-                    </div>
-                  )}
+        {/* Main Content - 2 Columns Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Basic Info */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Basic Information & Room Generation */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h3 className="text-base font-semibold text-gray-900 mb-3">Thông tin cơ bản</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Tên loại phòng</label>
+                  <p className="mt-0.5 text-gray-900">{room.name}</p>
                 </div>
-                
-                <div className="mt-6 flex flex-wrap gap-4">
-                  <Badge variant={room.pricing?.utilityIncluded ? "default" : "secondary"}>
-                    {room.pricing?.utilityIncluded ? 'Tiện ích đã bao gồm' : 'Tiện ích tính riêng'}
-                  </Badge>
-                  <Badge variant={room.pricing?.priceNegotiable ? "default" : "secondary"}>
-                    {room.pricing?.priceNegotiable ? 'Có thể thương lượng' : 'Giá cố định'}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="amenities" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Amenities */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Tiện nghi</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {room.amenities && room.amenities.length > 0 ? (
-                    <div className="space-y-3">
-                      {room.amenities.map((amenity, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div>
-                            <p className="font-medium">{amenity.customValue || `Tiện nghi ${index + 1}`}</p>
-                            {amenity.notes && (
-                              <p className="text-sm text-gray-600">{amenity.notes}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">Chưa có tiện nghi nào</p>
-                  )}
-                </CardContent>
-              </Card>
 
-              {/* Rules */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Nội quy</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {room.rules && room.rules.length > 0 ? (
-                    <div className="space-y-3">
-                      {room.rules.map((rule, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div>
-                            <p className="font-medium">{rule.customValue || `Quy định ${index + 1}`}</p>
-                            {rule.notes && (
-                              <p className="text-sm text-gray-600">{rule.notes}</p>
-                            )}
-                          </div>
-                          <Badge variant={rule.isEnforced ? "default" : "secondary"}>
-                            {rule.isEnforced ? 'Bắt buộc' : 'Khuyến khích'}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">Chưa có nội quy nào</p>
-                  )}
-                </CardContent>
-              </Card>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Loại phòng</label>
+                  <p className="mt-0.5 text-gray-900">
+                    {ROOM_TYPE_LABELS[room.roomType as keyof typeof ROOM_TYPE_LABELS]}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Dãy trọ</label>
+                  <div className="mt-0.5 flex items-center space-x-2">
+                    <BuildingIcon className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-900">{room.buildingName || 'N/A'}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Diện tích</label>
+                  <p className="mt-0.5 text-gray-900">{room.areaSqm || 'N/A'} m²</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Sức chứa</label>
+                  <p className="mt-0.5 text-gray-900">{room.maxOccupancy || 'N/A'} người</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Tầng</label>
+                  <p className="mt-0.5 text-gray-900">Tầng {room.floorNumber || 'N/A'}</p>
+                </div>
+
+                {room.description && (
+                  <div className="md:col-span-3">
+                    <label className="text-sm font-medium text-gray-500">Mô tả</label>
+                    <div className="mt-0.5 text-gray-900 text-sm" dangerouslySetInnerHTML={{ __html: room.description }} />
+                  </div>
+                )}
+              </div>
+
+              <Separator className="my-3" />
+
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Thông tin sinh phòng</h4>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Số lượng phòng</label>
+                  <p className="mt-0.5 text-gray-900">{room.totalRooms || 'N/A'} phòng</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Tiền tố</label>
+                  <p className="mt-0.5 text-gray-900">{room.roomNumberPrefix || 'N/A'}</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Số bắt đầu</label>
+                  <p className="mt-0.5 text-gray-900">{room.roomNumberStart || 'N/A'}</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Ví dụ</label>
+                  <p className="mt-0.5 text-gray-900 text-sm">
+                    {room.roomNumberPrefix && room.roomNumberStart ?
+                      `${room.roomNumberPrefix}${room.roomNumberStart}, ${room.roomNumberPrefix}${room.roomNumberStart + 1}` :
+                      'N/A'}
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* Costs */}
-            {room.costs && room.costs.length > 0 && (
-              <Card className="mt-8">
-                <CardHeader>
-                  <CardTitle>Chi phí phát sinh</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
+          </div>
+
+          {/* Right Column - Pricing, Amenities, Rules, Costs */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h3 className="text-base font-semibold text-gray-900 mb-3">Thông tin giá cả</h3>
+
+              {/* Pricing */}
+              <div className="space-y-2 mb-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Giá thuê/tháng</label>
+                    <p className="mt-0.5 text-base font-bold text-green-600">
+                      {room.pricing?.basePriceMonthly ?
+                        Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN') :
+                        'N/A'} VNĐ
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Tiền cọc</label>
+                    <p className="mt-0.5 text-base font-bold text-blue-600">
+                      {room.pricing?.depositAmount ?
+                        Number(room.pricing.depositAmount).toLocaleString('vi-VN') :
+                        'N/A'} VNĐ
+                    </p>
+                    <p className="text-xs text-gray-500">({room.pricing?.depositMonths || 'N/A'} tháng)</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Thời gian thuê</label>
+                  <p className="mt-0.5 text-sm text-gray-900">
+                    {room.pricing?.minimumStayMonths || 'N/A'} - {room.pricing?.maximumStayMonths || '∞'} tháng
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  <Badge variant={room.pricing?.utilityIncluded ? "default" : "secondary"} className="text-xs">
+                    {room.pricing?.utilityIncluded ? 'Tiện ích bao gồm' : 'Tiện ích riêng'}
+                  </Badge>
+                  <Badge variant={room.pricing?.priceNegotiable ? "default" : "secondary"} className="text-xs">
+                    {room.pricing?.priceNegotiable ? 'Thương lượng được' : 'Giá cố định'}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Amenities as badges */}
+              {room.amenities && room.amenities.length > 0 && (
+                <>
+                  <Separator className="my-3" />
+                  <div className="flex flex-wrap gap-1.5">
+                    {room.amenities.map((amenity, index) => (
+                      <Badge key={index} variant="outline" className="text-xs">
+                        {amenity.systemAmenity?.name || amenity.customValue || `Tiện nghi ${index + 1}`}
+                      </Badge>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Rules as badges */}
+              {room.rules && room.rules.length > 0 && (
+                <>
+                  <Separator className="my-3" />
+                  <div className="flex flex-wrap gap-1.5">
+                    {room.rules.map((rule, index) => (
+                      <Badge
+                        key={index}
+                        variant={rule.isEnforced ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {rule.systemRule?.name || rule.customValue || `Quy định ${index + 1}`}
+                        {rule.isEnforced && ' ⚠️'}
+                      </Badge>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Costs */}
+              {room.costs && room.costs.length > 0 && (
+                <>
+                  <Separator className="my-3" />
+                  <div className="space-y-2">
                     {room.costs.map((cost, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="font-medium">{cost.notes || `Chi phí ${index + 1}`}</p>
-                          <p className="text-sm text-gray-600">
-                            {cost.costType} • {cost.billingCycle}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-green-600">
-                            {cost.value ? 
-                              Number(cost.value).toLocaleString('vi-VN') : 
-                              'Chưa cập nhật'} VNĐ
-                            {cost.unit && `/${cost.unit}`}
-                          </p>
-                          <div className="flex space-x-2">
-                            <Badge variant={cost.includedInRent ? "default" : "outline"}>
-                              {cost.includedInRent ? 'Đã bao gồm' : 'Tính riêng'}
-                            </Badge>
-                            <Badge variant={cost.isOptional ? "secondary" : "default"}>
-                              {cost.isOptional ? 'Tùy chọn' : 'Bắt buộc'}
-                            </Badge>
-                          </div>
-                        </div>
+                      <div key={index} className="flex justify-between items-start text-xs">
+                        <span className="text-gray-900 font-medium">
+                          {cost.systemCostType?.name || cost.notes || `Chi phí ${index + 1}`}
+                        </span>
+                        <span className="font-bold text-green-600">
+                          {cost.value ? Number(cost.value).toLocaleString('vi-VN') : 'N/A'} VNĐ
+                        </span>
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="instances" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Quản lý các phòng cụ thể</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <p className="text-gray-600 mb-4">Quản lý trạng thái từng phòng cụ thể</p>
-                  <Link href={`/dashboard/landlord/properties/rooms/${room.id}/instances`}>
-                    <Button className="cursor-pointer">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Quản lý phòng
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   )

@@ -6,7 +6,9 @@ import {
 	MessageData,
 	markAllMessagesAsRead,
 	sendMessage,
+	uploadChatAttachments,
 } from '../actions/chat.action';
+import { TokenManager } from '../lib/api-client';
 
 export type ChatMessage = MessageData;
 
@@ -29,6 +31,7 @@ type ChatState = {
 		content: string;
 		type: string;
 		attachmentUrls?: string[];
+		attachmentFiles?: File[];
 	}) => Promise<void>;
 	markAllRead: (conversationId: string) => Promise<void>;
 };
@@ -54,7 +57,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 	},
 	loadConversations: async () => {
 		try {
-			const conversationList = await getConversations();
+			const token = TokenManager.getAccessToken();
+			const conversationList = await getConversations(token);
 			const conversationsObj = conversationList.reduce(
 				(acc, conv) => {
 					acc[conv.conversationId] = conv;
@@ -70,7 +74,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 	loadMessages: async (conversationId: string) => {
 		try {
 			console.log('Store: Loading messages for conversation:', conversationId);
-			const messages = await getMessages(conversationId);
+			const token = TokenManager.getAccessToken();
+			const messages = await getMessages(conversationId, {}, token);
 			console.log('Store: Received messages:', messages);
 			set((state) => ({
 				byConversation: {
@@ -102,21 +107,52 @@ export const useChatStore = create<ChatState>((set, get) => ({
 		const state = get();
 		if (!state.currentUserId) throw new Error('No current user set');
 
-		const sentMessage = await sendMessage(payload);
+		const token = TokenManager.getAccessToken();
+		console.log('[ChatStore] Sending message:', payload);
+
+		// Upload attachments if provided
+		let attachmentUrls = payload.attachmentUrls || [];
+		if (payload.attachmentFiles && payload.attachmentFiles.length > 0) {
+			console.log('[ChatStore] Uploading attachments:', payload.attachmentFiles.length);
+			try {
+				const uploadedUrls = await uploadChatAttachments(payload.attachmentFiles);
+				console.log('[ChatStore] Uploaded URLs:', uploadedUrls);
+				attachmentUrls = [...attachmentUrls, ...uploadedUrls];
+			} catch (error) {
+				console.error('[ChatStore] Failed to upload attachments:', error);
+				throw new Error('Không thể upload file đính kèm');
+			}
+		}
+
+		// Send message with attachment URLs
+		const messagePayload = {
+			recipientId: payload.recipientId,
+			conversationId: payload.conversationId,
+			content: payload.content,
+			type: payload.type,
+			attachmentUrls,
+		};
+		console.log('[ChatStore] Sending message to API:', messagePayload);
+		const sentMessage = await sendMessage(messagePayload, token);
+
+		console.log('[ChatStore] Received response:', sentMessage);
 
 		// Handle both possible response structures
 		const messageData = sentMessage?.data || sentMessage;
 
 		if (messageData?.conversationId) {
+			console.log('[ChatStore] Adding message to store:', messageData);
+			console.log('[ChatStore] Message attachments:', messageData.attachments);
 			state.addIncoming(messageData);
 		} else {
-			console.error('Invalid message data received:', sentMessage);
+			console.error('[ChatStore] Invalid message data received:', sentMessage);
 			throw new Error('Invalid message response from server');
 		}
 	},
 	markAllRead: async (conversationId: string) => {
 		try {
-			await markAllMessagesAsRead(conversationId);
+			const token = TokenManager.getAccessToken();
+			await markAllMessagesAsRead(conversationId, token);
 			set((state) => ({
 				conversations: {
 					...state.conversations,

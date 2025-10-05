@@ -18,7 +18,7 @@ export const REALTIME_EVENT = {
 
 export type RegisterPayload = { userId: string };
 
-type MountableHandler = (socket: Socket, userId?: string) => void | (() => void);
+type MountableHandler = (socket: Socket, userId?: string) => undefined | (() => void);
 
 let socket: Socket | null = null;
 

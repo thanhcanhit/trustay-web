@@ -1,10 +1,33 @@
 import { create } from 'zustand';
+import { getBuildings } from '@/actions/building.action';
 import {
 	getFeaturedRoomListings,
 	getRoomBySlug,
 	searchRoomListings,
 } from '@/actions/listings.action';
-import type { RoomDetail, RoomListing, RoomSearchParams } from '@/types/types';
+import {
+	bulkUpdateRoomInstancesStatus,
+	createRoom,
+	deleteRoom,
+	getMyRooms,
+	getRoomById,
+	getRoomInstancesByStatus,
+	updateRoom,
+	updateRoomInstanceStatus,
+} from '@/actions/room.action';
+import { TokenManager } from '@/lib/api-client';
+import type {
+	Building,
+	BulkUpdateRoomInstancesRequest,
+	CreateRoomRequest,
+	Room,
+	RoomDetail,
+	RoomInstance,
+	RoomListing,
+	RoomSearchParams,
+	UpdateRoomInstanceStatusRequest,
+	UpdateRoomRequest,
+} from '@/types/types';
 
 interface RoomState {
 	// Featured rooms for homepage
@@ -35,6 +58,17 @@ interface RoomState {
 	// Saved rooms
 	savedRooms: string[];
 
+	// Landlord rooms management
+	myRooms: Room[];
+	myRoomsLoading: boolean;
+	myRoomsError: string | null;
+	myRoomsPagination: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+	} | null;
+
 	// Actions
 	loadFeaturedRooms: (limit?: number) => Promise<void>;
 	searchRooms: (params: RoomSearchParams, append?: boolean) => Promise<void>;
@@ -43,6 +77,42 @@ interface RoomState {
 	clearSearchResults: () => void;
 	clearRoomDetail: () => void;
 	clearErrors: () => void;
+
+	// Landlord actions
+	fetchMyRooms: (params?: { page?: number; limit?: number }) => Promise<void>;
+	deleteMyRoom: (roomId: string) => Promise<boolean>;
+	clearMyRooms: () => void;
+
+	// Room CRUD operations
+	loadRoomById: (roomId: string) => Promise<Room | null>;
+	createNewRoom: (buildingId: string, data: CreateRoomRequest) => Promise<Room | null>;
+	updateExistingRoom: (roomId: string, data: UpdateRoomRequest) => Promise<Room | null>;
+
+	// Room instance management
+	loadRoomInstances: (
+		roomId: string,
+		status?: string,
+	) => Promise<{
+		instances: RoomInstance[];
+		statusCounts: {
+			available: number;
+			occupied: number;
+			maintenance: number;
+			reserved: number;
+			unavailable: number;
+		};
+	} | null>;
+	updateRoomInstance: (
+		instanceId: string,
+		data: UpdateRoomInstanceStatusRequest,
+	) => Promise<boolean>;
+	bulkUpdateRoomInstances: (
+		roomId: string,
+		data: BulkUpdateRoomInstancesRequest,
+	) => Promise<boolean>;
+
+	// Building operations
+	loadBuildings: (params?: { limit?: number }) => Promise<Building[]>;
 }
 
 export const useRoomStore = create<RoomState>((set, get) => ({
@@ -61,6 +131,12 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 	roomError: null,
 
 	savedRooms: [],
+
+	// Landlord initial state
+	myRooms: [],
+	myRoomsLoading: false,
+	myRoomsError: null,
+	myRoomsPagination: null,
 
 	// Load featured rooms for homepage
 	loadFeaturedRooms: async (limit = 4) => {
@@ -178,6 +254,208 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 			featuredError: null,
 			searchError: null,
 			roomError: null,
+			myRoomsError: null,
 		});
+	},
+
+	// Fetch landlord's rooms
+	fetchMyRooms: async (params = {}) => {
+		set({ myRoomsLoading: true, myRoomsError: null });
+
+		try {
+			const token = TokenManager.getAccessToken();
+			const response = await getMyRooms(params, token);
+
+			if (!response.success) {
+				throw new Error(response.error || 'Failed to fetch rooms');
+			}
+
+			set({
+				myRooms: response.data.rooms || [],
+				myRoomsPagination: {
+					page: response.data.page || 1,
+					limit: response.data.limit || 12,
+					total: response.data.total || 0,
+					totalPages: response.data.totalPages || 1,
+				},
+				myRoomsLoading: false,
+				myRoomsError: null,
+			});
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Failed to fetch rooms';
+			set({
+				myRoomsLoading: false,
+				myRoomsError: errorMessage,
+			});
+			console.error('Failed to fetch my rooms:', error);
+		}
+	},
+
+	// Delete landlord's room
+	deleteMyRoom: async (roomId: string): Promise<boolean> => {
+		try {
+			const token = TokenManager.getAccessToken();
+			const response = await deleteRoom(roomId, token);
+
+			if (!response.success) {
+				throw new Error(response.error || 'Failed to delete room');
+			}
+
+			// Remove room from state
+			const { myRooms } = get();
+			set({
+				myRooms: myRooms.filter((room) => room.id !== roomId),
+			});
+
+			return true;
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Failed to delete room';
+			set({ myRoomsError: errorMessage });
+			console.error('Failed to delete room:', error);
+			return false;
+		}
+	},
+
+	// Clear landlord rooms
+	clearMyRooms: () => {
+		set({
+			myRooms: [],
+			myRoomsPagination: null,
+			myRoomsError: null,
+		});
+	},
+
+	// Load room by ID
+	loadRoomById: async (roomId: string): Promise<Room | null> => {
+		try {
+			const token = TokenManager.getAccessToken();
+			const response = await getRoomById(roomId, token);
+
+			if (!response.success) {
+				console.error('Failed to load room:', response.error);
+				return null;
+			}
+
+			return response.data.data;
+		} catch (error: unknown) {
+			console.error('Failed to load room:', error);
+			return null;
+		}
+	},
+
+	// Create new room
+	createNewRoom: async (buildingId: string, data: CreateRoomRequest): Promise<Room | null> => {
+		try {
+			const token = TokenManager.getAccessToken();
+			const response = await createRoom(buildingId, data, token);
+
+			if (!response.success) {
+				console.error('Failed to create room:', response.error);
+				return null;
+			}
+
+			return response.data.data;
+		} catch (error: unknown) {
+			console.error('Failed to create room:', error);
+			return null;
+		}
+	},
+
+	// Update existing room
+	updateExistingRoom: async (roomId: string, data: UpdateRoomRequest): Promise<Room | null> => {
+		try {
+			const token = TokenManager.getAccessToken();
+			const response = await updateRoom(roomId, data, token);
+
+			if (!response.success) {
+				console.error('Failed to update room:', response.error);
+				return null;
+			}
+
+			return response.data.data;
+		} catch (error: unknown) {
+			console.error('Failed to update room:', error);
+			return null;
+		}
+	},
+
+	// Load room instances by status
+	loadRoomInstances: async (
+		roomId: string,
+		status = 'all',
+	): Promise<{
+		instances: RoomInstance[];
+		statusCounts: {
+			available: number;
+			occupied: number;
+			maintenance: number;
+			reserved: number;
+			unavailable: number;
+		};
+	} | null> => {
+		try {
+			const token = TokenManager.getAccessToken();
+			const response = await getRoomInstancesByStatus(roomId, status, token);
+
+			if (!response.success) {
+				console.error('Failed to load room instances:', response.error);
+				return null;
+			}
+
+			return response.data.data;
+		} catch (error: unknown) {
+			console.error('Failed to load room instances:', error);
+			return null;
+		}
+	},
+
+	// Update room instance status
+	updateRoomInstance: async (
+		instanceId: string,
+		data: UpdateRoomInstanceStatusRequest,
+	): Promise<boolean> => {
+		try {
+			const token = TokenManager.getAccessToken();
+			const response = await updateRoomInstanceStatus(instanceId, data, token);
+
+			return response.success;
+		} catch (error: unknown) {
+			console.error('Failed to update room instance:', error);
+			return false;
+		}
+	},
+
+	// Bulk update room instances
+	bulkUpdateRoomInstances: async (
+		roomId: string,
+		data: BulkUpdateRoomInstancesRequest,
+	): Promise<boolean> => {
+		try {
+			const token = TokenManager.getAccessToken();
+			const response = await bulkUpdateRoomInstancesStatus(roomId, data, token);
+
+			return response.success;
+		} catch (error: unknown) {
+			console.error('Failed to bulk update room instances:', error);
+			return false;
+		}
+	},
+
+	// Load buildings
+	loadBuildings: async (params = {}): Promise<Building[]> => {
+		try {
+			const token = TokenManager.getAccessToken();
+			const response = await getBuildings(params, token);
+
+			if (!response.success) {
+				console.error('Failed to load buildings:', response.error);
+				return [];
+			}
+
+			return response.data.buildings || [];
+		} catch (error: unknown) {
+			console.error('Failed to load buildings:', error);
+			return [];
+		}
 	},
 }));

@@ -7,6 +7,7 @@ import {
 	respondToInvitation,
 	withdrawInvitation,
 } from '@/actions/invitation.action';
+import { TokenManager } from '@/lib/api-client';
 import type {
 	CreateRoomInvitationRequest,
 	InvitationListResponse,
@@ -67,7 +68,8 @@ export const useInvitationStore = create<InvitationState>((set, get) => ({
 
 	loadSent: async (params = {}) => {
 		set({ loadingSent: true, errorSent: null });
-		const res = await getSentInvitations(params);
+		const token = TokenManager.getAccessToken();
+		const res = await getSentInvitations(params, token);
 		if (res.success) {
 			set({ sent: res.data.data, sentMeta: res.data.meta, loadingSent: false });
 		} else {
@@ -77,7 +79,8 @@ export const useInvitationStore = create<InvitationState>((set, get) => ({
 
 	loadReceived: async (params = {}) => {
 		set({ loadingReceived: true, errorReceived: null });
-		const res = await getReceivedInvitations(params);
+		const token = TokenManager.getAccessToken();
+		const res = await getReceivedInvitations(params, token);
 		if (res.success) {
 			set({ received: res.data.data, receivedMeta: res.data.meta, loadingReceived: false });
 		} else {
@@ -87,7 +90,8 @@ export const useInvitationStore = create<InvitationState>((set, get) => ({
 
 	loadById: async (id: string) => {
 		set({ loadingCurrent: true, errorCurrent: null });
-		const res = await getInvitationById(id);
+		const token = TokenManager.getAccessToken();
+		const res = await getInvitationById(id, token);
 		if (res.success) {
 			set({ current: res.data.data, loadingCurrent: false });
 		} else {
@@ -97,7 +101,8 @@ export const useInvitationStore = create<InvitationState>((set, get) => ({
 
 	create: async (data: CreateRoomInvitationRequest) => {
 		set({ submitting: true, submitError: null });
-		const res = await createRoomInvitation(data);
+		const token = TokenManager.getAccessToken();
+		const res = await createRoomInvitation(data, token);
 		if (res.success) {
 			const { sent } = get();
 			set({ sent: [res.data.data, ...sent], submitting: false });
@@ -109,7 +114,8 @@ export const useInvitationStore = create<InvitationState>((set, get) => ({
 
 	respond: async (id, status, tenantNotes) => {
 		set({ submitting: true, submitError: null });
-		const res = await respondToInvitation(id, { status, tenantNotes });
+		const token = TokenManager.getAccessToken();
+		const res = await respondToInvitation(id, { status, tenantNotes }, token);
 		if (res.success) {
 			// reload current
 			await get().loadById(id);
@@ -122,7 +128,8 @@ export const useInvitationStore = create<InvitationState>((set, get) => ({
 
 	withdraw: async (id) => {
 		set({ submitting: true, submitError: null });
-		const res = await withdrawInvitation(id);
+		const token = TokenManager.getAccessToken();
+		const res = await withdrawInvitation(id, token);
 		if (res.success) {
 			set({ submitting: false });
 			// remove from sent list

@@ -76,6 +76,11 @@ const tenantItems: SidebarItem[] = [
         icon: Home
       },
       {
+        title: "Hợp đồng",
+        href: "/profile/contracts",
+        icon: FileText
+      },
+      {
         title: "Hóa đơn",
         href: "/profile/bills",
         icon: Receipt
@@ -145,13 +150,13 @@ const landlordItems: SidebarItem[] = [
         title: "Khách thuê",
         href: "/dashboard/landlord/tenants",
         icon: Users,
-        disabled: true
+        disabled: false
       },
       {
         title: "Hợp đồng",
         href: "/dashboard/landlord/contracts",
         icon: FileText,
-        disabled: true
+        disabled: false
       },
       {
         title: "Hóa đơn",
@@ -201,7 +206,7 @@ const landlordItems: SidebarItem[] = [
     title: "Quản lý cho thuê",
     href: "/dashboard/landlord/rentals",
     icon: Heart,
-    disabled: true
+    disabled: false
   },
   {
     title: "Thông báo",

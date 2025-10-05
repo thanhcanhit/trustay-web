@@ -2,13 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Calendar, Home, Phone, Mail, Clock } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { toast } from "sonner"
+import { Search, Calendar, Phone, Mail, Clock, CheckCircle, MessageSquare, X } from "lucide-react"
 import { useBookingRequestStore } from "@/stores/bookingRequestStore"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
@@ -27,8 +30,18 @@ const STATUS_LABELS = {
   cancelled: 'Đã hủy'
 }
 
+const CONFIRMED_COLORS = {
+  true: 'bg-green-100 text-green-800',
+  false: 'bg-yellow-100 text-yellow-800'
+}
+
+const CONFIRMED_LABELS = {
+  true: 'Đã xác nhận',
+  false: 'Chờ xác nhận'
+}
+
 export default function RentalRequestsPage() {
-  const { received, receivedMeta, loadingReceived, errorReceived, loadReceived, ownerUpdate } = useBookingRequestStore()
+  const { received, receivedMeta, loadingReceived, errorReceived, submitting, loadReceived, ownerUpdate } = useBookingRequestStore()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
@@ -52,12 +65,22 @@ export default function RentalRequestsPage() {
   }, [received, searchTerm])
 
   const handleApprove = async (id: string) => {
-    await ownerUpdate(id, { status: 'approved' })
-    loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
+    const success = await ownerUpdate(id, { status: 'approved' })
+    if (success) {
+      toast.success(
+        'Đã chấp nhận yêu cầu!\n\nĐang chờ tenant xác nhận để tạo hợp đồng thuê.',
+        { duration: 3000 }
+      )
+      loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
+    }
   }
+
   const handleReject = async (id: string) => {
-    await ownerUpdate(id, { status: 'rejected' })
-    loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
+    const success = await ownerUpdate(id, { status: 'rejected' })
+    if (success) {
+      toast.success('Đã từ chối yêu cầu')
+      loadReceived({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
+    }
   }
 
   return (
@@ -78,7 +101,7 @@ export default function RentalRequestsPage() {
               className="pl-10"
             />
           </div>
-          
+
           <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1) }}>
             <SelectTrigger className="w-44">
               <SelectValue placeholder="Trạng thái" />
@@ -99,97 +122,183 @@ export default function RentalRequestsPage() {
           <div className="bg-red-50 text-red-700 border border-red-200 rounded p-3 mb-4 text-sm">{errorReceived}</div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {loadingReceived && Array.from({ length: 6 }).map((_, idx) => (
-            <Card key={idx}><CardContent className="p-6 text-gray-500">Đang tải...</CardContent></Card>
-          ))}
-
-          {!loadingReceived && filtered.map((request) => (
-            <Card key={request.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={request.tenant?.avatarUrl || undefined} alt={`${request.tenant?.firstName || ''} ${request.tenant?.lastName || ''}`} />
-                      <AvatarFallback className="bg-blue-100 text-blue-600">
-                        {`${(request.tenant?.firstName || 'U')[0]}${(request.tenant?.lastName || 'S')[0]}`}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <CardTitle className="text-lg">{request.tenant?.firstName} {request.tenant?.lastName}</CardTitle>
+        {loadingReceived ? (
+          <Card>
+            <CardContent className="p-6 text-center text-gray-500">Đang tải...</CardContent>
+          </Card>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-500 mb-4">Không có yêu cầu thuê trọ nào</div>
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[200px]">Người thuê</TableHead>
+                  <TableHead className="w-[180px]">Liên hệ</TableHead>
+                  <TableHead className="w-[150px]">Phòng</TableHead>
+                  <TableHead className="w-[110px]">Ngày vào</TableHead>
+                  <TableHead className="w-[130px]">Ngày gửi</TableHead>
+                  <TableHead className="w-[120px]">Trạng thái</TableHead>
+                  <TableHead className="w-[130px]">Xác nhận tenant</TableHead>
+                  <TableHead className="text-right w-[200px]">Thao tác</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((request) => (
+                  <TableRow key={request.id}>
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage
+                            src={request.tenant?.avatarUrl || undefined}
+                            alt={`${request.tenant?.firstName || ''} ${request.tenant?.lastName || ''}`}
+                          />
+                          <AvatarFallback className="bg-blue-100 text-blue-600">
+                            {`${(request.tenant?.firstName || 'U')[0]}${(request.tenant?.lastName || 'S')[0]}`}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">
+                            {request.tenant?.firstName} {request.tenant?.lastName}
+                          </p>
+                          {request.messageToOwner && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center text-xs text-gray-500 mt-1 cursor-help">
+                                  <MessageSquare className="h-3 w-3 mr-1" />
+                                  <span className="truncate">Có tin nhắn</span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-xs whitespace-pre-wrap">{request.messageToOwner}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {request.tenant?.phone && (
+                          <div className="flex items-center text-xs text-gray-600">
+                            <Phone className="h-3 w-3 mr-1.5 text-gray-400" />
+                            <span className="truncate">{request.tenant.phone}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center text-xs text-gray-600">
+                          <Mail className="h-3 w-3 mr-1.5 text-gray-400" />
+                          <span className="truncate">{request.tenant?.email || '-'}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <p className="text-sm truncate">
+                        {request.room?.name ? `Phòng ${request.room.name}` : request.room?.building?.name || '-'}
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Calendar className="h-3 w-3 mr-1.5 text-gray-400" />
+                        <span>{format(new Date(request.moveInDate), 'dd/MM/yyyy', { locale: vi })}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <Clock className="h-3 w-3 mr-1.5 text-gray-400" />
+                        <span>{format(new Date(request.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <Badge className={STATUS_COLORS[request.status as keyof typeof STATUS_COLORS]}>
                         {STATUS_LABELS[request.status as keyof typeof STATUS_LABELS]}
                       </Badge>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="pt-0">
-                <div className="space-y-3">
-                  {request.tenant?.phone ? (
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">{request.tenant?.phone || '-'}</span>
-                  </div>
-                  ): null}                  
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">{request.tenant?.email || '-'}</span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Home className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">{request.room?.name ? `Phòng: ${request.room.name}` : request.room?.building?.name}</span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">Ngày vào: {format(new Date(request.moveInDate), 'dd/MM/yyyy', { locale: vi })}</span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-500">Gửi: {format(new Date(request.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
-                  </div>
-                  
-                  {request.messageToOwner && (
-                    <div className="text-sm">
-                      <p className="text-gray-600 font-medium mb-1">Tin nhắn:</p>
-                      <p className="text-gray-700 bg-gray-50 p-2 rounded text-xs whitespace-pre-wrap">
-                        {request.messageToOwner}
-                      </p>
-                    </div>
-                  )}
-                </div>
-                
-                {request.status === 'pending' && (
-                  <div className="mt-4 flex space-x-2">
-                    <Button 
-                      size="sm" 
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                      onClick={() => handleApprove(request.id)}
-                    >
-                      Chấp nhận
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
-                      onClick={() => handleReject(request.id)}
-                    >
-                      Từ chối
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {!loadingReceived && filtered.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">Không có yêu cầu thuê trọ nào</div>
+                    </TableCell>
+                    <TableCell>
+                      {request.status === 'approved' ? (
+                        <div>
+                          <Badge className={CONFIRMED_COLORS[String(request.isConfirmedByTenant) as keyof typeof CONFIRMED_COLORS]}>
+                            {CONFIRMED_LABELS[String(request.isConfirmedByTenant) as keyof typeof CONFIRMED_LABELS]}
+                          </Badge>
+                          {request.isConfirmedByTenant && request.confirmedAt && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <p className="text-xs text-gray-500 mt-1 cursor-help truncate">
+                                  {format(new Date(request.confirmedAt), 'dd/MM HH:mm', { locale: vi })}
+                                </p>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Xác nhận lúc: {format(new Date(request.confirmedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {request.status === 'pending' && (
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 h-8 px-3"
+                            onClick={() => handleApprove(request.id)}
+                            disabled={submitting}
+                          >
+                            <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                            Chấp nhận
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-300 hover:bg-red-50 h-8 px-3"
+                            onClick={() => handleReject(request.id)}
+                            disabled={submitting}
+                          >
+                            <X className="h-3.5 w-3.5 mr-1" />
+                            Từ chối
+                          </Button>
+                        </div>
+                      )}
+                      {request.status === 'approved' && !request.isConfirmedByTenant && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="inline-flex items-center text-xs text-yellow-600 cursor-help">
+                              <Clock className="h-4 w-4 mr-1" />
+                              Chờ xác nhận
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>Đã gửi yêu cầu đến tenant. Khi tenant xác nhận, hợp đồng thuê sẽ được tạo tự động.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      {request.status === 'approved' && request.isConfirmedByTenant && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="inline-flex items-center text-xs text-green-600 cursor-help">
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Hoàn tất
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>Tenant đã xác nhận. Hợp đồng thuê đã được tạo tự động!</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      {request.status === 'rejected' && (
+                        <span className="text-xs text-red-600">Đã từ chối</span>
+                      )}
+                      {request.status === 'cancelled' && (
+                        <span className="text-xs text-gray-600">Đã hủy</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )}
 

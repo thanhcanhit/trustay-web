@@ -15,7 +15,7 @@ import { AmenityGrid } from "@/components/ui/amenity-grid"
 import { CostCheckboxSelector } from "@/components/ui/cost-checkbox-selector"
 import { RuleGrid } from "@/components/ui/rule-grid"
 import { useReferenceStore } from "@/stores/referenceStore"
-import { getRoomById, updateRoom } from "@/actions/room.action"
+import { useRoomStore } from "@/stores/roomStore"
 import { 
   type Room,
   type UpdateRoomRequest, 
@@ -166,12 +166,13 @@ const convertRulesToObjects = (rules: string[] | RoomRule[]): UpdateRoomRule[] =
 export default function EditRoomPage() {
   const params = useParams()
   const roomId = params.id as string
-  
+
+  const { loadRoomById, updateExistingRoom } = useRoomStore()
   const [room, setRoom] = useState<Room | null>(null)
   const [loading, setLoading] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  
+
   const {
     loadReferenceData,
     isLoading: isReferenceLoading
@@ -183,14 +184,13 @@ export default function EditRoomPage() {
   const fetchRoomDetail = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await getRoomById(roomId)
-      
-      if (!response.success) {
-        toast.error(response.error)
+      const roomData = await loadRoomById(roomId)
+
+      if (!roomData) {
+        toast.error('Không tìm thấy phòng')
         return
       }
-      
-      const roomData = response.data.data
+
       setRoom(roomData)
       
       // Initialize form with room data - only allowed fields for update
@@ -216,7 +216,7 @@ export default function EditRoomPage() {
     } finally {
       setLoading(false)
     }
-  }, [roomId])
+  }, [roomId, loadRoomById])
 
   // Load reference data and room details
   useEffect(() => {
@@ -331,10 +331,10 @@ export default function EditRoomPage() {
         isActive: formData.isActive!
       }
 
-      const response = await updateRoom(room.id, updateData)
-      
-      if (!response.success) {
-        toast.error(response.error)
+      const result = await updateExistingRoom(room.id, updateData)
+
+      if (!result) {
+        toast.error('Không thể cập nhật loại phòng')
         return
       }
 

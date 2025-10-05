@@ -19,10 +19,12 @@ export interface ApiResponse<T = unknown> {
 }
 
 // Token management for client-side
+// Only store accessToken in localStorage for persistence
+// refreshToken should be stored in-memory (via Zustand store) for security
 export const TokenManager = {
-	getAccessToken: (): string | null => {
-		if (typeof window === 'undefined') return null;
-		return localStorage.getItem('accessToken');
+	getAccessToken: (): string | undefined => {
+		if (typeof window === 'undefined') return undefined;
+		return localStorage.getItem('accessToken') ?? undefined;
 	},
 
 	setAccessToken: (token: string): void => {
@@ -30,20 +32,9 @@ export const TokenManager = {
 		localStorage.setItem('accessToken', token);
 	},
 
-	getRefreshToken: (): string | null => {
-		if (typeof window === 'undefined') return null;
-		return localStorage.getItem('refreshToken');
-	},
-
-	setRefreshToken: (token: string): void => {
-		if (typeof window === 'undefined') return;
-		localStorage.setItem('refreshToken', token);
-	},
-
-	clearTokens: (): void => {
+	clearAccessToken: (): void => {
 		if (typeof window === 'undefined') return;
 		localStorage.removeItem('accessToken');
-		localStorage.removeItem('refreshToken');
 	},
 };
 
@@ -54,22 +45,12 @@ const axiosInstance: AxiosInstance = axios.create({
 	headers: API_CONFIG.HEADERS,
 });
 
-// Helper function to get token from cookies (client-side)
-const getTokenFromClientCookies = (): string | null => {
-	if (typeof window === 'undefined') return null;
-	const cookies = document.cookie.split(';');
-	const tokenCookie = cookies.find((cookie) => cookie.trim().startsWith('accessToken='));
-	return tokenCookie ? tokenCookie.split('=')[1] : null;
-};
-
 // Request interceptor to add auth token
 axiosInstance.interceptors.request.use(
 	(config) => {
-		// For client-side requests, get token from cookies first, then localStorage
+		// For client-side requests, get token from localStorage
 		if (typeof window !== 'undefined') {
-			const cookieToken = getTokenFromClientCookies();
-			const localToken = TokenManager.getAccessToken();
-			const token = cookieToken || localToken;
+			const token = TokenManager.getAccessToken();
 
 			if (token) {
 				config.headers.Authorization = `Bearer ${token}`;
@@ -83,21 +64,29 @@ axiosInstance.interceptors.request.use(
 );
 
 // Helper function to handle token refresh
+// This will be called by the response interceptor when a 401 error occurs
 const handleTokenRefresh = async (originalRequest: AxiosRequestConfig) => {
-	const refreshToken = TokenManager.getRefreshToken();
+	// Import userStore dynamically to avoid circular dependency
+	const { useUserStore } = await import('@/stores/userStore');
+	const refreshToken = useUserStore.getState().getRefreshToken();
+
 	if (!refreshToken) {
 		return null;
 	}
 
 	try {
-		const response = await axios.post(`${API_CONFIG.BASE_URL}/api/auth/refresh`, {
+		const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`, {
 			refreshToken,
 		});
 
 		const { access_token, refresh_token } = response.data;
+
+		// Save new accessToken to localStorage
 		TokenManager.setAccessToken(access_token);
+
+		// Update refreshToken in store if provided
 		if (refresh_token) {
-			TokenManager.setRefreshToken(refresh_token);
+			useUserStore.setState({ refreshToken: refresh_token });
 		}
 
 		// Retry original request with new token
@@ -108,7 +97,12 @@ const handleTokenRefresh = async (originalRequest: AxiosRequestConfig) => {
 		return axiosInstance(originalRequest);
 	} catch (refreshError) {
 		// Refresh failed, clear tokens and redirect to login
-		TokenManager.clearTokens();
+		TokenManager.clearAccessToken();
+
+		// Clear store tokens
+		const { useUserStore } = await import('@/stores/userStore');
+		useUserStore.setState({ refreshToken: null, user: null, isAuthenticated: false });
+
 		if (typeof window !== 'undefined') {
 			window.location.href = '/login';
 		}
@@ -209,9 +203,14 @@ const handleServerApiError = (error: unknown): never => {
 };
 
 // Helper function for server-side API calls (for use in server actions)
-export const createServerApiCall = (getToken: () => Promise<string | null> | string | null) => {
-	return async function apiCall<T>(endpoint: string, options: AxiosRequestConfig = {}): Promise<T> {
-		const token = await getToken();
+export const createServerApiCall = (getToken?: () => Promise<string | null> | string | null) => {
+	return async function apiCall<T>(
+		endpoint: string,
+		options: AxiosRequestConfig = {},
+		token?: string,
+	): Promise<T> {
+		// Use provided token first, then fall back to getToken function
+		const authToken = token || (getToken ? await getToken() : null);
 		// Default to production API if env not set
 		const serverBaseURL = process.env.NEXT_PUBLIC_API_URL || 'http://trustay.life:3000';
 
@@ -220,14 +219,14 @@ export const createServerApiCall = (getToken: () => Promise<string | null> | str
 			url: endpoint,
 			headers: {
 				...options.headers,
-				...(token && { Authorization: `Bearer ${token}` }),
+				...(authToken && { Authorization: `Bearer ${authToken}` }),
 			},
 		};
 
 		console.log('Server API Call:', {
 			baseURL: serverBaseURL,
 			endpoint,
-			hasToken: !!token,
+			hasToken: !!authToken,
 		});
 
 		try {
@@ -243,3 +242,6 @@ export const createServerApiCall = (getToken: () => Promise<string | null> | str
 		}
 	};
 };
+
+// Simple server API call function that accepts token as parameter
+export const serverApiCall = createServerApiCall();

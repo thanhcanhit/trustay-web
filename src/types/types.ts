@@ -370,14 +370,16 @@ export interface Room {
 	viewCount: number;
 	isActive: boolean;
 	isVerified: boolean;
+	lastUpdated: string;
 	createdAt: string;
 	updatedAt: string;
 	// Related data
-	building?: {
-		id: string;
-		name: string;
-		addressLine1?: string;
-	};
+	buildingName: string;
+	buildingVerified: boolean;
+	address?: string;
+	availableRooms?: number;
+
+	buildingAddressLine1?: string;
 	pricing?: RoomPricing;
 	amenities?: RoomAmenity[];
 	costs?: RoomCost[];
@@ -636,6 +638,8 @@ export interface BookingRequest {
 	messageToOwner?: string | null;
 	ownerNotes?: string | null;
 	cancellationReason?: string | null;
+	isConfirmedByTenant?: boolean;
+	confirmedAt?: string | null;
 	createdAt: string;
 	updatedAt: string;
 	// Related
@@ -678,6 +682,10 @@ export interface UpdateBookingRequestRequest {
 
 export interface CancelBookingRequestRequest {
 	cancellationReason: string;
+}
+
+export interface ConfirmBookingRequestRequest {
+	tenantNotes?: string;
 }
 
 export interface BookingRequestListResponse {
@@ -829,4 +837,355 @@ export interface RoomSeekingPublicSearchParams {
 	isPublic?: boolean;
 	sortBy?: 'createdAt' | 'updatedAt' | 'title' | 'maxBudget' | 'viewCount' | 'contactCount';
 	sortOrder?: 'asc' | 'desc';
+}
+
+// Contract Types
+export interface Contract {
+	id: string;
+	contractCode?: string;
+	landlordId?: string;
+	tenantId?: string;
+	roomId?: string;
+	rentalId?: string;
+	terms?: string;
+	monthlyRent?: number;
+	depositAmount?: number;
+	startDate: string;
+	endDate?: string | null;
+	status:
+		| 'draft'
+		| 'pending_signatures'
+		| 'partially_signed'
+		| 'fully_signed'
+		| 'active'
+		| 'expired'
+		| 'terminated';
+	contractType?: 'monthly_rental' | 'fixed_term_rental' | 'short_term_rental';
+
+	// Digital Signature Fields
+	landlordSignature?: ContractSignature;
+	tenantSignature?: ContractSignature;
+	signatureDeadline?: string;
+	fullySignedAt?: string;
+	signedAt?: string | null;
+	pdfUrl?: string | null;
+
+	// Nested objects from API
+	landlord?: {
+		id: string;
+		fullName: string;
+		email: string;
+		phone?: string | null;
+		avatarUrl?: string;
+		// Computed fields
+		firstName?: string;
+		lastName?: string;
+	};
+	tenant?: {
+		id: string;
+		fullName: string;
+		email: string;
+		phone?: string | null;
+		avatarUrl?: string;
+		// Computed fields
+		firstName?: string;
+		lastName?: string;
+	};
+	room?: {
+		roomNumber: string;
+		roomName: string;
+		buildingName: string;
+		// Computed fields
+		name?: string;
+		roomType?: string;
+		areaSqm?: number;
+	};
+	contractData?: {
+		roomName: string;
+		roomNumber: string;
+		monthlyRent: number;
+		buildingName: string;
+		depositAmount: number;
+		buildingAddress: string;
+	};
+	signatures?: {
+		signerRole: 'landlord' | 'tenant';
+		signedAt: string;
+	}[];
+
+	createdAt: string;
+	updatedAt: string;
+	amendments?: ContractAmendment[];
+}
+
+export interface ContractSignature {
+	signatureData: string; // Base64 encoded signature from canvas
+	signedAt: string; // Timestamp when signed
+	signedBy: string; // User ID của người ký
+	ipAddress?: string; // IP address khi ký
+	deviceInfo?: string; // Device information
+	signatureMethod: 'canvas' | 'upload';
+	isValid: boolean; // Signature validation status
+}
+
+export interface SignContractRequest {
+	contractId: string;
+	signatureData: string; // Base64 từ react-signature-canvas
+	signatureMethod: 'canvas' | 'upload';
+}
+
+export interface ContractAmendment {
+	id: string;
+	contractId: string;
+	type: 'rent_increase' | 'rent_decrease' | 'term_extension' | 'term_modification' | 'other';
+	description: string;
+	changes: Record<string, unknown>;
+	reason: string;
+	status: 'pending' | 'approved' | 'rejected';
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface CreateContractAmendmentRequest {
+	type: 'rent_increase' | 'rent_decrease' | 'term_extension' | 'term_modification' | 'other';
+	description: string;
+	changes: Record<string, unknown>;
+	reason: string;
+}
+
+export interface UpdateContractRequest {
+	terms?: string;
+	monthlyRent?: number;
+	status?: 'draft' | 'active' | 'expired' | 'terminated';
+}
+
+export interface ContractListResponse {
+	data: Contract[];
+	meta: {
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	};
+}
+
+// Rental Types
+export interface Rental {
+	id: string;
+	bookingRequestId?: string | null;
+	invitationId?: string | null;
+	roomInstanceId: string;
+	tenantId: string;
+	ownerId: string;
+	contractStartDate: string;
+	contractEndDate?: string | null;
+	monthlyRent: string;
+	depositPaid: string;
+	status: 'active' | 'terminated' | 'expired' | 'pending';
+	contractDocumentUrl?: string | null;
+	terminationNoticeDate?: string | null;
+	terminationReason?: string | null;
+	createdAt: string;
+	updatedAt: string;
+
+	// Related entities
+	tenant?: {
+		id: string;
+		firstName: string;
+		lastName: string;
+		email: string;
+		phone?: string | null;
+	};
+	owner?: {
+		id: string;
+		firstName: string;
+		lastName: string;
+		email: string;
+		phone?: string | null;
+	};
+	roomInstance?: {
+		id: string;
+		roomId: string;
+		roomNumber: string;
+		status: 'available' | 'occupied' | 'maintenance' | 'reserved';
+		isActive: boolean;
+		notes?: string | null;
+		createdAt: string;
+		updatedAt: string;
+		room?: {
+			id: string;
+			slug: string;
+			buildingId: string;
+			floorNumber: number;
+			name: string;
+			description: string;
+			roomType: string;
+			areaSqm: string;
+			maxOccupancy: number;
+			totalRooms: number;
+			viewCount: number;
+			isActive: boolean;
+			isVerified: boolean;
+			overallRating: string;
+			totalRatings: number;
+			createdAt: string;
+			updatedAt: string;
+			building?: {
+				id: string;
+				name: string;
+				ownerId?: string;
+			};
+		};
+	};
+	bookingRequest?: {
+		id: string;
+		moveInDate: string;
+		moveOutDate?: string | null;
+	} | null;
+	invitation?: {
+		id: string;
+		// Add more fields as needed
+	} | null;
+
+	// Deprecated fields for backward compatibility
+	roomId?: string;
+	landlordId?: string;
+	contractId?: string;
+	depositAmount?: number;
+	startDate?: string;
+	endDate?: string;
+	notes?: string;
+	terminationDate?: string;
+	depositRefundAmount?: number;
+	room?: Room;
+	landlord?: UserProfile;
+	contract?: Contract;
+}
+
+export interface CreateRentalRequest {
+	roomId: string;
+	tenantId: string;
+	monthlyRent: number;
+	depositAmount: number;
+	startDate: string;
+	endDate: string;
+	contractId?: string;
+	notes?: string;
+}
+
+export interface UpdateRentalRequest {
+	monthlyRent?: number;
+	status?: 'active' | 'terminated' | 'expired' | 'pending';
+	notes?: string;
+}
+
+export interface TerminateRentalRequest {
+	status: 'terminated';
+	terminationDate: string;
+	reason: string;
+	depositRefundAmount?: number;
+}
+
+export interface RenewRentalRequest {
+	newEndDate: string;
+	newMonthlyRent?: number;
+	notes?: string;
+}
+
+export interface RentalListResponse {
+	data: Rental[];
+	meta: {
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	};
+}
+
+// Payment Types
+export interface Payment {
+	id: string;
+	contractId?: string;
+	rentalId?: string;
+	payerId: string;
+	receiverId: string;
+	amount: number;
+	paymentType: 'rent' | 'deposit' | 'utility' | 'maintenance' | 'penalty' | 'refund' | 'other';
+	paymentMethod: 'bank_transfer' | 'cash' | 'credit_card' | 'e_wallet' | 'qr_code' | 'other';
+	status: 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
+	description?: string;
+	dueDate?: string;
+	paidDate?: string;
+	currency: string;
+	transactionId?: string;
+	receiptNumber?: string;
+	receiptDate?: string;
+	notes?: string;
+	qrCodeUrl?: string;
+	createdAt: string;
+	updatedAt: string;
+	payer?: UserProfile;
+	receiver?: UserProfile;
+	contract?: Contract;
+	rental?: Rental;
+}
+
+export interface CreatePaymentRequest {
+	contractId?: string;
+	rentalId?: string;
+	amount: number;
+	paymentType: 'rent' | 'deposit' | 'utility' | 'maintenance' | 'penalty' | 'refund' | 'other';
+	paymentMethod: 'bank_transfer' | 'cash' | 'credit_card' | 'e_wallet' | 'qr_code' | 'other';
+	description?: string;
+	dueDate?: string;
+	currency: string;
+}
+
+export interface UpdatePaymentRequest {
+	status?: 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
+	paidDate?: string;
+	transactionId?: string;
+	paymentMethod?: 'bank_transfer' | 'cash' | 'credit_card' | 'e_wallet' | 'qr_code' | 'other';
+	notes?: string;
+}
+
+export interface CreatePaymentReceiptRequest {
+	paymentId: string;
+	receiptNumber: string;
+	receiptDate: string;
+	receivedAmount: number;
+	notes?: string;
+}
+
+export interface ProcessRefundRequest {
+	originalPaymentId: string;
+	refundAmount: number;
+	reason: string;
+	refundMethod: 'bank_transfer' | 'cash' | 'credit_card' | 'e_wallet' | 'other';
+}
+
+export interface PaymentListResponse {
+	data: Payment[];
+	meta: {
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	};
+}
+
+export interface PaymentStatistics {
+	totalPaid: number;
+	totalPending: number;
+	totalOverdue: number;
+	monthlyBreakdown: Array<{
+		month: string;
+		amount: number;
+		count: number;
+	}>;
+	paymentTypeBreakdown: Array<{
+		type: string;
+		amount: number;
+		count: number;
+	}>;
 }

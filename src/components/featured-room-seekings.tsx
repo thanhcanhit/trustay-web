@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { useRoomSeekingStore } from "@/stores/roomSeekingStore"
 import { RoomSeekingCard } from "@/components/ui/room-seeking-card"
@@ -13,12 +13,16 @@ export function FeaturedRoomSeekings() {
     loadPublicPosts
   } = useRoomSeekingStore()
 
-  // Load featured room-seeking posts on component mount
+  const hasLoadedRef = useRef(false)
+
+  // Load featured room-seeking posts on component mount - only once
   useEffect(() => {
-    if (publicPosts.length === 0 && !isLoading) {
+    if (!hasLoadedRef.current && publicPosts.length === 0 && !isLoading) {
+      hasLoadedRef.current = true
       loadPublicPosts({ page: 1, limit: 4 })
     }
-  }, [publicPosts.length, isLoading, loadPublicPosts])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <section className="py-12 bg-white">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, Suspense, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { MultiStepForm, StepContent, StepNavigation } from "@/components/ui/multi-step-form"
@@ -17,8 +17,7 @@ import { CostCheckboxSelector } from "@/components/ui/cost-checkbox-selector"
 import { RuleGrid } from "@/components/ui/rule-grid"
 import { ImageUploadWithApi, UploadedImage } from "@/components/ui/image-upload-with-api"
 import { useReferenceStore } from "@/stores/referenceStore"
-import { createRoom } from "@/actions/room.action"
-import { getBuildings } from "@/actions/building.action"
+import { useRoomStore } from "@/stores/roomStore"
 import { 
   type CreateRoomRequest, 
   type Building,
@@ -106,6 +105,8 @@ function AddRoomPageContent() {
     isLoading: isReferenceLoading
   } = useReferenceStore()
 
+  const { loadBuildings, createNewRoom } = useRoomStore()
+
   // Form data - using proper RoomCost format
   const [formData, setFormData] = useState<Partial<CreateRoomFormData>>({
     name: '',
@@ -138,11 +139,22 @@ function AddRoomPageContent() {
 
   const [selectedBuildingId2, setSelectedBuildingId2] = useState(selectedBuildingId || '')
 
+  // Fetch buildings function - stable reference with useCallback
+  const fetchBuildings = useCallback(async () => {
+    try {
+      const buildingList = await loadBuildings({ limit: 1000 })
+      setBuildings(buildingList)
+    } catch (error) {
+      console.error('Error fetching buildings:', error)
+      setBuildings([])
+    }
+  }, [loadBuildings])
+
   // Load reference data and buildings
   useEffect(() => {
     loadReferenceData()
     fetchBuildings()
-  }, [loadReferenceData])
+  }, [loadReferenceData, fetchBuildings])
   
   // Function to reload reference data if needed
   const reloadReferenceDataIfNeeded = async () => {
@@ -279,21 +291,6 @@ function AddRoomPageContent() {
         }
       }
     })
-  }
-
-  const fetchBuildings = async () => {
-    try {
-      const response = await getBuildings({ limit: 1000 })
-      if (response.success && response.data.buildings && Array.isArray(response.data.buildings)) {
-        setBuildings(response.data.buildings)
-      } else {
-        console.error('Buildings fetch failed:', !response.success ? response.error : 'Unknown error')
-        setBuildings([])
-      }
-    } catch (error) {
-      console.error('Error fetching buildings:', error)
-      setBuildings([])
-    }
   }
 
   const updateFormData = (field: string, value: unknown) => {
@@ -470,26 +467,15 @@ function AddRoomPageContent() {
         return
       }
       
-      
 
-      const response = await createRoom(selectedBuildingId2, roomData)
-      
-      if (!response.success) {
-        // Show detailed error message if available
-        let errorMessage = response.error
-        if (typeof response.error === 'object' && response.error && 'message' in response.error) {
-          const errorObj = response.error as { message?: string | string[] }
-          if (Array.isArray(errorObj.message)) {
-            errorMessage = 'Dữ liệu không hợp lệ:\n' + errorObj.message.join('\n')
-          } else if (typeof errorObj.message === 'string') {
-            errorMessage = errorObj.message
-          }
-                 }
-         toast.error(errorMessage)
+
+      const result = await createNewRoom(selectedBuildingId2, roomData)
+
+      if (!result) {
+        toast.error('Không thể tạo loại phòng. Vui lòng thử lại.')
         return
       }
 
-      
       toast.success('Tạo loại phòng thành công!')
       router.push(`/dashboard/landlord/properties/rooms?buildingId=${selectedBuildingId2}`)
          } catch (error) {

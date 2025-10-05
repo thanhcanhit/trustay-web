@@ -4,13 +4,13 @@ import { useState, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { changePassword } from "@/actions/user.action"
 import { toast } from "sonner"
 import { Key, Eye, EyeOff } from "lucide-react"
 import { ProfileLayout } from "@/components/profile/profile-layout"
-//import { useUserStore } from "@/stores/userStore"
+import { useUserStore } from "@/stores/userStore"
 
 function ChangePasswordCard() {
+  const { changePassword } = useUserStore()
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',

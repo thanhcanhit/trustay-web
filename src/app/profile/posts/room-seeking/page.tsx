@@ -12,14 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogTitle, AlertDialogHeader, AlertDialogDescription, AlertDialogCancel, AlertDialogAction, AlertDialogContent, AlertDialogFooter, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { Eye, MapPin, Pencil, Plus, Trash2, DollarSign, Home, Search } from 'lucide-react'
 import { RoomSeekingPost } from '@/types'
-import { deleteRoomSeekingPost } from '@/actions/room-seeking.action'
 import { getRoomTypeDisplayName } from '@/utils/room-types'
 import { toast } from 'sonner'
 import { useRoomSeekingStore } from '@/stores/roomSeekingStore'
 
 export default function ProfileRoomSeekingPostsPage() {
   const router = useRouter()
-  const { userPosts, userPostsLoading, fetchMyPosts } = useRoomSeekingStore()
+  const { userPosts, userPostsLoading, fetchMyPosts, deletePost } = useRoomSeekingStore()
 
   const [localPosts, setLocalPosts] = useState<RoomSeekingPost[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -56,9 +55,9 @@ export default function ProfileRoomSeekingPostsPage() {
 
   const handleDeleteRoomSeekingPost = async (postId: string) => {
     try {
-      const response = await deleteRoomSeekingPost(postId)
-      if (!response.success) {
-        toast.error(response.error)
+      const success = await deletePost(postId)
+      if (!success) {
+        toast.error('Không thể xóa bài đăng')
         return
       }
 
