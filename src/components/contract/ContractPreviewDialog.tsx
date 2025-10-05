@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -34,18 +35,7 @@ export default function ContractPreviewDialog({
 
   const { downloadPDF, downloading } = useContractStore();
 
-  useEffect(() => {
-    if (open && contractId) {
-      loadPreview();
-    }
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [open, contractId]);
-
-  const loadPreview = async () => {
+  const loadPreview = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -69,7 +59,18 @@ export default function ContractPreviewDialog({
     } finally {
       setLoading(false);
     }
-  };
+  }, [contractId]);
+
+  useEffect(() => {
+    if (open && contractId) {
+      loadPreview();
+    }
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [open, contractId, loadPreview, previewUrl]);
 
   const handleDownload = async () => {
     try {
@@ -120,11 +121,14 @@ export default function ContractPreviewDialog({
 
           {/* Preview Image */}
           {previewUrl && !loading && !error && (
-            <div className="border rounded-lg overflow-hidden bg-gray-50">
-              <img
+            <div className="border rounded-lg overflow-hidden bg-gray-50 relative min-h-[600px]">
+              <Image
                 src={previewUrl}
                 alt="Contract Preview"
+                width={800}
+                height={1000}
                 className="w-full h-auto"
+                unoptimized
               />
             </div>
           )}
