@@ -163,7 +163,7 @@ export const updateRental = async (
 		const response = await apiCall<{ data: Rental }>(
 			`/api/rentals/${id}`,
 			{
-				method: 'PATCH',
+				method: 'PUT',
 				data,
 			},
 			token,
@@ -187,7 +187,7 @@ export const terminateRental = async (
 		const response = await apiCall<{ data: Rental }>(
 			`/api/rentals/${id}/terminate`,
 			{
-				method: 'PATCH',
+				method: 'PUT',
 				data,
 			},
 			token,
@@ -211,7 +211,7 @@ export const renewRental = async (
 		const response = await apiCall<{ data: Rental }>(
 			`/api/rentals/${id}/renew`,
 			{
-				method: 'POST',
+				method: 'PUT',
 				data,
 			},
 			token,

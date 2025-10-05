@@ -1,77 +1,82 @@
 import { create } from 'zustand';
 import {
 	autoGenerateContract,
-	createContractAmendment,
+	createContract,
 	downloadContractPDF,
+	generateContractPDF,
 	getContractById,
-	getLandlordContracts,
+	getContractPreview,
+	getContractStatus,
 	getMyContracts,
-	getTenantContracts,
-	requestSignatures,
 	signContract,
-	updateContract,
-	verifySignature,
+	verifyPDFIntegrity,
 } from '@/actions/contract.action';
 import { TokenManager } from '@/lib/api-client';
-import type {
-	Contract,
-	ContractListResponse,
-	CreateContractAmendmentRequest,
-	UpdateContractRequest,
-} from '@/types/types';
+import type { Contract, ContractListResponse } from '@/types/types';
 
 interface ContractState {
 	// Data
 	contracts: Contract[];
-	landlordContracts: Contract[];
-	tenantContracts: Contract[];
 	current: Contract | null;
+	contractStatus: { status: string; details: Record<string, unknown> } | null;
+	pdfPreviewUrl: string | null;
+	pdfIntegrity: { isValid: boolean; hash: string; details: string } | null;
 
 	// Loading states
 	loading: boolean;
-	loadingLandlord: boolean;
-	loadingTenant: boolean;
 	loadingCurrent: boolean;
 	submitting: boolean;
 	downloading: boolean;
+	generating: boolean;
 	signing: boolean;
 	verifying: boolean;
 
 	// Error states
 	error: string | null;
-	errorLandlord: string | null;
-	errorTenant: string | null;
 	errorCurrent: string | null;
 	submitError: string | null;
 	downloadError: string | null;
+	generateError: string | null;
 	signError: string | null;
 	verifyError: string | null;
 
 	// Metadata
 	meta: ContractListResponse['meta'] | null;
-	landlordMeta: ContractListResponse['meta'] | null;
-	tenantMeta: ContractListResponse['meta'] | null;
 
 	// Actions
 	loadContracts: (params?: { page?: number; limit?: number; status?: string }) => Promise<void>;
-	loadLandlordContracts: (params?: { page?: number; limit?: number }) => Promise<void>;
-	loadTenantContracts: (params?: { page?: number; limit?: number }) => Promise<void>;
+	loadAll: () => Promise<void>;
 	loadById: (id: string) => Promise<void>;
 	loadContractById: (id: string) => Promise<Contract | null>;
+	create: (data: {
+		landlordId: string;
+		tenantId: string;
+		roomInstanceId: string;
+		contractType: string;
+		startDate: string;
+		endDate: string;
+		contractData: {
+			monthlyRent: number;
+			depositAmount: number;
+			additionalTerms?: string;
+			rules?: string[];
+			amenities?: string[];
+		};
+	}) => Promise<boolean>;
 	autoGenerate: (rentalId: string, additionalTerms?: string) => Promise<boolean>;
-	update: (id: string, data: UpdateContractRequest) => Promise<boolean>;
-	createAmendment: (contractId: string, data: CreateContractAmendmentRequest) => Promise<boolean>;
+	getStatus: (id: string) => Promise<boolean>;
+	generatePDF: (
+		contractId: string,
+		options?: { includeSignatures?: boolean; format?: string; printBackground?: boolean },
+	) => Promise<string | null>;
 	downloadPDF: (id: string) => Promise<Blob | null>;
+	getPreview: (contractId: string) => Promise<boolean>;
+	verifyPDF: (contractId: string) => Promise<boolean>;
 	sign: (
 		contractId: string,
 		signatureData: string,
 		signatureMethod?: 'canvas' | 'upload',
 	) => Promise<boolean>;
-	requestSignatures: (contractId: string, signatureDeadline?: string) => Promise<boolean>;
-	verifySignature: (
-		contractId: string,
-		signatureId: string,
-	) => Promise<{ isValid: boolean; details: string } | null>;
 	clearCurrent: () => void;
 	clearErrors: () => void;
 }
@@ -79,31 +84,33 @@ interface ContractState {
 export const useContractStore = create<ContractState>((set, get) => ({
 	// Initial state
 	contracts: [],
-	landlordContracts: [],
-	tenantContracts: [],
 	current: null,
+	contractStatus: null,
+	pdfPreviewUrl: null,
+	pdfIntegrity: null,
 
 	loading: false,
-	loadingLandlord: false,
-	loadingTenant: false,
 	loadingCurrent: false,
 	submitting: false,
 	downloading: false,
+	generating: false,
 	signing: false,
 	verifying: false,
 
 	error: null,
-	errorLandlord: null,
-	errorTenant: null,
 	errorCurrent: null,
 	submitError: null,
 	downloadError: null,
+	generateError: null,
 	signError: null,
 	verifyError: null,
 
 	meta: null,
-	landlordMeta: null,
-	tenantMeta: null,
+
+	// Load all contracts (shorthand for loadContracts without params)
+	loadAll: async () => {
+		return get().loadContracts();
+	},
 
 	// Load general contracts
 	loadContracts: async (params) => {
@@ -127,58 +134,6 @@ export const useContractStore = create<ContractState>((set, get) => ({
 			set({
 				error: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
 				loading: false,
-			});
-		}
-	},
-
-	// Load landlord contracts
-	loadLandlordContracts: async (params) => {
-		set({ loadingLandlord: true, errorLandlord: null });
-		try {
-			const token = TokenManager.getAccessToken();
-			const result = await getLandlordContracts(params, token);
-			if (result.success) {
-				set({
-					landlordContracts: result.data.data,
-					landlordMeta: result.data.meta,
-					loadingLandlord: false,
-				});
-			} else {
-				set({
-					errorLandlord: result.error,
-					loadingLandlord: false,
-				});
-			}
-		} catch (error) {
-			set({
-				errorLandlord: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
-				loadingLandlord: false,
-			});
-		}
-	},
-
-	// Load tenant contracts
-	loadTenantContracts: async (params) => {
-		set({ loadingTenant: true, errorTenant: null });
-		try {
-			const token = TokenManager.getAccessToken();
-			const result = await getTenantContracts(params, token);
-			if (result.success) {
-				set({
-					tenantContracts: result.data.data,
-					tenantMeta: result.data.meta,
-					loadingTenant: false,
-				});
-			} else {
-				set({
-					errorTenant: result.error,
-					loadingTenant: false,
-				});
-			}
-		} catch (error) {
-			set({
-				errorTenant: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
-				loadingTenant: false,
 			});
 		}
 	},
@@ -263,12 +218,12 @@ export const useContractStore = create<ContractState>((set, get) => ({
 		}
 	},
 
-	// Update contract
-	update: async (id, data) => {
+	// Create contract manually
+	create: async (data) => {
 		set({ submitting: true, submitError: null });
 		try {
 			const token = TokenManager.getAccessToken();
-			const result = await updateContract(id, data, token);
+			const result = await createContract(data, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -293,30 +248,56 @@ export const useContractStore = create<ContractState>((set, get) => ({
 		}
 	},
 
-	// Create contract amendment
-	createAmendment: async (contractId, data) => {
-		set({ submitting: true, submitError: null });
+	// Get contract status
+	getStatus: async (id) => {
+		set({ loading: true, error: null });
 		try {
 			const token = TokenManager.getAccessToken();
-			const result = await createContractAmendment(contractId, data, token);
+			const result = await getContractStatus(id, token);
 			if (result.success) {
-				set({ submitting: false });
-				// Reload current contract to get updated amendments
-				await get().loadById(contractId);
+				set({
+					contractStatus: result.data,
+					loading: false,
+				});
 				return true;
 			} else {
 				set({
-					submitError: result.error,
-					submitting: false,
+					error: result.error,
+					loading: false,
 				});
 				return false;
 			}
 		} catch (error) {
 			set({
-				submitError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
-				submitting: false,
+				error: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				loading: false,
 			});
 			return false;
+		}
+	},
+
+	// Generate contract PDF
+	generatePDF: async (contractId, options) => {
+		set({ generating: true, generateError: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await generateContractPDF(contractId, options, token);
+			if (result.success) {
+				set({ generating: false });
+				return result.data.pdfUrl;
+			} else {
+				set({
+					generateError: result.error,
+					generating: false,
+				});
+				return null;
+			}
+		} catch (error) {
+			set({
+				generateError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				generating: false,
+			});
+			return null;
 		}
 	},
 
@@ -345,9 +326,60 @@ export const useContractStore = create<ContractState>((set, get) => ({
 		}
 	},
 
-	// Clear current contract
-	clearCurrent: () => {
-		set({ current: null, errorCurrent: null });
+	// Get contract preview
+	getPreview: async (contractId) => {
+		set({ loading: true, error: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await getContractPreview(contractId, token);
+			if (result.success) {
+				set({
+					pdfPreviewUrl: result.data.previewUrl,
+					loading: false,
+				});
+				return true;
+			} else {
+				set({
+					error: result.error,
+					loading: false,
+				});
+				return false;
+			}
+		} catch (error) {
+			set({
+				error: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				loading: false,
+			});
+			return false;
+		}
+	},
+
+	// Verify PDF integrity
+	verifyPDF: async (contractId) => {
+		set({ verifying: true, verifyError: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await verifyPDFIntegrity(contractId, token);
+			if (result.success) {
+				set({
+					pdfIntegrity: result.data,
+					verifying: false,
+				});
+				return true;
+			} else {
+				set({
+					verifyError: result.error,
+					verifying: false,
+				});
+				return false;
+			}
+		} catch (error) {
+			set({
+				verifyError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				verifying: false,
+			});
+			return false;
+		}
 	},
 
 	// Sign contract
@@ -380,70 +412,25 @@ export const useContractStore = create<ContractState>((set, get) => ({
 		}
 	},
 
-	// Request signatures from both parties
-	requestSignatures: async (contractId, signatureDeadline) => {
-		set({ submitting: true, submitError: null });
-		try {
-			const token = TokenManager.getAccessToken();
-			const result = await requestSignatures(contractId, signatureDeadline, token);
-			if (result.success) {
-				set({
-					current: result.data.data,
-					submitting: false,
-				});
-				// Reload contracts lists
-				await get().loadContracts();
-				return true;
-			} else {
-				set({
-					submitError: result.error,
-					submitting: false,
-				});
-				return false;
-			}
-		} catch (error) {
-			set({
-				submitError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
-				submitting: false,
-			});
-			return false;
-		}
-	},
-
-	// Verify signature
-	verifySignature: async (contractId, signatureId) => {
-		set({ verifying: true, verifyError: null });
-		try {
-			const token = TokenManager.getAccessToken();
-			const result = await verifySignature(contractId, signatureId, token);
-			if (result.success) {
-				set({ verifying: false });
-				return result.data;
-			} else {
-				set({
-					verifyError: result.error,
-					verifying: false,
-				});
-				return null;
-			}
-		} catch (error) {
-			set({
-				verifyError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
-				verifying: false,
-			});
-			return null;
-		}
+	// Clear current contract
+	clearCurrent: () => {
+		set({
+			current: null,
+			errorCurrent: null,
+			contractStatus: null,
+			pdfPreviewUrl: null,
+			pdfIntegrity: null,
+		});
 	},
 
 	// Clear all errors
 	clearErrors: () => {
 		set({
 			error: null,
-			errorLandlord: null,
-			errorTenant: null,
 			errorCurrent: null,
 			submitError: null,
 			downloadError: null,
+			generateError: null,
 			signError: null,
 			verifyError: null,
 		});

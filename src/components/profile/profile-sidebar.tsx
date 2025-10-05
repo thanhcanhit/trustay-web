@@ -69,6 +69,12 @@ const profileItems: ProfileSidebarItem[] = [
         disabled: false
       },
       {
+        title: "Hợp đồng",
+        href: "/profile/contracts",
+        icon: FileText,
+        disabled: false
+      },
+      {
         title: "Hóa đơn",
         href: "/profile/bills",
         icon: Receipt,

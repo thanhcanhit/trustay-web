@@ -23,7 +23,7 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 	const [showSignaturePad, setShowSignaturePad] = useState(false);
 	const [isConfirming, setIsConfirming] = useState(false);
 
-	const { sign, requestSignatures, signing, submitting, signError } = useContractStore();
+	const { sign, signing, signError } = useContractStore();
 
 	// Kiểm tra trạng thái ký của từng bên
 	const isLandlordSigned = !!contract.landlordSignature;
@@ -75,25 +75,6 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 			toast.error('Đã có lỗi xảy ra khi ký hợp đồng');
 		} finally {
 			setIsConfirming(false);
-		}
-	};
-
-	const handleRequestSignatures = async () => {
-		try {
-			// Set deadline 7 ngày từ bây giờ
-			const deadline = new Date();
-			deadline.setDate(deadline.getDate() + 7);
-
-			const success = await requestSignatures(contract.id, deadline.toISOString());
-
-			if (success) {
-				toast.success('Đã gửi yêu cầu ký hợp đồng!');
-				onSigningComplete?.();
-			} else {
-				toast.error('Không thể gửi yêu cầu ký hợp đồng');
-			}
-		} catch {
-			toast.error('Đã có lỗi xảy ra');
 		}
 	};
 
@@ -183,23 +164,6 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 						signerName="Bạn"
 						signerRole={currentUserRole}
 					/>
-				</div>
-			)}
-
-			{/* Signature Actions */}
-			{contract.status === 'draft' && currentUserRole === 'landlord' && (
-				<div className="bg-white p-6 rounded-lg border">
-					<h3 className="text-lg font-medium mb-4">Gửi yêu cầu ký hợp đồng</h3>
-					<p className="text-gray-600 mb-4">
-						Gửi hợp đồng này cho cả hai bên để ký. Sau khi gửi, hợp đồng sẽ chuyển sang trạng thái &quot;Chờ ký&quot;.
-					</p>
-					<button
-						onClick={handleRequestSignatures}
-						disabled={submitting}
-						className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-					>
-						{submitting ? 'Đang gửi...' : 'Gửi yêu cầu ký'}
-					</button>
 				</div>
 			)}
 

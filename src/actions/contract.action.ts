@@ -1,12 +1,7 @@
 'use server';
 
 import { createServerApiCall } from '@/lib/api-client';
-import type {
-	Contract,
-	ContractListResponse,
-	CreateContractAmendmentRequest,
-	UpdateContractRequest,
-} from '@/types/types';
+import type { Contract, ContractListResponse } from '@/types/types';
 import { extractErrorMessage } from '@/utils/api-error-handler';
 
 interface ApiErrorResult {
@@ -21,6 +16,53 @@ interface ApiSuccessResult<T> {
 }
 
 type ApiResult<T> = ApiSuccessResult<T> | ApiErrorResult;
+
+// Helper function to normalize contract data from backend
+const normalizeContract = (contract: Record<string, unknown>): Contract => {
+	// Split fullName into firstName and lastName
+	const splitName = (fullName: string) => {
+		const parts = fullName?.trim().split(' ') || [''];
+		const lastName = parts.pop() || '';
+		const firstName = parts.join(' ') || lastName;
+		return { firstName, lastName };
+	};
+
+	const landlord = contract.landlord as Record<string, unknown> | undefined;
+	const tenant = contract.tenant as Record<string, unknown> | undefined;
+	const room = contract.room as Record<string, unknown> | undefined;
+	const contractData = contract.contractData as Record<string, unknown> | undefined;
+
+	return {
+		...contract,
+		// Map landlord data
+		landlord: landlord
+			? {
+					...landlord,
+					...splitName(landlord.fullName as string),
+				}
+			: undefined,
+		// Map tenant data
+		tenant: tenant
+			? {
+					...tenant,
+					...splitName(tenant.fullName as string),
+				}
+			: undefined,
+		// Map room data
+		room: room
+			? {
+					...room,
+					name: (room.roomName as string) || (room.name as string),
+					roomType: room.roomType as string,
+					areaSqm: room.areaSqm as number,
+					buildingName: room.buildingName as string,
+				}
+			: undefined,
+		// Map contract financial data from contractData
+		monthlyRent: (contractData?.monthlyRent as number) || (contract.monthlyRent as number),
+		depositAmount: (contractData?.depositAmount as number) || (contract.depositAmount as number),
+	} as Contract;
+};
 
 const apiCall = createServerApiCall();
 
@@ -68,8 +110,28 @@ export const getMyContracts = async (
 		if (params?.status) q.append('status', params.status);
 
 		const endpoint = `/api/contracts${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<ContractListResponse>(endpoint, { method: 'GET' }, token);
-		return { success: true, data: response };
+		const response = await apiCall<Contract[] | ContractListResponse>(
+			endpoint,
+			{ method: 'GET' },
+			token,
+		);
+
+		// Backend trả về array trực tiếp, cần wrap lại
+		if (Array.isArray(response)) {
+			return {
+				success: true,
+				data: {
+					data: (response as unknown as Record<string, unknown>[]).map(normalizeContract),
+					meta: {
+						total: response.length,
+						page: params?.page || 1,
+						limit: params?.limit || 10,
+						totalPages: Math.ceil(response.length / (params?.limit || 10)),
+					},
+				},
+			};
+		}
+		return { success: true, data: response as ContractListResponse };
 	} catch (error) {
 		return {
 			success: false,
@@ -94,8 +156,28 @@ export const getLandlordContracts = async (
 		if (params?.status) q.append('status', params.status);
 
 		const endpoint = `/api/contracts${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<ContractListResponse>(endpoint, { method: 'GET' }, token);
-		return { success: true, data: response };
+		const response = await apiCall<Contract[] | ContractListResponse>(
+			endpoint,
+			{ method: 'GET' },
+			token,
+		);
+
+		// Backend trả về array trực tiếp, cần wrap lại
+		if (Array.isArray(response)) {
+			return {
+				success: true,
+				data: {
+					data: (response as unknown as Record<string, unknown>[]).map(normalizeContract),
+					meta: {
+						total: response.length,
+						page: params?.page || 1,
+						limit: params?.limit || 10,
+						totalPages: Math.ceil(response.length / (params?.limit || 10)),
+					},
+				},
+			};
+		}
+		return { success: true, data: response as ContractListResponse };
 	} catch (error) {
 		return {
 			success: false,
@@ -120,8 +202,28 @@ export const getTenantContracts = async (
 		if (params?.status) q.append('status', params.status);
 
 		const endpoint = `/api/contracts${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<ContractListResponse>(endpoint, { method: 'GET' }, token);
-		return { success: true, data: response };
+		const response = await apiCall<Contract[] | ContractListResponse>(
+			endpoint,
+			{ method: 'GET' },
+			token,
+		);
+
+		// Backend trả về array trực tiếp, cần wrap lại
+		if (Array.isArray(response)) {
+			return {
+				success: true,
+				data: {
+					data: (response as unknown as Record<string, unknown>[]).map(normalizeContract),
+					meta: {
+						total: response.length,
+						page: params?.page || 1,
+						limit: params?.limit || 10,
+						totalPages: Math.ceil(response.length / (params?.limit || 10)),
+					},
+				},
+			};
+		}
+		return { success: true, data: response as ContractListResponse };
 	} catch (error) {
 		return {
 			success: false,
@@ -149,59 +251,11 @@ export const getContractById = async (
 	}
 };
 
-// Update contract (Landlord only)
-export const updateContract = async (
-	id: string,
-	data: UpdateContractRequest,
-	token?: string,
-): Promise<ApiResult<{ data: Contract }>> => {
-	try {
-		const response = await apiCall<{ data: Contract }>(
-			`/api/contracts/${id}`,
-			{
-				method: 'PUT',
-				data,
-			},
-			token,
-		);
-		return { success: true, data: normalizeEntityResponse<Contract>(response) };
-	} catch (error) {
-		return {
-			success: false,
-			error: extractErrorMessage(error, 'Không thể cập nhật hợp đồng'),
-		};
-	}
-};
-
-// Create contract amendment
-export const createContractAmendment = async (
-	contractId: string,
-	data: CreateContractAmendmentRequest,
-	token?: string,
-): Promise<ApiResult<{ message: string }>> => {
-	try {
-		const response = await apiCall<{ message: string }>(
-			`/api/contracts/${contractId}/amendments`,
-			{
-				method: 'POST',
-				data,
-			},
-			token,
-		);
-		return { success: true, data: response };
-	} catch (error) {
-		return {
-			success: false,
-			error: extractErrorMessage(error, 'Không thể tạo phụ lục hợp đồng'),
-		};
-	}
-};
-
 // Download contract as PDF
 export const downloadContractPDF = async (id: string, token?: string): Promise<ApiResult<Blob>> => {
 	try {
 		const response = await apiCall<Blob>(
-			`/api/contracts/${id}/download`,
+			`/api/contracts/${id}/pdf`,
 			{
 				method: 'GET',
 				responseType: 'blob',
@@ -249,41 +303,48 @@ export const signContract = async (
 	}
 };
 
-// Request signatures (Send contract for signing)
-export const requestSignatures = async (
-	contractId: string,
-	signatureDeadline?: string,
+// Create contract manually (not from rental)
+export const createContract = async (
+	data: {
+		landlordId: string;
+		tenantId: string;
+		roomInstanceId: string;
+		contractType: string;
+		startDate: string;
+		endDate: string;
+		contractData: {
+			monthlyRent: number;
+			depositAmount: number;
+			additionalTerms?: string;
+			rules?: string[];
+			amenities?: string[];
+		};
+	},
 	token?: string,
 ): Promise<ApiResult<{ data: Contract }>> => {
 	try {
 		const response = await apiCall<{ data: Contract }>(
-			`/api/contracts/${contractId}/request-signatures`,
+			'/api/contracts',
 			{
 				method: 'POST',
-				data: {
-					signatureDeadline,
-				},
+				data,
 			},
 			token,
 		);
 		return { success: true, data: normalizeEntityResponse<Contract>(response) };
 	} catch (error) {
-		return {
-			success: false,
-			error: extractErrorMessage(error, 'Không thể gửi yêu cầu ký hợp đồng'),
-		};
+		return { success: false, error: extractErrorMessage(error, 'Không thể tạo hợp đồng') };
 	}
 };
 
-// Verify signature
-export const verifySignature = async (
-	contractId: string,
-	signatureId: string,
+// Get contract status
+export const getContractStatus = async (
+	id: string,
 	token?: string,
-): Promise<ApiResult<{ isValid: boolean; details: string }>> => {
+): Promise<ApiResult<{ status: string; details: Record<string, unknown> }>> => {
 	try {
-		const response = await apiCall<{ isValid: boolean; details: string }>(
-			`/api/contracts/${contractId}/signatures/${signatureId}/verify`,
+		const response = await apiCall<{ status: string; details: Record<string, unknown> }>(
+			`/api/contracts/${id}/status`,
 			{
 				method: 'GET',
 			},
@@ -293,7 +354,83 @@ export const verifySignature = async (
 	} catch (error) {
 		return {
 			success: false,
-			error: extractErrorMessage(error, 'Không thể xác thực chữ ký'),
+			error: extractErrorMessage(error, 'Không thể lấy trạng thái hợp đồng'),
+		};
+	}
+};
+
+// Generate contract PDF
+export const generateContractPDF = async (
+	contractId: string,
+	options?: {
+		includeSignatures?: boolean;
+		format?: string;
+		printBackground?: boolean;
+	},
+	token?: string,
+): Promise<ApiResult<{ pdfUrl: string; message: string }>> => {
+	try {
+		const response = await apiCall<{ pdfUrl: string; message: string }>(
+			`/api/contracts/${contractId}/pdf`,
+			{
+				method: 'POST',
+				data: {
+					contractId,
+					includeSignatures: options?.includeSignatures ?? true,
+					options: {
+						format: options?.format || 'A4',
+						printBackground: options?.printBackground ?? true,
+					},
+				},
+			},
+			token,
+		);
+		return { success: true, data: response };
+	} catch (error) {
+		return { success: false, error: extractErrorMessage(error, 'Không thể tạo PDF hợp đồng') };
+	}
+};
+
+// Get contract preview
+export const getContractPreview = async (
+	contractId: string,
+	token?: string,
+): Promise<ApiResult<{ previewUrl: string }>> => {
+	try {
+		const response = await apiCall<{ previewUrl: string }>(
+			`/api/contracts/${contractId}/pdf/preview`,
+			{
+				method: 'GET',
+			},
+			token,
+		);
+		return { success: true, data: response };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể lấy bản xem trước hợp đồng'),
+		};
+	}
+};
+
+// Verify PDF integrity
+export const verifyPDFIntegrity = async (
+	contractId: string,
+	token?: string,
+): Promise<ApiResult<{ isValid: boolean; hash: string; details: string }>> => {
+	try {
+		const response = await apiCall<{ isValid: boolean; hash: string; details: string }>(
+			`/api/contracts/${contractId}/pdf/verify`,
+			{
+				method: 'GET',
+			},
+			token,
+		);
+		return { success: true, data: response };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể xác thực tính toàn vẹn PDF'),
 		};
 	}
 };

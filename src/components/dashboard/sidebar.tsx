@@ -76,6 +76,11 @@ const tenantItems: SidebarItem[] = [
         icon: Home
       },
       {
+        title: "Hợp đồng",
+        href: "/profile/contracts",
+        icon: FileText
+      },
+      {
         title: "Hóa đơn",
         href: "/profile/bills",
         icon: Receipt

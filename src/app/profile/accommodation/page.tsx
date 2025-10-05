@@ -11,6 +11,7 @@ import { useRentalStore } from "@/stores/rentalStore"
 import { useContractStore } from "@/stores/contractStore"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
+import { Contract } from "@/types/types"
 
 const RENTAL_STATUS_COLORS = {
   active: 'bg-green-100 text-green-800',
@@ -54,15 +55,15 @@ const formatDate = (dateStr: string | null | undefined, formatStr: string = 'dd/
 
 function AccommodationContent() {
   const { tenantRentals, loadingTenant, errorTenant, loadTenantRentals } = useRentalStore()
-  const { tenantContracts, loadingTenant: loadingContracts, errorTenant: errorContracts, loadTenantContracts } = useContractStore()
+  const { contracts, loading: loadingContracts, error: errorContracts, loadAll } = useContractStore()
 
   useEffect(() => {
     loadTenantRentals()
-    loadTenantContracts()
-  }, [loadTenantRentals, loadTenantContracts])
+    loadAll()
+  }, [loadTenantRentals, loadAll])
 
   const activeRental = (tenantRentals || []).find(r => r.status === 'active')
-  const activeContract = (tenantContracts || []).find(c => c.status === 'active')
+  const activeContract = (contracts || []).find((c: Contract) => c.status === 'active')
 
   if (loadingTenant || loadingContracts) {
     return (

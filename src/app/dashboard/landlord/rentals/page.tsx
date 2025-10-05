@@ -142,7 +142,11 @@ export default function RentalsPage() {
             </Button>
           </div>
 
-          <Button className="flex items-center space-x-2">
+          <Button 
+            className="flex items-center space-x-2"
+            onClick={() => window.location.href = '/dashboard/landlord/rental-requests'}
+            title="Tạo hợp đồng cho thuê từ yêu cầu thuê trọ"
+          >
             <Plus className="h-4 w-4" />
             <span>Tạo hợp đồng cho thuê mới</span>
           </Button>

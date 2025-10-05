@@ -1,33 +1,23 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
+import { ProfileLayout } from "@/components/profile/profile-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Download, Eye, Plus, RotateCcw, AlertCircle, FileSignature, Loader2 } from "lucide-react"
+import { Search, Download, Eye, RotateCcw, AlertCircle, FileSignature, Loader2 } from "lucide-react"
 import { useContractStore } from "@/stores/contractStore"
-import { useRentalStore } from "@/stores/rentalStore"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useRouter } from "next/navigation"
 import { Contract } from "@/types/types"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { toast } from "sonner"
 
 
 const STATUS_COLORS = {
   active: 'bg-green-100 text-green-800',
   expired: 'bg-red-100 text-red-800',
-  pending: 'bg-yellow-100 text-yellow-800',
+  pending_signatures: 'bg-yellow-100 text-yellow-800',
   terminated: 'bg-gray-100 text-gray-800',
   draft: 'bg-blue-100 text-blue-800',
   signed: 'bg-green-100 text-green-800',
@@ -37,20 +27,17 @@ const STATUS_COLORS = {
 const STATUS_LABELS = {
   active: 'Đang hiệu lực',
   expired: 'Hết hạn',
-  pending: 'Chờ ký',
+  pending_signatures: 'Chờ ký',
   terminated: 'Đã chấm dứt',
   draft: 'Bản nháp',
   signed: 'Đã ký',
   cancelled: 'Đã hủy'
 }
 
-export default function ContractsPage() {
+export default function TenantContractsPage() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
-  const [selectedRentalId, setSelectedRentalId] = useState<string>('')
-  
   const {
     contracts,
     loading,
@@ -59,52 +46,25 @@ export default function ContractsPage() {
     downloadError,
     loadAll,
     downloadPDF,
-    clearErrors,
-    autoGenerate,
-    submitting
+    clearErrors
   } = useContractStore()
-
-  const {
-    landlordRentals,
-    loadLandlordRentals,
-  } = useRentalStore()
 
   useEffect(() => {
     loadAll()
-    loadLandlordRentals()
-  }, [loadAll, loadLandlordRentals])
+  }, [loadAll])
 
   const filteredContracts = (contracts || []).filter((contract: Contract) => {
     const searchLower = searchTerm.toLowerCase()
     const matchesSearch =
       contract.id?.toLowerCase().includes(searchLower) ||
-      contract.tenant?.firstName?.toLowerCase().includes(searchLower) ||
-      contract.tenant?.lastName?.toLowerCase().includes(searchLower) ||
+      contract.landlord?.firstName?.toLowerCase().includes(searchLower) ||
+      contract.landlord?.lastName?.toLowerCase().includes(searchLower) ||
       contract.room?.name?.toLowerCase().includes(searchLower)
 
     const matchesStatus = statusFilter === 'all' || contract.status === statusFilter
 
     return matchesSearch && matchesStatus
   })
-
-  // Debug: Log contracts data
-  useEffect(() => {
-    console.log('=== Contracts Debug ===')
-    console.log('contracts:', contracts)
-    console.log('contracts length:', contracts?.length)
-    console.log('loading:', loading)
-    console.log('error:', error)
-    console.log('filteredContracts length:', filteredContracts.length)
-    console.log('======================')
-  }, [contracts, loading, error, filteredContracts.length])
-
-  // const getDaysUntilExpiry = (endDate: string) => {
-  //   const end = new Date(endDate)
-  //   const today = new Date()
-  //   const diffTime = end.getTime() - today.getTime()
-  //   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  //   return diffDays
-  // }
 
   const handleDownload = async (contractId: string, contractNumber: string) => {
     try {
@@ -124,49 +84,16 @@ export default function ContractsPage() {
     }
   }
 
-  const handleCreateContract = async () => {
-    if (!selectedRentalId) {
-      toast.error('Vui lòng chọn hợp đồng cho thuê')
-      return
-    }
-
-    const success = await autoGenerate(selectedRentalId)
-    if (success) {
-      toast.success('Tạo hợp đồng thành công!')
-      setShowCreateDialog(false)
-      setSelectedRentalId('')
-      loadAll()
-    } else {
-      toast.error('Không thể tạo hợp đồng')
-    }
+  const handleViewContract = (contractId: string) => {
+    router.push(`/profile/contracts/${contractId}`)
   }
 
-  // Get rentals without contracts
-  const rentalsWithoutContract = (landlordRentals || []).filter(
-    rental => rental.status === 'active' && !rental.contract
-  )
-
   return (
-    <DashboardLayout userType="landlord">
+    <ProfileLayout>
       <div className="px-6">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Quản lý hợp đồng</h1>
-          <p className="text-gray-600">Quản lý tất cả hợp đồng thuê trọ</p>
-          
-          {/* Debug Badge */}
-          <div className="mt-2 flex gap-2 text-xs">
-            <Badge variant="outline">
-              Contracts: {(contracts || []).length}
-            </Badge>
-            <Badge variant="outline">
-              Loading: {loading ? 'Yes' : 'No'}
-            </Badge>
-            {error && (
-              <Badge variant="destructive">
-                Error: {error}
-              </Badge>
-            )}
-          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Hợp đồng của tôi</h1>
+          <p className="text-gray-600">Quản lý hợp đồng thuê trọ của bạn</p>
         </div>
 
         {/* Filters and Actions */}
@@ -190,7 +117,7 @@ export default function ContractsPage() {
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 <SelectItem value="active">Đang hiệu lực</SelectItem>
                 <SelectItem value="draft">Bản nháp</SelectItem>
-                <SelectItem value="pending">Chờ ký</SelectItem>
+                <SelectItem value="pending_signatures">Chờ ký</SelectItem>
                 <SelectItem value="signed">Đã ký</SelectItem>
                 <SelectItem value="expired">Hết hạn</SelectItem>
                 <SelectItem value="terminated">Đã chấm dứt</SelectItem>
@@ -208,90 +135,6 @@ export default function ContractsPage() {
               <span>Làm mới</span>
             </Button>
           </div>
-
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <Button 
-              className="flex items-center space-x-2"
-              onClick={() => setShowCreateDialog(true)}
-            >
-              <Plus className="h-4 w-4" />
-              <span>Tạo hợp đồng mới</span>
-            </Button>
-
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Tạo hợp đồng mới</DialogTitle>
-                <DialogDescription>
-                  Chọn hợp đồng cho thuê để tạo hợp đồng chính thức
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="py-4">
-                {rentalsWithoutContract.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    Không có hợp đồng cho thuê nào chưa có hợp đồng chính thức
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <label className="text-sm font-medium">Chọn hợp đồng cho thuê:</label>
-                    <Select value={selectedRentalId} onValueChange={setSelectedRentalId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn hợp đồng cho thuê..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {rentalsWithoutContract.map((rental) => (
-                          <SelectItem key={rental.id} value={rental.id!}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">
-                                {rental.room?.name || 'N/A'} - {rental.tenant?.firstName} {rental.tenant?.lastName}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                {rental.room?.buildingName || 'N/A'}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    {selectedRentalId && (
-                      <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-blue-800">
-                          <strong>Lưu ý:</strong> Hợp đồng sẽ được tạo tự động dựa trên thông tin từ hợp đồng cho thuê. 
-                          Bạn có thể chỉnh sửa sau khi tạo.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <DialogFooter>
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setShowCreateDialog(false)
-                    setSelectedRentalId('')
-                  }}
-                >
-                  Hủy
-                </Button>
-                <Button 
-                  onClick={handleCreateContract}
-                  disabled={!selectedRentalId || submitting}
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Đang tạo...
-                    </>
-                  ) : (
-                    'Tạo hợp đồng'
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
 
         {/* Error Display */}
@@ -346,7 +189,7 @@ export default function ContractsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[100px]">Mã HĐ</TableHead>
-                  <TableHead className="min-w-[150px]">Người thuê</TableHead>
+                  <TableHead className="min-w-[150px]">Chủ nhà</TableHead>
                   <TableHead className="min-w-[120px]">Phòng</TableHead>
                   <TableHead className="text-right min-w-[120px]">Tiền thuê</TableHead>
                   <TableHead className="text-right min-w-[120px]">Tiền cọc</TableHead>
@@ -357,9 +200,9 @@ export default function ContractsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredContracts.map((contract) => {
-                  const tenantName = contract.tenant
-                    ? `${contract.tenant.firstName} ${contract.tenant.lastName}`
+                {filteredContracts.map((contract: Contract) => {
+                  const landlordName = contract.landlord
+                    ? `${contract.landlord.firstName} ${contract.landlord.lastName}`
                     : 'Chưa có thông tin'
 
                   const roomName = contract.room?.name || 'N/A'
@@ -370,14 +213,14 @@ export default function ContractsPage() {
                         {contract.id ? `HĐ-${contract.id.slice(-8)}` : 'N/A'}
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">{tenantName}</div>
+                        <div className="font-medium">{landlordName}</div>
                       </TableCell>
                       <TableCell>{roomName}</TableCell>
                       <TableCell className="text-right font-medium text-green-600">
-                        {(contract.monthlyRent || 0).toLocaleString('vi-VN')}
+                        {(contract.monthlyRent || 0).toLocaleString('vi-VN')} đ
                       </TableCell>
                       <TableCell className="text-right font-medium text-blue-600">
-                        {(contract.depositAmount || 0).toLocaleString('vi-VN')}
+                        {(contract.depositAmount || 0).toLocaleString('vi-VN')} đ
                       </TableCell>
                       <TableCell>
                         {contract.startDate
@@ -399,16 +242,16 @@ export default function ContractsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => router.push(`/dashboard/landlord/contracts/${contract.id}`)}
+                            onClick={() => handleViewContract(contract.id!)}
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             Xem
                           </Button>
-                          {contract.status === 'draft' && (
+                          {(contract.status === 'draft' || contract.status === 'pending_signatures') && (
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => router.push(`/dashboard/landlord/contracts/${contract.id}`)}
+                              onClick={() => handleViewContract(contract.id!)}
                             >
                               <FileSignature className="h-4 w-4 mr-1" />
                               Ký
@@ -437,27 +280,16 @@ export default function ContractsPage() {
           <div className="text-center py-12 bg-white rounded-lg border">
             <div className="text-gray-500 mb-4">
               {(contracts || []).length === 0
-                ? 'Chưa có hợp đồng nào'
+                ? 'Bạn chưa có hợp đồng nào'
                 : 'Không tìm thấy hợp đồng phù hợp'
               }
             </div>
-            {/* Debug info */}
-            <div className="text-xs text-gray-400 mb-4">
-              <p>Total contracts: {(contracts || []).length}</p>
-              <p>Filtered contracts: {filteredContracts.length}</p>
-              <p>Search term: {searchTerm || '(empty)'}</p>
-              <p>Status filter: {statusFilter}</p>
-            </div>
-            <Button 
-              className="flex items-center space-x-2"
-              onClick={() => setShowCreateDialog(true)}
-            >
-              <Plus className="h-4 w-4" />
-              <span>Tạo hợp đồng đầu tiên</span>
-            </Button>
+            <p className="text-sm text-gray-400">
+              Hợp đồng sẽ được tạo sau khi bạn hoàn tất thuê trọ với chủ nhà
+            </p>
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </ProfileLayout>
   )
 }
