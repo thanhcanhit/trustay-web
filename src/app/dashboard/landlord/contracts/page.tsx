@@ -7,11 +7,17 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Download, Eye, Plus, RotateCcw, AlertCircle, FileSignature, Loader2 } from "lucide-react"
+import { Search, Download, Eye, Plus, RotateCcw, AlertCircle, FileSignature, Loader2, MoreHorizontal, FileText } from "lucide-react"
 import { useContractStore } from "@/stores/contractStore"
 import { useRentalStore } from "@/stores/rentalStore"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useRouter } from "next/navigation"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Contract } from "@/types/types"
 import {
   Dialog,
@@ -23,31 +29,7 @@ import {
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import ContractPreviewDialog from "@/components/contract/ContractPreviewDialog"
-
-
-const STATUS_COLORS = {
-  active: 'bg-green-100 text-green-800',
-  expired: 'bg-red-100 text-red-800',
-  pending: 'bg-yellow-100 text-yellow-800',
-  pending_signatures: 'bg-yellow-100 text-yellow-800',
-  partially_signed: 'bg-orange-100 text-orange-800',
-  terminated: 'bg-gray-100 text-gray-800',
-  draft: 'bg-blue-100 text-blue-800',
-  signed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800'
-}
-
-const STATUS_LABELS = {
-  active: 'Đang hiệu lực',
-  expired: 'Hết hạn',
-  pending: 'Chờ ký',
-  pending_signatures: 'Chờ ký',
-  partially_signed: 'Đã ký một phần',
-  terminated: 'Đã chấm dứt',
-  draft: 'Bản nháp',
-  signed: 'Đã ký',
-  cancelled: 'Đã hủy'
-}
+import { STATUS_COLORS, CONTRACT_SIGN } from "@/constants/basic"
 
 export default function ContractsPage() {
   const router = useRouter()
@@ -158,21 +140,6 @@ export default function ContractsPage() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Quản lý hợp đồng</h1>
           <p className="text-gray-600">Quản lý tất cả hợp đồng thuê trọ</p>
-          
-          {/* Debug Badge */}
-          <div className="mt-2 flex gap-2 text-xs">
-            <Badge variant="outline">
-              Contracts: {(contracts || []).length}
-            </Badge>
-            <Badge variant="outline">
-              Loading: {loading ? 'Yes' : 'No'}
-            </Badge>
-            {error && (
-              <Badge variant="destructive">
-                Error: {error}
-              </Badge>
-            )}
-          </div>
         </div>
 
         {/* Filters and Actions */}
@@ -353,14 +320,14 @@ export default function ContractsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[100px]">Mã HĐ</TableHead>
-                  <TableHead className="min-w-[150px]">Người thuê</TableHead>
-                  <TableHead className="min-w-[120px]">Phòng</TableHead>
-                  <TableHead className="text-right min-w-[120px]">Tiền thuê</TableHead>
-                  <TableHead className="text-right min-w-[120px]">Tiền cọc</TableHead>
+                  <TableHead className="min-w-[120px]">Người thuê</TableHead>
+                  <TableHead className="w-[80px]">Phòng</TableHead>
+                  <TableHead className="text-right w-[80px]">Tiền thuê</TableHead>
+                  <TableHead className="text-right w-[80px]">Tiền cọc</TableHead>
                   <TableHead className="min-w-[110px]">Ngày bắt đầu</TableHead>
                   <TableHead className="min-w-[110px]">Ngày kết thúc</TableHead>
                   <TableHead className="min-w-[120px]">Trạng thái</TableHead>
-                  <TableHead className="text-right min-w-[200px]">Thao tác</TableHead>
+                  <TableHead className="w-[60px]">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -389,49 +356,52 @@ export default function ContractsPage() {
                       <TableCell>
                         {contract.startDate
                           ? new Date(contract.startDate).toLocaleDateString('vi-VN')
-                          : 'N/A'}
+                          : '...'}
                       </TableCell>
                       <TableCell>
                         {contract.endDate
                           ? new Date(contract.endDate).toLocaleDateString('vi-VN')
-                          : 'N/A'}
+                          : '...'}
                       </TableCell>
                       <TableCell>
                         <Badge className={STATUS_COLORS[contract.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'}>
-                          {STATUS_LABELS[contract.status as keyof typeof STATUS_LABELS] || contract.status}
+                          {CONTRACT_SIGN[contract.status as keyof typeof CONTRACT_SIGN] || contract.status}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPreviewContractId(contract.id!)}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            Xem
-                          </Button>
-                          {/* Hiển thị nút Ký nếu status là draft, pending_signatures, hoặc partially_signed VÀ landlord chưa ký */}
-                          {(contract.status === 'draft' || contract.status === 'pending_signatures' || contract.status === 'partially_signed') && 
-                           !contract.landlordSignature && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => router.push(`/dashboard/landlord/contracts/${contract.id}`)}
-                            >
-                              <FileSignature className="h-4 w-4 mr-1" />
-                              Ký
-                            </Button>
-                          )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownload(contract.id!, `HĐ-${contract.id?.slice(-8)}`)}
-                            disabled={downloading}
-                          >
-                            <Download className={`h-4 w-4 mr-1 ${downloading ? 'animate-spin' : ''}`} />
-                            PDF
-                          </Button>
+                        <div className="flex items-center justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => router.push(`/dashboard/landlord/contracts/${contract.id}`)}>
+                                <FileText className="h-4 w-4 mr-2" />
+                                Xem chi tiết
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setPreviewContractId(contract.id!)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                Xem nhanh
+                              </DropdownMenuItem>
+                              {/* Hiển thị nút Ký nếu status là draft, pending_signatures, hoặc partially_signed VÀ landlord chưa ký */}
+                              {(contract.status === 'draft' || contract.status === 'pending_signatures' || contract.status === 'partially_signed') && 
+                               !contract.landlordSignature && (
+                                <DropdownMenuItem onClick={() => router.push(`/dashboard/landlord/contracts/${contract.id}`)}>
+                                  <FileSignature className="h-4 w-4 mr-2" />
+                                  Ký hợp đồng
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem 
+                                onClick={() => handleDownload(contract.id!, `HĐ-${contract.id?.slice(-8)}`)}
+                                disabled={downloading}
+                              >
+                                <Download className={`h-4 w-4 mr-2 ${downloading ? 'animate-spin' : ''}`} />
+                                Tải PDF
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </TableCell>
                     </TableRow>

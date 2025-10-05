@@ -7,10 +7,16 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Download, Eye, RotateCcw, AlertCircle, FileSignature, Loader2 } from "lucide-react"
+import { Search, Download, RotateCcw, AlertCircle, FileSignature, Loader2, MoreHorizontal, FileText } from "lucide-react"
 import { useContractStore } from "@/stores/contractStore"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useRouter } from "next/navigation"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Contract } from "@/types/types"
 
 
@@ -196,7 +202,7 @@ export default function TenantContractsPage() {
                   <TableHead className="min-w-[110px]">Ngày bắt đầu</TableHead>
                   <TableHead className="min-w-[110px]">Ngày kết thúc</TableHead>
                   <TableHead className="min-w-[120px]">Trạng thái</TableHead>
-                  <TableHead className="text-right min-w-[200px]">Thao tác</TableHead>
+                  <TableHead className="text-right w-[80px]">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -238,34 +244,33 @@ export default function TenantContractsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewContract(contract.id!)}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            Xem
-                          </Button>
-                          {(contract.status === 'draft' || contract.status === 'pending_signatures') && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleViewContract(contract.id!)}
-                            >
-                              <FileSignature className="h-4 w-4 mr-1" />
-                              Ký
-                            </Button>
-                          )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownload(contract.id!, `HĐ-${contract.id?.slice(-8)}`)}
-                            disabled={downloading}
-                          >
-                            <Download className={`h-4 w-4 mr-1 ${downloading ? 'animate-spin' : ''}`} />
-                            PDF
-                          </Button>
+                        <div className="flex items-center justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleViewContract(contract.id!)}>
+                                <FileText className="h-4 w-4 mr-2" />
+                                Xem chi tiết
+                              </DropdownMenuItem>
+                              {(contract.status === 'draft' || contract.status === 'pending_signatures') && (
+                                <DropdownMenuItem onClick={() => handleViewContract(contract.id!)}>
+                                  <FileSignature className="h-4 w-4 mr-2" />
+                                  Ký hợp đồng
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem 
+                                onClick={() => handleDownload(contract.id!, `HĐ-${contract.id?.slice(-8)}`)}
+                                disabled={downloading}
+                              >
+                                <Download className={`h-4 w-4 mr-2 ${downloading ? 'animate-spin' : ''}`} />
+                                Tải PDF
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </TableCell>
                     </TableRow>

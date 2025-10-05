@@ -12,7 +12,6 @@ import { toast } from "sonner"
 import {
   ArrowLeft,
   FileText,
-  Calendar,
   DollarSign,
   User,
   MapPin,
@@ -184,166 +183,137 @@ export default function TenantContractDetailPage() {
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Contract Details (2/3 width) */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* People Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Tenant Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <User className="h-5 w-5 mr-2 text-blue-600" />
-                    Người thuê
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={contract.tenant?.avatarUrl || ''} alt={tenantName} />
-                      <AvatarFallback className="bg-blue-100 text-blue-600">
-                        {tenantName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold">{tenantName}</p>
-                      <p className="text-sm text-gray-600">{contract.tenant?.email}</p>
-                    </div>
-                  </div>
-                  {contract.tenant?.phone && (
-                    <p className="text-sm text-gray-600">
-                      📱 {contract.tenant.phone}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Landlord Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <User className="h-5 w-5 mr-2 text-green-600" />
-                    Chủ nhà
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={contract.landlord?.avatarUrl || ''} alt={landlordName} />
-                      <AvatarFallback className="bg-green-100 text-green-600">
-                        {landlordName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold">{landlordName}</p>
-                      <p className="text-sm text-gray-600">{contract.landlord?.email}</p>
-                    </div>
-                  </div>
-                  {contract.landlord?.phone && (
-                    <p className="text-sm text-gray-600">
-                      📱 {contract.landlord.phone}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Room Info */}
+          <div className="lg:col-span-2">
+            {/* Single Combined Card */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <MapPin className="h-5 w-5 mr-2 text-orange-600" />
-                  Thông tin phòng
+                <CardTitle className="text-xl flex items-center">
+                  <FileText className="h-6 w-6 mr-2" />
+                  Chi tiết hợp đồng
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Tên phòng</p>
-                    <p className="font-semibold text-lg">{roomInfo}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Số phòng</p>
-                    <p className="font-semibold text-lg">{roomNumber}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Tòa nhà</p>
-                    <p className="font-semibold">{buildingInfo}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Địa chỉ</p>
-                    <p className="font-semibold">{buildingAddress}</p>
-                  </div>
-                  {contract.room?.roomType && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Loại phòng</p>
-                      <p className="font-semibold">{contract.room.roomType}</p>
+              <CardContent className="space-y-5">
+                {/* People Info - Same Row */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Thông tin các bên</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Tenant Info */}
+                    <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                      <Avatar className="h-12 w-12 flex-shrink-0">
+                        <AvatarImage src={contract.tenant?.avatarUrl || ''} alt={tenantName} />
+                        <AvatarFallback className="bg-blue-100 text-blue-600">
+                          {tenantName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center mb-1">
+                          <User className="h-4 w-4 mr-1 text-blue-600 flex-shrink-0" />
+                          <p className="text-xs font-semibold text-blue-600">Người thuê</p>
+                        </div>
+                        <p className="font-semibold text-sm">{tenantName}</p>
+                        <p className="text-xs text-gray-600 truncate">{contract.tenant?.email}</p>
+                        {contract.tenant?.phone && (
+                          <p className="text-xs text-gray-600 mt-1">📱 {contract.tenant.phone}</p>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  {contract.room?.areaSqm && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Diện tích</p>
-                      <p className="font-semibold">{contract.room.areaSqm}m²</p>
+
+                    {/* Landlord Info */}
+                    <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg border border-green-100">
+                      <Avatar className="h-12 w-12 flex-shrink-0">
+                        <AvatarImage src={contract.landlord?.avatarUrl || ''} alt={landlordName} />
+                        <AvatarFallback className="bg-green-100 text-green-600">
+                          {landlordName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center mb-1">
+                          <User className="h-4 w-4 mr-1 text-green-600 flex-shrink-0" />
+                          <p className="text-xs font-semibold text-green-600">Chủ nhà</p>
+                        </div>
+                        <p className="font-semibold text-sm">{landlordName}</p>
+                        <p className="text-xs text-gray-600 truncate">{contract.landlord?.email}</p>
+                        {contract.landlord?.phone && (
+                          <p className="text-xs text-gray-600 mt-1">📱 {contract.landlord.phone}</p>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Contract Financial Terms */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <DollarSign className="h-5 w-5 mr-2" />
-                  Điều khoản tài chính
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-3 bg-green-100 rounded-lg">
-                      <DollarSign className="h-6 w-6 text-green-600" />
+                <Separator />
+
+                {/* Room Info */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                    <MapPin className="h-4 w-4 mr-1 text-orange-600" />
+                    Thông tin phòng
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Tên phòng</p>
+                      <p className="font-semibold text-sm">{roomInfo}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Tiền thuê hàng tháng</p>
-                      <p className="text-xl font-bold text-green-600">
-                        {(contract.monthlyRent || contract.contractData?.monthlyRent || 0).toLocaleString('vi-VN')} VNĐ
+                      <p className="text-xs text-gray-500 mb-1">Số phòng</p>
+                      <p className="font-semibold text-sm">{roomNumber}</p>
+                    </div>
+                    {contract.room?.areaSqm && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Diện tích</p>
+                        <p className="font-semibold text-sm">{contract.room.areaSqm}m²</p>
+                      </div>
+                    )}
+                    <div className="md:col-span-2">
+                      <p className="text-xs text-gray-500 mb-1">Tòa nhà</p>
+                      <p className="font-semibold text-sm">{buildingInfo}</p>
+                    </div>
+                    <div className="col-span-2 md:col-span-3">
+                      <p className="text-xs text-gray-500 mb-1">Địa chỉ</p>
+                      <p className="font-semibold text-sm">{buildingAddress}</p>
+                    </div>
+                    {contract.room?.roomType && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Loại phòng</p>
+                        <p className="font-semibold text-sm">{contract.room.roomType}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Contract Financial Terms */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                    <DollarSign className="h-4 w-4 mr-1" />
+                    Điều khoản tài chính
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="p-3 bg-green-50 rounded-lg border border-green-100">
+                      <p className="text-xs text-gray-600 mb-1">Tiền thuê/tháng</p>
+                      <p className="text-base font-bold text-green-600">
+                        {(contract.monthlyRent || contract.contractData?.monthlyRent || 0).toLocaleString('vi-VN')} ₫
                       </p>
                     </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <div className="p-3 bg-blue-100 rounded-lg">
-                      <DollarSign className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Tiền cọc</p>
-                      <p className="text-xl font-bold text-blue-600">
-                        {(contract.depositAmount || contract.contractData?.depositAmount || 0).toLocaleString('vi-VN')} VNĐ
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                      <p className="text-xs text-gray-600 mb-1">Tiền cọc</p>
+                      <p className="text-base font-bold text-blue-600">
+                        {(contract.depositAmount || contract.contractData?.depositAmount || 0).toLocaleString('vi-VN')} ₫
                       </p>
                     </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <div className="p-3 bg-purple-100 rounded-lg">
-                      <Calendar className="h-6 w-6 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Ngày bắt đầu</p>
-                      <p className="text-lg font-semibold">
+                    <div className="p-3 bg-purple-50 rounded-lg border border-purple-100">
+                      <p className="text-xs text-gray-600 mb-1">Ngày bắt đầu</p>
+                      <p className="text-sm font-semibold text-purple-700">
                         {contract.startDate
                           ? format(new Date(contract.startDate), 'dd/MM/yyyy', { locale: vi })
                           : 'N/A'
                         }
                       </p>
                     </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <div className="p-3 bg-orange-100 rounded-lg">
-                      <Calendar className="h-6 w-6 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Ngày kết thúc</p>
-                      <p className="text-lg font-semibold">
+                    <div className="p-3 bg-orange-50 rounded-lg border border-orange-100">
+                      <p className="text-xs text-gray-600 mb-1">Ngày kết thúc</p>
+                      <p className="text-sm font-semibold text-orange-700">
                         {contract.endDate
                           ? format(new Date(contract.endDate), 'dd/MM/yyyy', { locale: vi })
                           : 'Không giới hạn'
@@ -355,10 +325,10 @@ export default function TenantContractDetailPage() {
 
                 {contract.terms && (
                   <>
-                    <Separator className="my-6" />
+                    <Separator />
                     <div>
-                      <h4 className="font-semibold mb-3">Điều khoản chi tiết:</h4>
-                      <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2">Điều khoản chi tiết</h3>
+                      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">
                           {contract.terms}
                         </p>
@@ -366,111 +336,103 @@ export default function TenantContractDetailPage() {
                     </div>
                   </>
                 )}
-              </CardContent>
-            </Card>
 
-            {/* Signature Status */}
-            {contract.signatures && contract.signatures.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <FileText className="h-5 w-5 mr-2" />
-                    Trạng thái ký
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {contract.signatures.map((sig, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <CheckCircle className="h-5 w-5 text-green-600" />
-                          <div>
-                            <p className="font-semibold">
-                              {sig.signerRole === 'landlord' ? 'Chủ nhà' : 'Người thuê'} đã ký
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {format(new Date(sig.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                {/* Signature Status */}
+                {contract.signatures && contract.signatures.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                        <CheckCircle className="h-4 w-4 mr-1 text-green-600" />
+                        Trạng thái ký
+                      </h3>
+                      <div className="space-y-2">
+                        {contract.signatures.map((sig, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-100">
+                            <div className="flex items-center space-x-2">
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                              <div>
+                                <p className="text-sm font-semibold">
+                                  {sig.signerRole === 'landlord' ? 'Chủ nhà' : 'Người thuê'} đã ký
+                                </p>
+                                <p className="text-xs text-gray-600">
+                                  {format(new Date(sig.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Signatures Display - Show actual signatures with images */}
+                {(contract.landlordSignature || contract.tenantSignature) && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Chữ ký hợp đồng</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {contract.landlordSignature && (
+                          <div className="border rounded-lg p-3 bg-gray-50">
+                            <h4 className="text-xs font-semibold text-gray-800 mb-1">Chữ ký Chủ nhà</h4>
+                            <p className="text-xs text-gray-600 mb-2">{landlordName}</p>
+                            <div className="border border-gray-300 rounded bg-white p-2 mb-1 flex justify-center">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={contract.landlordSignature.signatureData}
+                                alt={`Chữ ký của ${landlordName}`}
+                                className="max-w-full h-auto max-h-24 object-contain"
+                              />
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              Đã ký: {format(new Date(contract.landlordSignature.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
                             </p>
                           </div>
-                        </div>
+                        )}
+                        
+                        {contract.tenantSignature && (
+                          <div className="border rounded-lg p-3 bg-gray-50">
+                            <h4 className="text-xs font-semibold text-gray-800 mb-1">Chữ ký Người thuê</h4>
+                            <p className="text-xs text-gray-600 mb-2">{tenantName}</p>
+                            <div className="border border-gray-300 rounded bg-white p-2 mb-1 flex justify-center">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={contract.tenantSignature.signatureData}
+                                alt={`Chữ ký của ${tenantName}`}
+                                className="max-w-full h-auto max-h-24 object-contain"
+                              />
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              Đã ký: {format(new Date(contract.tenantSignature.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                            </p>
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                    </div>
+                  </>
+                )}
 
-            {/* Signatures Display - Show actual signatures with images */}
-            {(contract.landlordSignature || contract.tenantSignature) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <FileText className="h-5 w-5 mr-2" />
-                    Chữ ký hợp đồng
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {contract.landlordSignature && (
-                      <div className="border rounded-lg p-4 bg-gray-50">
-                        <h4 className="text-sm font-semibold text-gray-800 mb-2">Chữ ký Chủ nhà</h4>
-                        <p className="text-xs text-gray-600 mb-3">{landlordName}</p>
-                        <div className="border border-gray-300 rounded bg-white p-3 mb-2 flex justify-center">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={contract.landlordSignature.signatureData}
-                            alt={`Chữ ký của ${landlordName}`}
-                            className="max-w-full h-auto max-h-32 object-contain"
-                          />
-                        </div>
-                        <p className="text-xs text-gray-500">
-                          Đã ký: {format(new Date(contract.landlordSignature.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {contract.tenantSignature && (
-                      <div className="border rounded-lg p-4 bg-gray-50">
-                        <h4 className="text-sm font-semibold text-gray-800 mb-2">Chữ ký Người thuê</h4>
-                        <p className="text-xs text-gray-600 mb-3">{tenantName}</p>
-                        <div className="border border-gray-300 rounded bg-white p-3 mb-2 flex justify-center">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={contract.tenantSignature.signatureData}
-                            alt={`Chữ ký của ${tenantName}`}
-                            className="max-w-full h-auto max-h-32 object-contain"
-                          />
-                        </div>
-                        <p className="text-xs text-gray-500">
-                          Đã ký: {format(new Date(contract.tenantSignature.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Metadata */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                {/* Metadata */}
+                <Separator />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-gray-600">
                   {contract.createdAt && (
                     <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-2" />
-                      <span>Tạo lúc: {format(new Date(contract.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
+                      <Clock className="h-3 w-3 mr-1" />
+                      <span>Tạo: {format(new Date(contract.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
                     </div>
                   )}
                   {contract.updatedAt && (
                     <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-2" />
+                      <Clock className="h-3 w-3 mr-1" />
                       <span>Cập nhật: {format(new Date(contract.updatedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
                     </div>
                   )}
                   {contract.signedAt && (
                     <div className="flex items-center">
-                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                      <span>Hoàn tất ký: {format(new Date(contract.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
+                      <CheckCircle className="h-3 w-3 mr-1 text-green-600" />
+                      <span>Hoàn tất: {format(new Date(contract.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
                     </div>
                   )}
                 </div>
