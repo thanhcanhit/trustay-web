@@ -852,7 +852,14 @@ export interface Contract {
 	depositAmount?: number;
 	startDate: string;
 	endDate?: string | null;
-	status: 'draft' | 'pending_signatures' | 'partially_signed' | 'active' | 'expired' | 'terminated';
+	status:
+		| 'draft'
+		| 'pending_signatures'
+		| 'partially_signed'
+		| 'fully_signed'
+		| 'active'
+		| 'expired'
+		| 'terminated';
 	contractType?: 'monthly_rental' | 'fixed_term_rental' | 'short_term_rental';
 
 	// Digital Signature Fields

@@ -27,34 +27,7 @@ import { Contract } from "@/types/types"
 import ContractSigningWorkflow from "@/components/contract/ContractSigningWorkflow"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
-
-const STATUS_COLORS = {
-  draft: 'bg-gray-100 text-gray-800',
-  pending_signatures: 'bg-yellow-100 text-yellow-800',
-  partially_signed: 'bg-orange-100 text-orange-800',
-  active: 'bg-green-100 text-green-800',
-  expired: 'bg-red-100 text-red-800',
-  terminated: 'bg-red-100 text-red-800',
-  signed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800'
-}
-
-const STATUS_LABELS = {
-  draft: 'Bản nháp',
-  pending_signatures: 'Chờ ký',
-  partially_signed: 'Đã ký một phần',
-  active: 'Đang hiệu lực',
-  expired: 'Hết hạn',
-  terminated: 'Đã chấm dứt',
-  signed: 'Đã ký',
-  cancelled: 'Đã hủy'
-}
-
-const CONTRACT_TYPE_LABELS = {
-  monthly_rental: 'Thuê theo tháng',
-  fixed_term_rental: 'Thuê có thời hạn',
-  short_term_rental: 'Thuê ngắn hạn'
-}
+import { CONTRACT_SIGN, STATUS_COLORS, CONTRACT_TYPE_LABELS } from "@/constants/basic"
 
 export default function TenantContractDetailPage() {
   const params = useParams()
@@ -189,7 +162,7 @@ export default function TenantContractDetailPage() {
             </div>
             <div className="flex items-center space-x-3">
               <Badge className={STATUS_COLORS[contract.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'}>
-                {STATUS_LABELS[contract.status as keyof typeof STATUS_LABELS] || contract.status}
+                {CONTRACT_SIGN[contract.status as keyof typeof CONTRACT_SIGN] || contract.status}
               </Badge>
               {contract.contractType && (
                 <Badge variant="outline">
@@ -506,7 +479,7 @@ export default function TenantContractDetailPage() {
           </div>
 
           {/* Right Column - Signing Section (1/3 width) */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 sticky">
             <div className="sticky top-6">
               <ContractSigningWorkflow
                 contract={contract}

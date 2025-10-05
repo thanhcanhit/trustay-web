@@ -22,8 +22,9 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 	const signaturePadRef = useRef<SignaturePadRef>(null);
 	const [showSignaturePad, setShowSignaturePad] = useState(false);
 	const [isConfirming, setIsConfirming] = useState(false);
+	const [otpCode, setOtpCode] = useState('');
 
-	const { sign, signing, signError } = useContractStore();
+	const { sign, signing, signError, requestOTP, requestingOTP, otpError } = useContractStore();
 
 	// Kiểm tra trạng thái ký của từng bên - check cả 2 nguồn: field riêng và signatures array
 	const isLandlordSigned = !!contract.landlordSignature || 
@@ -47,12 +48,28 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 		: contract.tenantSignature;
 
 	const handleStartSigning = async () => {
-		// Bỏ qua bước request OTP - hiển thị form ký ngay
+		// Gọi API gửi OTP khi bắt đầu ký
 		setShowSignaturePad(true);
+		const success = await requestOTP(contract.id);
+		if (success) {
+			toast.success('Mã OTP đã được gửi đến email của bạn');
+		} else {
+			toast.error(otpError || 'Không thể gửi mã OTP');
+		}
+	};
+
+	const handleResendOTP = async () => {
+		const success = await requestOTP(contract.id);
+		if (success) {
+			toast.success('Mã OTP đã được gửi lại');
+		} else {
+			toast.error(otpError || 'Không thể gửi lại mã OTP');
+		}
 	};
 
 	const handleCancelSigning = () => {
 		setShowSignaturePad(false);
+		setOtpCode('');
 		signaturePadRef.current?.clear();
 	};
 
@@ -65,21 +82,22 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 			return;
 		}
 
-		// OTP là optional - không bắt buộc phải nhập
-		// if (!otpCode || otpCode.length !== 6) {
-		// 	toast.error('Vui lòng nhập mã OTP (6 chữ số)');
-		// 	return;
-		// }
+		// Kiểm tra OTP
+		if (!otpCode || otpCode.length !== 6) {
+			toast.error('Vui lòng nhập mã OTP (6 chữ số)');
+			return;
+		}
 
 		setIsConfirming(true);
 
 		try {
-			// Ký với OTP mặc định (backend chưa có endpoint lấy OTP)
-			const success = await sign(contract.id, signatureData);
+			// Ký với OTP
+			const success = await sign(contract.id, signatureData, otpCode);
 
 			if (success) {
 				toast.success('Ký hợp đồng thành công!');
 				setShowSignaturePad(false);
+				setOtpCode('');
 				onSigningComplete?.();
 			} else {
 				toast.error(signError || 'Không thể ký hợp đồng');
@@ -91,27 +109,6 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 		}
 	};
 
-	// Render contract status badge
-	const renderStatusBadge = () => {
-		const statusConfig: Record<string, { label: string; color: string }> = {
-			draft: { label: 'Bản nháp', color: 'bg-gray-100 text-gray-800' },
-			pending_signatures: { label: 'Chờ ký', color: 'bg-yellow-100 text-yellow-800' },
-			active: { label: 'Đang hiệu lực', color: 'bg-green-100 text-green-800' },
-			expired: { label: 'Hết hạn', color: 'bg-red-100 text-red-800' },
-			terminated: { label: 'Đã chấm dứt', color: 'bg-red-100 text-red-800' }
-		};
-
-		const config = statusConfig[contract.status] || { 
-			label: contract.status || 'Không xác định', 
-			color: 'bg-gray-100 text-gray-800' 
-		};
-		
-		return (
-			<span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
-				{config.label}
-			</span>
-		);
-	};
 
 	return (
 		<div className="contract-signing-workflow space-y-6">
@@ -119,7 +116,6 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 			<div className="bg-white p-6 rounded-lg border">
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="text-lg font-medium">Trạng thái hợp đồng</h3>
-					{renderStatusBadge()}
 				</div>
 
 				{/* Signing Progress */}
@@ -213,6 +209,35 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 								height={200}
 								className="mb-4"
 							/>
+
+							{/* OTP Input Section */}
+							<div className="mb-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+								<label htmlFor="otp-input" className="block text-sm font-medium text-gray-700 mb-2">
+									Mã OTP (đã gửi đến email của bạn)
+								</label>
+								<input
+									id="otp-input"
+									type="text"
+									maxLength={6}
+									value={otpCode}
+									onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+									placeholder="Nhập 6 chữ số"
+									className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+									disabled={signing || isConfirming}
+								/>
+								<div className="mt-2 flex items-center justify-between">
+									<button
+										onClick={handleResendOTP}
+										disabled={requestingOTP || signing || isConfirming}
+										className="text-sm text-green-600 hover:text-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+									>
+										{requestingOTP ? 'Đang gửi...' : 'Gửi lại mã OTP'}
+									</button>
+									{otpError && (
+										<p className="text-sm text-red-600">{otpError}</p>
+									)}
+								</div>
+							</div>
 
 							<div className="flex space-x-4">
 								<button
