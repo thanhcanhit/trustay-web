@@ -2,25 +2,27 @@
 
 import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import {
   Search,
-  Calendar,
-  Home,
-  DollarSign,
-  Clock,
   Plus,
   RotateCcw,
   AlertCircle,
   FileText,
-  Edit,
-  StopCircle,
-  RefreshCw
+  Eye,
+  FileCheck,
 } from "lucide-react"
 import { useRentalStore } from "@/stores/rentalStore"
 import { useContractStore } from "@/stores/contractStore"
@@ -53,10 +55,8 @@ export default function RentalsPage() {
     landlordRentals,
     loadingLandlord,
     errorLandlord,
-    submitting,
+    //submitting,
     loadLandlordRentals,
-    terminate,
-    renew,
     clearErrors
   } = useRentalStore()
 
@@ -82,14 +82,6 @@ export default function RentalsPage() {
     return matchesSearch && matchesStatus
   })
 
-  const getDaysUntilExpiry = (endDate: string) => {
-    const end = new Date(endDate)
-    const today = new Date()
-    const diffTime = end.getTime() - today.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
-  }
-
   const handleGenerateContract = async (rentalId: string) => {
     const success = await autoGenerate(rentalId)
     if (success) {
@@ -100,34 +92,8 @@ export default function RentalsPage() {
     }
   }
 
-  const handleTerminate = async (rentalId: string) => {
-    const confirmTerminate = window.confirm('Bạn có chắc chắn muốn chấm dứt hợp đồng thuê này?')
-    if (confirmTerminate) {
-      const success = await terminate(rentalId, {
-        status: 'terminated',
-        reason: 'Chấm dứt theo yêu cầu của chủ nhà',
-        terminationDate: new Date().toISOString().split('T')[0]
-      })
-      if (success) {
-        await loadLandlordRentals()
-      }
-    }
-  }
-
-  const handleRenew = async (rentalId: string) => {
-    const months = window.prompt('Gia hạn bao nhiều tháng?', '12')
-    if (months && parseInt(months) > 0) {
-      // Calculate new end date by adding months to current date
-      const currentDate = new Date()
-      const newEndDate = new Date(currentDate.setMonth(currentDate.getMonth() + parseInt(months)))
-
-      const success = await renew(rentalId, {
-        newEndDate: newEndDate.toISOString().split('T')[0]
-      })
-      if (success) {
-        await loadLandlordRentals()
-      }
-    }
+  const handleViewDetail = (rentalId: string) => {
+    window.open(`/dashboard/landlord/rentals/${rentalId}`, '_blank')
   }
 
   return (
@@ -210,214 +176,143 @@ export default function RentalsPage() {
           </div>
         )}
 
-        {/* Rentals Grid */}
-        {!loadingLandlord && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredRentals.map((rental) => {
-              const daysUntilExpiry = getDaysUntilExpiry(rental.endDate)
-              const isExpiringSoon = daysUntilExpiry <= 30 && daysUntilExpiry > 0
-              const hasContract = rental.contract != null
+        {/* Rentals Table */}
+        {!loadingLandlord && filteredRentals.length > 0 && (
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">Mã Rental</TableHead>
+                      <TableHead className="min-w-[150px]">Người thuê</TableHead>
+                      <TableHead className="min-w-[180px]">Phòng</TableHead>
+                      <TableHead className="text-right min-w-[120px]">Tiền thuê</TableHead>
+                      <TableHead className="text-right min-w-[120px]">Tiền cọc</TableHead>
+                      <TableHead className="min-w-[110px]">Ngày bắt đầu</TableHead>
+                      <TableHead className="min-w-[110px]">Ngày kết thúc</TableHead>
+                      <TableHead className="min-w-[120px]">Trạng thái</TableHead>
+                      <TableHead className="text-center min-w-[100px]">Hợp đồng</TableHead>
+                      <TableHead className="text-center min-w-[200px]">Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredRentals.map((rental) => {
+                      const hasContract = rental.contract != null
 
-              const tenantName = rental.tenant
-                ? `${rental.tenant.firstName} ${rental.tenant.lastName}`
-                : 'Chưa có thông tin'
+                      const tenantName = rental.tenant
+                        ? `${rental.tenant.firstName} ${rental.tenant.lastName}`
+                        : 'Chưa có thông tin'
 
-              // Display room info from rental.room (which contains room instance data)
-              const roomInfo = rental.room
-                ? `${rental.room.name || 'N/A'}${rental.room.roomType ? ` - ${rental.room.roomType}` : ''}`
-                : 'Chưa có thông tin'
+                      const roomInfo = rental.room
+                        ? `${rental.room.name || 'N/A'}${rental.room.roomType ? ` - ${rental.room.roomType}` : ''}`
+                        : 'Chưa có thông tin'
 
-              return (
-                <Card key={rental.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                          <Home className="h-5 w-5 text-green-600" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">HD-{rental.id?.slice(-6)}</CardTitle>
-                          <Badge className={STATUS_COLORS[rental.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'}>
-                            {STATUS_LABELS[rental.status as keyof typeof STATUS_LABELS] || rental.status}
-                          </Badge>
-                        </div>
-                      </div>
-                      {hasContract && (
-                        <Badge variant="outline" className="text-blue-600 border-blue-200">
-                          <FileText className="h-3 w-3 mr-1" />
-                          Có HĐ
-                        </Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="pt-0">
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={rental.tenant?.avatarUrl || ''} alt={tenantName} />
-                          <AvatarFallback className="bg-green-100 text-green-600 text-xs">
-                            {tenantName.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium text-sm">{tenantName}</span>
-                      </div>
-
-                      <div className="flex items-center space-x-2 text-sm">
-                        <span className="text-gray-600">Phòng:</span>
-                        <span className="font-medium">{roomInfo}</span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <p className="text-gray-600">Bắt đầu</p>
-                            <p className="font-medium">
-                              {new Date(rental.startDate).toLocaleDateString('vi-VN')}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <p className="text-gray-600">Kết thúc</p>
-                            <p className="font-medium">
-                              {new Date(rental.endDate).toLocaleDateString('vi-VN')}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <DollarSign className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <p className="text-gray-600">Tiền thuê</p>
-                            <p className="font-medium text-green-600">
-                              {(rental.monthlyRent || 0).toLocaleString('vi-VN')} VNĐ
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <DollarSign className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <p className="text-gray-600">Tiền cọc</p>
-                            <p className="font-medium text-blue-600">
-                              {(rental.depositAmount || 0).toLocaleString('vi-VN')} VNĐ
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {rental.createdAt && (
-                        <div className="flex items-center space-x-2 text-sm">
-                          <Clock className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-500">
-                            Tạo lúc: {new Date(rental.createdAt).toLocaleDateString('vi-VN')}
-                          </span>
-                        </div>
-                      )}
-
-                      {isExpiringSoon && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2">
-                          <p className="text-yellow-800 text-xs font-medium">
-                            ⚠ Hợp đồng sẽ hết hạn sau {daysUntilExpiry} ngày
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-4 flex flex-col space-y-2">
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => window.open(`/dashboard/landlord/rentals/${rental.id}`, '_blank')}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Chỉnh sửa
-                        </Button>
-                        {!hasContract && rental.status === 'active' && (
-                          <Dialog open={showContractDialog && selectedRental === rental.id} onOpenChange={(open) => {
-                            setShowContractDialog(open)
-                            if (!open) setSelectedRental(null)
-                          }}>
-                            <DialogTrigger asChild>
+                      return (
+                        <TableRow key={rental.id}>
+                          <TableCell className="font-medium">
+                            {rental.id?.slice(-8)}
+                          </TableCell>
+                          <TableCell>{tenantName}</TableCell>
+                          <TableCell>{roomInfo}</TableCell>
+                          <TableCell className="text-right font-medium text-green-600">
+                            {(rental.monthlyRent || 0).toLocaleString('vi-VN')} đ
+                          </TableCell>
+                          <TableCell className="text-right font-medium text-blue-600">
+                            {(rental.depositAmount || 0).toLocaleString('vi-VN')} đ
+                          </TableCell>
+                          <TableCell>
+                            {new Date(rental.startDate).toLocaleDateString('vi-VN')}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(rental.endDate).toLocaleDateString('vi-VN')}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={STATUS_COLORS[rental.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'}>
+                              {STATUS_LABELS[rental.status as keyof typeof STATUS_LABELS] || rental.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {hasContract ? (
+                              <Badge variant="outline" className="text-blue-600 border-blue-200">
+                                <FileCheck className="h-3 w-3 mr-1" />
+                                Có
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-gray-500 border-gray-200">
+                                Chưa có
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-center gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="flex-1"
-                                onClick={() => setSelectedRental(rental.id!)}
+                                onClick={() => handleViewDetail(rental.id!)}
+                                className="flex items-center gap-1"
                               >
-                                <FileText className="h-4 w-4 mr-1" />
-                                Tạo HĐ
+                                <Eye className="h-3 w-3" />
+                                Xem
                               </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Tạo hợp đồng từ cho thuê</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <p>Bạn có muốn tạo hợp đồng từ thông tin cho thuê này không?</p>
-                                <div className="flex space-x-2">
-                                  <Button
-                                    onClick={() => handleGenerateContract(rental.id!)}
-                                    disabled={contractSubmitting}
-                                    className="flex-1"
-                                  >
-                                    {contractSubmitting ? 'Đang tạo...' : 'Tạo hợp đồng'}
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                      setShowContractDialog(false)
-                                      setSelectedRental(null)
-                                    }}
-                                    className="flex-1"
-                                  >
-                                    Hủy
-                                  </Button>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        )}
-                      </div>
-
-                      {rental.status === 'active' && (
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => handleRenew(rental.id!)}
-                            disabled={submitting}
-                          >
-                            <RefreshCw className="h-4 w-4 mr-1" />
-                            Gia hạn
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 text-red-600 hover:bg-red-50"
-                            onClick={() => handleTerminate(rental.id!)}
-                            disabled={submitting}
-                          >
-                            <StopCircle className="h-4 w-4 mr-1" />
-                            Chấm dứt
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
+                              {!hasContract && rental.status === 'active' && (
+                                <Dialog
+                                  open={showContractDialog && selectedRental === rental.id}
+                                  onOpenChange={(open) => {
+                                    setShowContractDialog(open)
+                                    if (!open) setSelectedRental(null)
+                                  }}
+                                >
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      onClick={() => setSelectedRental(rental.id!)}
+                                      className="flex items-center gap-1"
+                                    >
+                                      <FileText className="h-3 w-3" />
+                                      Tạo HĐ
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>Tạo hợp đồng từ cho thuê</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <p>Bạn có muốn tạo hợp đồng từ thông tin cho thuê này không?</p>
+                                      <div className="flex space-x-2">
+                                        <Button
+                                          onClick={() => handleGenerateContract(rental.id!)}
+                                          disabled={contractSubmitting}
+                                          className="flex-1"
+                                        >
+                                          {contractSubmitting ? 'Đang tạo...' : 'Tạo hợp đồng'}
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          onClick={() => {
+                                            setShowContractDialog(false)
+                                            setSelectedRental(null)
+                                          }}
+                                          className="flex-1"
+                                        >
+                                          Hủy
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {!loadingLandlord && filteredRentals.length === 0 && (

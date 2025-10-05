@@ -214,10 +214,6 @@ export function ImageUploadWithApi({
         : img
     )
     onChange?.(updatedImages)
-
-    // Note: This is a simplified retry - in a real implementation,
-    // you'd need to store the original File object to retry upload
-    // For now, we'll just simulate a retry
     setTimeout(() => {
       const finalImages = value.map(img => 
         img.id === imageId 
@@ -359,14 +355,6 @@ export function ImageUploadWithApi({
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {/* File info */}
-      {value.length > 0 && (
-        <div className="text-xs text-muted-foreground">
-          <p>Ảnh đầu tiên sẽ được sử dụng làm ảnh chính</p>
-          <p>Kéo thả để sắp xếp lại thứ tự ảnh</p>
         </div>
       )}
     </div>

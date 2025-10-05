@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { useRoomStore } from "@/stores/roomStore"
 import { RoomCard } from "@/components/ui/room-card"
@@ -15,12 +15,16 @@ export function FeaturedProperties() {
     toggleSaveRoom
   } = useRoomStore()
 
-  // Load featured rooms on component mount
+  const hasLoadedRef = useRef(false)
+
+  // Load featured rooms on component mount - only once
   useEffect(() => {
-    if (featuredRooms.length === 0 && !isLoading) {
+    if (!hasLoadedRef.current && featuredRooms.length === 0 && !isLoading) {
+      hasLoadedRef.current = true
       loadFeaturedRooms(4)
     }
-  }, [featuredRooms.length, isLoading, loadFeaturedRooms])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
 
 

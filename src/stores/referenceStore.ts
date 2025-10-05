@@ -9,6 +9,7 @@ export interface Amenity {
 	category: string;
 	description?: string;
 	icon?: string;
+	isActive?: boolean;
 }
 
 export interface CostType {
@@ -16,6 +17,7 @@ export interface CostType {
 	name: string;
 	category: string;
 	unit?: string;
+	isActive?: boolean;
 }
 
 export interface Rule {
@@ -24,6 +26,7 @@ export interface Rule {
 	category: string;
 	ruleType: string;
 	description?: string;
+	isActive?: boolean;
 }
 
 export interface AppEnums {

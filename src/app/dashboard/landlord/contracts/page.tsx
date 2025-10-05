@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Calendar, FileText, DollarSign, Clock, Download, Eye, Plus, RotateCcw, AlertCircle } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Search, Download, Eye, Plus, RotateCcw, AlertCircle, FileSignature } from "lucide-react"
 import { useContractStore } from "@/stores/contractStore"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
@@ -64,13 +63,13 @@ export default function ContractsPage() {
     return matchesSearch && matchesStatus
   })
 
-  const getDaysUntilExpiry = (endDate: string) => {
-    const end = new Date(endDate)
-    const today = new Date()
-    const diffTime = end.getTime() - today.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
-  }
+  // const getDaysUntilExpiry = (endDate: string) => {
+  //   const end = new Date(endDate)
+  //   const today = new Date()
+  //   const diffTime = end.getTime() - today.getTime()
+  //   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  //   return diffDays
+  // }
 
   const handleDownload = async (contractId: string, contractNumber: string) => {
     try {
@@ -189,150 +188,96 @@ export default function ContractsPage() {
           </div>
         )}
 
-        {/* Contracts Grid */}
-        {!loadingLandlord && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredContracts.map((contract) => {
-              const endDate = contract.endDate
-              const daysUntilExpiry = endDate ? getDaysUntilExpiry(endDate) : null
-              const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0
+        {/* Contracts Table */}
+        {!loadingLandlord && filteredContracts.length > 0 && (
+          <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">Mã HĐ</TableHead>
+                  <TableHead className="min-w-[150px]">Người thuê</TableHead>
+                  <TableHead className="min-w-[120px]">Phòng</TableHead>
+                  <TableHead className="text-right min-w-[120px]">Tiền thuê</TableHead>
+                  <TableHead className="text-right min-w-[120px]">Tiền cọc</TableHead>
+                  <TableHead className="min-w-[110px]">Ngày bắt đầu</TableHead>
+                  <TableHead className="min-w-[110px]">Ngày kết thúc</TableHead>
+                  <TableHead className="min-w-[120px]">Trạng thái</TableHead>
+                  <TableHead className="text-right min-w-[200px]">Thao tác</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredContracts.map((contract) => {
+                  const tenantName = contract.tenant
+                    ? `${contract.tenant.firstName} ${contract.tenant.lastName}`
+                    : 'Chưa có thông tin'
 
-              const tenantName = contract.tenant
-                ? `${contract.tenant.firstName} ${contract.tenant.lastName}`
-                : 'Chưa có thông tin'
+                  const roomName = contract.room?.name || 'N/A'
 
-              const roomInfo = contract.room
-                ? `${contract.room.name || 'N/A'} - ${contract.room.roomType || 'N/A'}`
-                : 'Chưa có thông tin'
-
-              return (
-                <Card key={contract.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <FileText className="h-5 w-5 text-blue-600" />
+                  return (
+                    <TableRow key={contract.id}>
+                      <TableCell className="font-medium">
+                        {contract.id ? `HĐ-${contract.id.slice(-8)}` : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{tenantName}</div>
+                      </TableCell>
+                      <TableCell>{roomName}</TableCell>
+                      <TableCell className="text-right font-medium text-green-600">
+                        {(contract.monthlyRent || 0).toLocaleString('vi-VN')}
+                      </TableCell>
+                      <TableCell className="text-right font-medium text-blue-600">
+                        {(contract.depositAmount || 0).toLocaleString('vi-VN')}
+                      </TableCell>
+                      <TableCell>
+                        {contract.startDate
+                          ? new Date(contract.startDate).toLocaleDateString('vi-VN')
+                          : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        {contract.endDate
+                          ? new Date(contract.endDate).toLocaleDateString('vi-VN')
+                          : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={STATUS_COLORS[contract.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'}>
+                          {STATUS_LABELS[contract.status as keyof typeof STATUS_LABELS] || contract.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`/dashboard/landlord/contracts/${contract.id}`, '_blank')}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Xem
+                          </Button>
+                          {contract.status === 'draft' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                            >
+                              <FileSignature className="h-4 w-4 mr-1" />
+                              Ký
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownload(contract.id!, `HĐ-${contract.id?.slice(-8)}`)}
+                            disabled={downloading}
+                          >
+                            <Download className={`h-4 w-4 mr-1 ${downloading ? 'animate-spin' : ''}`} />
+                            PDF
+                          </Button>
                         </div>
-                        <div>
-                          <CardTitle className="text-lg">{`HĐ-${contract.id?.slice(-6)}`}</CardTitle>
-                          <Badge className={STATUS_COLORS[contract.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'}>
-                            {STATUS_LABELS[contract.status as keyof typeof STATUS_LABELS] || contract.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="pt-0">
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={contract.tenant?.avatarUrl || ''} alt={tenantName} />
-                          <AvatarFallback className="bg-green-100 text-green-600 text-xs">
-                            {tenantName.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium text-sm">{tenantName}</span>
-                      </div>
-
-                      <div className="flex items-center space-x-2 text-sm">
-                        <span className="text-gray-600">Phòng:</span>
-                        <span className="font-medium">{roomInfo}</span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <p className="text-gray-600">Bắt đầu</p>
-                            <p className="font-medium">
-                              {contract.startDate
-                                ? new Date(contract.startDate).toLocaleDateString('vi-VN')
-                                : 'N/A'
-                              }
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <p className="text-gray-600">Kết thúc</p>
-                            <p className="font-medium">
-                              {endDate
-                                ? new Date(endDate).toLocaleDateString('vi-VN')
-                                : 'N/A'
-                              }
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <DollarSign className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <p className="text-gray-600">Tiền thuê</p>
-                            <p className="font-medium text-green-600">
-                              {(contract.monthlyRent || 0).toLocaleString('vi-VN')} VNĐ
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <DollarSign className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <p className="text-gray-600">Tiền cọc</p>
-                            <p className="font-medium text-blue-600">
-                              {(contract.depositAmount || 0).toLocaleString('vi-VN')} VNĐ
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {contract.createdAt && (
-                        <div className="flex items-center space-x-2 text-sm">
-                          <Clock className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-500">
-                            Tạo lúc: {new Date(contract.createdAt).toLocaleDateString('vi-VN')}
-                          </span>
-                        </div>
-                      )}
-
-                      {isExpiringSoon && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2">
-                          <p className="text-yellow-800 text-xs font-medium">
-                            ⚠️ Hợp đồng sẽ hết hạn sau {daysUntilExpiry} ngày
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-4 flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => window.open(`/dashboard/landlord/contracts/${contract.id}`, '_blank')}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Xem
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => handleDownload(contract.id!, `HĐ-${contract.id?.slice(-6)}`)}
-                        disabled={downloading}
-                      >
-                        <Download className={`h-4 w-4 mr-1 ${downloading ? 'animate-spin' : ''}`} />
-                        Tải
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
           </div>
         )}
 

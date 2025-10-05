@@ -3,13 +3,14 @@
 import { useState, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Building, Plus, Search, MapPin, Users, DollarSign, Home, Edit, Trash2, Eye } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Building, Plus, Search, Edit, Trash2, Eye, MoreVertical } from "lucide-react"
 import { useBuildingStore } from "@/stores/buildingStore"
 import Link from "next/link"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogTitle, AlertDialogHeader, AlertDialogDescription, AlertDialogCancel, AlertDialogAction, AlertDialogContent, AlertDialogFooter, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 export default function LandlordProperties() {
   const { buildings, isLoading, error, fetchAllBuildings, deleteBuilding: deleteBuildingFromStore } = useBuildingStore()
@@ -98,150 +99,122 @@ export default function LandlordProperties() {
           </div>
         )}
 
-        {/* Properties Grid */}
-        {!isLoading && buildings && Array.isArray(buildings) && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {buildings.map((building) => (
-              <Card key={building.id} className={`hover:shadow-lg transition-shadow ${
-                building.isActive 
-                  ? 'border-green-500 border-2' 
-                  : 'border-gray-300 border-2'
-              }`}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-3 bg-blue-100 rounded-lg">
-                        <Building className="h-6 w-6 text-blue-600" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg line-clamp-2">{building.name}</CardTitle>
+        {/* Properties Table */}
+        {!isLoading && buildings && Array.isArray(buildings) && buildings.length > 0 && (
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[250px]">Tên dãy trọ</TableHead>
+                    <TableHead className="w-[250px] max-w-[250px]">Địa chỉ</TableHead>
+                    <TableHead className="w-[100px] text-center">Số phòng</TableHead>
+                    <TableHead className="w-[120px] text-center">Trạng thái</TableHead>
+                    <TableHead className="w-[120px] text-center">Xác thực</TableHead>
+                    <TableHead className="w-[120px]">Ngày tạo</TableHead>
+                    <TableHead className="w-[200px] text-center">Hành động</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {buildings.map((building) => (
+                    <TableRow key={building.id}>
+                      <TableCell className="font-medium max-w-[250px]">
+                        <div className="flex items-center space-x-2">
+                          <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
+                            <Building className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <span className="line-clamp-2 truncate">{building.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-[250px]">
+                        <div className="text-sm text-gray-600 line-clamp-2 truncate">
+                          {building.addressLine1}
+                          {building.ward && `, ${building.ward.name}`}
+                          {building.district && `, ${building.district.name}`}
+                          {building.province && `, ${building.province.name}`}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="font-medium">{building.roomCount || 0}</span>
+                      </TableCell>
+                      <TableCell className="text-center">
                         <Badge className={
-                          building.isActive 
-                            ? 'bg-green-100 text-green-800' 
+                          building.isActive
+                            ? 'bg-green-100 text-green-800'
                             : 'bg-gray-100 text-gray-800'
                         }>
                           {building.isActive ? 'Hoạt động' : 'Tạm dừng'}
                         </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2 text-sm">
-                      <MapPin className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600">
-                        {building.addressLine1}
-                        {building.ward && `, ${building.ward.name}`}
-                        {building.district && `, ${building.district.name}`}
-                        {building.province && `, ${building.province.name}`}
-                      </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="flex items-center space-x-2">
-                        <Home className="h-4 w-4 text-gray-400" />
-                        <div>
-                          <p className="text-gray-600">Tổng phòng</p>
-                          <p className="font-medium">{building.roomCount || 0}</p>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge className={
+                          building.isVerified
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }>
+                          {building.isVerified ? 'Đã xác thực' : 'Chưa xác thực'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-gray-600">
+                          {new Date(building.createdAt).toLocaleDateString('vi-VN')}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="cursor-pointer">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link href={`/dashboard/landlord/properties/${building.id}`} className="cursor-pointer">
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Xem chi tiết
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/dashboard/landlord/properties/${building.id}/edit`} className="cursor-pointer">
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Chỉnh sửa
+                                </Link>
+                              </DropdownMenuItem>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 cursor-pointer">
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Xóa
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Bạn có chắc chắn muốn xóa dãy trọ {building.name}?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Điều này sẽ xóa dãy trọ {building.name} và tất cả các phòng trong dãy trọ này. Hành động này không thể hoàn tác.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel className="cursor-pointer">Hủy</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      className="bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+                                      onClick={() => handleDeleteBuilding(building.id)}
+                                    >
+                                      Xóa
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Users className="h-4 w-4 text-gray-400" />
-                        <div>
-                          <p className="text-gray-600">Trạng thái</p>
-                          <p className="font-medium">{building.isVerified ? 'Đã xác thực' : 'Chưa xác thực'}</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="flex items-center space-x-2">
-                        <DollarSign className="h-4 w-4 text-gray-400" />
-                        <div>
-                          <p className="text-gray-600">Ngày tạo</p>
-                          <p className="font-medium text-blue-600">
-                            {new Date(building.createdAt).toLocaleDateString('vi-VN')}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <div className={`h-4 w-4 rounded-full ${
-                          building.isVerified ? 'bg-green-500' : 'bg-yellow-500'
-                        }`}></div>
-                        <div>
-                          <p className="text-gray-600">Xác thực</p>
-                          <p className="font-medium">
-                            {building.isVerified ? 'Đã xác thực' : 'Chưa xác thực'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {building.description && (
-                      <div className="text-sm text-gray-600 line-clamp-2">
-                        {building.description}
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <span>Cập nhật: {new Date(building.updatedAt).toLocaleDateString('vi-VN')}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 flex space-x-2">
-                    <Link href={`/dashboard/landlord/properties/${building.id}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full cursor-pointer">
-                        <Eye className="h-4 w-4 mr-1" />
-                        Chi tiết
-                      </Button>
-                    </Link>
-                    <Link href={`/dashboard/landlord/properties/${building.id}/edit`} className="flex-1">
-                      <Button size="sm" className="w-full cursor-pointer">
-                        <Edit className="h-4 w-4 mr-1" />
-                        Sửa
-                      </Button>
-                    </Link>
-                  </div>
-                  
-                  <div className="mt-2 flex space-x-2">
-                    <Link href={`/dashboard/landlord/properties/rooms?buildingId=${building.id}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full text-green-600 border-green-300 hover:bg-green-50 cursor-pointer">
-                        <Home className="h-4 w-4 mr-1" />
-                        Quản lý phòng
-                      </Button>
-                    </Link>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="text-red-600 border-red-300 hover:bg-red-50 cursor-pointer">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Bạn có chắc chắn muốn xóa dãy trọ {building.name}?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Điều này sẽ xóa dãy trọ {building.name} và tất cả các phòng trong dãy trọ này.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel className="cursor-pointer">Hủy</AlertDialogCancel>
-                          <AlertDialogAction
-                            className="bg-red-500 hover:bg-red-600 text-white cursor-pointer"
-                            onClick={() => handleDeleteBuilding(building.id)}
-                          >
-                            Xóa
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         )}
 
