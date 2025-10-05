@@ -74,8 +74,11 @@ export default function RentalsPage() {
     const matchesSearch =
       rental.tenant?.firstName?.toLowerCase().includes(searchLower) ||
       rental.tenant?.lastName?.toLowerCase().includes(searchLower) ||
-      rental.room?.name?.toLowerCase().includes(searchLower) ||
-      rental.room?.roomType?.toLowerCase().includes(searchLower)
+      rental.tenant?.email?.toLowerCase().includes(searchLower) ||
+      rental.roomInstance?.room?.name?.toLowerCase().includes(searchLower) ||
+      rental.roomInstance?.room?.building?.name?.toLowerCase().includes(searchLower) ||
+      rental.roomInstance?.roomNumber?.toLowerCase().includes(searchLower) ||
+      rental.id?.toLowerCase().includes(searchLower)
 
     const matchesStatus = statusFilter === 'all' || rental.status === statusFilter
 
@@ -190,7 +193,8 @@ export default function RentalsPage() {
                     <TableRow>
                       <TableHead className="w-[100px]">Mã Rental</TableHead>
                       <TableHead className="min-w-[150px]">Người thuê</TableHead>
-                      <TableHead className="min-w-[180px]">Phòng</TableHead>
+                      <TableHead className="min-w-[180px]">Phòng/Tòa nhà</TableHead>
+                      <TableHead className="min-w-[120px]">Số phòng</TableHead>
                       <TableHead className="text-right min-w-[120px]">Tiền thuê</TableHead>
                       <TableHead className="text-right min-w-[120px]">Tiền cọc</TableHead>
                       <TableHead className="min-w-[110px]">Ngày bắt đầu</TableHead>
@@ -208,28 +212,56 @@ export default function RentalsPage() {
                         ? `${rental.tenant.firstName} ${rental.tenant.lastName}`
                         : 'Chưa có thông tin'
 
-                      const roomInfo = rental.room
-                        ? `${rental.room.name || 'N/A'}${rental.room.roomType ? ` - ${rental.room.roomType}` : ''}`
-                        : 'Chưa có thông tin'
+                      // Get room info from roomInstance
+                      const roomName = rental.roomInstance?.room?.name || 'N/A'
+                      const buildingName = rental.roomInstance?.room?.building?.name || 'N/A'
+                      const roomNumber = rental.roomInstance?.roomNumber || 'N/A'
+                      
+                      // Parse monthly rent and deposit
+                      const monthlyRent = rental.monthlyRent ? parseFloat(rental.monthlyRent) : 0
+                      const depositPaid = rental.depositPaid ? parseFloat(rental.depositPaid) : 0
+
+                      // Get dates
+                      const startDate = rental.contractStartDate || rental.startDate
+                      const endDate = rental.contractEndDate || rental.endDate
 
                       return (
                         <TableRow key={rental.id}>
                           <TableCell className="font-medium">
                             {rental.id?.slice(-8)}
                           </TableCell>
-                          <TableCell>{tenantName}</TableCell>
-                          <TableCell>{roomInfo}</TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{tenantName}</div>
+                              {rental.tenant?.email && (
+                                <div className="text-xs text-gray-500">{rental.tenant.email}</div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{roomName}</div>
+                              <div className="text-xs text-gray-500">{buildingName}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{roomNumber}</Badge>
+                          </TableCell>
                           <TableCell className="text-right font-medium text-green-600">
-                            {(rental.monthlyRent || 0).toLocaleString('vi-VN')} đ
+                            {monthlyRent.toLocaleString('vi-VN')} đ
                           </TableCell>
                           <TableCell className="text-right font-medium text-blue-600">
-                            {(rental.depositAmount || 0).toLocaleString('vi-VN')} đ
+                            {depositPaid.toLocaleString('vi-VN')} đ
                           </TableCell>
                           <TableCell>
-                            {new Date(rental.startDate).toLocaleDateString('vi-VN')}
+                            {startDate
+                              ? new Date(startDate).toLocaleDateString('vi-VN')
+                              : 'N/A'}
                           </TableCell>
                           <TableCell>
-                            {new Date(rental.endDate).toLocaleDateString('vi-VN')}
+                            {endDate
+                              ? new Date(endDate).toLocaleDateString('vi-VN')
+                              : 'Không xác định'}
                           </TableCell>
                           <TableCell>
                             <Badge className={STATUS_COLORS[rental.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'}>

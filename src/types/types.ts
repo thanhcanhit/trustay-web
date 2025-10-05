@@ -972,23 +972,92 @@ export interface ContractListResponse {
 // Rental Types
 export interface Rental {
 	id: string;
-	roomId: string;
+	bookingRequestId?: string | null;
+	invitationId?: string | null;
+	roomInstanceId: string;
 	tenantId: string;
-	landlordId: string;
-	contractId?: string;
-	monthlyRent: number;
-	depositAmount: number;
-	startDate: string;
-	endDate: string;
+	ownerId: string;
+	contractStartDate: string;
+	contractEndDate?: string | null;
+	monthlyRent: string;
+	depositPaid: string;
 	status: 'active' | 'terminated' | 'expired' | 'pending';
-	notes?: string;
-	terminationDate?: string;
-	terminationReason?: string;
-	depositRefundAmount?: number;
+	contractDocumentUrl?: string | null;
+	terminationNoticeDate?: string | null;
+	terminationReason?: string | null;
 	createdAt: string;
 	updatedAt: string;
+
+	// Related entities
+	tenant?: {
+		id: string;
+		firstName: string;
+		lastName: string;
+		email: string;
+		phone?: string | null;
+	};
+	owner?: {
+		id: string;
+		firstName: string;
+		lastName: string;
+		email: string;
+		phone?: string | null;
+	};
+	roomInstance?: {
+		id: string;
+		roomId: string;
+		roomNumber: string;
+		status: 'available' | 'occupied' | 'maintenance' | 'reserved';
+		isActive: boolean;
+		notes?: string | null;
+		createdAt: string;
+		updatedAt: string;
+		room?: {
+			id: string;
+			slug: string;
+			buildingId: string;
+			floorNumber: number;
+			name: string;
+			description: string;
+			roomType: string;
+			areaSqm: string;
+			maxOccupancy: number;
+			totalRooms: number;
+			viewCount: number;
+			isActive: boolean;
+			isVerified: boolean;
+			overallRating: string;
+			totalRatings: number;
+			createdAt: string;
+			updatedAt: string;
+			building?: {
+				id: string;
+				name: string;
+				ownerId?: string;
+			};
+		};
+	};
+	bookingRequest?: {
+		id: string;
+		moveInDate: string;
+		moveOutDate?: string | null;
+	} | null;
+	invitation?: {
+		id: string;
+		// Add more fields as needed
+	} | null;
+
+	// Deprecated fields for backward compatibility
+	roomId?: string;
+	landlordId?: string;
+	contractId?: string;
+	depositAmount?: number;
+	startDate?: string;
+	endDate?: string;
+	notes?: string;
+	terminationDate?: string;
+	depositRefundAmount?: number;
 	room?: Room;
-	tenant?: UserProfile;
 	landlord?: UserProfile;
 	contract?: Contract;
 }

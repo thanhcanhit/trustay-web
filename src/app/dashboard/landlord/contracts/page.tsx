@@ -217,10 +217,10 @@ export default function ContractsPage() {
                           <SelectItem key={rental.id} value={rental.id!}>
                             <div className="flex flex-col">
                               <span className="font-medium">
-                                {rental.room?.name || 'N/A'} - {rental.tenant?.firstName} {rental.tenant?.lastName}
+                                {rental.roomInstance?.room?.name || 'N/A'} ({rental.roomInstance?.roomNumber || 'N/A'}) - {rental.tenant?.firstName} {rental.tenant?.lastName}
                               </span>
                               <span className="text-xs text-gray-500">
-                                {rental.room?.buildingName || 'N/A'}
+                                {rental.roomInstance?.room?.building?.name || 'N/A'}
                               </span>
                             </div>
                           </SelectItem>
