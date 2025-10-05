@@ -22,6 +22,7 @@ type ChatState = {
 	setCurrentConversationId: (conversationId: string | null) => void;
 	getMessages: (conversationId: string) => ChatMessage[];
 	getConversation: (conversationId: string) => ConversationData | null;
+	getUnreadConversationCount: () => number;
 	addIncoming: (payload: ChatMessage) => void;
 	loadConversations: () => Promise<void>;
 	loadMessages: (conversationId: string) => Promise<void>;
@@ -54,6 +55,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
 	},
 	getConversation: (conversationId) => {
 		return get().conversations[conversationId] ?? null;
+	},
+	getUnreadConversationCount: () => {
+		const state = get();
+		return Object.values(state.conversations).filter(
+			(conv) => conv.unreadCount && conv.unreadCount > 0,
+		).length;
 	},
 	loadConversations: async () => {
 		try {
@@ -101,7 +108,46 @@ export const useChatStore = create<ChatState>((set, get) => ({
 				console.log('Message already exists, skipping duplicate:', p.id);
 				return s;
 			}
-			return { byConversation: { ...s.byConversation, [p.conversationId]: [...list, p] } };
+
+			// Update conversation with new message and increment unread count if not from current user
+			const currentConv = s.conversations[p.conversationId];
+			const isFromCurrentUser = p.senderId === s.currentUserId;
+			const isCurrentConversation = s.currentConversationId === p.conversationId;
+
+			// If conversation doesn't exist yet, we need to create it
+			// This might happen if it's a new conversation from realtime event
+			if (!currentConv) {
+				console.warn(
+					'Conversation not found in store, will be loaded on next refresh:',
+					p.conversationId,
+				);
+				// Still add the message, but don't update conversation count
+				return {
+					byConversation: { ...s.byConversation, [p.conversationId]: [...list, p] },
+				};
+			}
+
+			const updatedConversations = {
+				...s.conversations,
+				[p.conversationId]: {
+					...currentConv,
+					lastMessage: {
+						id: p.id,
+						content: p.content,
+						type: p.type,
+						sentAt: p.sentAt,
+					},
+					unreadCount:
+						!isFromCurrentUser && !isCurrentConversation
+							? (currentConv?.unreadCount || 0) + 1
+							: currentConv?.unreadCount || 0,
+				},
+			};
+
+			return {
+				byConversation: { ...s.byConversation, [p.conversationId]: [...list, p] },
+				conversations: updatedConversations,
+			};
 		}),
 	sendMessage: async (payload) => {
 		const state = get();

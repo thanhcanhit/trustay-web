@@ -2,7 +2,23 @@
 
 // User management actions for Trustay API
 import { serverApiCall } from '../lib/api-client';
-import { ChangePasswordRequest, UpdateProfileRequest, UserProfile } from '../types/types';
+import {
+	ChangePasswordRequest,
+	PublicUserProfile,
+	UpdateProfileRequest,
+	UserProfile,
+} from '../types/types';
+
+// Get public user profile by ID (no authentication required)
+export const getPublicUserProfile = async (userId: string): Promise<PublicUserProfile> => {
+	return await serverApiCall<PublicUserProfile>(
+		`/api/users/public/${userId}`,
+		{
+			method: 'GET',
+		},
+		undefined, // No token required for public endpoint
+	);
+};
 
 // Get user profile
 export const getUserProfile = async (token?: string): Promise<UserProfile> => {

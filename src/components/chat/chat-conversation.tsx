@@ -13,6 +13,7 @@ import { MessageInput } from "./message-input";
 import { MessageAttachments } from "./message-attachments";
 import { getMessageMetadata } from "@/lib/message-metadata";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { UserProfileModal } from "../profile/user-profile-modal";
 
 export function ChatConversation() {
   const getConversation = useChatStore((state) => state.getConversation);
@@ -24,6 +25,8 @@ export function ChatConversation() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const isSystemMessage = (messageType: string) => {
     return SYSTEM_MESSAGE_TYPES.includes(messageType as SystemMessageType);
@@ -176,11 +179,17 @@ export function ChatConversation() {
                 // Render normal text messages
                 <div className={`flex my-2 gap-2 ${isOwnMessage ? "justify-end" : ""}`}>
                   {!isOwnMessage && (
-                    <div className="flex-shrink-0">
-                      <Avatar className="rounded-lg">
+                    <div 
+                      className="flex-shrink-0 cursor-pointer"
+                      onClick={() => {
+                        setSelectedUserId(conversation.counterpart.id);
+                        setProfileModalOpen(true);
+                      }}
+                    >
+                      <Avatar className="rounded-lg hover:ring-2 hover:ring-primary transition-all">
                         <AvatarImage
                           src={conversation.counterpart.avatarUrl || ""}
-                          alt="@evilrabbit"
+                          alt={conversation.counterpart.lastName}
                         />
                         <AvatarFallback>{conversation.counterpart.lastName.charAt(0)}{conversation.counterpart.firstName.charAt(0)}  </AvatarFallback>
                       </Avatar>
@@ -232,6 +241,15 @@ export function ChatConversation() {
         <div ref={messagesEndRef} />
       </div>
       <MessageInput onSendMessage={handleSendMessage} />
+      
+      {/* User Profile Modal */}
+      {selectedUserId && (
+        <UserProfileModal
+          userId={selectedUserId}
+          open={profileModalOpen}
+          onOpenChange={setProfileModalOpen}
+        />
+      )}
     </div>
   );
 }

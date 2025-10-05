@@ -18,32 +18,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Contract } from "@/types/types"
-
-
-const STATUS_COLORS = {
-  active: 'bg-green-100 text-green-800',
-  expired: 'bg-red-100 text-red-800',
-  pending_signatures: 'bg-yellow-100 text-yellow-800',
-  terminated: 'bg-gray-100 text-gray-800',
-  draft: 'bg-blue-100 text-blue-800',
-  signed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800'
-}
-
-const STATUS_LABELS = {
-  active: 'Đang hiệu lực',
-  expired: 'Hết hạn',
-  pending_signatures: 'Chờ ký',
-  terminated: 'Đã chấm dứt',
-  draft: 'Bản nháp',
-  signed: 'Đã ký',
-  cancelled: 'Đã hủy'
-}
+import { UserProfileModal } from "@/components/profile/user-profile-modal"
+import { CONTRACT_SIGN, STATUS_COLORS } from "@/constants/basic"
 
 export default function TenantContractsPage() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [profileModalOpen, setProfileModalOpen] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const {
     contracts,
     loading,
@@ -219,7 +202,18 @@ export default function TenantContractsPage() {
                         {contract.id ? `HĐ-${contract.id.slice(-8)}` : 'N/A'}
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">{landlordName}</div>
+                        <button
+                          onClick={() => {
+                            if (contract.landlord?.id) {
+                              setSelectedUserId(contract.landlord.id)
+                              setProfileModalOpen(true)
+                            }
+                          }}
+                          className="font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left"
+                          disabled={!contract.landlord?.id}
+                        >
+                          {landlordName}
+                        </button>
                       </TableCell>
                       <TableCell>{roomName}</TableCell>
                       <TableCell className="text-right font-medium text-green-600">
@@ -240,7 +234,7 @@ export default function TenantContractsPage() {
                       </TableCell>
                       <TableCell>
                         <Badge className={STATUS_COLORS[contract.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'}>
-                          {STATUS_LABELS[contract.status as keyof typeof STATUS_LABELS] || contract.status}
+                          {CONTRACT_SIGN[contract.status as keyof typeof CONTRACT_SIGN] || contract.status}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -293,6 +287,15 @@ export default function TenantContractsPage() {
               Hợp đồng sẽ được tạo sau khi bạn hoàn tất thuê trọ với chủ nhà
             </p>
           </div>
+        )}
+
+        {/* User Profile Modal */}
+        {selectedUserId && (
+          <UserProfileModal
+            userId={selectedUserId}
+            open={profileModalOpen}
+            onOpenChange={setProfileModalOpen}
+          />
         )}
       </div>
     </ProfileLayout>
