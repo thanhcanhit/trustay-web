@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
+import { ProfileLayout } from "@/components/profile/profile-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -28,7 +28,7 @@ import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { CONTRACT_SIGN, STATUS_COLORS, CONTRACT_TYPE_LABELS } from "@/constants/basic"
 
-export default function ContractDetailPage() {
+export default function TenantContractDetailPage() {
   const params = useParams()
   const router = useRouter()
   const contractId = params.id as string
@@ -48,8 +48,8 @@ export default function ContractDetailPage() {
     const result = await loadContractById(contractId)
     if (result) {
       setContract(result)
-      // Determine current user ID (landlord)
-      setCurrentUserId(result.landlordId || '')
+      // Determine current user ID (tenant)
+      setCurrentUserId(result.tenantId || '')
     }
   }, [contractId, loadContractById])
 
@@ -89,20 +89,20 @@ export default function ContractDetailPage() {
 
   if (loading) {
     return (
-      <DashboardLayout userType="landlord">
+      <ProfileLayout>
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center space-x-2">
             <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
             <span className="text-gray-500">Đang tải hợp đồng...</span>
           </div>
         </div>
-      </DashboardLayout>
+      </ProfileLayout>
     )
   }
 
   if (error || !contract) {
     return (
-      <DashboardLayout userType="landlord">
+      <ProfileLayout>
         <div className="px-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <div className="flex items-center space-x-3">
@@ -123,7 +123,7 @@ export default function ContractDetailPage() {
             </div>
           </div>
         </div>
-      </DashboardLayout>
+      </ProfileLayout>
     )
   }
 
@@ -139,7 +139,7 @@ export default function ContractDetailPage() {
   const buildingAddress = contract.contractData?.buildingAddress || 'N/A'
 
   return (
-    <DashboardLayout userType="landlord">
+    <ProfileLayout>
       <div className="px-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -441,12 +441,12 @@ export default function ContractDetailPage() {
           </div>
 
           {/* Right Column - Signing Section (1/3 width) */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 sticky">
             <div className="sticky top-6">
               <ContractSigningWorkflow
                 contract={contract}
                 currentUserId={currentUserId}
-                currentUserRole="landlord"
+                currentUserRole="tenant"
                 onSigningComplete={handleSigningComplete}
               />
 
@@ -477,6 +477,6 @@ export default function ContractDetailPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </ProfileLayout>
   )
 }

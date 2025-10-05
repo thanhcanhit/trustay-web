@@ -84,6 +84,7 @@ export const getLandlordRentals = async (
 	params?: {
 		page?: number;
 		limit?: number;
+		status?: string;
 	},
 	token?: string,
 ): Promise<ApiResult<RentalListResponse>> => {
@@ -91,8 +92,9 @@ export const getLandlordRentals = async (
 		const q = new URLSearchParams();
 		if (params?.page) q.append('page', String(params.page));
 		if (params?.limit) q.append('limit', String(params.limit));
+		if (params?.status) q.append('status', params.status);
 
-		const endpoint = `/api/rentals/as-landlord${q.toString() ? `?${q.toString()}` : ''}`;
+		const endpoint = `/api/rentals/owner${q.toString() ? `?${q.toString()}` : ''}`;
 		const response = await apiCall<RentalListResponse>(endpoint, { method: 'GET' }, token);
 		return { success: true, data: response };
 	} catch (error) {
@@ -108,6 +110,7 @@ export const getTenantRentals = async (
 	params?: {
 		page?: number;
 		limit?: number;
+		status?: string;
 	},
 	token?: string,
 ): Promise<ApiResult<RentalListResponse>> => {
@@ -115,8 +118,9 @@ export const getTenantRentals = async (
 		const q = new URLSearchParams();
 		if (params?.page) q.append('page', String(params.page));
 		if (params?.limit) q.append('limit', String(params.limit));
+		if (params?.status) q.append('status', params.status);
 
-		const endpoint = `/api/rentals/as-tenant${q.toString() ? `?${q.toString()}` : ''}`;
+		const endpoint = `/api/rentals/my-rentals${q.toString() ? `?${q.toString()}` : ''}`;
 		const response = await apiCall<RentalListResponse>(endpoint, { method: 'GET' }, token);
 		return { success: true, data: response };
 	} catch (error) {
@@ -159,7 +163,7 @@ export const updateRental = async (
 		const response = await apiCall<{ data: Rental }>(
 			`/api/rentals/${id}`,
 			{
-				method: 'PATCH',
+				method: 'PUT',
 				data,
 			},
 			token,
@@ -183,7 +187,7 @@ export const terminateRental = async (
 		const response = await apiCall<{ data: Rental }>(
 			`/api/rentals/${id}/terminate`,
 			{
-				method: 'PATCH',
+				method: 'PUT',
 				data,
 			},
 			token,
@@ -207,7 +211,7 @@ export const renewRental = async (
 		const response = await apiCall<{ data: Rental }>(
 			`/api/rentals/${id}/renew`,
 			{
-				method: 'POST',
+				method: 'PUT',
 				data,
 			},
 			token,

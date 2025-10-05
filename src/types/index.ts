@@ -22,6 +22,7 @@ export type {
 	ChangePasswordRequest,
 	CheckPassword,
 	CreateBuildingRequest,
+	CreateRentalRequest,
 	CreateRoomRequest,
 	GeneratePasswordResponse,
 	// Authentication Types
@@ -30,6 +31,10 @@ export type {
 	RefreshTokenRequest,
 	RegisterDirectRequest,
 	RegisterRequest,
+	RenewRentalRequest,
+	// Rental Types
+	Rental,
+	RentalListResponse,
 	// Room Types (from types.ts)
 	RoomAmenity,
 	RoomCost,
@@ -40,8 +45,10 @@ export type {
 	RoomStatus,
 	RoomsListResponse,
 	RoomType,
+	TerminateRentalRequest,
 	UpdateBuildingRequest,
 	UpdateProfileRequest,
+	UpdateRentalRequest,
 	UpdateRoomInstanceStatusRequest,
 	UpdateRoomRequest,
 	// User Types

@@ -39,6 +39,7 @@ export function Navigation() {
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   // Second row removed; scroll-based toggle no longer needed
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<string>("")
   const [selectedProvinceId, setSelectedProvinceId] = useState<number | null>(null)
   const [selectedDistrictId, setSelectedDistrictId] = useState<number | null>(null)
@@ -400,14 +401,21 @@ export function Navigation() {
                         </div>
                       </div>
                       <DialogFooter className="flex-shrink-0 mt-4 pt-4 border-t">
-                        <Button
-                          onClick={() => setIsFilterOpen(false)}
-                          variant="outline"
-                          className="cursor-pointer"
-                        >
-                          Hủy
-                        </Button>
-                        <Button onClick={handleApplyFilters} className="bg-green-600 hover:bg-green-700 cursor-pointer">Áp dụng</Button>
+                        <div className="flex gap-2 w-full">
+                          <Button
+                            onClick={() => setIsFilterOpen(false)}
+                            variant="outline"
+                            className="flex-1 sm:flex-initial cursor-pointer"
+                          >
+                            Hủy
+                          </Button>
+                          <Button 
+                            onClick={handleApplyFilters} 
+                            className="flex-1 sm:flex-initial bg-green-600 hover:bg-green-700 cursor-pointer"
+                          >
+                            Áp dụng
+                          </Button>
+                        </div>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
@@ -418,7 +426,7 @@ export function Navigation() {
             {/* Mobile Search */}
             {!isAuthPage && isMounted && (
               <div className="lg:hidden">
-                <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                <Dialog open={isMobileSearchOpen} onOpenChange={setIsMobileSearchOpen}>
                   <DialogTrigger asChild>
                     <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
                       <Search className="h-5 w-5 text-gray-600" />
@@ -467,22 +475,16 @@ export function Navigation() {
                         <Input
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleApplyFilters()
+                              setIsMobileSearchOpen(false)
+                            }
+                          }}
                           placeholder="Nhập để tìm kiếm"
                           className="w-full"
                         />
                       </div>
-
-                      {/* Search Button */}
-                      <Button
-                        onClick={() => {
-                          handleSearch()
-                          setIsFilterOpen(false)
-                        }}
-                        className="w-full bg-green-600 hover:bg-green-700"
-                      >
-                        <Search className="h-4 w-4 mr-2" />
-                        Tìm kiếm
-                      </Button>
 
                       <hr />
 
@@ -528,20 +530,26 @@ export function Navigation() {
                       </div>
                     </div>
 
-                    <DialogFooter className="flex-shrink-0 mt-4">
-                      <Button
-                        onClick={() => setIsFilterOpen(false)}
-                        variant="outline"
-                        className="flex-1"
-                      >
-                        Hủy
-                      </Button>
-                      <Button
-                        onClick={handleApplyFilters}
-                        className="flex-1 bg-green-600 hover:bg-green-700"
-                      >
-                        Áp dụng
-                      </Button>
+                    <DialogFooter className="flex-shrink-0 mt-4 pt-4 border-t">
+                      <div className="flex gap-2 w-full">
+                        <Button
+                          onClick={() => setIsMobileSearchOpen(false)}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          Hủy
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            handleApplyFilters()
+                            setIsMobileSearchOpen(false)
+                          }}
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                        >
+                          <Search className="h-4 w-4 mr-2" />
+                          Tìm kiếm
+                        </Button>
+                      </div>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>

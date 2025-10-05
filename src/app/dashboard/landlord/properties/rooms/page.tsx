@@ -3,26 +3,20 @@
 import { useState, useEffect, Suspense, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Search, Edit, Trash2, Eye, Home} from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Search, Edit, Trash2, Eye, Home, MoreVertical } from "lucide-react"
 import { useRoomStore } from "@/stores/roomStore"
 import { useBuildingStore } from "@/stores/buildingStore"
 import Link from "next/link"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
-import {RoomType} from "@/types/types"
-const ROOM_TYPE_LABELS: Record<RoomType, string> = {
-  boarding_house: 'Nhà trọ',
-  sleepbox: 'Phòng ngủ',
-  dormitory: 'Ký túc xá',
-  apartment: 'Căn hộ',
-  whole_house: 'Nhà nguyên căn'
-}
+import { ROOM_TYPE_LABELS } from "@/constants/basic"
 
 function RoomsManagementPageContent() {
   const searchParams = useSearchParams()
@@ -189,7 +183,7 @@ function RoomsManagementPageContent() {
           </div>
         )}
 
-        {/* Rooms Grid */}
+        {/* Rooms Table */}
         {!loading && (
           <>
             {filteredRooms.length > 0 && (
@@ -203,137 +197,133 @@ function RoomsManagementPageContent() {
                 )}
               </div>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredRooms.map((room) => (
-              <Card key={room.id} className={`hover:shadow-lg transition-shadow ${
-                room.isActive 
-                  ? 'border-green-500 border-2' 
-                  : 'border-gray-300 border-2'
-              }`}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg mb-1 line-clamp-2">{room.name}</CardTitle>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="outline">
-                          {ROOM_TYPE_LABELS[room.roomType as keyof typeof ROOM_TYPE_LABELS]}
-                        </Badge>
-                        <Badge className={room.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                          {room.isActive ? 'Hoạt động' : 'Tạm dừng'}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Dãy trọ:</span>
-                      <span className="font-medium line-clamp-2">{room.buildingName || 'N/A'}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Tầng:</span>
-                      <span className="font-medium">Tầng {room.floorNumber || 'Chưa cập nhật'}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Diện tích:</span>
-                      <span className="font-medium">{room.areaSqm || 'Chưa cập nhật'}m²</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Sức chứa:</span>
-                      <span className="font-medium">{room.maxOccupancy || 'Chưa cập nhật'} người</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Tổng phòng:</span>
-                      <span className="font-medium">{room.totalRooms || 'Chưa cập nhật'} phòng</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Giá thuê:</span>
-                      <span className="font-medium text-green-600">
-                        {room.pricing?.basePriceMonthly ? 
-                          Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN') : 
-                          'Chưa cập nhật'} VNĐ/tháng
-                      </span>
-                    </div>
-                    
-                    {room.availableInstancesCount !== undefined && room.occupiedInstancesCount !== undefined && (
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <div className="text-xs text-gray-600 mb-2">Tình trạng phòng:</div>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div className="flex justify-between">
-                            <span>Trống:</span>
-                            <span className="font-medium text-green-600">{room.availableInstancesCount}</span>
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tên phòng</TableHead>
+                      <TableHead>Dãy trọ</TableHead>
+                      <TableHead>Loại phòng</TableHead>
+                      <TableHead>Diện tích</TableHead>
+                      <TableHead>Giá thuê</TableHead>
+                      <TableHead>Trạng thái</TableHead>
+                      <TableHead>Số người tối đa</TableHead>
+                      <TableHead className="text-center">Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredRooms.map((room) => (
+                      <TableRow key={room.id}>
+                        <TableCell className="font-medium">
+                          <div className="max-w-[200px]">
+                            <div className="font-semibold text-gray-900">{room.name}</div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              Tổng: {room.totalRooms || 0} phòng
+                            </div>
                           </div>
-                          <div className="flex justify-between">
-                            <span>Đã thuê:</span>
-                            <span className="font-medium text-blue-600">{room.occupiedInstancesCount}</span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="max-w-[150px]">
+                            <div>{room.buildingName || 'N/A'}</div>
+                            {room.floorNumber && (
+                              <div className="text-xs text-gray-500 mt-1">Tầng {room.floorNumber}</div>
+                            )}
                           </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Cập nhật:</span>
-                      <span className="text-gray-500">{new Date(room.lastUpdated).toLocaleDateString('vi-VN')}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 flex space-x-2">
-                    <Link href={`/dashboard/landlord/properties/rooms/${room.id}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full cursor-pointer">
-                        <Eye className="h-4 w-4 mr-1" />
-                        Chi tiết
-                      </Button>
-                    </Link>
-                    <Link href={`/dashboard/landlord/properties/rooms/${room.id}/edit`} className="flex-1">
-                      <Button size="sm" className="w-full cursor-pointer">
-                        <Edit className="h-4 w-4 mr-1" />
-                        Sửa
-                      </Button>
-                    </Link>
-                  </div>
-                  
-                  <div className="mt-2 flex space-x-2">
-                    <Link href={`/dashboard/landlord/properties/rooms/${room.id}/instances`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full text-green-600 border-green-300 hover:bg-green-50 cursor-pointer">
-                        <Home className="h-4 w-4 mr-1" />
-                        Quản lý phòng
-                      </Button>
-                    </Link>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="text-red-600 border-red-300 hover:bg-red-50 cursor-pointer">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Xóa phòng {room.name}?</AlertDialogTitle>
-                        </AlertDialogHeader>
-                        <AlertDialogDescription>
-                          Điều này sẽ xóa phòng {room.name} và tất cả các phòng trong phòng này.
-                        </AlertDialogDescription>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel className="cursor-pointer">Hủy</AlertDialogCancel>
-                          <AlertDialogAction
-                            className="bg-red-500 hover:bg-red-600 text-white cursor-pointer"
-                            onClick={() => handleDeleteRoom(room.id)}
-                          >
-                            Xóa
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {ROOM_TYPE_LABELS[room.roomType as keyof typeof ROOM_TYPE_LABELS]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {room.areaSqm ? `${room.areaSqm}m²` : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-green-600">
+                            {room.pricing?.basePriceMonthly ?
+                              Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN') :
+                              'N/A'}
+                          </div>
+                          <div className="text-xs text-gray-500">VNĐ/tháng</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <Badge className={room.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                              {room.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                            </Badge>
+                            {room.availableInstancesCount !== undefined && room.occupiedInstancesCount !== undefined && (
+                              <div className="text-xs text-gray-500">
+                                <div>Trống: {room.availableInstancesCount}</div>
+                                <div>Đã thuê: {room.occupiedInstancesCount}</div>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {room.maxOccupancy ? `${room.maxOccupancy} người` : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="cursor-pointer">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/dashboard/landlord/properties/rooms/${room.id}`} className="cursor-pointer">
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    Xem chi tiết
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/dashboard/landlord/properties/rooms/${room.id}/edit`} className="cursor-pointer">
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Chỉnh sửa
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/dashboard/landlord/properties/rooms/${room.id}/instances`} className="cursor-pointer">
+                                    <Home className="h-4 w-4 mr-2" />
+                                    Quản lý phòng
+                                  </Link>
+                                </DropdownMenuItem>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 cursor-pointer">
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Xóa
+                                    </DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Xóa phòng {room.name}?</AlertDialogTitle>
+                                    </AlertDialogHeader>
+                                    <AlertDialogDescription>
+                                      Điều này sẽ xóa phòng {room.name} và tất cả các phòng trong phòng này.
+                                    </AlertDialogDescription>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel className="cursor-pointer">Hủy</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        className="bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+                                        onClick={() => handleDeleteRoom(room.id)}
+                                      >
+                                        Xóa
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </>
         )}

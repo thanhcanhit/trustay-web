@@ -4,10 +4,10 @@ import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { MapPin, Home, Users, DollarSign, TrendingUp } from "lucide-react"
+import { MapPin, Home, Users, DollarSign, TrendingUp, Building as BuildingIcon, MoreVertical, Trash } from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useBuildingStore } from "@/stores/buildingStore"
 import { type Building as BuildingType } from "@/types/types"
 import Link from "next/link"
@@ -161,201 +161,169 @@ export default function BuildingDetailPage() {
           actions={
             <>
               <PageHeaderActions.Edit href={`/dashboard/landlord/properties/${building.id}/edit`} />
-              <PageHeaderActions.Delete onClick={handleDeleteBuilding} />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="cursor-pointer">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/landlord/properties/rooms?buildingId=${building.id}`} className="cursor-pointer">
+                      <Home className="h-4 w-4 mr-2" />
+                      Quản lý phòng
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/landlord/properties/rooms/add?buildingId=${building.id}`} className="cursor-pointer">
+                      <BuildingIcon className="h-4 w-4 mr-2" />
+                      Thêm loại phòng
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={handleDeleteBuilding} className="cursor-pointer text-red-600 hover:bg-red-100">
+                    <Trash className="h-4 w-4 mr-2" />
+                    Xóa dãy trọ
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Báo cáo doanh thu
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           }
         />
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
+        {/* Stats Overview */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
                 <Home className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Tổng số phòng</p>
-                  <p className="text-2xl font-bold text-gray-900">{roomsCount.total}</p>
-                </div>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
+              <div>
+                <p className="text-xs text-gray-600">Tổng số phòng</p>
+                <p className="text-xl font-bold text-gray-900">{roomsCount.total}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-green-100 rounded-lg">
                 <Users className="h-5 w-5 text-green-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Phòng đã thuê</p>
-                  <p className="text-2xl font-bold text-gray-900">{roomsCount.occupied}</p>
-                </div>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
+              <div>
+                <p className="text-xs text-gray-600">Đã cho thuê</p>
+                <p className="text-xl font-bold text-gray-900">{roomsCount.occupied}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
                 <TrendingUp className="h-5 w-5 text-purple-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Tỷ lệ lấp đầy</p>
-                  <p className="text-2xl font-bold text-gray-900">{occupancyRate}%</p>
-                </div>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
+              <div>
+                <p className="text-xs text-gray-600">Tỷ lệ lấp đầy</p>
+                <p className="text-xl font-bold text-gray-900">{occupancyRate}%</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-orange-100 rounded-lg">
                 <DollarSign className="h-5 w-5 text-orange-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Doanh thu</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {building.monthlyRevenue ? (building.monthlyRevenue / 1000000).toFixed(1) + 'M' : 'N/A'}
-                  </p>
-                </div>
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-xs text-gray-600">Doanh thu</p>
+                <p className="text-xl font-bold text-gray-900">
+                  {building.monthlyRevenue ? (building.monthlyRevenue / 1000000).toFixed(1) + 'M' : 'N/A'}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Building Details */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Thông tin cơ bản</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h4 className="font-medium text-gray-900 mb-1">Tên dãy trọ</h4>
-                <p className="text-gray-600">{building.name}</p>
-              </div>
-              
-              {building.description && (
+        {/* Main Content - 2 Columns Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Basic Info & Address */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h3 className="text-base font-semibold text-gray-900 mb-3">Thông tin cơ bản</h3>
+              <div className="space-y-3">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-1">Mô tả</h4>
-                  <p className="text-gray-600">{building.description}</p>
+                  <label className="text-sm font-medium text-gray-500">Tên dãy trọ</label>
+                  <p className="mt-0.5 text-gray-900">{building.name}</p>
                 </div>
-              )}
-              
-              <Separator />
-              
-              <div>
-                <h4 className="font-medium text-gray-900 mb-2">Địa chỉ</h4>
-                <div className="flex items-start space-x-2">
-                  <MapPin className="h-4 w-4 text-gray-400 mt-1" />
-                  <div className="text-gray-600">
-                    <p>{building.addressLine1}</p>
-                    {building.addressLine2 && <p>{building.addressLine2}</p>}
-                    <p>
-                      {building.ward?.name && `${building.ward.name}, `}
-                      {building.district?.name && `${building.district.name}, `}
-                      {building.province?.name}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              {(building.latitude && building.longitude) && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-1">Tọa độ</h4>
-                  <p className="text-gray-600">
-                    {building.latitude}, {building.longitude}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Room Statistics */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Thống kê phòng</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Tổng số phòng:</span>
-                  <span className="font-medium">{roomsCount.total}</span>
+                {building.description && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Mô tả</label>
+                    <p className="mt-0.5 text-gray-900">{building.description}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h3 className="text-base font-semibold text-gray-900 mb-3">Địa chỉ</h3>
+              <div className="flex items-start space-x-2">
+                <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                <div className="text-gray-900 text-sm">
+                  <p>{building.addressLine1}</p>
+                  {building.addressLine2 && <p>{building.addressLine2}</p>}
+                  <p className="text-gray-600">
+                    {building.ward?.name && `${building.ward.name}, `}
+                    {building.district?.name && `${building.district.name}, `}
+                    {building.province?.name}
+                  </p>
+                  {(building.latitude && building.longitude) && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Tọa độ: {building.latitude}, {building.longitude}
+                    </p>
+                  )}
                 </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Phòng trống:</span>
-                  <span className="font-medium text-green-600">{roomsCount.available}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Room Statistics */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h3 className="text-base font-semibold text-gray-900 mb-3">Thống kê phòng</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center py-1.5">
+                  <span className="text-sm text-gray-600">Tổng số phòng</span>
+                  <span className="font-semibold text-gray-900">{roomsCount.total}</span>
                 </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Phòng đã thuê:</span>
-                  <span className="font-medium text-blue-600">{roomsCount.occupied}</span>
+                <div className="flex justify-between items-center py-1.5">
+                  <span className="text-sm text-gray-600">Phòng trống</span>
+                  <span className="font-semibold text-green-600">{roomsCount.available}</span>
                 </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Phòng bảo trì:</span>
-                  <span className="font-medium text-yellow-600">{roomsCount.maintenance}</span>
+                <div className="flex justify-between items-center py-1.5">
+                  <span className="text-sm text-gray-600">Phòng đã thuê</span>
+                  <span className="font-semibold text-blue-600">{roomsCount.occupied}</span>
                 </div>
-                
-                <Separator />
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Tỷ lệ lấp đầy:</span>
-                  <span className="font-medium text-lg">{occupancyRate}%</span>
+                <div className="flex justify-between items-center py-1.5">
+                  <span className="text-sm text-gray-600">Phòng bảo trì</span>
+                  <span className="font-semibold text-yellow-600">{roomsCount.maintenance}</span>
                 </div>
-                
+
+                <Separator className="my-2" />
+
+                <div className="flex justify-between items-center py-1.5">
+                  <span className="text-sm text-gray-600">Tỷ lệ lấp đầy</span>
+                  <span className="font-semibold text-lg text-gray-900">{occupancyRate}%</span>
+                </div>
+
                 {/* Progress bar */}
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${occupancyRate}%` }}
                   ></div>
                 </div>
               </div>
-              
-              <div className="mt-6">
-                <Link href={`/dashboard/landlord/properties/rooms?buildingId=${building.id}`}>
-                  <Button className="w-full cursor-pointer">
-                    <Home className="h-4 w-4 mr-2" />
-                    Quản lý phòng
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Thao tác nhanh</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              <Link href={`/dashboard/landlord/properties/rooms?buildingId=${building.id}`}>
-                <Button variant="outline" className="cursor-pointer">
-                  <Home className="h-4 w-4 mr-2" />
-                  Quản lý phòng
-                </Button>
-              </Link>
-              
-              <Link href={`/dashboard/landlord/properties/rooms/add?buildingId=${building.id}`}>
-                <Button variant="outline" className="cursor-pointer">
-                  <Home className="h-4 w-4 mr-2" />
-                  Thêm loại phòng mới
-                </Button>
-              </Link>
-              
-              <Button variant="outline" className="cursor-pointer">
-                <Users className="h-4 w-4 mr-2" />
-                Xem khách thuê
-              </Button>
-              
-              <Button variant="outline" className="cursor-pointer">
-                <DollarSign className="h-4 w-4 mr-2" />
-                Báo cáo doanh thu
-              </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   )

@@ -22,31 +22,54 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 	const signaturePadRef = useRef<SignaturePadRef>(null);
 	const [showSignaturePad, setShowSignaturePad] = useState(false);
 	const [isConfirming, setIsConfirming] = useState(false);
+	const [otpCode, setOtpCode] = useState('');
 
-	const { sign, requestSignatures, signing, submitting, signError } = useContractStore();
+	const { sign, signing, signError, requestOTP, requestingOTP, otpError } = useContractStore();
 
-	// Kiểm tra trạng thái ký của từng bên
-	const isLandlordSigned = !!contract.landlordSignature;
-	const isTenantSigned = !!contract.tenantSignature;
+	// Kiểm tra trạng thái ký của từng bên - check cả 2 nguồn: field riêng và signatures array
+	const isLandlordSigned = !!contract.landlordSignature || 
+		contract.signatures?.some(sig => sig.signerRole === 'landlord') || 
+		false;
+	const isTenantSigned = !!contract.tenantSignature || 
+		contract.signatures?.some(sig => sig.signerRole === 'tenant') || 
+		false;
 	const isFullySigned = isLandlordSigned && isTenantSigned;
 
 	// Kiểm tra xem user hiện tại đã ký chưa
 	const hasCurrentUserSigned = currentUserRole === 'landlord' ? isLandlordSigned : isTenantSigned;
 
-	// Kiểm tra xem có thể ký không
-	const canSign = contract.status === 'pending_signatures' && !hasCurrentUserSigned;
+	// Kiểm tra xem có thể ký không - cho phép ký khi status là draft, pending_signatures, hoặc partially_signed
+	// và user hiện tại chưa ký
+	const canSign = (contract.status === 'pending_signatures' || contract.status === 'draft' || contract.status === 'partially_signed') && !hasCurrentUserSigned;
 
 	// Lấy thông tin chữ ký của user hiện tại
 	const currentUserSignature = currentUserRole === 'landlord'
 		? contract.landlordSignature
 		: contract.tenantSignature;
 
-	const handleStartSigning = () => {
+	const handleStartSigning = async () => {
+		// Gọi API gửi OTP khi bắt đầu ký
 		setShowSignaturePad(true);
+		const success = await requestOTP(contract.id);
+		if (success) {
+			toast.success('Mã OTP đã được gửi đến email của bạn');
+		} else {
+			toast.error(otpError || 'Không thể gửi mã OTP');
+		}
+	};
+
+	const handleResendOTP = async () => {
+		const success = await requestOTP(contract.id);
+		if (success) {
+			toast.success('Mã OTP đã được gửi lại');
+		} else {
+			toast.error(otpError || 'Không thể gửi lại mã OTP');
+		}
 	};
 
 	const handleCancelSigning = () => {
 		setShowSignaturePad(false);
+		setOtpCode('');
 		signaturePadRef.current?.clear();
 	};
 
@@ -59,14 +82,22 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 			return;
 		}
 
+		// Kiểm tra OTP
+		if (!otpCode || otpCode.length !== 6) {
+			toast.error('Vui lòng nhập mã OTP (6 chữ số)');
+			return;
+		}
+
 		setIsConfirming(true);
 
 		try {
-			const success = await sign(contract.id, signatureData, 'canvas');
+			// Ký với OTP
+			const success = await sign(contract.id, signatureData, otpCode);
 
 			if (success) {
 				toast.success('Ký hợp đồng thành công!');
 				setShowSignaturePad(false);
+				setOtpCode('');
 				onSigningComplete?.();
 			} else {
 				toast.error(signError || 'Không thể ký hợp đồng');
@@ -78,42 +109,6 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 		}
 	};
 
-	const handleRequestSignatures = async () => {
-		try {
-			// Set deadline 7 ngày từ bây giờ
-			const deadline = new Date();
-			deadline.setDate(deadline.getDate() + 7);
-
-			const success = await requestSignatures(contract.id, deadline.toISOString());
-
-			if (success) {
-				toast.success('Đã gửi yêu cầu ký hợp đồng!');
-				onSigningComplete?.();
-			} else {
-				toast.error('Không thể gửi yêu cầu ký hợp đồng');
-			}
-		} catch {
-			toast.error('Đã có lỗi xảy ra');
-		}
-	};
-
-	// Render contract status badge
-	const renderStatusBadge = () => {
-		const statusConfig = {
-			draft: { label: 'Bản nháp', color: 'bg-gray-100 text-gray-800' },
-			pending_signatures: { label: 'Chờ ký', color: 'bg-yellow-100 text-yellow-800' },
-			active: { label: 'Đang hiệu lực', color: 'bg-green-100 text-green-800' },
-			expired: { label: 'Hết hạn', color: 'bg-red-100 text-red-800' },
-			terminated: { label: 'Đã chấm dứt', color: 'bg-red-100 text-red-800' }
-		};
-
-		const config = statusConfig[contract.status];
-		return (
-			<span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
-				{config.label}
-			</span>
-		);
-	};
 
 	return (
 		<div className="contract-signing-workflow space-y-6">
@@ -121,7 +116,6 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 			<div className="bg-white p-6 rounded-lg border">
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="text-lg font-medium">Trạng thái hợp đồng</h3>
-					{renderStatusBadge()}
 				</div>
 
 				{/* Signing Progress */}
@@ -186,23 +180,6 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 				</div>
 			)}
 
-			{/* Signature Actions */}
-			{contract.status === 'draft' && currentUserRole === 'landlord' && (
-				<div className="bg-white p-6 rounded-lg border">
-					<h3 className="text-lg font-medium mb-4">Gửi yêu cầu ký hợp đồng</h3>
-					<p className="text-gray-600 mb-4">
-						Gửi hợp đồng này cho cả hai bên để ký. Sau khi gửi, hợp đồng sẽ chuyển sang trạng thái &quot;Chờ ký&quot;.
-					</p>
-					<button
-						onClick={handleRequestSignatures}
-						disabled={submitting}
-						className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-					>
-						{submitting ? 'Đang gửi...' : 'Gửi yêu cầu ký'}
-					</button>
-				</div>
-			)}
-
 			{/* Signing Section */}
 			{canSign && (
 				<div className="bg-white p-6 rounded-lg border">
@@ -223,7 +200,7 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 					) : (
 						<div>
 							<p className="text-gray-600 mb-4">
-								Vui lòng ký vào khung bên dưới:
+								Vui lòng vẽ chữ ký của bạn vào khung bên dưới để xác nhận:
 							</p>
 
 							<SignaturePad
@@ -233,11 +210,40 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 								className="mb-4"
 							/>
 
+							{/* OTP Input Section */}
+							<div className="mb-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+								<label htmlFor="otp-input" className="block text-sm font-medium text-gray-700 mb-2">
+									Mã OTP (đã gửi đến email của bạn)
+								</label>
+								<input
+									id="otp-input"
+									type="text"
+									maxLength={6}
+									value={otpCode}
+									onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+									placeholder="Nhập 6 chữ số"
+									className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+									disabled={signing || isConfirming}
+								/>
+								<div className="mt-2 flex items-center justify-between">
+									<button
+										onClick={handleResendOTP}
+										disabled={requestingOTP || signing || isConfirming}
+										className="text-sm text-green-600 hover:text-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+									>
+										{requestingOTP ? 'Đang gửi...' : 'Gửi lại mã OTP'}
+									</button>
+									{otpError && (
+										<p className="text-sm text-red-600">{otpError}</p>
+									)}
+								</div>
+							</div>
+
 							<div className="flex space-x-4">
 								<button
 									onClick={handleConfirmSigning}
 									disabled={signing || isConfirming}
-									className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+									className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
 								>
 									{signing || isConfirming ? 'Đang ký...' : 'Xác nhận ký'}
 								</button>

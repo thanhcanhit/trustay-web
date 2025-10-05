@@ -49,16 +49,18 @@ export {
 // Export contract actions
 export {
 	autoGenerateContract,
-	createContractAmendment,
+	createContract,
 	downloadContractPDF,
+	generateContractPDF,
 	getContractById,
+	getContractPreview,
+	getContractStatus,
 	getLandlordContracts,
 	getMyContracts,
 	getTenantContracts,
-	requestSignatures,
+	requestSigningOTP,
 	signContract,
-	updateContract,
-	verifySignature,
+	verifyPDFIntegrity,
 } from './contract.action';
 // Export invitation actions
 export {

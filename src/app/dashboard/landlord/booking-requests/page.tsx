@@ -2,16 +2,23 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Calendar, Home, Phone, Mail, Clock, UserPlus, DollarSign } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Search, MessageSquare } from "lucide-react"
 import { useInvitationStore } from "@/stores/invitationStore"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -95,124 +102,150 @@ export default function BookingRequestsPage() {
           <div className="bg-red-50 text-red-700 border border-red-200 rounded p-3 mb-4 text-sm">{errorSent}</div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {loadingSent && Array.from({ length: 6 }).map((_, idx) => (
-            <Card key={idx}><CardContent className="p-6 text-gray-500">Đang tải...</CardContent></Card>
-          ))}
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[200px]">Người nhận</TableHead>
+                  <TableHead className="w-[180px]">Liên hệ</TableHead>
+                  <TableHead className="w-[220px]">Phòng</TableHead>
+                  <TableHead className="w-[120px] text-right">Tiền thuê</TableHead>
+                  <TableHead className="w-[120px] text-right">Tiền cọc</TableHead>
+                  <TableHead className="w-[100px]">Ngày vào</TableHead>
+                  <TableHead className="w-[120px]">Trạng thái</TableHead>
+                  <TableHead className="w-[120px]">Ngày gửi</TableHead>
+                  <TableHead className="w-[100px] text-right">Thao tác</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loadingSent && (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                      Đang tải...
+                    </TableCell>
+                  </TableRow>
+                )}
 
-          {!loadingSent && filtered.map((invitation) => (
-            <Card key={invitation.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={invitation.recipient?.avatarUrl || undefined} alt={`${invitation.recipient?.firstName || ''} ${invitation.recipient?.lastName || ''}`} />
-                      <AvatarFallback className="bg-blue-100 text-blue-600">
-                        {`${(invitation.recipient?.firstName || 'U')[0]}${(invitation.recipient?.lastName || 'S')[0]}`}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <CardTitle className="text-lg">{invitation.recipient?.firstName} {invitation.recipient?.lastName}</CardTitle>
+                {!loadingSent && filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-12 text-gray-500">
+                      Chưa gửi lời mời thuê nào
+                    </TableCell>
+                  </TableRow>
+                )}
+
+                {!loadingSent && filtered.map((invitation) => (
+                  <TableRow key={invitation.id} className="hover:bg-gray-50">
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage
+                            src={invitation.recipient?.avatarUrl || undefined}
+                            alt={`${invitation.recipient?.firstName || ''} ${invitation.recipient?.lastName || ''}`}
+                          />
+                          <AvatarFallback className="bg-blue-100 text-blue-600">
+                            {`${(invitation.recipient?.firstName || 'U')[0]}${(invitation.recipient?.lastName || 'S')[0]}`}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <div className="font-medium text-gray-900 truncate">
+                            {invitation.recipient?.firstName} {invitation.recipient?.lastName}
+                          </div>
+                          {invitation.message && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center text-xs text-blue-600 cursor-help mt-0.5">
+                                    <MessageSquare className="h-3 w-3 mr-1" />
+                                    <span>Có tin nhắn</span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p className="text-sm whitespace-pre-wrap">{invitation.message}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="space-y-1 text-sm">
+                        {invitation.recipient?.phone && (
+                          <div className="text-gray-600 truncate">{invitation.recipient.phone}</div>
+                        )}
+                        <div className="text-gray-500 truncate text-xs">{invitation.recipient?.email || '-'}</div>
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="min-w-0">
+                        <div className="font-medium text-gray-900 truncate">{invitation.room?.name}</div>
+                        <div className="text-xs text-gray-500 truncate">{invitation.room?.building?.name}</div>
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="text-right">
+                      <div className="text-sm">
+                        <div className="font-medium text-gray-900">
+                          {parseInt(invitation.monthlyRent || '0').toLocaleString('vi-VN')}đ
+                        </div>
+                        {invitation.rentalMonths && (
+                          <div className="text-xs text-gray-500">{invitation.rentalMonths} tháng</div>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="text-right">
+                      <div className="text-sm font-medium text-gray-900">
+                        {invitation.depositAmount && parseInt(invitation.depositAmount) > 0
+                          ? `${parseInt(invitation.depositAmount).toLocaleString('vi-VN')}đ`
+                          : '-'
+                        }
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="text-sm text-gray-600">
+                        {invitation.moveInDate ? format(new Date(invitation.moveInDate), 'dd/MM/yyyy', { locale: vi }) : '-'}
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
                       <Badge className={STATUS_COLORS[invitation.status as keyof typeof STATUS_COLORS]}>
                         {STATUS_LABELS[invitation.status as keyof typeof STATUS_LABELS]}
                       </Badge>
-                    </div>
-                  </div>
-                  <UserPlus className="h-5 w-5 text-gray-400" />
-                </div>
-              </CardHeader>
+                    </TableCell>
 
-              <CardContent className="pt-0">
-                <div className="space-y-3">
-                  {invitation.recipient?.phone && (
-                    <div className="flex items-center space-x-2 text-sm">
-                      <Phone className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600">{invitation.recipient.phone}</span>
-                    </div>
-                  )}
+                    <TableCell>
+                      <div className="text-sm text-gray-500">
+                        {format(new Date(invitation.createdAt), 'dd/MM/yyyy', { locale: vi })}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {format(new Date(invitation.createdAt), 'HH:mm', { locale: vi })}
+                      </div>
+                    </TableCell>
 
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">{invitation.recipient?.email || '-'}</span>
-                  </div>
-
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Home className="h-4 w-4 text-gray-400" />
-                    <div className="text-gray-600">
-                      <div className="font-medium line-clamp-2">{invitation.room?.name}</div>
-                      <div className="text-xs text-gray-500 line-clamp-2">{invitation.room?.building?.name}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2 text-sm">
-                    <DollarSign className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">
-                      {parseInt(invitation.monthlyRent || '0').toLocaleString('vi-VN')}đ/tháng
-                      {invitation.rentalMonths && ` • ${invitation.rentalMonths} tháng`}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">Ngày vào: {invitation.moveInDate ? format(new Date(invitation.moveInDate), 'dd/MM/yyyy', { locale: vi }) : '-'}</span>
-                  </div>
-
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-500">Gửi: {format(new Date(invitation.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
-                  </div>
-
-                  {invitation.message && (
-                    <div className="text-sm">
-                      <p className="text-gray-600 font-medium mb-1">Tin nhắn:</p>
-                      <p className="text-gray-700 bg-gray-50 p-2 rounded text-xs whitespace-pre-wrap">
-                        {invitation.message}
-                      </p>
-                    </div>
-                  )}
-
-                  {invitation.depositAmount && parseInt(invitation.depositAmount) > 0 && (
-                    <div className="flex items-center space-x-2 text-sm">
-                      <DollarSign className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600">Cọc: {parseInt(invitation.depositAmount).toLocaleString('vi-VN')}đ</span>
-                    </div>
-                  )}
-                </div>
-
-                {invitation.status === 'pending' && (
-                  <div className="mt-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full text-red-600 border-red-300 hover:bg-red-50"
-                      onClick={() => handleWithdraw(invitation.id)}
-                    >
-                      Thu hồi lời mời
-                    </Button>
-                  </div>
-                )}
-
-                {invitation.status === 'accepted' && (
-                  <div className="mt-4 text-center">
-                    <div className="text-sm text-green-600 font-medium">✅ Đã được chấp nhận</div>
-                  </div>
-                )}
-
-                {invitation.status === 'declined' && (
-                  <div className="mt-4 text-center">
-                    <div className="text-sm text-red-600 font-medium">❌ Đã bị từ chối</div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {!loadingSent && filtered.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">Chưa gửi lời mời thuê nào</div>
-          </div>
-        )}
+                    <TableCell className="text-right">
+                      {invitation.status === 'pending' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 border-red-300 hover:bg-red-50"
+                          onClick={() => handleWithdraw(invitation.id)}
+                        >
+                          Thu hồi
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
         <div className="flex items-center justify-between mt-6">
           <div className="text-sm text-gray-600">Trang {sentMeta?.page || 1}/{sentMeta?.totalPages || 1}</div>

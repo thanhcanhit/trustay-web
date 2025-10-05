@@ -842,28 +842,79 @@ export interface RoomSeekingPublicSearchParams {
 // Contract Types
 export interface Contract {
 	id: string;
-	landlordId: string;
-	tenantId: string;
-	roomId: string;
+	contractCode?: string;
+	landlordId?: string;
+	tenantId?: string;
+	roomId?: string;
 	rentalId?: string;
-	terms: string;
-	monthlyRent: number;
+	terms?: string;
+	monthlyRent?: number;
 	depositAmount?: number;
 	startDate: string;
-	endDate: string;
-	status: 'draft' | 'pending_signatures' | 'active' | 'expired' | 'terminated';
+	endDate?: string | null;
+	status:
+		| 'draft'
+		| 'pending_signatures'
+		| 'partially_signed'
+		| 'fully_signed'
+		| 'active'
+		| 'expired'
+		| 'terminated';
+	contractType?: 'monthly_rental' | 'fixed_term_rental' | 'short_term_rental';
 
 	// Digital Signature Fields
 	landlordSignature?: ContractSignature;
 	tenantSignature?: ContractSignature;
 	signatureDeadline?: string;
 	fullySignedAt?: string;
+	signedAt?: string | null;
+	pdfUrl?: string | null;
+
+	// Nested objects from API
+	landlord?: {
+		id: string;
+		fullName: string;
+		email: string;
+		phone?: string | null;
+		avatarUrl?: string;
+		// Computed fields
+		firstName?: string;
+		lastName?: string;
+	};
+	tenant?: {
+		id: string;
+		fullName: string;
+		email: string;
+		phone?: string | null;
+		avatarUrl?: string;
+		// Computed fields
+		firstName?: string;
+		lastName?: string;
+	};
+	room?: {
+		roomNumber: string;
+		roomName: string;
+		buildingName: string;
+		// Computed fields
+		name?: string;
+		roomType?: string;
+		areaSqm?: number;
+	};
+	contractData?: {
+		roomName: string;
+		roomNumber: string;
+		monthlyRent: number;
+		buildingName: string;
+		depositAmount: number;
+		buildingAddress: string;
+	};
+	signatures?: {
+		signerRole: 'landlord' | 'tenant';
+		signedAt: string;
+	}[];
 
 	createdAt: string;
 	updatedAt: string;
-	landlord?: UserProfile;
-	tenant?: UserProfile;
-	room?: Room;
 	amendments?: ContractAmendment[];
 }
 
@@ -921,23 +972,92 @@ export interface ContractListResponse {
 // Rental Types
 export interface Rental {
 	id: string;
-	roomId: string;
+	bookingRequestId?: string | null;
+	invitationId?: string | null;
+	roomInstanceId: string;
 	tenantId: string;
-	landlordId: string;
-	contractId?: string;
-	monthlyRent: number;
-	depositAmount: number;
-	startDate: string;
-	endDate: string;
+	ownerId: string;
+	contractStartDate: string;
+	contractEndDate?: string | null;
+	monthlyRent: string;
+	depositPaid: string;
 	status: 'active' | 'terminated' | 'expired' | 'pending';
-	notes?: string;
-	terminationDate?: string;
-	terminationReason?: string;
-	depositRefundAmount?: number;
+	contractDocumentUrl?: string | null;
+	terminationNoticeDate?: string | null;
+	terminationReason?: string | null;
 	createdAt: string;
 	updatedAt: string;
+
+	// Related entities
+	tenant?: {
+		id: string;
+		firstName: string;
+		lastName: string;
+		email: string;
+		phone?: string | null;
+	};
+	owner?: {
+		id: string;
+		firstName: string;
+		lastName: string;
+		email: string;
+		phone?: string | null;
+	};
+	roomInstance?: {
+		id: string;
+		roomId: string;
+		roomNumber: string;
+		status: 'available' | 'occupied' | 'maintenance' | 'reserved';
+		isActive: boolean;
+		notes?: string | null;
+		createdAt: string;
+		updatedAt: string;
+		room?: {
+			id: string;
+			slug: string;
+			buildingId: string;
+			floorNumber: number;
+			name: string;
+			description: string;
+			roomType: string;
+			areaSqm: string;
+			maxOccupancy: number;
+			totalRooms: number;
+			viewCount: number;
+			isActive: boolean;
+			isVerified: boolean;
+			overallRating: string;
+			totalRatings: number;
+			createdAt: string;
+			updatedAt: string;
+			building?: {
+				id: string;
+				name: string;
+				ownerId?: string;
+			};
+		};
+	};
+	bookingRequest?: {
+		id: string;
+		moveInDate: string;
+		moveOutDate?: string | null;
+	} | null;
+	invitation?: {
+		id: string;
+		// Add more fields as needed
+	} | null;
+
+	// Deprecated fields for backward compatibility
+	roomId?: string;
+	landlordId?: string;
+	contractId?: string;
+	depositAmount?: number;
+	startDate?: string;
+	endDate?: string;
+	notes?: string;
+	terminationDate?: string;
+	depositRefundAmount?: number;
 	room?: Room;
-	tenant?: UserProfile;
 	landlord?: UserProfile;
 	contract?: Contract;
 }
