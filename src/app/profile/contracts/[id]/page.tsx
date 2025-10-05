@@ -427,6 +427,57 @@ export default function TenantContractDetailPage() {
               </Card>
             )}
 
+            {/* Signatures Display - Show actual signatures with images */}
+            {(contract.landlordSignature || contract.tenantSignature) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <FileText className="h-5 w-5 mr-2" />
+                    Chữ ký hợp đồng
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {contract.landlordSignature && (
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <h4 className="text-sm font-semibold text-gray-800 mb-2">Chữ ký Chủ nhà</h4>
+                        <p className="text-xs text-gray-600 mb-3">{landlordName}</p>
+                        <div className="border border-gray-300 rounded bg-white p-3 mb-2 flex justify-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={contract.landlordSignature.signatureData}
+                            alt={`Chữ ký của ${landlordName}`}
+                            className="max-w-full h-auto max-h-32 object-contain"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          Đã ký: {format(new Date(contract.landlordSignature.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {contract.tenantSignature && (
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <h4 className="text-sm font-semibold text-gray-800 mb-2">Chữ ký Người thuê</h4>
+                        <p className="text-xs text-gray-600 mb-3">{tenantName}</p>
+                        <div className="border border-gray-300 rounded bg-white p-3 mb-2 flex justify-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={contract.tenantSignature.signatureData}
+                            alt={`Chữ ký của ${tenantName}`}
+                            className="max-w-full h-auto max-h-32 object-contain"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          Đã ký: {format(new Date(contract.tenantSignature.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Metadata */}
             <Card>
               <CardContent className="pt-6">

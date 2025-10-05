@@ -290,7 +290,7 @@ export const requestSigningOTP = async (
 ): Promise<ApiResult<{ message: string }>> => {
 	try {
 		const response = await apiCall<{ message: string }>(
-			`/api/contracts/${contractId}/request-otp`,
+			`/api/contracts/${contractId}/send-otp`,
 			{
 				method: 'POST',
 			},
