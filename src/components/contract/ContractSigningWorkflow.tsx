@@ -6,6 +6,8 @@ import { useContractStore } from '@/stores/contractStore';
 import SignaturePad, { SignaturePadRef } from './SignaturePad';
 import SignatureDisplay from './SignatureDisplay';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface ContractSigningWorkflowProps {
 	contract: Contract;
@@ -22,6 +24,7 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 	const signaturePadRef = useRef<SignaturePadRef>(null);
 	const [showSignaturePad, setShowSignaturePad] = useState(false);
 	const [isConfirming, setIsConfirming] = useState(false);
+	const [otpCode, setOtpCode] = useState('');
 
 	const { sign, signing, signError } = useContractStore();
 
@@ -48,6 +51,7 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 	const handleCancelSigning = () => {
 		setShowSignaturePad(false);
 		signaturePadRef.current?.clear();
+		setOtpCode('');
 	};
 
 	const handleConfirmSigning = async () => {
@@ -59,14 +63,22 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 			return;
 		}
 
+		if (!otpCode || otpCode.length !== 6) {
+			toast.error('Vui lòng nhập mã OTP (6 chữ số)');
+			return;
+		}
+
 		setIsConfirming(true);
 
 		try {
-			const success = await sign(contract.id, signatureData, 'canvas');
+			// TODO: Backend cần update API để nhận OTP
+			// Tạm thời vẫn gọi API cũ, cần update khi backend sẵn sàng
+			const success = await sign(contract.id, signatureData, 'canvas', otpCode);
 
 			if (success) {
 				toast.success('Ký hợp đồng thành công!');
 				setShowSignaturePad(false);
+				setOtpCode('');
 				onSigningComplete?.();
 			} else {
 				toast.error(signError || 'Không thể ký hợp đồng');
@@ -187,7 +199,7 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 					) : (
 						<div>
 							<p className="text-gray-600 mb-4">
-								Vui lòng ký vào khung bên dưới:
+								Vui lòng ký vào khung bên dưới và nhập mã OTP để xác nhận:
 							</p>
 
 							<SignaturePad
@@ -196,6 +208,25 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 								height={200}
 								className="mb-4"
 							/>
+
+							<div className="mb-4">
+								<Label htmlFor="otpCode" className="block text-sm font-medium mb-2">
+									Mã OTP (6 chữ số)
+								</Label>
+								<Input
+									id="otpCode"
+									type="text"
+									placeholder="Nhập mã OTP"
+									value={otpCode}
+									onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+									maxLength={6}
+									className="max-w-xs"
+									disabled={signing || isConfirming}
+								/>
+								<p className="text-xs text-gray-500 mt-1">
+									Mã OTP đã được gửi đến email/số điện thoại của bạn
+								</p>
+							</div>
 
 							<div className="flex space-x-4">
 								<button

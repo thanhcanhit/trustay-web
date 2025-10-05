@@ -20,13 +20,15 @@ import {
   Download,
   AlertCircle,
   CheckCircle,
-  Loader2
+  Loader2,
+  Eye
 } from "lucide-react"
 import { useContractStore } from "@/stores/contractStore"
 import { Contract } from "@/types/types"
 import ContractSigningWorkflow from "@/components/contract/ContractSigningWorkflow"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 const STATUS_COLORS = {
   draft: 'bg-gray-100 text-gray-800',
@@ -54,6 +56,9 @@ export default function ContractDetailPage() {
   const contractId = params.id as string
   const [contract, setContract] = useState<Contract | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string>('')
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [loadingPreview, setLoadingPreview] = useState(false)
+  const [previewError, setPreviewError] = useState<string | null>(null)
 
   const {
     loadContractById,
@@ -73,11 +78,45 @@ export default function ContractDetailPage() {
     }
   }, [contractId, loadContractById])
 
+  const loadPreview = useCallback(async () => {
+    setLoadingPreview(true)
+    setPreviewError(null)
+
+    try {
+      const response = await fetch(`/api/contracts/${contractId}/pdf/preview`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Không thể tải bản xem trước')
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      setPreviewUrl(url)
+    } catch (err) {
+      setPreviewError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra')
+    } finally {
+      setLoadingPreview(false)
+    }
+  }, [contractId])
+
   useEffect(() => {
     if (contractId) {
       loadContract()
+      loadPreview()
     }
-  }, [contractId, loadContract])
+  }, [contractId, loadContract, loadPreview])
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
+    }
+  }, [previewUrl])
 
   const handleDownload = async () => {
     if (!contract) return
@@ -286,6 +325,44 @@ export default function ContractDetailPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Contract Preview */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Eye className="h-5 w-5 mr-2" />
+              Xem trước hợp đồng
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingPreview && (
+              <div className="flex items-center justify-center py-12">
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+                  <span className="text-gray-500">Đang tải bản xem trước...</span>
+                </div>
+              </div>
+            )}
+
+            {previewError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{previewError}</AlertDescription>
+              </Alert>
+            )}
+
+            {previewUrl && !loadingPreview && !previewError && (
+              <div className="border rounded-lg overflow-hidden bg-gray-50">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={previewUrl}
+                  alt="Contract Preview"
+                  className="w-full h-auto"
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Contract Terms */}
         <Card className="mb-6">

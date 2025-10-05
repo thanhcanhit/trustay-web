@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
+import ContractPreviewDialog from "@/components/contract/ContractPreviewDialog"
 
 
 const STATUS_COLORS = {
@@ -50,7 +51,8 @@ export default function ContractsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [selectedRentalId, setSelectedRentalId] = useState<string>('')
-  
+  const [previewContractId, setPreviewContractId] = useState<string | null>(null)
+
   const {
     contracts,
     loading,
@@ -399,7 +401,7 @@ export default function ContractsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => router.push(`/dashboard/landlord/contracts/${contract.id}`)}
+                            onClick={() => setPreviewContractId(contract.id!)}
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             Xem
@@ -456,6 +458,22 @@ export default function ContractsPage() {
               <span>Tạo hợp đồng đầu tiên</span>
             </Button>
           </div>
+        )}
+
+        {/* Preview Dialog */}
+        {previewContractId && (
+          <ContractPreviewDialog
+            contractId={previewContractId}
+            open={!!previewContractId}
+            onOpenChange={(open) => !open && setPreviewContractId(null)}
+            showSignButton={
+              contracts?.find(c => c.id === previewContractId)?.status === 'draft'
+            }
+            onSignClick={() => {
+              setPreviewContractId(null)
+              router.push(`/dashboard/landlord/contracts/${previewContractId}`)
+            }}
+          />
         )}
       </div>
     </DashboardLayout>

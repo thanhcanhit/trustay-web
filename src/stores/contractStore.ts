@@ -76,6 +76,7 @@ interface ContractState {
 		contractId: string,
 		signatureData: string,
 		signatureMethod?: 'canvas' | 'upload',
+		otpCode?: string,
 	) => Promise<boolean>;
 	clearCurrent: () => void;
 	clearErrors: () => void;
@@ -383,10 +384,13 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	},
 
 	// Sign contract
-	sign: async (contractId, signatureData, signatureMethod = 'canvas') => {
+	sign: async (contractId, signatureData, signatureMethod = 'canvas', otpCode) => {
 		set({ signing: true, signError: null });
 		try {
 			const token = TokenManager.getAccessToken();
+			// TODO: Update signContract action to accept otpCode when backend is ready
+			// For now, pass otpCode as comment but don't use it yet
+			console.log('OTP Code (not sent to backend yet):', otpCode);
 			const result = await signContract(contractId, signatureData, signatureMethod, token);
 			if (result.success) {
 				set({
