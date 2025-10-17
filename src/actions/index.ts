@@ -14,6 +14,7 @@ export * from '../types/types';
 
 // Export auth actions (excluding conflicting ApiError and updateUserProfile)
 export {
+	//changePassword,
 	completeRegistration,
 	getCurrentUser,
 	login,
@@ -24,6 +25,7 @@ export {
 	registerWithVerificationNoPhone,
 	sendEmailVerification,
 	skipProfileUpdate,
+	//updateUserProfile as updateAuthUserProfile,
 	verifyEmailCode,
 } from './auth.action';
 // Export booking request actions
@@ -140,6 +142,43 @@ export {
 	updateRoomSeekingPost,
 	updateRoomSeekingPostStatus,
 } from './room-seeking.action';
+// Export roommate applications actions
+export {
+	bulkRespondToApplications,
+	cancelRoommateApplication,
+	confirmRoommateApplication,
+	createRoommateApplication,
+	getApplicationStatisticsForMyPosts,
+	getApplicationsForMyPosts,
+	getMyApplicationStatistics,
+	getMyRoommateApplications,
+	getRoommateApplicationById,
+	respondToRoommateApplication,
+	updateRoommateApplication,
+} from './roommate-applications.action';
+// Export roommate seeking posts actions
+export {
+	createRoommateSeekingPost,
+	deleteRoommateSeekingPost,
+	getAllRoommateSeekingPosts,
+	getMyRoommateSeekingPosts,
+	getRoommateSeekingPostById,
+	searchRoommateSeekingPosts,
+	updateRoommateSeekingPost,
+	updateRoommateSeekingPostStatus,
+} from './roommate-seeking-posts.action';
+// Export tenant preferences actions
+export {
+	createOrUpdateRoommatePreferences,
+	createOrUpdateRoomPreferences,
+	deleteRoommatePreferences,
+	deleteRoomPreferences,
+	getAllPreferences,
+	getRoommatePreferences,
+	getRoomPreferences,
+	updateRoommatePreferences,
+	updateRoomPreferences,
+} from './tenant-preferences.action';
 // Export upload actions
 export {
 	getImageUrl,
