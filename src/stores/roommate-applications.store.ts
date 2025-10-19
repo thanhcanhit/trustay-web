@@ -211,15 +211,18 @@ export const useRoommateApplicationsStore = create<RoommateApplicationsState>((s
 					applications: { ...state.applications, [result.data.id]: result.data },
 					myApplications: [result.data, ...state.myApplications],
 					isLoading: false,
+					error: null,
 				}));
 				return true;
 			} else {
+				// Store error for potential display
 				set({ error: result.error, isLoading: false });
 				return false;
 			}
 		} catch (error) {
 			console.error('Failed to create application:', error);
-			set({ error: 'Không thể tạo đơn ứng tuyển', isLoading: false });
+			const errorMessage = 'Không thể tạo đơn ứng tuyển';
+			set({ error: errorMessage, isLoading: false });
 			return false;
 		}
 	},

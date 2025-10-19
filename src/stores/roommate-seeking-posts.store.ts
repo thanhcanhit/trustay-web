@@ -55,7 +55,7 @@ interface RoommateSeekingPostsState {
 
 	updatePostStatus: (
 		id: string,
-		status: 'active' | 'inactive' | 'closed' | 'expired',
+		status: 'active' | 'paused' | 'closed' | 'expired',
 	) => Promise<boolean>;
 
 	deletePost: (id: string) => Promise<boolean>;

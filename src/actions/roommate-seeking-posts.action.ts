@@ -25,71 +25,165 @@ export interface RoommateSeekingPost {
 	id: string;
 	title: string;
 	description: string;
-	externalAddress: string;
-	externalProvinceId: number;
-	externalDistrictId: number;
-	externalWardId: number;
-	monthlyRent: number;
-	currency: string;
-	depositAmount: number;
-	utilityCostPerPerson: number;
-	seekingCount: number;
-	maxOccupancy: number;
-	currentOccupancy: number;
-	preferredGender: 'any' | 'male' | 'female';
-	additionalRequirements?: string;
-	availableFromDate: string;
-	minimumStayMonths?: number;
-	maximumStayMonths?: number;
-	requiresLandlordApproval: boolean;
-	status: 'active' | 'inactive' | 'closed' | 'expired';
-	userId: string;
-	createdAt: string;
-	updatedAt: string;
-}
+	slug: string;
 
-export interface CreateRoommateSeekingPostRequest {
-	title: string;
-	description: string;
-	externalAddress: string;
-	externalProvinceId: number;
-	externalDistrictId: number;
-	externalWardId: number;
-	monthlyRent: number;
-	currency?: string;
-	depositAmount: number;
-	utilityCostPerPerson: number;
-	seekingCount: number;
-	maxOccupancy: number;
-	currentOccupancy: number;
-	preferredGender: 'any' | 'male' | 'female';
-	additionalRequirements?: string;
-	availableFromDate: string;
-	minimumStayMonths?: number;
-	maximumStayMonths?: number;
-	requiresLandlordApproval?: boolean;
-}
+	// Người đăng (tenant)
+	tenantId: string;
 
-export interface UpdateRoommateSeekingPostRequest {
-	title?: string;
-	description?: string;
+	// Phòng trong platform (tùy chọn)
+	roomInstanceId?: string;
+	rentalId?: string;
+
+	// Phòng ngoài platform (tùy chọn)
 	externalAddress?: string;
 	externalProvinceId?: number;
 	externalDistrictId?: number;
 	externalWardId?: number;
+
+	// Chi phí
+	monthlyRent: number;
+	currency: string;
+	depositAmount: number;
+	utilityCostPerPerson?: number;
+
+	// Số lượng người
+	seekingCount: number;
+	approvedCount: number;
+	remainingSlots: number;
+	maxOccupancy: number;
+	currentOccupancy: number;
+
+	// Yêu cầu
+	preferredGender: 'other' | 'male' | 'female';
+	additionalRequirements?: string;
+
+	// Thời gian
+	availableFromDate: string;
+	minimumStayMonths?: number;
+	maximumStayMonths?: number;
+
+	// Trạng thái
+	status: 'draft' | 'active' | 'paused' | 'closed' | 'expired';
+	requiresLandlordApproval: boolean;
+	isApprovedByLandlord?: boolean;
+	landlordNotes?: string;
+
+	// Visibility
+	isActive: boolean;
+	expiresAt?: string;
+
+	// Statistics
+	viewCount: number;
+	contactCount: number;
+
+	// Timestamps
+	createdAt: string;
+	updatedAt: string;
+
+	// Relations (optional, populated by backend)
+	tenant?: {
+		id: string;
+		firstName?: string;
+		lastName?: string;
+		avatarUrl?: string;
+		phoneNumber?: string;
+	};
+	roomInstance?: {
+		id: string;
+		roomNumber: string;
+		room?: {
+			id: string;
+			name: string;
+			building?: {
+				id: string;
+				name: string;
+				address: string;
+			};
+		};
+	};
+	externalProvince?: { id: number; name: string };
+	externalDistrict?: { id: number; name: string };
+	externalWard?: { id: number; name: string };
+}
+
+export interface CreateRoommateSeekingPostRequest {
+	// Thông tin cơ bản
+	title: string;
+	description: string;
+
+	// Phòng trong platform (tùy chọn - chọn 1 trong 2: phòng trong hệ thống hoặc ngoài)
+	roomInstanceId?: string;
+	rentalId?: string;
+
+	// Phòng ngoài platform (tùy chọn)
+	externalAddress?: string;
+	externalProvinceId?: number;
+	externalDistrictId?: number;
+	externalWardId?: number;
+
+	// Chi phí
+	monthlyRent: number;
+	currency?: string; // Default: "VND"
+	depositAmount: number;
+	utilityCostPerPerson?: number;
+
+	// Số lượng người
+	seekingCount: number; // Số người cần tìm
+	maxOccupancy: number; // Tối đa số người ở
+	currentOccupancy: number; // Số người hiện tại (thường là 1)
+
+	// Yêu cầu về roommate
+	preferredGender: 'other' | 'male' | 'female';
+	additionalRequirements?: string;
+
+	// Thời gian
+	availableFromDate: string; // ISO date string
+	minimumStayMonths?: number;
+	maximumStayMonths?: number;
+
+	// Khác
+	requiresLandlordApproval?: boolean; // Default: false
+	expiresAt?: string; // ISO date string
+}
+
+export interface UpdateRoommateSeekingPostRequest {
+	// Thông tin cơ bản
+	title?: string;
+	description?: string;
+
+	// Phòng trong platform
+	roomInstanceId?: string;
+	rentalId?: string;
+
+	// Phòng ngoài platform
+	externalAddress?: string;
+	externalProvinceId?: number;
+	externalDistrictId?: number;
+	externalWardId?: number;
+
+	// Chi phí
 	monthlyRent?: number;
 	currency?: string;
 	depositAmount?: number;
 	utilityCostPerPerson?: number;
+
+	// Số lượng
 	seekingCount?: number;
 	maxOccupancy?: number;
 	currentOccupancy?: number;
-	preferredGender?: 'any' | 'male' | 'female';
+
+	// Yêu cầu
+	preferredGender?: 'other' | 'male' | 'female';
 	additionalRequirements?: string;
+
+	// Thời gian
 	availableFromDate?: string;
 	minimumStayMonths?: number;
 	maximumStayMonths?: number;
+
+	// Khác
 	requiresLandlordApproval?: boolean;
+	expiresAt?: string;
 }
 
 export interface RoommateSeekingPostListResponse {
@@ -100,6 +194,52 @@ export interface RoommateSeekingPostListResponse {
 	totalPages: number;
 }
 
+// Listing response (from /api/listings/roommate-seeking-posts)
+export interface RoommateSeekingListingItem {
+	id: string;
+	title: string;
+	description: string;
+	slug: string;
+	maxBudget: number;
+	currency: string;
+	occupancy: number;
+	moveInDate: string;
+	status: 'active' | 'paused' | 'closed' | 'expired';
+	viewCount: number;
+	contactCount: number;
+	createdAt: string;
+	requester: {
+		id: string;
+		avatarUrl: string | null;
+		name: string;
+		email: string;
+	};
+}
+
+export interface RoommateSeekingListingResponse {
+	data: RoommateSeekingListingItem[];
+	meta: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+		hasNext: boolean;
+		hasPrev: boolean;
+		itemCount: number;
+	};
+	seo: {
+		title: string;
+		description: string;
+		keywords: string;
+	};
+	breadcrumb: {
+		items: Array<{
+			title: string;
+			path: string;
+		}>;
+	};
+}
+
 export interface SearchRoommateSeekingPostsParams {
 	page?: number;
 	limit?: number;
@@ -108,8 +248,8 @@ export interface SearchRoommateSeekingPostsParams {
 	wardId?: number;
 	minPrice?: number;
 	maxPrice?: number;
-	preferredGender?: 'any' | 'male' | 'female';
-	status?: 'active' | 'inactive' | 'closed' | 'expired';
+	preferredGender?: 'other' | 'male' | 'female';
+	status?: 'active' | 'paused' | 'closed' | 'expired';
 	sortBy?: 'createdAt' | 'monthlyRent' | 'updatedAt';
 	sortOrder?: 'asc' | 'desc';
 }
@@ -325,7 +465,7 @@ export const updateRoommateSeekingPost = async (
 // Update roommate seeking post status
 export const updateRoommateSeekingPostStatus = async (
 	id: string,
-	status: 'active' | 'inactive' | 'closed' | 'expired',
+	status: 'active' | 'paused' | 'closed' | 'expired',
 	token?: string,
 ): Promise<ApiResult<RoommateSeekingPost>> => {
 	try {
@@ -373,6 +513,48 @@ export const deleteRoommateSeekingPost = async (
 		return {
 			success: false,
 			error: extractErrorMessage(error, 'Không thể xóa bài đăng'),
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
+	}
+};
+
+// Get listings (public endpoint - similar to room-seekings)
+export const getRoommateSeekingListings = async (
+	params?: {
+		page?: number;
+		limit?: number;
+		sortBy?: 'createdAt' | 'maxBudget' | 'updatedAt';
+		sortOrder?: 'asc' | 'desc';
+	},
+	token?: string,
+): Promise<ApiResult<RoommateSeekingListingResponse>> => {
+	try {
+		const searchParams = new URLSearchParams();
+		if (params?.page) searchParams.append('page', params.page.toString());
+		if (params?.limit) searchParams.append('limit', params.limit.toString());
+		if (params?.sortBy) searchParams.append('sortBy', params.sortBy);
+		if (params?.sortOrder) searchParams.append('sortOrder', params.sortOrder);
+
+		const endpoint = `/api/listings/roommate-seeking-posts${
+			searchParams.toString() ? `?${searchParams.toString()}` : ''
+		}`;
+
+		const response = await apiCall<RoommateSeekingListingResponse>(
+			endpoint,
+			{
+				method: 'GET',
+			},
+			token,
+		);
+
+		return {
+			success: true,
+			data: response,
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể tải danh sách bài đăng'),
 			status: error instanceof AxiosError ? error.response?.status : undefined,
 		};
 	}

@@ -85,19 +85,7 @@ const profileItems: ProfileSidebarItem[] = [
   {
     title: "Quản lý bài đăng",
     icon: FileText,
-    subItems: [
-      {
-        title: "Tìm trọ",
-        href: "/profile/posts/room-seeking",
-        icon: FileText
-      },
-      {
-        title: "Tìm người ở ghép",
-        href: "/profile/posts/roommate",
-        icon: FileText,
-        disabled: true
-      }
-    ]
+    href: "/profile/posts",
   },
   {
     title: "Yêu cầu thuê",

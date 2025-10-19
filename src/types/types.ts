@@ -1208,3 +1208,106 @@ export interface PaymentStatistics {
 		count: number;
 	}>;
 }
+
+// Landlord Management Types
+export interface TenantInfo {
+	id: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone?: string;
+	avatarUrl?: string;
+	rental: {
+		id: string;
+		startDate: string;
+		endDate?: string;
+		monthlyRent: number;
+		status: string;
+	};
+	room: {
+		id: string;
+		roomNumber: string;
+		roomName?: string;
+		buildingName?: string;
+	};
+}
+
+export interface RoomWithOccupants {
+	id: string;
+	roomNumber: string;
+	roomName?: string;
+	status: string;
+	building: {
+		id: string;
+		name: string;
+		address: string;
+	};
+	occupants: Array<{
+		id: string;
+		firstName: string;
+		lastName: string;
+		email: string;
+		phone?: string;
+		avatarUrl?: string;
+		rental: {
+			id: string;
+			startDate: string;
+			endDate?: string;
+			monthlyRent: number;
+			status: string;
+		};
+	}>;
+}
+
+export interface TenantListResponse {
+	data: TenantInfo[];
+	page?: number;
+	limit?: number;
+	total?: number;
+}
+
+export interface RoomWithOccupantsListResponse {
+	data: RoomWithOccupants[];
+	page?: number;
+	limit?: number;
+	total?: number;
+}
+
+// User Address Types
+export interface CreateAddressRequest {
+	streetAddress: string;
+	wardId: number;
+	districtId: number;
+	provinceId: number;
+	isDefault?: boolean;
+}
+
+export interface UpdateAddressRequest {
+	streetAddress?: string;
+	wardId?: number;
+	districtId?: number;
+	provinceId?: number;
+	isDefault?: boolean;
+}
+
+// User Verification Types
+export interface VerifyPhoneRequest {
+	phone: string;
+	verificationCode: string;
+}
+
+export interface VerifyEmailRequest {
+	email: string;
+	verificationCode: string;
+}
+
+export interface VerifyIdentityRequest {
+	idCardNumber: string;
+	idCardType: 'cmnd' | 'cccd' | 'passport';
+	fullName: string;
+	dateOfBirth: string;
+	placeOfOrigin: string;
+	placeOfResidence: string;
+	frontImageUrl: string;
+	backImageUrl: string;
+}

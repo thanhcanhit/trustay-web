@@ -80,7 +80,7 @@ export default function EditRoomSeekingPostPage() {
 
                 if (!postData) {
                     toast.error('Không thể tải thông tin bài đăng')
-                    router.push('/profile/posts/room-seeking')
+                    router.push('/profile/posts?tab=room-seeking')
                     return
                 }
 
@@ -134,7 +134,7 @@ export default function EditRoomSeekingPostPage() {
             } catch (error) {
                 console.error('Error fetching post:', error)
                 toast.error('Không thể tải thông tin bài đăng')
-                router.push('/profile/posts/room-seeking')
+                router.push('/profile/posts?tab=room-seeking')
             } finally {
                 setLoading(false)
             }
@@ -246,7 +246,7 @@ export default function EditRoomSeekingPostPage() {
             }
 
             toast.success('Cập nhật bài đăng thành công!')
-            router.push('/profile/posts/room-seeking')
+            router.push('/profile/posts?tab=room-seeking')
         } catch (error) {
             console.error('Error updating post:', error)
             toast.error('Không thể cập nhật bài đăng. Vui lòng thử lại.')
@@ -256,7 +256,7 @@ export default function EditRoomSeekingPostPage() {
     }
 
     const handleCancel = () => {
-        router.push('/profile/posts/room-seeking')
+        router.push('/profile/posts?tab=room-seeking')
     }
 
     if (loading) {
