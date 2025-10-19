@@ -95,6 +95,16 @@ export async function deleteNotification(notificationId: string, token?: string)
 	);
 }
 
+export async function deleteAllNotifications(token?: string): Promise<void> {
+	await apiCall<void>(
+		'/api/notifications/all',
+		{
+			method: 'DELETE',
+		},
+		token,
+	);
+}
+
 export interface CreateNotificationData {
 	userId: string;
 	type: string;
