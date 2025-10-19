@@ -1335,3 +1335,89 @@ export interface VerifyIdentityRequest {
 	frontImageUrl: string;
 	backImageUrl: string;
 }
+
+// Rating & Review System Types
+export type RatingTargetType = 'tenant' | 'landlord' | 'room';
+
+export interface ReviewerInfo {
+	id: string;
+	firstName: string;
+	lastName: string;
+	avatarUrl?: string | null;
+	isVerified: boolean;
+}
+
+export interface RatingResponseDto {
+	id: string;
+	targetType: RatingTargetType;
+	targetId: string;
+	reviewerId: string;
+	rentalId?: string | null;
+	rating: number; // 1-5
+	content?: string | null;
+	images?: string[];
+	createdAt: string;
+	updatedAt: string;
+	reviewer: ReviewerInfo;
+	isCurrentUser: boolean;
+}
+
+export interface CreateRatingRequest {
+	targetType: RatingTargetType;
+	targetId: string;
+	rating: number; // 1-5
+	content?: string;
+	images?: string[];
+	rentalId?: string;
+}
+
+export interface UpdateRatingRequest {
+	rating?: number; // 1-5
+	content?: string;
+	images?: string[];
+}
+
+export interface RatingDistribution {
+	1: number;
+	2: number;
+	3: number;
+	4: number;
+	5: number;
+}
+
+export interface RatingStatistics {
+	totalRatings: number;
+	averageRating: number;
+	distribution: RatingDistribution;
+}
+
+export interface PaginationMeta {
+	page: number;
+	limit: number;
+	total: number;
+	totalPages: number;
+}
+
+export interface PaginatedRatingsResponse {
+	data: RatingResponseDto[];
+	meta: PaginationMeta;
+	stats: RatingStatistics;
+}
+
+export interface GetRatingsQueryParams {
+	// Filters
+	targetType?: RatingTargetType;
+	targetId?: string;
+	reviewerId?: string;
+	rentalId?: string;
+	minRating?: number; // 1-5
+	maxRating?: number; // 1-5
+
+	// Pagination
+	page?: number; // Default: 1
+	limit?: number; // Default: 20
+
+	// Sorting
+	sortBy?: string; // Default: 'createdAt'
+	sortOrder?: 'asc' | 'desc'; // Default: 'desc'
+}

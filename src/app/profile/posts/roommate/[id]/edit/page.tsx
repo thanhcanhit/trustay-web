@@ -45,9 +45,36 @@ export default function EditRoommatePostPage() {
 		);
 	}
 
+	// Transform RoommateSeekingPost to FormData format
+	const formData = {
+		title: post.title,
+		description: post.description,
+		roomInstanceId: post.roomInstanceId,
+		rentalId: post.rentalId,
+		externalAddress: post.externalAddress,
+		externalProvinceId: post.externalProvinceId?.toString(),
+		externalDistrictId: post.externalDistrictId?.toString(),
+		externalWardId: post.externalWardId?.toString(),
+		monthlyRent: post.monthlyRent?.toString(),
+		currency: post.currency as 'VND' | 'USD',
+		depositAmount: post.depositAmount?.toString(),
+		utilityCostPerPerson: post.utilityCostPerPerson?.toString(),
+		seekingCount: post.seekingCount?.toString(),
+		maxOccupancy: post.maxOccupancy?.toString(),
+		currentOccupancy: post.currentOccupancy?.toString(),
+		preferredGender: post.preferredGender,
+		additionalRequirements: post.additionalRequirements,
+		availableFromDate: post.availableFromDate,
+		minimumStayMonths: post.minimumStayMonths?.toString(),
+		maximumStayMonths: post.maximumStayMonths?.toString(),
+		requiresLandlordApproval: post.requiresLandlordApproval,
+		expiresAt: post.expiresAt,
+		isExternalRoom: !post.roomInstanceId, // If no roomInstanceId, it's an external room
+	};
+
 	return (
 		<ProfileLayout>
-			<RoommatePostForm mode="edit" initialData={post} postId={postId} />
+			<RoommatePostForm mode="edit" initialData={formData} postId={postId} />
 		</ProfileLayout>
 	);
 }

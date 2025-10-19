@@ -128,6 +128,17 @@ export {
 	processRefund,
 	updatePayment,
 } from './payment.action';
+// Export rating actions
+export {
+	createRating,
+	deleteRating,
+	getRatingById,
+	getRatingStats,
+	getRatings,
+	getUserCreatedRatings,
+	hasUserRatedTarget,
+	updateRating,
+} from './rating.action';
 // Export reference data actions
 export {
 	getAmenities,

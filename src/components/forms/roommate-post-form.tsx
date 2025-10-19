@@ -95,25 +95,25 @@ export function RoommatePostForm({ onBack, postId, initialData, mode = 'create' 
 		rentalId: initialData?.rentalId ?? '',
 		
 		externalAddress: initialData?.externalAddress ?? '',
-		externalProvinceId: initialData?.externalProvinceId ?? '',
-		externalDistrictId: initialData?.externalDistrictId ?? '',
-		externalWardId: initialData?.externalWardId ?? '',
+		externalProvinceId: initialData?.externalProvinceId?.toString() ?? '',
+		externalDistrictId: initialData?.externalDistrictId?.toString() ?? '',
+		externalWardId: initialData?.externalWardId?.toString() ?? '',
 		
-		monthlyRent: initialData?.monthlyRent ?? '',
+		monthlyRent: initialData?.monthlyRent?.toString() ?? '',
 		currency: (initialData?.currency as FormData['currency']) ?? 'VND',
-		depositAmount: initialData?.depositAmount ?? '',
-		utilityCostPerPerson: initialData?.utilityCostPerPerson ?? '',
+		depositAmount: initialData?.depositAmount?.toString() ?? '',
+		utilityCostPerPerson: initialData?.utilityCostPerPerson?.toString() ?? '',
 		
-		seekingCount: initialData?.seekingCount ?? '1',
-		maxOccupancy: initialData?.maxOccupancy ?? '2',
-		currentOccupancy: initialData?.currentOccupancy ?? '1',
+		seekingCount: initialData?.seekingCount?.toString() ?? '1',
+		maxOccupancy: initialData?.maxOccupancy?.toString() ?? '2',
+		currentOccupancy: initialData?.currentOccupancy?.toString() ?? '1',
 		
 		preferredGender: (initialData?.preferredGender as FormData['preferredGender']) ?? 'other',
 		additionalRequirements: initialData?.additionalRequirements ?? '',
 		
 		availableFromDate: initialData?.availableFromDate ?? '',
-		minimumStayMonths: initialData?.minimumStayMonths ?? '1',
-		maximumStayMonths: initialData?.maximumStayMonths ?? '',
+		minimumStayMonths: initialData?.minimumStayMonths?.toString() ?? '1',
+		maximumStayMonths: initialData?.maximumStayMonths?.toString() ?? '',
 		
 		requiresLandlordApproval: initialData?.requiresLandlordApproval ?? false,
 		expiresAt: initialData?.expiresAt ?? '',

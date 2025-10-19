@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ProfileLayout } from "@/components/profile/profile-layout"
 import Link from "next/link"
 import { Users, Building2 } from "lucide-react"
+import { RatingPromptBanner } from "@/components/rating"
 
 function ProfileContent({ user }: { user: UserProfile | null }) {
   const { updateProfile, uploadAvatar } = useUserStore()
@@ -503,6 +504,7 @@ function PersonalProfileContent() {
         </div>
 
         <div className="space-y-6">
+          <RatingPromptBanner />
           <ProfileContent user={user} />
         </div>
       </div>

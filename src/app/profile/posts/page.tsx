@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PostList } from '@/components/posts/post-list';
 import { ProfileLayout } from '@/components/profile/profile-layout';
 import { useRoomSeekingStore } from '@/stores/roomSeekingStore';
 import { useRoommateSeekingPostsStore } from '@/stores/roommate-seeking-posts.store';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
-export default function ProfilePostsPage() {
+function ProfilePostsContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const tab = searchParams.get('tab') as 'room-seeking' | 'roommate' | null;
@@ -109,5 +110,19 @@ export default function ProfilePostsPage() {
 				/>
 			</div>
 		</ProfileLayout>
+	);
+}
+
+export default function ProfilePostsPage() {
+	return (
+		<Suspense fallback={
+			<ProfileLayout>
+				<div className="flex items-center justify-center min-h-[400px]">
+					<Loader2 className="h-8 w-8 animate-spin text-primary" />
+				</div>
+			</ProfileLayout>
+		}>
+			<ProfilePostsContent />
+		</Suspense>
 	);
 }

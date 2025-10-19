@@ -140,11 +140,6 @@ const landlordItems: SidebarItem[] = [
         icon: Building2
       },
       {
-        title: "Quản lý phòng",
-        href: "/dashboard/landlord/properties/rooms",
-        icon: Home
-      },
-      {
         title: "Yêu cầu thuê trọ",
         href: "/dashboard/landlord/rental-requests",
         icon: Send,
