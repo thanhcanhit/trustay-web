@@ -32,6 +32,7 @@ export {
 export {
 	approveBookingRequestAndCreateRental,
 	cancelMyBookingRequest,
+	confirmBookingRequest,
 	createBookingRequest,
 	getBookingRequestById,
 	getMyBookingRequests,
@@ -48,8 +49,18 @@ export {
 	getMyBuildings,
 	updateBuilding,
 } from './building.action';
+// Export chat actions
+export {
+	getConversations,
+	getMessages,
+	getOrCreateConversation,
+	markAllMessagesAsRead,
+	sendMessage,
+	uploadChatAttachments,
+} from './chat.action';
 // Export contract actions
 export {
+	activateContract,
 	autoGenerateContract,
 	createContract,
 	downloadContractPDF,
@@ -66,6 +77,7 @@ export {
 } from './contract.action';
 // Export invitation actions
 export {
+	confirmInvitation,
 	createRoomInvitation,
 	getInvitationById,
 	getMyInvitations,
@@ -74,6 +86,11 @@ export {
 	respondToInvitation,
 	withdrawInvitation,
 } from './invitation.action';
+// Export landlord actions
+export {
+	listMyRoomsWithOccupants,
+	listMyTenants,
+} from './landlord.action';
 // Export listings actions
 export {
 	getAllRoomListings,
@@ -88,10 +105,21 @@ export {
 	getProvinces,
 	getWardsByDistrict,
 } from './location.action';
+// Export notification actions
+export {
+	createNotification,
+	deleteAllNotifications,
+	deleteNotification,
+	getNotifications,
+	getUnreadNotificationCount,
+	markAllNotificationsAsRead,
+	markNotificationAsRead,
+} from './notification.action';
 // Export payment actions
 export {
 	createPayment,
 	createPaymentReceipt,
+	deletePayment,
 	generatePaymentQRCode,
 	getPaymentById,
 	getPaymentHistory,
@@ -162,6 +190,7 @@ export {
 	deleteRoommateSeekingPost,
 	getAllRoommateSeekingPosts,
 	getMyRoommateSeekingPosts,
+	getRoommateSeekingListings,
 	getRoommateSeekingPostById,
 	searchRoommateSeekingPosts,
 	updateRoommateSeekingPost,
@@ -187,7 +216,14 @@ export {
 } from './upload.action';
 // Export user actions (prefer user-actions updateUserProfile, exclude ApiError)
 export {
+	createAddress,
+	deleteAddress,
 	getPublicUserProfile,
 	getUserProfile,
+	updateAddress,
 	updateUserProfile,
+	uploadAvatar,
+	verifyEmail,
+	verifyIdentity,
+	verifyPhone,
 } from './user.action';

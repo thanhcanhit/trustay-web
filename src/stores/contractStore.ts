@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import {
+	activateContract,
 	autoGenerateContract,
 	createContract,
 	downloadContractPDF,
@@ -77,6 +78,7 @@ interface ContractState {
 	verifyPDF: (contractId: string) => Promise<boolean>;
 	requestOTP: (contractId: string) => Promise<boolean>;
 	sign: (contractId: string, signatureData: string, otpCode?: string) => Promise<boolean>;
+	activate: (contractId: string) => Promise<boolean>;
 	clearCurrent: () => void;
 	clearErrors: () => void;
 }
@@ -436,6 +438,36 @@ export const useContractStore = create<ContractState>((set, get) => ({
 			set({
 				signError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
 				signing: false,
+			});
+			return false;
+		}
+	},
+
+	// Activate contract
+	activate: async (contractId) => {
+		set({ submitting: true, submitError: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await activateContract(contractId, token);
+			if (result.success) {
+				set({
+					current: result.data.data,
+					submitting: false,
+				});
+				// Reload contracts lists to reflect changes
+				await get().loadContracts();
+				return true;
+			} else {
+				set({
+					submitError: result.error,
+					submitting: false,
+				});
+				return false;
+			}
+		} catch (error) {
+			set({
+				submitError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				submitting: false,
 			});
 			return false;
 		}
