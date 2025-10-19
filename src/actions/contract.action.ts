@@ -464,3 +464,25 @@ export const verifyPDFIntegrity = async (
 		};
 	}
 };
+
+// Activate contract
+export const activateContract = async (
+	contractId: string,
+	token?: string,
+): Promise<ApiResult<{ data: Contract }>> => {
+	try {
+		const response = await apiCall<{ data: Contract }>(
+			`/api/contracts/${contractId}/activate`,
+			{
+				method: 'POST',
+			},
+			token,
+		);
+		return { success: true, data: normalizeEntityResponse<Contract>(response) };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể kích hoạt hợp đồng'),
+		};
+	}
+};
