@@ -8,7 +8,7 @@ import {
   User,
   Home,
   Bell,
-  //Users,
+  Users,
   Heart,
   LogOut,
   ChevronDown,
@@ -97,6 +97,18 @@ const profileItems: ProfileSidebarItem[] = [
     title: "Lời mời thuê",
     href: "/profile/booking-requests",
     icon: UserPlus,
+    disabled: false
+  },
+  {
+    title: "Ứng tuyển nhận được",
+    href: "/profile/roommate-applications/received",
+    icon: Users,
+    disabled: false
+  },
+  {
+    title: "Ứng tuyển đã gửi",
+    href: "/profile/roommate-applications/sent",
+    icon: Send,
     disabled: false
   },
   {

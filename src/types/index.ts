@@ -29,6 +29,7 @@ export type {
 	LoginRequest,
 	PasswordStrengthResponse,
 	PublicUserProfile,
+	RatingStats,
 	RefreshTokenRequest,
 	RegisterDirectRequest,
 	RegisterRequest,
@@ -54,6 +55,7 @@ export type {
 	UpdateRoomRequest,
 	// User Types
 	UserProfile,
+	UserRating,
 	VerificationRequest,
 	VerificationResponse,
 } from './types';

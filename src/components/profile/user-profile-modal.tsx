@@ -94,7 +94,8 @@ export function UserProfileModal({
     return `${localPart.substring(0, 2)}${"*".repeat(localPart.length - 2)}@${domain}`;
   };
 
-  const maskPhone = (phone: string) => {
+  const maskPhone = (phone?: string | null) => {
+    if (!phone) return "Chưa cập nhật";
     if (phone.length <= 6) {
       return `${phone.substring(0, 3)}***`;
     }
@@ -145,19 +146,100 @@ export function UserProfileModal({
 
             <Separator />
 
-            {/* Rating */}
-            {profile.totalRatings > 0 && (
+            {/* Rating Section */}
+            {profile.ratingStats && profile.ratingStats.totalRatings > 0 && (
               <>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                    <span className="text-lg font-semibold">
-                      {profile.overallRating.toFixed(1)}
+                <div className="space-y-4">
+                  {/* Overall Rating */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                      <span className="text-lg font-semibold">
+                        {profile.ratingStats.averageRating.toFixed(1)}
+                      </span>
+                    </div>
+                    <span className="text-sm text-gray-500">
+                      ({profile.ratingStats.totalRatings} đánh giá)
                     </span>
                   </div>
-                  <span className="text-sm text-gray-500">
-                    ({profile.totalRatings} đánh giá)
-                  </span>
+
+                  {/* Rating Distribution */}
+                  <div className="space-y-2">
+                    {[5, 4, 3, 2, 1].map((star) => {
+                      const count = profile.ratingStats?.distribution[star as keyof typeof profile.ratingStats.distribution] || 0;
+                      const percentage = profile.ratingStats?.totalRatings
+                        ? (count / profile.ratingStats.totalRatings) * 100
+                        : 0;
+                      
+                      return (
+                        <div key={star} className="flex items-center gap-2 text-sm">
+                          <div className="flex items-center gap-1 w-12">
+                            <span className="text-gray-600">{star}</span>
+                            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                          </div>
+                          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-yellow-500 transition-all"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                          <span className="text-gray-500 w-8 text-right">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Recent Ratings */}
+                  {profile.recentRatings && profile.recentRatings.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-sm text-gray-700">
+                        Đánh giá gần đây
+                      </h4>
+                      <div className="space-y-3 max-h-60 overflow-y-auto">
+                        {profile.recentRatings.map((rating) => (
+                          <div key={rating.id} className="border rounded-lg p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Avatar className="w-8 h-8">
+                                  <AvatarImage src={rating.raterAvatarUrl || ""} alt={rating.raterName} />
+                                  <AvatarFallback className="text-xs">
+                                    {rating.raterName
+                                      .split(" ")
+                                      .slice(-2)
+                                      .map((n) => n.charAt(0).toUpperCase())
+                                      .join("")}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="text-sm font-medium">{rating.raterName}</p>
+                                  <div className="flex items-center gap-1">
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`w-3 h-3 ${
+                                          i < rating.rating
+                                            ? "text-yellow-500 fill-yellow-500"
+                                            : "text-gray-300"
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                {format(new Date(rating.createdAt), "dd/MM/yyyy", {
+                                  locale: vi,
+                                })}
+                              </span>
+                            </div>
+                            {rating.comment && (
+                              <p className="text-sm text-gray-600 pl-10">{rating.comment}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <Separator />
               </>

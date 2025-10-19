@@ -103,6 +103,16 @@ const tenantItems: SidebarItem[] = [
     icon: UserPlus
   },
   {
+    title: "Ứng tuyển nhận được",
+    href: "/profile/roommate-applications/received",
+    icon: Users
+  },
+  {
+    title: "Ứng tuyển đã gửi",
+    href: "/profile/roommate-applications/sent",
+    icon: Send
+  },
+  {
     title: "Trọ đã lưu",
     href: "/profile/saved",
     icon: Heart
@@ -144,6 +154,18 @@ const landlordItems: SidebarItem[] = [
         title: "Lời mời thuê",
         href: "/dashboard/landlord/booking-requests",
         icon: UserPlus,
+        disabled: false
+      },
+      {
+        title: "Ứng tuyển nhận được",
+        href: "/dashboard/landlord/roommate-applications/received",
+        icon: Users,
+        disabled: false
+      },
+      {
+        title: "Ứng tuyển đã gửi",
+        href: "/dashboard/landlord/roommate-applications/sent",
+        icon: Send,
         disabled: false
       },
       {

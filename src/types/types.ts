@@ -92,11 +92,32 @@ export interface UserProfile {
 	updatedAt: string;
 }
 
+export interface RatingStats {
+	totalRatings: number;
+	averageRating: number;
+	distribution: {
+		1: number;
+		2: number;
+		3: number;
+		4: number;
+		5: number;
+	};
+}
+
+export interface UserRating {
+	id: string;
+	rating: number;
+	comment: string | null;
+	createdAt: string;
+	raterName: string;
+	raterAvatarUrl: string | null;
+}
+
 export interface PublicUserProfile {
 	id: string;
 	name: string;
 	email: string;
-	phone: string;
+	phone?: string | null;
 	avatarUrl: string | null;
 	gender: 'male' | 'female' | 'other';
 	role: 'tenant' | 'landlord';
@@ -109,6 +130,9 @@ export interface PublicUserProfile {
 	totalRatings: number;
 	createdAt: string;
 	updatedAt: string;
+	ratingStats?: RatingStats;
+	recentRatings?: UserRating[];
+	recentGivenRatings?: UserRating[];
 }
 
 export interface UpdateProfileRequest {

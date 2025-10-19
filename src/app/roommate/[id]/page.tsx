@@ -13,6 +13,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { getRoommateSeekingPostById, type RoommateSeekingPost } from "@/actions/roommate-seeking-posts.action"
 import { useRoommateApplicationsStore } from "@/stores/roommate-applications.store"
 import { useUserStore } from "@/stores/userStore"
+import { useChatStore } from "@/stores/chat.store"
+import { MESSAGE_TYPES } from "@/constants/chat.constants"
+import { encodeStructuredMessage } from "@/lib/chat-message-encoder"
 import { toast } from "sonner"
 
 export default function RoommateDetailPage() {
@@ -40,6 +43,14 @@ export default function RoommateDetailPage() {
   })
   
   const { createApplication, isLoading: isSubmitting, error: applicationError } = useRoommateApplicationsStore()
+  const { sendMessage: sendChatMessage, setCurrentUserId } = useChatStore()
+
+  // Set current user ID for chat
+  useEffect(() => {
+    if (user?.id) {
+      setCurrentUserId(user.id)
+    }
+  }, [user?.id, setCurrentUserId])
 
   // Auto-fill form when dialog opens and user is logged in
   useEffect(() => {
@@ -65,6 +76,43 @@ export default function RoommateDetailPage() {
     })
 
     if (success) {
+      // Send notification message to post owner
+      if (post?.tenant?.id) {
+        try {
+          console.log('🚀 Sending roommate application notification message')
+          
+          // Encode structured message with post metadata
+          const location = post.externalProvince && post.externalDistrict
+            ? `${post.externalDistrict.name}, ${post.externalProvince.name}`
+            : post.roomInstance?.room?.building?.address || ''
+          
+          const budgetText = post.monthlyRent 
+            ? `${post.monthlyRent.toLocaleString('vi-VN')}đ/tháng` 
+            : undefined
+          
+          const encodedContent = encodeStructuredMessage({
+            type: 'roommate_application',
+            roommateSeeking: {
+              roommateSeekingPostId: post.id,
+              roommateSeekingPostTitle: post.title,
+              roommateSeekingPostBudget: budgetText,
+              roommateSeekingPostLocation: location
+            },
+            message: formData.applicationMessage || 'Tôi muốn ứng tuyển làm bạn cùng phòng của bạn.'
+          })
+          
+          await sendChatMessage({
+            recipientId: post.tenant.id,
+            content: encodedContent,
+            type: MESSAGE_TYPES.REQUEST
+          })
+          console.log('✅ Notification message sent successfully')
+        } catch (error) {
+          console.error('❌ Failed to send notification message:', error)
+          // Don't fail the whole operation if message sending fails
+        }
+      }
+
       toast.success('Gửi yêu cầu ở ghép thành công!')
       setDialogOpen(false)
       // Reset form

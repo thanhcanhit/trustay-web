@@ -41,8 +41,21 @@ export interface RoommateApplication {
 		| 'cancelled'
 		| 'expired';
 	responseMessage?: string;
+	isConfirmedByTenant?: boolean;
+	isConfirmedByLandlord?: boolean;
+	confirmedAt?: string;
+	tenantResponse?: string;
+	tenantRespondedAt?: string;
+	landlordResponse?: string;
+	landlordRespondedAt?: string;
 	createdAt: string;
 	updatedAt: string;
+	// Post information for determining external vs platform room
+	roommateSeekingPost?: {
+		roomInstanceId?: string;
+		externalAddress?: string;
+		tenantId: string;
+	};
 }
 
 export interface CreateRoommateApplicationRequest {
@@ -67,8 +80,11 @@ export interface UpdateRoommateApplicationRequest {
 }
 
 export interface RespondToApplicationRequest {
-	approve: boolean;
-	message?: string;
+	status:
+		| 'approved_by_tenant'
+		| 'rejected_by_tenant'
+		| 'approved_by_landlord'
+		| 'rejected_by_landlord';
 }
 
 export interface RoommateApplicationListResponse {
@@ -102,6 +118,9 @@ export const createRoommateApplication = async (
 			},
 			token,
 		);
+
+		// Note: Backend should automatically send a message notification
+		// with roommate application metadata to the post owner
 
 		return {
 			success: true,

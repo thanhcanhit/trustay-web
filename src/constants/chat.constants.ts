@@ -8,6 +8,10 @@ export const MESSAGE_TYPES = {
 	INVITATION_ACCEPTED: 'invitation_accepted',
 	INVITATION_REJECTED: 'invitation_rejected',
 	INVITATION_CANCELLED: 'invitation_cancelled',
+	ROOMMATE_APPLICATION: 'roommate_application',
+	ROOMMATE_APPLICATION_APPROVED: 'roommate_application_approved',
+	ROOMMATE_APPLICATION_REJECTED: 'roommate_application_rejected',
+	ROOMMATE_APPLICATION_CANCELLED: 'roommate_application_cancelled',
 } as const;
 
 export type MessageType = (typeof MESSAGE_TYPES)[keyof typeof MESSAGE_TYPES];
@@ -21,6 +25,10 @@ export const SYSTEM_MESSAGE_TYPES = [
 	MESSAGE_TYPES.INVITATION_ACCEPTED,
 	MESSAGE_TYPES.INVITATION_REJECTED,
 	MESSAGE_TYPES.INVITATION_CANCELLED,
+	MESSAGE_TYPES.ROOMMATE_APPLICATION,
+	MESSAGE_TYPES.ROOMMATE_APPLICATION_APPROVED,
+	MESSAGE_TYPES.ROOMMATE_APPLICATION_REJECTED,
+	MESSAGE_TYPES.ROOMMATE_APPLICATION_CANCELLED,
 ] as const;
 
 export type SystemMessageType = (typeof SYSTEM_MESSAGE_TYPES)[number];
@@ -34,4 +42,9 @@ export const MESSAGE_CONTENT_MAP = {
 	[MESSAGE_TYPES.INVITATION_ACCEPTED]: 'Người thuê đã đồng ý lời mời thuê trọ',
 	[MESSAGE_TYPES.INVITATION_REJECTED]: 'Người thuê đã từ chối lời mời thuê trọ',
 	[MESSAGE_TYPES.INVITATION_CANCELLED]: 'Chủ trọ đã huỷ lời mời thuê trọ',
+	[MESSAGE_TYPES.ROOMMATE_APPLICATION]: 'Người dùng gửi đơn ứng tuyển tìm bạn cùng phòng',
+	[MESSAGE_TYPES.ROOMMATE_APPLICATION_APPROVED]:
+		'Đơn ứng tuyển tìm bạn cùng phòng đã được chấp nhận',
+	[MESSAGE_TYPES.ROOMMATE_APPLICATION_REJECTED]: 'Đơn ứng tuyển tìm bạn cùng phòng đã bị từ chối',
+	[MESSAGE_TYPES.ROOMMATE_APPLICATION_CANCELLED]: 'Đơn ứng tuyển tìm bạn cùng phòng đã bị hủy',
 } as const;
