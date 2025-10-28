@@ -1,12 +1,7 @@
 'use server';
 
 import { createServerApiCall } from '@/lib/api-client';
-import type {
-	RoomWithOccupants,
-	RoomWithOccupantsListResponse,
-	TenantInfo,
-	TenantListResponse,
-} from '@/types/types';
+import type { RoomWithOccupantsListResponse, TenantListResponse } from '@/types/types';
 import { extractErrorMessage } from '@/utils/api-error-handler';
 
 interface ApiErrorResult {

@@ -11,16 +11,25 @@ import {
   Eye,
   MapPin,
   Calendar,
-  Loader2
+  Loader2,
+  Star,
+  FileText
 } from "lucide-react"
-import { mockBookings } from "@/data/mock-data"
 import Link from "next/link"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useBuildingStore } from "@/stores/buildingStore"
+import { useUserStore } from "@/stores/userStore"
+import { useRatingStore } from "@/stores/ratingStore"
+import { useContractStore } from "@/stores/contractStore"
+import { RatingStats } from "@/components/rating"
 
 // Client Component for Dashboard Content
 function DashboardContent() {
   const { dashboardData, isLoading, error, hasFetched, fetchDashboardData, forceRefresh } = useBuildingStore()
+  const { user } = useUserStore()
+  const { getRatingStats, statistics } = useRatingStore()
+  const { contracts, loading: loadingContracts, loadContracts } = useContractStore()
+  const [loadingStats, setLoadingStats] = useState(true)
   
   useEffect(() => {
     // Only fetch if we haven't fetched yet and not currently loading
@@ -28,6 +37,23 @@ function DashboardContent() {
       fetchDashboardData()
     }
   }, [hasFetched, isLoading, fetchDashboardData])
+
+  // Fetch landlord rating stats
+  useEffect(() => {
+    const loadStats = async () => {
+      if (user?.id) {
+        setLoadingStats(true)
+        await getRatingStats('landlord', user.id)
+        setLoadingStats(false)
+      }
+    }
+    loadStats()
+  }, [user?.id, getRatingStats])
+
+  // Fetch recent contracts
+  useEffect(() => {
+    loadContracts({ page: 1, limit: 3, status: 'active' })
+  }, [loadContracts])
 
   if (isLoading) {
     return (
@@ -264,70 +290,83 @@ function DashboardContent() {
 
       {/* Quick Actions */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Recent Bookings */}
+        {/* Recent Contracts */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Hợp đồng gần đây</h3>
-          <div className="space-y-3">
-            {mockBookings.slice(0, 3).map((booking) => (
-              <div key={booking.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
-                <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <Users className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{booking.tenantName}</p>
-                  <p className="text-xs text-gray-600">
-                    {(booking.monthlyRent / 1000000).toFixed(1)}M VNĐ/tháng •
-                    <Calendar className="h-3 w-3 inline ml-1 mr-1" />
-                    {booking.checkIn}
-                  </p>
-                </div>
-                <span className={`text-xs px-2 py-1 rounded ${
-                  booking.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {booking.status === 'active' ? 'Đang thuê' : 'Chờ xử lý'}
-                </span>
+          {loadingContracts ? (
+            <div className="text-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
+            </div>
+          ) : contracts.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+              <p>Chưa có hợp đồng nào</p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-3">
+                {contracts.slice(0, 3).map((contract) => (
+                  <div key={contract.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
+                    <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <Users className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">
+                        {contract.tenant?.firstName} {contract.tenant?.lastName}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {contract.contractData?.monthlyRent ? (contract.contractData.monthlyRent / 1000000).toFixed(1) : '0'}M VNĐ/tháng •
+                        <Calendar className="h-3 w-3 inline ml-1 mr-1" />
+                        {new Date(contract.startDate).toLocaleDateString('vi-VN')}
+                      </p>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      contract.status === 'active' ? 'bg-green-100 text-green-800' : 
+                      contract.status === 'pending_signatures' ? 'bg-yellow-100 text-yellow-800' :
+                      contract.status === 'fully_signed' ? 'bg-blue-100 text-blue-800' :
+                      contract.status === 'partially_signed' ? 'bg-orange-100 text-orange-800' :
+                      contract.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                      contract.status === 'expired' ? 'bg-red-100 text-red-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {contract.status === 'active' ? 'Đang thuê' : 
+                       contract.status === 'pending_signatures' ? 'Chờ ký' :
+                       contract.status === 'fully_signed' ? 'Đã ký đầy đủ' :
+                       contract.status === 'partially_signed' ? 'Đã ký một phần' :
+                       contract.status === 'draft' ? 'Bản nháp' :
+                       contract.status === 'expired' ? 'Hết hạn' :
+                       contract.status === 'terminated' ? 'Đã chấm dứt' : 'Khác'}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <Button variant="outline" className="w-full mt-4">
-            Xem tất cả hợp đồng
-          </Button>
+              <Link href="/dashboard/landlord/contracts">
+                <Button variant="outline" className="w-full mt-4">
+                  Xem tất cả hợp đồng
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
-        {/* Support Contact */}
+        {/* Landlord Rating Stats */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          {/* <h3 className="font-semibold text-gray-900 mb-4">Hỗ trợ khách hàng</h3>
-          <div className="space-y-4">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-2">Nhân viên hỗ trợ</h4>
-              <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <Users className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Nguyễn Thị Mỹ Duyên</p>
-                  <p className="text-sm text-gray-600 flex items-center">
-                    <Phone className="h-4 w-4 mr-1" />
-                    033.266.1579
-                  </p>
-                </div>
-              </div>
+          <h3 className="font-semibold text-gray-900 mb-4">Đánh giá của bạn</h3>
+          {loadingStats ? (
+            <div className="text-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
             </div>
-
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 mb-2">Hotline hỗ trợ</h4>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Phone className="h-4 w-4 text-blue-600" />
-                  <span className="text-blue-600 font-medium">033.266.1579</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Phone className="h-4 w-4 text-blue-600" />
-                  <span className="text-blue-600 font-medium">035.866.1579</span>
-                </div>
-              </div>
+          ) : statistics ? (
+            <RatingStats statistics={statistics} targetType="landlord" />
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Star className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+              <p>Chưa có đánh giá nào</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Hoàn thành hợp đồng thuê để nhận đánh giá
+              </p>
             </div>
-          </div> */}
+          )}
         </div>
       </div>
     </div>

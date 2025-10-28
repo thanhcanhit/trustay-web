@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Building, Plus, Search, Edit, Trash2, Eye, MoreVertical } from "lucide-react"
+import { Building, Plus, Search, Edit, Trash2, MoreVertical } from "lucide-react"
 import { useBuildingStore } from "@/stores/buildingStore"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -13,19 +13,20 @@ import { AlertDialog, AlertDialogTitle, AlertDialogHeader, AlertDialogDescriptio
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 export default function LandlordProperties() {
-  const { buildings, isLoading, error, fetchAllBuildings, deleteBuilding: deleteBuildingFromStore } = useBuildingStore()
+  const { buildings, isLoading, error, pagination, fetchAllBuildings, deleteBuilding: deleteBuildingFromStore } = useBuildingStore()
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
-  const pageLimit = 12
-  const totalPages = Math.ceil(buildings.length / pageLimit)
+  const pageLimit = 20
+  const totalPages = pagination?.totalPages || 1
+  const total = pagination?.total || 0
 
-  const fetchBuildings = useCallback(async () => {
-    await fetchAllBuildings()
-  }, [fetchAllBuildings])
+  const fetchBuildings = useCallback(async (page = 1, search = '') => {
+    await fetchAllBuildings({ page, limit: pageLimit, search })
+  }, [fetchAllBuildings, pageLimit])
 
   useEffect(() => {
-    fetchBuildings()
-  }, [fetchBuildings])
+    fetchBuildings(1, '')
+  }, [fetchBuildings]) // Fetch on mount
 
   useEffect(() => {
     if (error) {
@@ -35,7 +36,13 @@ export default function LandlordProperties() {
 
   const handleSearch = () => {
     setCurrentPage(1)
-    fetchBuildings()
+    fetchBuildings(1, searchTerm)
+  }
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage)
+    fetchBuildings(newPage, searchTerm)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleDeleteBuilding = async (buildingId: string) => {
@@ -117,7 +124,11 @@ export default function LandlordProperties() {
                 </TableHeader>
                 <TableBody>
                   {buildings.map((building) => (
-                    <TableRow key={building.id}>
+                    <TableRow 
+                      key={building.id} 
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => window.location.href = `/dashboard/landlord/properties/${building.id}/rooms`}
+                    >
                       <TableCell className="font-medium max-w-[250px]">
                         <div className="flex items-center space-x-2">
                           <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
@@ -161,7 +172,7 @@ export default function LandlordProperties() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm" className="cursor-pointer">
@@ -171,8 +182,8 @@ export default function LandlordProperties() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild>
                                 <Link href={`/dashboard/landlord/properties/${building.id}`} className="cursor-pointer">
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  Xem chi tiết
+                                  <Building className="h-4 w-4 mr-2" />
+                                  Xem chi tiết dãy trọ
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
@@ -233,23 +244,23 @@ export default function LandlordProperties() {
         {/* Pagination */}
         {!isLoading && buildings && Array.isArray(buildings) && buildings.length > 0 && totalPages > 1 && (
           <div className="flex justify-center mt-8">
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 items-center">
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
                 className="cursor-pointer"
               >
                 Trước
               </Button>
               <span className="flex items-center px-4 text-sm text-gray-600">
-                Trang {currentPage} / {totalPages}
+                Trang {currentPage} / {totalPages} ({total} dãy trọ)
               </span>
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
                 className="cursor-pointer"
               >

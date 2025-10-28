@@ -209,7 +209,7 @@ const landlordItems: SidebarItem[] = [
         title: "Khách hàng đánh giá",
         href: "/dashboard/landlord/reviews",
         icon: Star,
-        disabled: true
+        disabled: false
       }
     ]
   },
