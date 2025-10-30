@@ -4,18 +4,105 @@ import { useState, useEffect } from 'react'
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { CreditCard, AlertCircle, Receipt, Loader2 } from "lucide-react"
-import { ProfileLayout } from "@/components/profile/profile-layout"
+import { CreditCard, Download, AlertCircle, Receipt, Loader2 } from "lucide-react"
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
-import { useBillStore } from "@/stores/billStore"
+
+interface BillItem {
+  id: string
+  name: string
+  type: 'rent' | 'electricity' | 'water' | 'internet' | 'cleaning' | 'other'
+  quantity: number
+  unit_price: number
+  total: number
+}
+
+interface Bill {
+  id: string
+  rental_id: string
+  tenant_name: string
+  room_number: string
+  amount: number
+  due_date: string
+  status: 'draft' | 'pending' | 'paid' | 'overdue' | 'cancelled'
+  bill_items: BillItem[]
+  created_at: string
+}
 
 export default function TenantBillsPage() {
-  const { bills, loading, markingPaid, loadAll, markPaid } = useBillStore()
+  const [bills, setBills] = useState<Bill[]>([])
+  const [loading, setLoading] = useState(true)
   const [processingPayment, setProcessingPayment] = useState<string | null>(null)
 
   useEffect(() => {
-    loadAll()
-  }, [loadAll])
+    fetchBills()
+  }, [])
+
+  const fetchBills = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/bills/tenant`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setBills(data.bills || [])
+      }
+    } catch (error) {
+      console.error('Error fetching bills:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const payBill = async (billId: string) => {
+    setProcessingPayment(billId)
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/bills/${billId}/pay`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        fetchBills() // Refresh list
+      } else {
+        alert('Có lỗi xảy ra khi thanh toán')
+      }
+    } catch (error) {
+      console.error('Error paying bill:', error)
+      alert('Có lỗi xảy ra khi thanh toán')
+    } finally {
+      setProcessingPayment(null)
+    }
+  }
+
+  const downloadBill = async (billId: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/bills/${billId}/download`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `bill-${billId}.pdf`
+        a.click()
+        window.URL.revokeObjectURL(url)
+      }
+    } catch (error) {
+      console.error('Error downloading bill:', error)
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -41,20 +128,13 @@ export default function TenantBillsPage() {
   const getBillTypeLabel = (type: string) => {
     switch (type) {
       case 'rent': return 'Tiền thuê'
-      case 'electric': return 'Tiền điện'
+      case 'electricity': return 'Tiền điện'
       case 'water': return 'Tiền nước'
-      case 'service': return 'Dịch vụ'
+      case 'internet': return 'Internet'
+      case 'cleaning': return 'Vệ sinh'
+      case 'other': return 'Khác'
       default: return type
     }
-  }
-
-  const handleMarkAsPaid = async (billId: string) => {
-    setProcessingPayment(billId)
-    const success = await markPaid(billId)
-    if (!success) {
-      alert('Có lỗi xảy ra khi đánh dấu đã thanh toán')
-    }
-    setProcessingPayment(null)
   }
 
   const overdueBills = bills.filter(bill => bill.status === 'overdue')
@@ -62,19 +142,19 @@ export default function TenantBillsPage() {
 
   if (loading) {
     return (
-      <ProfileLayout>
+      <div className="p-6">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-400" />
             <p className="text-gray-600">Đang tải hóa đơn...</p>
           </div>
         </div>
-      </ProfileLayout>
+      </div>
     )
   }
 
   return (
-    <ProfileLayout>
+    <div className="p-6">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Hóa Đơn Của Tôi</h1>
@@ -125,19 +205,11 @@ export default function TenantBillsPage() {
                   <div>
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                       <Receipt className="h-5 w-5 text-gray-500" />
-                      Hóa đơn {bill.billingPeriod}
+                      Hóa đơn phòng {bill.room_number}
                     </h3>
                     <p className="text-gray-600 text-sm mt-1">
-                      Kỳ: {new Date(bill.periodStart).toLocaleDateString('vi-VN')} - {new Date(bill.periodEnd).toLocaleDateString('vi-VN')}
+                      Hạn thanh toán: {new Date(bill.due_date).toLocaleDateString('vi-VN')}
                     </p>
-                    <p className="text-gray-600 text-sm">
-                      Hạn thanh toán: {new Date(bill.dueDate).toLocaleDateString('vi-VN')}
-                    </p>
-                    {bill.paidDate && (
-                      <p className="text-green-600 text-sm">
-                        Đã thanh toán: {new Date(bill.paidDate).toLocaleDateString('vi-VN')}
-                      </p>
-                    )}
                   </div>
                   <Badge className={getStatusColor(bill.status)}>
                     {getStatusText(bill.status)}
@@ -147,16 +219,14 @@ export default function TenantBillsPage() {
                 {/* Bill Items */}
                 <div className="space-y-2 mb-4 bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-medium text-sm text-gray-700 mb-2">Chi tiết hóa đơn:</h4>
-                  {bill.billItems && bill.billItems.length > 0 ? (
-                    bill.billItems.map((item) => (
+                  {bill.bill_items && bill.bill_items.length > 0 ? (
+                    bill.bill_items.map((item) => (
                       <div key={item.id} className="flex justify-between text-sm">
                         <span className="text-gray-700">
-                          {item.itemName || getBillTypeLabel(item.itemType)}
-                          {item.quantity && item.quantity > 1 && ` (x${item.quantity})`}
-                          {item.description && <span className="text-gray-500 ml-2 text-xs">({item.description})</span>}
+                          {getBillTypeLabel(item.type)} {item.quantity > 1 && `(x${item.quantity})`}
                         </span>
                         <span className="font-medium">
-                          {item.amount.toLocaleString('vi-VN')} {item.currency}
+                          {item.total.toLocaleString('vi-VN')} đ
                         </span>
                       </div>
                     ))
@@ -165,58 +235,27 @@ export default function TenantBillsPage() {
                   )}
                 </div>
 
-                {/* Financial Summary */}
-                <div className="space-y-1 mb-4 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tổng phụ:</span>
-                    <span className="font-medium">{bill.subtotal.toLocaleString('vi-VN')} đ</span>
-                  </div>
-                  {bill.discountAmount > 0 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Giảm giá:</span>
-                      <span>-{bill.discountAmount.toLocaleString('vi-VN')} đ</span>
-                    </div>
-                  )}
-                  {bill.taxAmount > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Thuế:</span>
-                      <span className="font-medium">+{bill.taxAmount.toLocaleString('vi-VN')} đ</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between pt-2 border-t">
-                    <span className="text-gray-600">Tổng cộng:</span>
-                    <span className="font-bold text-lg">{bill.totalAmount.toLocaleString('vi-VN')} đ</span>
-                  </div>
-                  {bill.paidAmount > 0 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Đã thanh toán:</span>
-                      <span className="font-medium">{bill.paidAmount.toLocaleString('vi-VN')} đ</span>
-                    </div>
-                  )}
-                  {bill.remainingAmount > 0 && (
-                    <div className="flex justify-between text-red-600">
-                      <span>Còn lại:</span>
-                      <span className="font-bold">{bill.remainingAmount.toLocaleString('vi-VN')} đ</span>
-                    </div>
-                  )}
-                </div>
-
-                {bill.notes && (
-                  <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-800"><span className="font-medium">Ghi chú:</span> {bill.notes}</p>
-                  </div>
-                )}
-
                 <div className="border-t pt-4 flex justify-between items-center">
-                  <div className="text-xs text-gray-500">
-                    Tạo lúc: {new Date(bill.createdAt).toLocaleDateString('vi-VN')}
+                  <div>
+                    <span className="text-sm text-gray-600">Tổng cộng:</span>
+                    <div className="text-xl font-bold text-gray-900">
+                      {bill.amount.toLocaleString('vi-VN')} đ
+                    </div>
                   </div>
                   <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadBill(bill.id)}
+                    >
+                      <Download size={16} className="mr-1" />
+                      Tải PDF
+                    </Button>
                     {(bill.status === 'pending' || bill.status === 'overdue') && (
                       <Button
                         size="sm"
-                        onClick={() => handleMarkAsPaid(bill.id)}
-                        disabled={processingPayment === bill.id || markingPaid}
+                        onClick={() => payBill(bill.id)}
+                        disabled={processingPayment === bill.id}
                         className={bill.status === 'overdue' ? 'bg-red-600 hover:bg-red-700' : ''}
                       >
                         {processingPayment === bill.id ? (
@@ -227,7 +266,7 @@ export default function TenantBillsPage() {
                         ) : (
                           <>
                             <CreditCard size={16} className="mr-1" />
-                            Đánh dấu đã thanh toán
+                            Thanh Toán
                           </>
                         )}
                       </Button>
@@ -239,6 +278,6 @@ export default function TenantBillsPage() {
           </div>
         )}
       </div>
-    </ProfileLayout>
+    </div>
   )
 }

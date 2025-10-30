@@ -45,10 +45,11 @@ const CONTRACT_STATUS_LABELS = {
 }
 
 // Helper function to safely format dates
-const formatDate = (dateStr: string | null | undefined, formatStr: string = 'dd/MM/yyyy') => {
+const formatDate = (dateStr: string | Date | null | undefined, formatStr: string = 'dd/MM/yyyy') => {
   if (!dateStr) return 'N/A'
   try {
-    return format(new Date(dateStr), formatStr, { locale: vi })
+    const date = dateStr instanceof Date ? dateStr : new Date(dateStr)
+    return format(date, formatStr, { locale: vi })
   } catch {
     return 'N/A'
   }

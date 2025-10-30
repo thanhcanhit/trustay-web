@@ -18,9 +18,10 @@ import { ProfileLayout } from "@/components/profile/profile-layout"
 import Link from "next/link"
 import { Users, Building2 } from "lucide-react"
 import { RatingPromptBanner } from "@/components/rating"
+import { VerificationAlert } from "@/components/verification/VerificationAlert"
 
 function ProfileContent({ user }: { user: UserProfile | null }) {
-  const { updateProfile, uploadAvatar } = useUserStore()
+  const { updateProfile, uploadAvatar, fetchUser } = useUserStore()
   const [isEditing, setIsEditing] = useState(false)
   const [profileData, setProfileData] = useState({
     firstName: user?.firstName || '',
@@ -226,10 +227,26 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
             <p className="text-gray-900">{profileData.email || 'Chưa cập nhật'}</p>
+            {profileData.email && !user?.isVerifiedEmail && (
+              <VerificationAlert
+                type="email"
+                value={profileData.email}
+                isVerified={user?.isVerifiedEmail}
+                onVerificationComplete={fetchUser}
+              />
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Số điện thoại</label>
             <p className="text-gray-900">{profileData.phone || 'Chưa cập nhật'}</p>
+            {profileData.phone && !user?.isVerifiedPhone && (
+              <VerificationAlert
+                type="phone"
+                value={profileData.phone}
+                isVerified={user?.isVerifiedPhone}
+                onVerificationComplete={fetchUser}
+              />
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Giới tính</label>
