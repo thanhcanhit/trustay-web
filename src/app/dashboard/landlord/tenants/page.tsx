@@ -6,31 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Plus, Search, Phone, Mail, Calendar, Loader2, AlertCircle } from "lucide-react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Plus, Search, Phone, Mail, Calendar, Loader2, AlertCircle, Users } from "lucide-react"
 import { useLandlordStore } from "@/stores/landlordStore"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
-
-const STATUS_COLORS = {
-  active: 'bg-green-100 text-green-800',
-  overdue: 'bg-red-100 text-red-800',
-  inactive: 'bg-gray-100 text-gray-800',
-  pending: 'bg-yellow-100 text-yellow-800'
-}
-
-const STATUS_LABELS = {
-  active: 'Đang thuê',
-  overdue: 'Quá hạn thanh toán',
-  inactive: 'Không còn thuê',
-  pending: 'Chờ ký hợp đồng'
-}
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty"
 
 export default function TenantsManagementPage() {
   const { tenants, loadingTenants, errorTenants, tenantsMeta, loadTenants } = useLandlordStore()
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
 
   // Load tenants on mount and when page or statusFilter changes
@@ -38,17 +23,15 @@ export default function TenantsManagementPage() {
   useEffect(() => {
     loadTenants({ 
       page, 
-      limit: 12, 
-      status: statusFilter === 'all' ? undefined : statusFilter
+      limit: 12,
     })
-  }, [loadTenants, page, statusFilter])
+  }, [loadTenants, page])
 
   const handleSearch = () => {
     setPage(1)
     loadTenants({ 
       page: 1, 
       limit: 12, 
-      status: statusFilter === 'all' ? undefined : statusFilter,
       search: searchTerm.trim() || undefined
     })
   }
@@ -113,7 +96,7 @@ export default function TenantsManagementPage() {
               />
             </div>
             
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Trạng thái" />
               </SelectTrigger>
@@ -144,21 +127,20 @@ export default function TenantsManagementPage() {
             const buildingInfo = tenant.room.buildingName ? ` (${tenant.room.buildingName})` : ''
             
             return (
-              <Card key={tenant.id} className="hover:shadow-lg transition-shadow">
+              <Card key={tenant.tenantId} className="hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-12 w-12">
-                        <AvatarImage src={tenant.avatarUrl || ''} alt={fullName} />
                         <AvatarFallback className="bg-blue-100 text-blue-600">
                           {initials}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <CardTitle className="text-lg">{fullName}</CardTitle>
-                        <Badge className={STATUS_COLORS[tenant.rental.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-600'}>
+                        {/* <Badge className={STATUS_COLORS[tenant.rental.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-600'}>
                           {STATUS_LABELS[tenant.rental.status as keyof typeof STATUS_LABELS] || tenant.rental.status}
-                        </Badge>
+                        </Badge> */}
                       </div>
                     </div>
                   </div>
@@ -183,25 +165,20 @@ export default function TenantsManagementPage() {
                       <span className="text-gray-600">Phòng: {roomInfo}{buildingInfo}</span>
                     </div>
                     
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Tiền thuê:</span>
-                      <span className="font-medium text-green-600">
-                        {tenant.rental.monthlyRent.toLocaleString('vi-VN')} VNĐ
-                      </span>
-                    </div>
+      
                     
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Ngày bắt đầu:</span>
                       <span className="font-medium">
-                        {format(new Date(tenant.rental.startDate), 'dd/MM/yyyy', { locale: vi })}
+                        {format(new Date(tenant.contractStartDate), 'dd/MM/yyyy', { locale: vi })}
                       </span>
                     </div>
                     
-                    {tenant.rental.endDate && (
+                    {tenant.contractEndDate && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Ngày kết thúc:</span>
                         <span className="font-medium">
-                          {format(new Date(tenant.rental.endDate), 'dd/MM/yyyy', { locale: vi })}
+                          {format(new Date(tenant.contractEndDate), 'dd/MM/yyyy', { locale: vi })}
                         </span>
                       </div>
                     )}
@@ -222,10 +199,27 @@ export default function TenantsManagementPage() {
         </div>
 
         {filteredTenants.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">Không tìm thấy khách thuê nào</div>
-            <Button variant="outline">Thêm khách thuê đầu tiên</Button>
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Users />
+              </EmptyMedia>
+              <EmptyTitle>Chưa có khách thuê</EmptyTitle>
+              <EmptyDescription>
+                {searchTerm
+                  ? 'Không tìm thấy khách thuê nào phù hợp với từ khóa tìm kiếm.'
+                  : 'Bạn chưa có khách thuê nào. Khách thuê sẽ xuất hiện sau khi có hợp đồng thuê được ký kết.'}
+              </EmptyDescription>
+            </EmptyHeader>
+            {!searchTerm && (
+              <EmptyContent>
+                <Button variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Thêm khách thuê
+                </Button>
+              </EmptyContent>
+            )}
+          </Empty>
         )}
 
         {/* Pagination */}
