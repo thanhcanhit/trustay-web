@@ -15,6 +15,7 @@ import { useBookingRequestStore } from "@/stores/bookingRequestStore"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { ClickableUserAvatar } from "@/components/profile/clickable-user-avatar"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -65,7 +66,7 @@ export default function RentalRequestsPage() {
   }, [received, searchTerm])
 
   const handleApprove = async (id: string) => {
-    const success = await ownerUpdate(id, { status: 'approved' })
+    const success = await ownerUpdate(id, { status: 'accepted' })
     if (success) {
       toast.success(
         'Đã chấp nhận yêu cầu!\n\nĐang chờ tenant xác nhận để tạo hợp đồng thuê.',
@@ -127,9 +128,24 @@ export default function RentalRequestsPage() {
             <CardContent className="p-6 text-center text-gray-500">Đang tải...</CardContent>
           </Card>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">Không có yêu cầu thuê trọ nào</div>
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Calendar />
+              </EmptyMedia>
+              <EmptyTitle>
+                {searchTerm || statusFilter !== 'all'
+                  ? 'Không tìm thấy yêu cầu'
+                  : 'Chưa có yêu cầu thuê trọ'
+                }
+              </EmptyTitle>
+              <EmptyDescription>
+                {searchTerm || statusFilter !== 'all'
+                  ? 'Không có yêu cầu nào phù hợp với bộ lọc hiện tại. Hãy thử tìm kiếm hoặc lọc với điều kiện khác.'
+                  : 'Bạn chưa nhận được yêu cầu thuê trọ nào. Yêu cầu sẽ xuất hiện khi khách thuê gửi yêu cầu cho phòng của bạn.'}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <div className="rounded-md border">
             <Table>
