@@ -2,6 +2,15 @@
 
 import { AxiosError } from 'axios';
 import { createServerApiCall } from '../lib/api-client';
+import type {
+	AllPreferencesResponse,
+	CreateRoommatePreferencesRequest,
+	CreateRoomPreferencesRequest,
+	RoommatePreferences,
+	RoomPreferences,
+	UpdateRoommatePreferencesRequest,
+	UpdateRoomPreferencesRequest,
+} from '../types/preferences.types';
 import { extractErrorMessage } from '../utils/api-error-handler';
 
 // Types for error handling
@@ -19,90 +28,6 @@ interface ApiSuccessResult<T> {
 type ApiResult<T> = ApiSuccessResult<T> | ApiErrorResult;
 
 const apiCall = createServerApiCall();
-
-// Types for Room Preferences
-export interface RoomPreferences {
-	id: string;
-	userId: string;
-	preferredRoomType: 'single' | 'shared' | 'studio' | 'apartment';
-	minPrice: number;
-	maxPrice: number;
-	preferredProvinceIds: number[];
-	preferredDistrictIds: number[];
-	preferredAmenities: string[];
-	isActive: boolean;
-	createdAt: string;
-	updatedAt: string;
-}
-
-export interface CreateRoomPreferencesRequest {
-	preferredRoomType: 'single' | 'shared' | 'studio' | 'apartment';
-	minPrice: number;
-	maxPrice: number;
-	preferredProvinceIds: number[];
-	preferredDistrictIds: number[];
-	preferredAmenities: string[];
-	isActive?: boolean;
-}
-
-export interface UpdateRoomPreferencesRequest {
-	preferredRoomType?: 'single' | 'shared' | 'studio' | 'apartment';
-	minPrice?: number;
-	maxPrice?: number;
-	preferredProvinceIds?: number[];
-	preferredDistrictIds?: number[];
-	preferredAmenities?: string[];
-	isActive?: boolean;
-}
-
-// Types for Roommate Preferences
-export interface RoommatePreferences {
-	id: string;
-	userId: string;
-	preferredGender: 'any' | 'male' | 'female';
-	preferredAgeMin: number;
-	preferredAgeMax: number;
-	allowsSmoking: boolean;
-	allowsPets: boolean;
-	allowsGuests: boolean;
-	cleanlinessLevel: number; // 1-5
-	socialInteractionLevel: number; // 1-5
-	dealBreakers: string[];
-	isActive: boolean;
-	createdAt: string;
-	updatedAt: string;
-}
-
-export interface CreateRoommatePreferencesRequest {
-	preferredGender: 'any' | 'male' | 'female';
-	preferredAgeMin: number;
-	preferredAgeMax: number;
-	allowsSmoking: boolean;
-	allowsPets: boolean;
-	allowsGuests: boolean;
-	cleanlinessLevel: number;
-	socialInteractionLevel: number;
-	dealBreakers: string[];
-	isActive?: boolean;
-}
-
-export interface UpdateRoommatePreferencesRequest {
-	preferredGender?: 'any' | 'male' | 'female';
-	preferredAgeMin?: number;
-	preferredAgeMax?: number;
-	allowsSmoking?: boolean;
-	allowsPets?: boolean;
-	allowsGuests?: boolean;
-	cleanlinessLevel?: number;
-	socialInteractionLevel?: number;
-	dealBreakers?: string[];
-	isActive?: boolean;
-}
-
-export interface AllPreferencesResponse {
-	roomPreferences: RoomPreferences | null;
-	roommatePreferences: RoommatePreferences | null;
-}
 
 // ============= ROOM PREFERENCES =============
 

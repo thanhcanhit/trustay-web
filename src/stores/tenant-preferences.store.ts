@@ -1,7 +1,5 @@
 import { create } from 'zustand';
 import {
-	CreateRoommatePreferencesRequest,
-	CreateRoomPreferencesRequest,
 	createOrUpdateRoommatePreferences,
 	createOrUpdateRoomPreferences,
 	deleteRoommatePreferences,
@@ -9,14 +7,18 @@ import {
 	getAllPreferences,
 	getRoommatePreferences,
 	getRoomPreferences,
-	RoommatePreferences,
-	RoomPreferences,
-	UpdateRoommatePreferencesRequest,
-	UpdateRoomPreferencesRequest,
 	updateRoommatePreferences,
 	updateRoomPreferences,
 } from '../actions/tenant-preferences.action';
 import { TokenManager } from '../lib/api-client';
+import type {
+	CreateRoommatePreferencesRequest,
+	CreateRoomPreferencesRequest,
+	RoommatePreferences,
+	RoomPreferences,
+	UpdateRoommatePreferencesRequest,
+	UpdateRoomPreferencesRequest,
+} from '../types/preferences.types';
 
 interface TenantPreferencesState {
 	// State
