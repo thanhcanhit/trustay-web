@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import type { LoginRequest, UserProfile } from '@/actions';
 import { login as apiLogin, logout as apiLogout, getCurrentUser } from '@/actions';
 import {
@@ -32,6 +32,7 @@ interface UserState {
 	logout: () => Promise<void>;
 	loadUser: () => Promise<void>;
 	fetchUser: () => Promise<void>;
+	validateSession: () => Promise<boolean>;
 	updateProfile: (profileData: UpdateProfileRequest) => Promise<void>;
 	uploadAvatar: (file: File) => Promise<string>;
 	changePassword: (passwordData: ChangePasswordRequest) => Promise<void>;
@@ -56,6 +57,9 @@ const convertUserProfile = (profile: UserProfile): User => ({
 	idCardNumber: profile.idCardNumber,
 	bankAccount: profile.bankAccount,
 	bankName: profile.bankName,
+	isVerifiedPhone: profile.isVerifiedPhone,
+	isVerifiedEmail: profile.isVerifiedEmail,
+	isVerifiedIdentity: profile.isVerifiedIdentity,
 	createdAt: profile.createdAt,
 	updatedAt: profile.updatedAt,
 });
@@ -226,6 +230,35 @@ export const useUserStore = create<UserState>()(
 				}
 			},
 
+			validateSession: async () => {
+				const token = TokenManager.getAccessToken();
+				const state = get();
+
+				if (!token || !state.isAuthenticated) {
+					return false;
+				}
+
+				try {
+					// Try to fetch current user without clearing state on failure
+					const userProfile = await getCurrentUser(token);
+					const user = convertUserProfile(userProfile);
+
+					set({
+						user,
+						isAuthenticated: true,
+					});
+
+					return true;
+				} catch {
+					// Token is invalid/expired - let refresh token handle it
+					// Don't clear state immediately, give refresh token interceptor a chance
+					console.warn(
+						'Session validation failed, refresh token will be attempted on next API call',
+					);
+					return false;
+				}
+			},
+
 			clearError: () => set({ error: null }),
 
 			switchRole: (newRole: 'tenant' | 'landlord') =>
@@ -318,6 +351,9 @@ export const useUserStore = create<UserState>()(
 		}),
 		{
 			name: 'user-storage',
+			version: 1, // Increment version to force migration
+			// Use localStorage explicitly for persistence
+			storage: createJSONStorage(() => localStorage),
 			// Only persist user data and refreshToken, not loading states
 			// refreshToken is persisted here (in-memory via Zustand) for better security than localStorage
 			partialize: (state) => ({
@@ -325,8 +361,19 @@ export const useUserStore = create<UserState>()(
 				isAuthenticated: state.isAuthenticated,
 				refreshToken: state.refreshToken,
 			}),
+			migrate: (persistedState: unknown, version: number) => {
+				// Handle migration from older versions
+				if (version === 0) {
+					// Migration from v0 to v1 - return clean state if needed
+					return persistedState;
+				}
+				return persistedState;
+			},
 			onRehydrateStorage: () => (state) => {
 				state?.setHasHydrated(true);
+				// Don't call loadUser() on rehydrate - it will fail and clear tokens
+				// Instead, rely on the persisted state to restore authentication
+				// Individual pages can call fetchUser() if they need fresh data
 			},
 		},
 	),
