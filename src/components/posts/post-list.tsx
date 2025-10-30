@@ -1,19 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { 
-	Search, 
-	Users, 
-	Home, 
-	Eye, 
+import {
+	Search,
+	Users,
+	Home,
+	Eye,
 	ExternalLink,
-	Edit, 
-	Trash2, 
+	Edit,
+	Trash2,
 	Calendar,
 	MapPin,
 	DollarSign,
@@ -21,6 +21,7 @@ import {
 	Plus,
 	MoreVertical
 } from 'lucide-react'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -461,21 +462,25 @@ export function PostList({
 				{showRoomSeeking && (
 				<TabsContent value="room-seeking" className="space-y-4">
 					{roomSeekingPosts.length === 0 ? (
-						<Card>
-							<CardContent className="flex flex-col items-center justify-center py-12">
-								<Search className="h-12 w-12 text-muted-foreground mb-4" />
-								<h3 className="text-lg font-medium mb-2">Chưa có bài đăng tìm trọ</h3>
-								<p className="text-muted-foreground text-center mb-4">
-									Tạo bài đăng đầu tiên để tìm phòng trọ phù hợp
-								</p>
+						<Empty>
+							<EmptyHeader>
+								<EmptyMedia variant="icon">
+									<Search />
+								</EmptyMedia>
+								<EmptyTitle>Chưa có bài đăng tìm trọ</EmptyTitle>
+								<EmptyDescription>
+									Tạo bài đăng đầu tiên để tìm phòng trọ phù hợp với nhu cầu của bạn.
+								</EmptyDescription>
+							</EmptyHeader>
+							<EmptyContent>
 								<Link href="/profile/posts/room-seeking/add">
 									<Button>
 										<Plus className="h-4 w-4 mr-2" />
 										Tạo bài đăng tìm trọ
 									</Button>
 								</Link>
-							</CardContent>
-						</Card>
+							</EmptyContent>
+						</Empty>
 					) : (
 						<div className="grid gap-4">
 							{roomSeekingPosts.map(renderRoomSeekingPost)}
@@ -487,21 +492,25 @@ export function PostList({
 			{showRoommate && (
 			<TabsContent value="roommate" className="space-y-4">
 				{roommatePosts.length === 0 ? (
-					<Card>
-						<CardContent className="flex flex-col items-center justify-center py-12">
-							<Users className="h-12 w-12 text-muted-foreground mb-4" />
-							<h3 className="text-lg font-medium mb-2">Chưa có bài đăng tìm bạn cùng trọ</h3>
-							<p className="text-muted-foreground text-center mb-4">
-								Tạo bài đăng đầu tiên để tìm người ở cùng
-							</p>
+					<Empty>
+						<EmptyHeader>
+							<EmptyMedia variant="icon">
+								<Users />
+							</EmptyMedia>
+							<EmptyTitle>Chưa có bài đăng tìm bạn cùng trọ</EmptyTitle>
+							<EmptyDescription>
+								Tạo bài đăng đầu tiên để tìm người ở cùng phù hợp với bạn.
+							</EmptyDescription>
+						</EmptyHeader>
+						<EmptyContent>
 							<Link href="/profile/posts/roommate/add">
 								<Button>
 									<Plus className="h-4 w-4 mr-2" />
 									Tạo bài đăng tìm bạn cùng trọ
 								</Button>
 							</Link>
-						</CardContent>
-					</Card>
+						</EmptyContent>
+					</Empty>
 				) : (
 					<div className="grid gap-4">
 						{roommatePosts.map(renderRoommatePost)}
@@ -511,19 +520,23 @@ export function PostList({
 			)}				{showRental && (
 					<TabsContent value="rental" className="space-y-4">
 						{rentalPosts.length === 0 ? (
-							<Card>
-								<CardContent className="flex flex-col items-center justify-center py-12">
-									<Home className="h-12 w-12 text-muted-foreground mb-4" />
-									<h3 className="text-lg font-medium mb-2">Chưa có bài đăng cho thuê</h3>
-									<p className="text-muted-foreground text-center mb-4">
-										Tạo bài đăng đầu tiên để cho thuê phòng trọ
-									</p>
+							<Empty>
+								<EmptyHeader>
+									<EmptyMedia variant="icon">
+										<Home />
+									</EmptyMedia>
+									<EmptyTitle>Chưa có bài đăng cho thuê</EmptyTitle>
+									<EmptyDescription>
+										Tạo bài đăng đầu tiên để cho thuê phòng trọ của bạn.
+									</EmptyDescription>
+								</EmptyHeader>
+								<EmptyContent>
 									<Button>
-										<Home className="h-4 w-4 mr-2" />
+										<Plus className="h-4 w-4 mr-2" />
 										Tạo bài đăng cho thuê
 									</Button>
-								</CardContent>
-							</Card>
+								</EmptyContent>
+							</Empty>
 						) : (
 							<div className="grid gap-4">
 								{rentalPosts.map(renderRentalPost)}

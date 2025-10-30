@@ -1,7 +1,7 @@
 'use server';
 
 import { createServerApiCall } from '@/lib/api-client';
-import type { Contract, ContractListResponse } from '@/types/types';
+import type { Contract, PaginatedContractResponse } from '@/types/contract.types';
 import { extractErrorMessage } from '@/utils/api-error-handler';
 
 interface ApiErrorResult {
@@ -114,7 +114,7 @@ export const getMyContracts = async (
 		status?: string;
 	},
 	token?: string,
-): Promise<ApiResult<ContractListResponse>> => {
+): Promise<ApiResult<PaginatedContractResponse>> => {
 	try {
 		const q = new URLSearchParams();
 		if (params?.page) q.append('page', String(params.page));
@@ -122,7 +122,7 @@ export const getMyContracts = async (
 		if (params?.status) q.append('status', params.status);
 
 		const endpoint = `/api/contracts${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<Contract[] | ContractListResponse>(
+		const response = await apiCall<Contract[] | PaginatedContractResponse>(
 			endpoint,
 			{ method: 'GET' },
 			token,
@@ -143,7 +143,7 @@ export const getMyContracts = async (
 				},
 			};
 		}
-		return { success: true, data: response as ContractListResponse };
+		return { success: true, data: response as PaginatedContractResponse };
 	} catch (error) {
 		return {
 			success: false,
@@ -160,7 +160,7 @@ export const getLandlordContracts = async (
 		status?: string;
 	},
 	token?: string,
-): Promise<ApiResult<ContractListResponse>> => {
+): Promise<ApiResult<PaginatedContractResponse>> => {
 	try {
 		const q = new URLSearchParams();
 		if (params?.page) q.append('page', String(params.page));
@@ -168,7 +168,7 @@ export const getLandlordContracts = async (
 		if (params?.status) q.append('status', params.status);
 
 		const endpoint = `/api/contracts${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<Contract[] | ContractListResponse>(
+		const response = await apiCall<Contract[] | PaginatedContractResponse>(
 			endpoint,
 			{ method: 'GET' },
 			token,
@@ -189,7 +189,7 @@ export const getLandlordContracts = async (
 				},
 			};
 		}
-		return { success: true, data: response as ContractListResponse };
+		return { success: true, data: response as PaginatedContractResponse };
 	} catch (error) {
 		return {
 			success: false,
@@ -206,7 +206,7 @@ export const getTenantContracts = async (
 		status?: string;
 	},
 	token?: string,
-): Promise<ApiResult<ContractListResponse>> => {
+): Promise<ApiResult<PaginatedContractResponse>> => {
 	try {
 		const q = new URLSearchParams();
 		if (params?.page) q.append('page', String(params.page));
@@ -214,7 +214,7 @@ export const getTenantContracts = async (
 		if (params?.status) q.append('status', params.status);
 
 		const endpoint = `/api/contracts${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<Contract[] | ContractListResponse>(
+		const response = await apiCall<Contract[] | PaginatedContractResponse>(
 			endpoint,
 			{ method: 'GET' },
 			token,
@@ -235,7 +235,7 @@ export const getTenantContracts = async (
 				},
 			};
 		}
-		return { success: true, data: response as ContractListResponse };
+		return { success: true, data: response as PaginatedContractResponse };
 	} catch (error) {
 		return {
 			success: false,
@@ -354,7 +354,7 @@ export const createContract = async (
 ): Promise<ApiResult<{ data: Contract }>> => {
 	try {
 		const response = await apiCall<{ data: Contract }>(
-			'/api/contracts',
+			'/contracts',
 			{
 				method: 'POST',
 				data,

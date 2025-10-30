@@ -27,11 +27,11 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 	const { sign, signing, signError, requestOTP, requestingOTP, otpError } = useContractStore();
 
 	// Kiểm tra trạng thái ký của từng bên - check cả 2 nguồn: field riêng và signatures array
-	const isLandlordSigned = !!contract.landlordSignature || 
-		contract.signatures?.some(sig => sig.signerRole === 'landlord') || 
+	const isLandlordSigned = !!contract.landlordSignature ||
+		contract.signatures?.some((sig) => sig.signerRole === 'landlord') ||
 		false;
-	const isTenantSigned = !!contract.tenantSignature || 
-		contract.signatures?.some(sig => sig.signerRole === 'tenant') || 
+	const isTenantSigned = !!contract.tenantSignature ||
+		contract.signatures?.some((sig) => sig.signerRole === 'tenant') ||
 		false;
 	const isFullySigned = isLandlordSigned && isTenantSigned;
 

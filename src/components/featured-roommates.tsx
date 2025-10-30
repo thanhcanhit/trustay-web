@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getRoommateSeekingListings, type RoommateSeekingListingItem } from "@/actions/roommate-seeking-posts.action"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty"
 
 export function FeaturedRoommates() {
   const [savedPosts, setSavedPosts] = useState<string[]>([])
@@ -95,12 +96,32 @@ export function FeaturedRoommates() {
     return (
       <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center">
+          <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
               TÌM BẠN CÙNG PHÒNG NỔI BẬT
             </h2>
-            <p className="text-gray-600">Chưa có bài đăng nào</p>
+            <p className="text-gray-600">
+              Những bài đăng tìm bạn cùng phòng được quan tâm nhiều nhất
+            </p>
           </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Users />
+              </EmptyMedia>
+              <EmptyTitle>Chưa có bài đăng tìm bạn cùng phòng</EmptyTitle>
+              <EmptyDescription>
+                Hiện tại chưa có bài đăng tìm bạn cùng phòng nào. Hãy quay lại sau để xem các bài đăng mới nhất.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Link href="/roommate">
+                <Button variant="outline">
+                  Xem tất cả bài đăng
+                </Button>
+              </Link>
+            </EmptyContent>
+          </Empty>
         </div>
       </section>
     )

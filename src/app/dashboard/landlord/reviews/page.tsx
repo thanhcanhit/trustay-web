@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Search, Star, MessageSquare, Calendar, MapPin, ThumbsUp, Reply, Loader2 } from "lucide-react"
 import { useRatingStore } from "@/stores/ratingStore"
 import { useUserStore } from "@/stores/userStore"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 
 const RATING_LABELS = {
   5: 'Xuất sắc',
@@ -245,9 +246,17 @@ export default function ReviewsPage() {
         </div>
 
         {filteredReviews.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">Không có đánh giá nào</div>
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Star />
+              </EmptyMedia>
+              <EmptyTitle>Chưa có đánh giá</EmptyTitle>
+              <EmptyDescription>
+                Bạn chưa nhận được đánh giá nào từ khách thuê. Đánh giá sẽ xuất hiện sau khi khách thuê hoàn tất thuê trọ và để lại đánh giá.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
       </div>
     </DashboardLayout>

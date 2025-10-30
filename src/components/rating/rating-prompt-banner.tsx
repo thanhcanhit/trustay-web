@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Star, X } from "lucide-react"
@@ -28,19 +28,36 @@ export function RatingPromptBanner() {
   const [completedRentalsNeedingRating, setCompletedRentalsNeedingRating] = useState<CompletedRentalWithoutRating[]>([])
   const [dismissed, setDismissed] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const [hasLoaded, setHasLoaded] = useState(false)
 
+  const checkRatings = useCallback(async () => {
+    if (!user || hasLoaded) {
+      return
+    }
+
+    setLoading(true)
+
+    // Load tenant's rentals only once
+    await loadTenantRentals()
+
+    setHasLoaded(true)
+  }, [user, hasLoaded, loadTenantRentals])
+
+  // Load rentals only once
   useEffect(() => {
-    const checkRatings = async () => {
-      if (!user) {
+    checkRatings()
+  }, [checkRatings])
+
+  // Check ratings when rentals are loaded
+  useEffect(() => {
+    const processRatings = async () => {
+      if (!hasLoaded || !tenantRentals) {
         setLoading(false)
         return
       }
 
-      // Load tenant's rentals
-      await loadTenantRentals()
-
       // Find completed rentals (expired or terminated)
-      const completedRentals = (tenantRentals || []).filter(
+      const completedRentals = tenantRentals.filter(
         r => r.status === 'expired' || r.status === 'terminated'
       )
 
@@ -78,8 +95,8 @@ export function RatingPromptBanner() {
       setLoading(false)
     }
 
-    checkRatings()
-  }, [user, tenantRentals, loadTenantRentals, hasUserRatedTarget, dismissed])
+    processRatings()
+  }, [hasLoaded, tenantRentals, hasUserRatedTarget, dismissed])
 
   const handleDismiss = (rentalId: string) => {
     setDismissed(prev => [...prev, rentalId])

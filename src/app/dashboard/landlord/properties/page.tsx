@@ -11,6 +11,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogTitle, AlertDialogHeader, AlertDialogDescription, AlertDialogCancel, AlertDialogAction, AlertDialogContent, AlertDialogFooter, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty"
 
 export default function LandlordProperties() {
   const { buildings, isLoading, error, pagination, fetchAllBuildings, deleteBuilding: deleteBuildingFromStore } = useBuildingStore()
@@ -231,14 +232,31 @@ export default function LandlordProperties() {
 
         {/* Empty State */}
         {!isLoading && (!buildings || !Array.isArray(buildings) || buildings.length === 0) && (
-          <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">
-              {searchTerm ? 'Không tìm thấy dãy trọ nào phù hợp' : 'Bạn chưa có dãy trọ nào'}
-            </div>
-            <Link href="/dashboard/landlord/properties/add">
-              <Button className="cursor-pointer">Thêm dãy trọ đầu tiên</Button>
-            </Link>
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Building />
+              </EmptyMedia>
+              <EmptyTitle>
+                {searchTerm ? 'Không tìm thấy dãy trọ' : 'Chưa có dãy trọ'}
+              </EmptyTitle>
+              <EmptyDescription>
+                {searchTerm
+                  ? 'Không có dãy trọ nào phù hợp với từ khóa tìm kiếm. Hãy thử tìm kiếm với từ khóa khác.'
+                  : 'Bạn chưa có dãy trọ nào. Hãy thêm dãy trọ đầu tiên để bắt đầu quản lý cho thuê.'}
+              </EmptyDescription>
+            </EmptyHeader>
+            {!searchTerm && (
+              <EmptyContent>
+                <Link href="/dashboard/landlord/properties/add">
+                  <Button className="cursor-pointer">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Thêm dãy trọ đầu tiên
+                  </Button>
+                </Link>
+              </EmptyContent>
+            )}
+          </Empty>
         )}
 
         {/* Pagination */}

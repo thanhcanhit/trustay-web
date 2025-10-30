@@ -1,11 +1,11 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users } from 'lucide-react';
 import { getRoommateSeekingListings, type RoommateSeekingListingItem } from '@/actions/roommate-seeking-posts.action';
 import { RoommateSeekingCard } from '@/components/roommate/roommate-seeking-card';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 
 function RoommateListingsContent() {
 	const isRequestInProgress = useRef(false);
@@ -88,15 +88,17 @@ function RoommateListingsContent() {
 
 			{/* Empty State */}
 			{!loading && listings.length === 0 && (
-				<Card>
-					<CardContent className="flex flex-col items-center justify-center py-12">
-						<Users className="h-12 w-12 text-gray-400 mb-4" />
-						<h3 className="text-lg font-medium mb-2">Không tìm thấy bài đăng</h3>
-						<p className="text-gray-600 text-center">
-							Chưa có bài đăng tìm bạn cùng trọ nào
-						</p>
-					</CardContent>
-				</Card>
+				<Empty>
+					<EmptyHeader>
+						<EmptyMedia variant="icon">
+							<Users />
+						</EmptyMedia>
+						<EmptyTitle>Không tìm thấy bài đăng</EmptyTitle>
+						<EmptyDescription>
+							Chưa có bài đăng tìm bạn cùng trọ nào. Hãy quay lại sau để xem các bài đăng mới nhất.
+						</EmptyDescription>
+					</EmptyHeader>
+				</Empty>
 			)}
 
 			{/* Listings Grid */}

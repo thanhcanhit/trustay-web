@@ -26,7 +26,6 @@ interface LandlordState {
 		limit?: number;
 		buildingId?: string;
 		roomId?: string;
-		status?: string;
 		search?: string;
 	}) => Promise<void>;
 	loadRooms: (params?: {

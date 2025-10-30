@@ -37,7 +37,7 @@ export const listMyTenants = async (
 		if (params?.limit) q.append('limit', String(params.limit));
 		if (params?.buildingId) q.append('buildingId', params.buildingId);
 		if (params?.roomId) q.append('roomId', params.roomId);
-		if (params?.status) q.append('status', params.status);
+		// if (params?.status) q.append('status', params.status);
 		if (params?.search) q.append('search', params.search);
 
 		const endpoint = `/api/landlord/tenants${q.toString() ? `?${q.toString()}` : ''}`;
@@ -67,7 +67,7 @@ export const listMyRoomsWithOccupants = async (
 		if (params?.page) q.append('page', String(params.page));
 		if (params?.limit) q.append('limit', String(params.limit));
 		if (params?.buildingId) q.append('buildingId', params.buildingId);
-		if (params?.status) q.append('status', params.status);
+		// if (params?.status) q.append('status', params.status);
 		if (params?.occupancyStatus) q.append('occupancyStatus', params.occupancyStatus);
 
 		const endpoint = `/api/landlord/rooms${q.toString() ? `?${q.toString()}` : ''}`;

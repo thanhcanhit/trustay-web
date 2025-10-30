@@ -31,6 +31,7 @@ import { toast } from "sonner"
 import ContractPreviewDialog from "@/components/contract/ContractPreviewDialog"
 import { STATUS_COLORS, CONTRACT_SIGN } from "@/constants/basic"
 import { UserProfileModal } from "@/components/profile/user-profile-modal"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty"
 
 export default function ContractsPage() {
   const router = useRouter()
@@ -427,28 +428,32 @@ export default function ContractsPage() {
         )}
 
         {!loading && filteredContracts.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-lg border">
-            <div className="text-gray-500 mb-4">
-              {(contracts || []).length === 0
-                ? 'Chưa có hợp đồng nào'
-                : 'Không tìm thấy hợp đồng phù hợp'
-              }
-            </div>
-            {/* Debug info */}
-            <div className="text-xs text-gray-400 mb-4">
-              <p>Total contracts: {(contracts || []).length}</p>
-              <p>Filtered contracts: {filteredContracts.length}</p>
-              <p>Search term: {searchTerm || '(empty)'}</p>
-              <p>Status filter: {statusFilter}</p>
-            </div>
-            <Button 
-              className="flex items-center space-x-2"
-              onClick={() => setShowCreateDialog(true)}
-            >
-              <Plus className="h-4 w-4" />
-              <span>Tạo hợp đồng đầu tiên</span>
-            </Button>
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <FileText />
+              </EmptyMedia>
+              <EmptyTitle>
+                {searchTerm || statusFilter !== 'all'
+                  ? 'Không tìm thấy hợp đồng'
+                  : 'Chưa có hợp đồng'
+                }
+              </EmptyTitle>
+              <EmptyDescription>
+                {searchTerm || statusFilter !== 'all'
+                  ? 'Không có hợp đồng nào phù hợp với bộ lọc hiện tại. Hãy thử tìm kiếm hoặc lọc với điều kiện khác.'
+                  : 'Bạn chưa có hợp đồng nào. Hãy tạo hợp đồng đầu tiên từ các hợp đồng cho thuê đang hoạt động.'}
+              </EmptyDescription>
+            </EmptyHeader>
+            {!searchTerm && statusFilter === 'all' && (
+              <EmptyContent>
+                <Button onClick={() => setShowCreateDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Tạo hợp đồng đầu tiên
+                </Button>
+              </EmptyContent>
+            )}
+          </Empty>
         )}
 
         {/* Preview Dialog */}

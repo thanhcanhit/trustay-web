@@ -5,8 +5,9 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { RoomSeekingCard } from '@/components/ui/room-seeking-card'
 import { Button } from '@/components/ui/button'
-import { Loader2, SlidersHorizontal } from 'lucide-react'
+import { Loader2, SlidersHorizontal, SearchX } from 'lucide-react'
 import { useRoomSeekingStore } from '@/stores/roomSeekingStore'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 
 function RoomSeekingsContent() {
   const searchParams = useSearchParams()
@@ -93,10 +94,18 @@ function RoomSeekingsContent() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16">
-            <p className="text-gray-600 mb-4">Không tìm thấy bài đăng phù hợp</p>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <SearchX />
+              </EmptyMedia>
+              <EmptyTitle>Không tìm thấy bài đăng</EmptyTitle>
+              <EmptyDescription>
+                Không có bài đăng tìm phòng nào phù hợp với tiêu chí tìm kiếm của bạn. Hãy thử lại hoặc điều chỉnh bộ lọc.
+              </EmptyDescription>
+            </EmptyHeader>
             <Button onClick={() => loadPublicPosts({ page: 1, ...computedParams })} variant="outline">Thử lại</Button>
-          </div>
+          </Empty>
         )
       )}
     </div>

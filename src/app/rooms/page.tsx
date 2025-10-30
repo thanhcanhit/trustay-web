@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useCallback, Suspense, useRef, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Loader2, SlidersHorizontal } from 'lucide-react';
+import { Loader2, SlidersHorizontal, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { useRoomStore } from '@/stores/roomStore';
 import { type RoomSearchParams } from '@/types/types';
 import { RoomCard } from '@/components/ui/room-card';
 import { parseSearchParams } from '@/utils/search-params';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 
 function RoomsPageContent() {
   const searchParams = useSearchParams();
@@ -286,9 +287,17 @@ function RoomsPageContent() {
 
           {/* No Results */}
           {!isLoading && !error && rooms.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-600">Không tìm thấy phòng nào phù hợp</p>
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Home />
+                </EmptyMedia>
+                <EmptyTitle>Không tìm thấy phòng nào</EmptyTitle>
+                <EmptyDescription>
+                  Không có phòng trọ phù hợp với tiêu chí tìm kiếm của bạn. Hãy thử điều chỉnh bộ lọc hoặc tìm kiếm lại.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
 
           {/* Results Grid */}
