@@ -23,6 +23,9 @@ import {
   FileText,
   Eye,
   FileCheck,
+  ExternalLink,
+  Edit,
+  XCircle,
 } from "lucide-react"
 import { useRentalStore } from "@/stores/rentalStore"
 import { useContractStore } from "@/stores/contractStore"
@@ -30,7 +33,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { ContractCreationForm } from "@/components/contract/ContractCreationForm"
 import { toast } from "sonner"
-import { Rental } from "@/types/rental.types"
+import { Rental, UpdateRentalRequest, TerminateRentalRequest } from "@/types/rental.types"
+import { UpdateRentalDialog } from "@/components/rental/UpdateRentalDialog"
+import { TerminateRentalDialog } from "@/components/rental/TerminateRentalDialog"
 
 const STATUS_COLORS = {
   active: 'bg-green-100 text-green-800',
@@ -53,13 +58,17 @@ export default function RentalsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [showFormDialog, setShowFormDialog] = useState(false)
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null)
+  const [showUpdateDialog, setShowUpdateDialog] = useState(false)
+  const [showTerminateDialog, setShowTerminateDialog] = useState(false)
 
   const {
     landlordRentals,
     loadingLandlord,
     errorLandlord,
-    //submitting,
+    submitting,
     loadLandlordRentals,
+    update,
+    terminate,
     clearErrors
   } = useRentalStore()
 
@@ -151,6 +160,44 @@ export default function RentalsPage() {
 
   const handleViewDetail = (rentalId: string) => {
     window.open(`/dashboard/landlord/rentals/${rentalId}`, '_blank')
+  }
+
+  const handleViewRoomPost = (roomSlug: string) => {
+    window.open(`/rooms/${roomSlug}`, '_blank')
+  }
+
+  const handleOpenUpdateDialog = (rental: Rental) => {
+    setSelectedRental(rental)
+    setShowUpdateDialog(true)
+  }
+
+  const handleOpenTerminateDialog = (rental: Rental) => {
+    setSelectedRental(rental)
+    setShowTerminateDialog(true)
+  }
+
+  const handleUpdateRental = async (rentalId: string, data: UpdateRentalRequest) => {
+    const success = await update(rentalId, data)
+    if (success) {
+      toast.success('Cập nhật hợp đồng cho thuê thành công!')
+      setShowUpdateDialog(false)
+      setSelectedRental(null)
+      await loadLandlordRentals()
+    } else {
+      toast.error('Không thể cập nhật hợp đồng cho thuê')
+    }
+  }
+
+  const handleTerminateRental = async (rentalId: string, data: TerminateRentalRequest) => {
+    const success = await terminate(rentalId, data)
+    if (success) {
+      toast.success('Chấm dứt hợp đồng cho thuê thành công!')
+      setShowTerminateDialog(false)
+      setSelectedRental(null)
+      await loadLandlordRentals()
+    } else {
+      toast.error('Không thể chấm dứt hợp đồng cho thuê')
+    }
   }
 
   return (
@@ -255,7 +302,7 @@ export default function RentalsPage() {
                       <TableHead className="min-w-[110px]">Ngày kết thúc</TableHead>
                       <TableHead className="min-w-[120px]">Trạng thái</TableHead>
                       <TableHead className="text-center min-w-[100px]">Hợp đồng</TableHead>
-                      <TableHead className="text-center min-w-[200px]">Thao tác</TableHead>
+                      <TableHead className="text-center min-w-[280px]">Thao tác</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -293,9 +340,22 @@ export default function RentalsPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div>
-                              <div className="font-medium">{roomName}</div>
-                              <div className="text-xs text-gray-500">{buildingName}</div>
+                            <div className="flex items-center gap-2">
+                              <div>
+                                <div className="font-medium">{roomName}</div>
+                                <div className="text-xs text-gray-500">{buildingName}</div>
+                              </div>
+                              {rental.roomInstance?.room?.slug && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleViewRoomPost(rental.roomInstance!.room!.slug)}
+                                  className="h-6 w-6 p-0"
+                                  title="Xem bài đăng"
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -335,7 +395,7 @@ export default function RentalsPage() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center justify-center gap-2">
+                            <div className="flex items-center justify-center gap-2 flex-wrap">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -355,6 +415,28 @@ export default function RentalsPage() {
                                   <FileText className="h-3 w-3" />
                                   Tạo HĐ
                                 </Button>
+                              )}
+                              {rental.status === 'active' && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleOpenUpdateDialog(rental)}
+                                    className="flex items-center gap-1"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                    Sửa
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleOpenTerminateDialog(rental)}
+                                    className="flex items-center gap-1"
+                                  >
+                                    <XCircle className="h-3 w-3" />
+                                    Chấm dứt
+                                  </Button>
+                                </>
                               )}
                             </div>
                           </TableCell>
@@ -417,6 +499,24 @@ export default function RentalsPage() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Update Rental Dialog */}
+        <UpdateRentalDialog
+          rental={selectedRental}
+          open={showUpdateDialog}
+          onOpenChange={setShowUpdateDialog}
+          onSubmit={handleUpdateRental}
+          isSubmitting={submitting}
+        />
+
+        {/* Terminate Rental Dialog */}
+        <TerminateRentalDialog
+          rental={selectedRental}
+          open={showTerminateDialog}
+          onOpenChange={setShowTerminateDialog}
+          onSubmit={handleTerminateRental}
+          isSubmitting={submitting}
+        />
       </div>
     </DashboardLayout>
   )
