@@ -16,6 +16,16 @@ import {
 import { TokenManager } from '@/lib/api-client';
 import type { Contract, ContractListResponse } from '@/types/types';
 
+// Helper function to convert base64 to Blob (client-side only)
+const base64ToBlob = (base64: string, contentType: string): Blob => {
+	const binaryString = atob(base64);
+	const bytes = new Uint8Array(binaryString.length);
+	for (let i = 0; i < binaryString.length; i++) {
+		bytes[i] = binaryString.charCodeAt(i);
+	}
+	return new Blob([bytes], { type: contentType });
+};
+
 interface ContractState {
 	// Data
 	contracts: Contract[];
@@ -30,6 +40,7 @@ interface ContractState {
 	submitting: boolean;
 	downloading: boolean;
 	generating: boolean;
+	loadingPreview: boolean;
 	signing: boolean;
 	verifying: boolean;
 	requestingOTP: boolean;
@@ -67,14 +78,14 @@ interface ContractState {
 			amenities?: string[];
 		};
 	}) => Promise<boolean>;
-	autoGenerate: (rentalId: string, additionalTerms?: string) => Promise<boolean>;
+	autoGenerate: (rentalId: string, additionalContractData?: string | object) => Promise<boolean>;
 	getStatus: (id: string) => Promise<boolean>;
 	generatePDF: (
 		contractId: string,
 		options?: { includeSignatures?: boolean; format?: string; printBackground?: boolean },
 	) => Promise<string | null>;
 	downloadPDF: (id: string) => Promise<Blob | null>;
-	getPreview: (contractId: string) => Promise<boolean>;
+	getPreview: (contractId: string) => Promise<string | null>;
 	verifyPDF: (contractId: string) => Promise<boolean>;
 	requestOTP: (contractId: string) => Promise<boolean>;
 	sign: (contractId: string, signatureData: string, otpCode?: string) => Promise<boolean>;
@@ -96,6 +107,7 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	submitting: false,
 	downloading: false,
 	generating: false,
+	loadingPreview: false,
 	signing: false,
 	verifying: false,
 	requestingOTP: false,
@@ -193,11 +205,11 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	},
 
 	// Auto-generate contract from rental
-	autoGenerate: async (rentalId, additionalTerms) => {
+	autoGenerate: async (rentalId, additionalContractData) => {
 		set({ submitting: true, submitError: null });
 		try {
 			const token = TokenManager.getAccessToken();
-			const result = await autoGenerateContract(rentalId, additionalTerms, token);
+			const result = await autoGenerateContract(rentalId, additionalContractData, token);
 			if (result.success) {
 				set({
 					current: result.data.data,
@@ -288,7 +300,7 @@ export const useContractStore = create<ContractState>((set, get) => ({
 			const result = await generateContractPDF(contractId, options, token);
 			if (result.success) {
 				set({ generating: false });
-				return result.data.pdfUrl;
+				return result.data.downloadUrl || result.data.pdfUrl || null;
 			} else {
 				set({
 					generateError: result.error,
@@ -310,11 +322,68 @@ export const useContractStore = create<ContractState>((set, get) => ({
 		set({ downloading: true, downloadError: null });
 		try {
 			const token = TokenManager.getAccessToken();
-			const result = await downloadContractPDF(id, token);
+			console.log('[downloadPDF] Attempting to download PDF for contract:', id);
+			let result = await downloadContractPDF(id, token);
+
+			// If 404 (PDF not found), generate it first then use downloadUrl
+			if (!result.success && result.status === 404) {
+				console.log('[downloadPDF] PDF not found (404), generating PDF first...');
+				// Generate PDF
+				const generateResult = await generateContractPDF(
+					id,
+					{
+						includeSignatures: true,
+						format: 'A4',
+						printBackground: true,
+					},
+					token,
+				);
+
+				if (generateResult.success) {
+					console.log('[downloadPDF] PDF generated successfully');
+					// Use downloadUrl from generate response instead of retrying GET
+					const downloadUrl = generateResult.data.downloadUrl || generateResult.data.pdfUrl;
+					if (downloadUrl) {
+						console.log('[downloadPDF] Using downloadUrl from generate response:', downloadUrl);
+						// Fetch the PDF from the download URL
+						const response = await fetch(downloadUrl);
+						if (response.ok) {
+							const blob = await response.blob();
+							console.log('[downloadPDF] Blob created successfully from URL, size:', blob.size);
+							set({ downloading: false });
+							return blob;
+						} else {
+							console.error('[downloadPDF] Failed to fetch from downloadUrl:', response.statusText);
+						}
+					}
+					// Fallback: retry download after a short delay
+					console.log('[downloadPDF] Waiting 1s before retrying download...');
+					await new Promise((resolve) => setTimeout(resolve, 1000));
+					result = await downloadContractPDF(id, token);
+				} else {
+					console.error('[downloadPDF] Failed to generate PDF:', generateResult.error);
+					set({
+						downloadError: generateResult.error,
+						downloading: false,
+					});
+					return null;
+				}
+			}
+
 			if (result.success) {
+				console.log('[downloadPDF] PDF downloaded successfully as base64');
+				// Convert base64 to Blob (client-side)
+				const blob = base64ToBlob(result.data.base64, result.data.contentType);
+				console.log('[downloadPDF] Blob created successfully, size:', blob.size);
 				set({ downloading: false });
-				return result.data;
+				return blob;
 			} else {
+				console.error(
+					'[downloadPDF] Failed to download PDF:',
+					result.error,
+					'Status:',
+					result.status,
+				);
 				set({
 					downloadError: result.error,
 					downloading: false,
@@ -322,6 +391,7 @@ export const useContractStore = create<ContractState>((set, get) => ({
 				return null;
 			}
 		} catch (error) {
+			console.error('[downloadPDF] Exception occurred:', error);
 			set({
 				downloadError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
 				downloading: false,
@@ -330,31 +400,79 @@ export const useContractStore = create<ContractState>((set, get) => ({
 		}
 	},
 
-	// Get contract preview
+	// Get contract preview (PNG blob)
 	getPreview: async (contractId) => {
-		set({ loading: true, error: null });
+		set({ loadingPreview: true, error: null });
 		try {
 			const token = TokenManager.getAccessToken();
-			const result = await getContractPreview(contractId, token);
+			console.log('[getPreview] Attempting to fetch preview for contract:', contractId);
+			let result = await getContractPreview(contractId, token);
+
+			// If 404 (PDF not found), generate it first then retry
+			if (!result.success && result.status === 404) {
+				console.log('[getPreview] Preview not found (404), generating PDF first...');
+				// Generate PDF
+				const generateResult = await generateContractPDF(
+					contractId,
+					{
+						includeSignatures: true,
+						format: 'A4',
+						printBackground: true,
+					},
+					token,
+				);
+
+				if (generateResult.success) {
+					console.log('[getPreview] PDF generated successfully');
+					// Wait a bit for the preview to be generated
+					console.log('[getPreview] Waiting 1.5s before retrying preview...');
+					await new Promise((resolve) => setTimeout(resolve, 1500));
+					// Retry preview after generation
+					result = await getContractPreview(contractId, token);
+				} else {
+					console.error('[getPreview] Failed to generate PDF:', generateResult.error);
+					set({
+						error: generateResult.error,
+						loadingPreview: false,
+					});
+					return null;
+				}
+			}
+
 			if (result.success) {
+				console.log('[getPreview] Preview fetched successfully as base64');
+
+				// Convert base64 to Blob (client-side)
+				const blob = base64ToBlob(result.data.base64, result.data.contentType);
+
+				// Convert blob to URL
+				const url = URL.createObjectURL(blob);
+				console.log('[getPreview] Blob URL created successfully:', url);
 				set({
-					pdfPreviewUrl: result.data.previewUrl,
-					loading: false,
+					pdfPreviewUrl: url,
+					loadingPreview: false,
 				});
-				return true;
+				return url;
 			} else {
+				console.error(
+					'[getPreview] Failed to fetch preview:',
+					result.error,
+					'Status:',
+					result.status,
+				);
 				set({
 					error: result.error,
-					loading: false,
+					loadingPreview: false,
 				});
-				return false;
+				return null;
 			}
 		} catch (error) {
+			console.error('[getPreview] Exception occurred:', error);
 			set({
 				error: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
-				loading: false,
+				loadingPreview: false,
 			});
-			return false;
+			return null;
 		}
 	},
 

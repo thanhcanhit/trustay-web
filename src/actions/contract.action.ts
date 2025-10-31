@@ -88,15 +88,31 @@ const normalizeEntityResponse = <T extends object>(response: unknown): { data: T
 // Auto-generate contract from rental (Landlord only)
 export const autoGenerateContract = async (
 	rentalId: string,
-	additionalTerms?: string,
+	additionalContractData?: string | object,
 	token?: string,
 ): Promise<ApiResult<{ data: Contract }>> => {
 	try {
+		// Handle both string (legacy) and object (new structured data)
+		let requestData = {};
+
+		if (additionalContractData) {
+			if (typeof additionalContractData === 'string') {
+				// Try to parse as JSON first, if it fails treat as plain text terms
+				try {
+					requestData = JSON.parse(additionalContractData);
+				} catch {
+					requestData = { additionalTerms: additionalContractData };
+				}
+			} else {
+				requestData = additionalContractData;
+			}
+		}
+
 		const response = await apiCall<{ data: Contract }>(
 			`/api/contracts/from-rental/${rentalId}`,
 			{
 				method: 'POST',
-				data: additionalTerms ? { additionalTerms } : {},
+				data: requestData,
 			},
 			token,
 		);
@@ -263,22 +279,40 @@ export const getContractById = async (
 	}
 };
 
-// Download contract as PDF
-export const downloadContractPDF = async (id: string, token?: string): Promise<ApiResult<Blob>> => {
+// Download contract as PDF (returns base64 to work with Server Actions)
+export const downloadContractPDF = async (
+	id: string,
+	token?: string,
+): Promise<ApiResult<{ base64: string; contentType: string }>> => {
 	try {
-		const response = await apiCall<Blob>(
+		// Fetch as arraybuffer to get binary data
+		const response = await apiCall<ArrayBuffer>(
 			`/api/contracts/${id}/pdf`,
 			{
 				method: 'GET',
-				responseType: 'blob',
+				responseType: 'arraybuffer',
 			},
 			token,
 		);
-		return { success: true, data: response };
-	} catch (error) {
+
+		// Convert ArrayBuffer to base64
+		const buffer = Buffer.from(response);
+		const base64 = buffer.toString('base64');
+
+		return {
+			success: true,
+			data: {
+				base64,
+				contentType: 'application/pdf',
+			},
+		};
+	} catch (error: unknown) {
+		// Extract status code from axios error
+		const status = (error as { response?: { status?: number } })?.response?.status;
 		return {
 			success: false,
 			error: extractErrorMessage(error, 'Không thể tải xuống hợp đồng'),
+			status,
 		};
 	}
 };
@@ -398,14 +432,20 @@ export const generateContractPDF = async (
 		printBackground?: boolean;
 	},
 	token?: string,
-): Promise<ApiResult<{ pdfUrl: string; message: string }>> => {
+): Promise<
+	ApiResult<{ pdfUrl?: string; downloadUrl?: string; hash?: string; message: string }>
+> => {
 	try {
-		const response = await apiCall<{ pdfUrl: string; message: string }>(
+		const response = await apiCall<{
+			pdfUrl?: string;
+			downloadUrl?: string;
+			hash?: string;
+			message: string;
+		}>(
 			`/api/contracts/${contractId}/pdf`,
 			{
 				method: 'POST',
 				data: {
-					contractId,
 					includeSignatures: options?.includeSignatures ?? true,
 					options: {
 						format: options?.format || 'A4',
@@ -421,24 +461,40 @@ export const generateContractPDF = async (
 	}
 };
 
-// Get contract preview
+// Get contract preview (PNG image as base64 string)
 export const getContractPreview = async (
 	contractId: string,
 	token?: string,
-): Promise<ApiResult<{ previewUrl: string }>> => {
+): Promise<ApiResult<{ base64: string; contentType: string }>> => {
 	try {
-		const response = await apiCall<{ previewUrl: string }>(
+		// Fetch as arraybuffer to get binary data
+		const response = await apiCall<ArrayBuffer>(
 			`/api/contracts/${contractId}/pdf/preview`,
 			{
 				method: 'GET',
+				responseType: 'arraybuffer',
 			},
 			token,
 		);
-		return { success: true, data: response };
-	} catch (error) {
+
+		// Convert ArrayBuffer to base64
+		const buffer = Buffer.from(response);
+		const base64 = buffer.toString('base64');
+
+		return {
+			success: true,
+			data: {
+				base64,
+				contentType: 'image/png',
+			},
+		};
+	} catch (error: unknown) {
+		// Extract status code from axios error
+		const status = (error as { response?: { status?: number } })?.response?.status;
 		return {
 			success: false,
 			error: extractErrorMessage(error, 'Không thể lấy bản xem trước hợp đồng'),
+			status,
 		};
 	}
 };

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Download, RotateCcw, AlertCircle, FileSignature, Loader2, MoreHorizontal, FileText } from "lucide-react"
+import { Search, Download, RotateCcw, AlertCircle, FileSignature, Loader2, MoreHorizontal, FileText, Eye } from "lucide-react"
 import { useContractStore } from "@/stores/contractStore"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useRouter } from "next/navigation"
@@ -58,6 +58,7 @@ export default function TenantContractsPage() {
 
   const handleDownload = async (contractId: string, contractNumber: string) => {
     try {
+      // Download PDF (store handles 404 and auto-generate)
       const blob = await downloadPDF(contractId)
       if (blob) {
         const url = window.URL.createObjectURL(blob)
@@ -68,6 +69,8 @@ export default function TenantContractsPage() {
         link.click()
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
+      } else {
+        console.error('Failed to download PDF blob')
       }
     } catch (error) {
       console.error('Download failed:', error)
@@ -250,6 +253,10 @@ export default function TenantContractsPage() {
                             <DropdownMenuItem onClick={() => handleViewContract(contract.id!)}>
                               <FileText className="h-4 w-4 mr-2" />
                               Xem chi tiết
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/dashboard/tenant/contracts/${contract.id}/preview`)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Xem trước hợp đồng
                             </DropdownMenuItem>
                             {(contract.status === 'draft' || contract.status === 'pending_signatures') && (
                               <DropdownMenuItem onClick={() => handleViewContract(contract.id!)}>

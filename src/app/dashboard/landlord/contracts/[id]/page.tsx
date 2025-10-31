@@ -64,6 +64,7 @@ export default function ContractDetailPage() {
     if (!contract) return
 
     try {
+      // Download PDF (store handles 404 and auto-generate)
       const blob = await downloadPDF(contract.id!)
       if (blob) {
         const url = window.URL.createObjectURL(blob)
@@ -75,6 +76,8 @@ export default function ContractDetailPage() {
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
         toast.success('Đã tải xuống hợp đồng thành công!')
+      } else {
+        toast.error('Không thể tải xuống PDF')
       }
     } catch (error) {
       console.error('Download failed:', error)
