@@ -17,6 +17,7 @@ import { useChatStore } from "@/stores/chat.store"
 import { MESSAGE_TYPES } from "@/constants/chat.constants"
 import { encodeStructuredMessage } from "@/lib/chat-message-encoder"
 import { toast } from "sonner"
+import { HTMLContent } from "@/components/ui/html-content"
 
 export default function RoommateDetailPage() {
   const params = useParams()
@@ -317,14 +318,14 @@ export default function RoommateDetailPage() {
             {/* Description */}
             <div>
               <h2 className="text-xl font-bold text-gray-900 mb-3">Mô tả</h2>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-line">{post.description}</p>
+              <HTMLContent content={post.description} />
             </div>
 
             {/* Additional Requirements */}
             {post.additionalRequirements && (
               <div>
                 <h2 className="text-xl font-bold text-gray-900 mb-3">Yêu cầu thêm</h2>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">{post.additionalRequirements}</p>
+                <HTMLContent content={post.additionalRequirements} />
               </div>
             )}
 

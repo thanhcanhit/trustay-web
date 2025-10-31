@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
@@ -15,6 +15,7 @@ import { Progress } from '@/components/ui/progress'
 import { AmenityGrid } from '@/components/ui/amenity-grid'
 import { AddressSelector } from '@/components/ui/address-selector'
 import { PriceFilter } from '@/components/ui/price-filter'
+import { getCleanTextLength } from '@/utils/textProcessing'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
@@ -109,11 +110,12 @@ export function RoomSeekingForm({ onBack, postId, initialData, mode = 'create' }
 				} else if (formData.title.trim().length > 200) {
 					newErrors.title = 'Tiêu đề không được quá 200 ký tự'
 				}
+				const descLength = getCleanTextLength(formData.description)
 				if (!formData.description.trim()) {
 					newErrors.description = 'Mô tả là bắt buộc'
-				} else if (formData.description.trim().length < 50) {
+				} else if (descLength < 50) {
 					newErrors.description = 'Mô tả phải có ít nhất 50 ký tự'
-				} else if (formData.description.trim().length > 2000) {
+				} else if (descLength > 2000) {
 					newErrors.description = 'Mô tả không được quá 2000 ký tự'
 				}
 				break
@@ -268,23 +270,17 @@ export function RoomSeekingForm({ onBack, postId, initialData, mode = 'create' }
 							</div>
 							<div>
 								<Label htmlFor="description">Mô tả chi tiết *</Label>
-								<Textarea
-									id="description"
-									placeholder="Mô tả chi tiết về nhu cầu tìm phòng của bạn, yêu cầu về vị trí, tiện ích, môi trường sống..."
-									rows={6}
+								<RichTextEditor
 									value={formData.description}
-									onChange={(e) => updateFormData('description', e.target.value)}
+									onChange={(value) => updateFormData('description', value)}
+									placeholder="Mô tả chi tiết về nhu cầu tìm phòng của bạn, yêu cầu về vị trí, tiện ích, môi trường sống..."
 									error={!!errors.description}
 									maxLength={2000}
+									showCharCount={true}
 								/>
-								<div className="flex justify-between items-center mt-1">
-									{errors.description && (
-										<p className="text-sm text-destructive">{errors.description}</p>
-									)}
-									<p className="text-sm text-muted-foreground ml-auto">
-										{formData.description.length}/2000
-									</p>
-								</div>
+								{errors.description && (
+									<p className="text-sm text-destructive mt-1">{errors.description}</p>
+								)}
 							</div>
 						</div>
 					</div>

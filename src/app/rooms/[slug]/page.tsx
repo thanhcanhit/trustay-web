@@ -31,6 +31,7 @@ import { RatingsList } from "@/components/rating"
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
+import { HTMLContent } from '@/components/ui/html-content'
 
 export default function PropertyDetailPage() {
   const params = useParams()
@@ -717,8 +718,8 @@ export default function PropertyDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className={`text-gray-700 whitespace-pre-line leading-relaxed ${!isDescriptionExpanded ? 'line-clamp-3' : ''}`}>
-                    {roomDetail.description}
+                  <div className={`${!isDescriptionExpanded ? 'line-clamp-3' : ''}`}>
+                    <HTMLContent content={roomDetail.description} />
                   </div>
                   {roomDetail.description.length > 150 && (
                     <button
