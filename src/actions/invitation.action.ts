@@ -200,3 +200,24 @@ export const getMyInvitations = async (
 		};
 	}
 };
+
+export const confirmInvitation = async (
+	id: string,
+	token?: string,
+): Promise<ApiResult<{ data: RoomInvitation; rental?: { id: string } }>> => {
+	try {
+		const response = await apiCall<{ data: RoomInvitation; rental?: { id: string } }>(
+			`/api/room-invitations/${id}/confirm`,
+			{
+				method: 'POST',
+			},
+			token,
+		);
+		return { success: true, data: response };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể xác nhận lời mời'),
+		};
+	}
+};

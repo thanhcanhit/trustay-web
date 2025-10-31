@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { useRoomStore } from "@/stores/roomStore"
 import { RoomCard } from "@/components/ui/room-card"
+import { Home } from "lucide-react"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty"
 
 export function FeaturedProperties() {
   const {
@@ -68,7 +70,7 @@ export function FeaturedProperties() {
         )}
 
         {/* Featured Rooms Grid */}
-        {!isLoading && !error && (
+        {!isLoading && !error && featuredRooms.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredRooms.map((room) => (
               <RoomCard
@@ -80,6 +82,29 @@ export function FeaturedProperties() {
               />
             ))}
           </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !error && featuredRooms.length === 0 && (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Home />
+              </EmptyMedia>
+              <EmptyTitle>Chưa có phòng trọ nổi bật</EmptyTitle>
+              <EmptyDescription>
+                Hiện tại chưa có phòng trọ nổi bật nào. Hãy quay lại sau để xem các phòng trọ được quan tâm nhiều nhất.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button
+                variant="outline"
+                onClick={() => window.location.href = '/rooms'}
+              >
+                Xem tất cả phòng trọ
+              </Button>
+            </EmptyContent>
+          </Empty>
         )}
 
         {/* View More Button */}

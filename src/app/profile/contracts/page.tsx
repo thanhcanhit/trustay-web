@@ -11,6 +11,7 @@ import { Search, Download, RotateCcw, AlertCircle, FileSignature, Loader2, MoreH
 import { useContractStore } from "@/stores/contractStore"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useRouter } from "next/navigation"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,32 +19,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Contract } from "@/types/types"
-
-
-const STATUS_COLORS = {
-  active: 'bg-green-100 text-green-800',
-  expired: 'bg-red-100 text-red-800',
-  pending_signatures: 'bg-yellow-100 text-yellow-800',
-  terminated: 'bg-gray-100 text-gray-800',
-  draft: 'bg-blue-100 text-blue-800',
-  signed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800'
-}
-
-const STATUS_LABELS = {
-  active: 'Đang hiệu lực',
-  expired: 'Hết hạn',
-  pending_signatures: 'Chờ ký',
-  terminated: 'Đã chấm dứt',
-  draft: 'Bản nháp',
-  signed: 'Đã ký',
-  cancelled: 'Đã hủy'
-}
+import { UserProfileModal } from "@/components/profile/user-profile-modal"
+import { CONTRACT_SIGN, STATUS_COLORS } from "@/constants/basic"
 
 export default function TenantContractsPage() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [profileModalOpen, setProfileModalOpen] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const {
     contracts,
     loading,
@@ -219,7 +203,18 @@ export default function TenantContractsPage() {
                         {contract.id ? `HĐ-${contract.id.slice(-8)}` : 'N/A'}
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">{landlordName}</div>
+                        <button
+                          onClick={() => {
+                            if (contract.landlord?.id) {
+                              setSelectedUserId(contract.landlord.id)
+                              setProfileModalOpen(true)
+                            }
+                          }}
+                          className="font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left"
+                          disabled={!contract.landlord?.id}
+                        >
+                          {landlordName}
+                        </button>
                       </TableCell>
                       <TableCell>{roomName}</TableCell>
                       <TableCell className="text-right font-medium text-green-600">
@@ -240,7 +235,7 @@ export default function TenantContractsPage() {
                       </TableCell>
                       <TableCell>
                         <Badge className={STATUS_COLORS[contract.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'}>
-                          {STATUS_LABELS[contract.status as keyof typeof STATUS_LABELS] || contract.status}
+                          {CONTRACT_SIGN[contract.status as keyof typeof CONTRACT_SIGN] || contract.status}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -282,17 +277,32 @@ export default function TenantContractsPage() {
         )}
 
         {!loading && filteredContracts.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-lg border">
-            <div className="text-gray-500 mb-4">
-              {(contracts || []).length === 0
-                ? 'Bạn chưa có hợp đồng nào'
-                : 'Không tìm thấy hợp đồng phù hợp'
-              }
-            </div>
-            <p className="text-sm text-gray-400">
-              Hợp đồng sẽ được tạo sau khi bạn hoàn tất thuê trọ với chủ nhà
-            </p>
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <FileText />
+              </EmptyMedia>
+              <EmptyTitle>
+                {(contracts || []).length === 0
+                  ? 'Chưa có hợp đồng'
+                  : 'Không tìm thấy hợp đồng'}
+              </EmptyTitle>
+              <EmptyDescription>
+                {(contracts || []).length === 0
+                  ? 'Bạn chưa có hợp đồng thuê trọ nào. Hợp đồng sẽ được tạo tự động sau khi bạn xác nhận yêu cầu thuê được chấp nhận từ chủ nhà.'
+                  : 'Không có hợp đồng nào phù hợp với tiêu chí tìm kiếm. Hãy thử lại với từ khóa hoặc bộ lọc khác.'}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        )}
+
+        {/* User Profile Modal */}
+        {selectedUserId && (
+          <UserProfileModal
+            userId={selectedUserId}
+            open={profileModalOpen}
+            onOpenChange={setProfileModalOpen}
+          />
         )}
       </div>
     </ProfileLayout>

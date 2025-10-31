@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Home, FileText, Calendar, DollarSign, User, MapPin, Clock, Loader2, AlertCircle } from "lucide-react"
+import { Home, FileText, Calendar, DollarSign, User, MapPin, Clock, Loader2, AlertCircle, Star } from "lucide-react"
 import { ProfileLayout } from "@/components/profile/profile-layout"
 import { useRentalStore } from "@/stores/rentalStore"
 import { useContractStore } from "@/stores/contractStore"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { Contract } from "@/types/types"
+import Link from "next/link"
 
 const RENTAL_STATUS_COLORS = {
   active: 'bg-green-100 text-green-800',
@@ -44,10 +45,11 @@ const CONTRACT_STATUS_LABELS = {
 }
 
 // Helper function to safely format dates
-const formatDate = (dateStr: string | null | undefined, formatStr: string = 'dd/MM/yyyy') => {
+const formatDate = (dateStr: string | Date | null | undefined, formatStr: string = 'dd/MM/yyyy') => {
   if (!dateStr) return 'N/A'
   try {
-    return format(new Date(dateStr), formatStr, { locale: vi })
+    const date = dateStr instanceof Date ? dateStr : new Date(dateStr)
+    return format(date, formatStr, { locale: vi })
   } catch {
     return 'N/A'
   }
@@ -313,19 +315,33 @@ function AccommodationContent() {
             <div className="space-y-3">
               {(tenantRentals || [])
                 .filter(r => r.id !== activeRental?.id)
-                .map((rental) => (
-                  <div key={rental.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{rental.room?.name || 'N/A'}</p>
-                      <p className="text-sm text-gray-600">
-                        {formatDate(rental.startDate)} - {formatDate(rental.endDate)}
-                      </p>
+                .map((rental) => {
+                  const isCompleted = rental.status === 'expired' || rental.status === 'terminated'
+                  
+                  return (
+                    <div key={rental.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium">{rental.room?.name || 'N/A'}</p>
+                        <p className="text-sm text-gray-600">
+                          {formatDate(rental.startDate)} - {formatDate(rental.endDate)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={RENTAL_STATUS_COLORS[rental.status as keyof typeof RENTAL_STATUS_COLORS]}>
+                          {RENTAL_STATUS_LABELS[rental.status as keyof typeof RENTAL_STATUS_LABELS]}
+                        </Badge>
+                        {isCompleted && (
+                          <Link href={`/profile/rate-rental/${rental.id}`}>
+                            <Button variant="outline" size="sm" className="gap-1">
+                              <Star className="h-3 w-3" />
+                              Đánh giá
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
                     </div>
-                    <Badge className={RENTAL_STATUS_COLORS[rental.status as keyof typeof RENTAL_STATUS_COLORS]}>
-                      {RENTAL_STATUS_LABELS[rental.status as keyof typeof RENTAL_STATUS_LABELS]}
-                    </Badge>
-                  </div>
-                ))}
+                  )
+                })}
             </div>
           </CardContent>
         </Card>

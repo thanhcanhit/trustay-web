@@ -260,3 +260,25 @@ export const generatePaymentQRCode = async (
 		};
 	}
 };
+
+// Delete payment
+export const deletePayment = async (
+	id: string,
+	token?: string,
+): Promise<ApiResult<{ message: string }>> => {
+	try {
+		const response = await apiCall<{ message: string }>(
+			`/api/payments/${id}`,
+			{
+				method: 'DELETE',
+			},
+			token,
+		);
+		return { success: true, data: response };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể xóa thanh toán'),
+		};
+	}
+};

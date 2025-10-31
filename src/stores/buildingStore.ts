@@ -29,10 +29,16 @@ interface BuildingState {
 	isLoading: boolean;
 	error: string | null;
 	hasFetched: boolean; // Flag to prevent infinite loops
+	pagination: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+	} | null;
 
 	// Actions
 	fetchDashboardData: () => Promise<void>;
-	fetchAllBuildings: () => Promise<void>; // Fetch all buildings for properties page
+	fetchAllBuildings: (params?: { page?: number; limit?: number; search?: string }) => Promise<void>; // Fetch all buildings for properties page
 	deleteBuilding: (id: string) => Promise<boolean>; // Delete building and refresh
 	clearError: () => void;
 	reset: () => void;
@@ -44,7 +50,10 @@ interface BuildingState {
 	updateBuilding: (id: string, data: UpdateBuildingRequest) => Promise<Building | null>;
 	createNewBuilding: (data: CreateBuildingRequest) => Promise<Building | null>;
 	updateExistingBuilding: (id: string, data: UpdateBuildingRequest) => Promise<Building | null>;
-	loadRoomsByBuilding: (buildingId: string, params?: { limit?: number }) => Promise<Room[]>;
+	loadRoomsByBuilding: (
+		buildingId: string,
+		params?: { limit?: number; page?: number },
+	) => Promise<Room[]>;
 }
 
 const calculateStats = (buildings: Building[], buildingRooms: Map<string, Room[]>) => {
@@ -90,6 +99,7 @@ export const useBuildingStore = create<BuildingState>((set, get) => ({
 	isLoading: false,
 	error: null,
 	hasFetched: false,
+	pagination: null,
 
 	fetchDashboardData: async () => {
 		const currentState = get();
@@ -157,7 +167,7 @@ export const useBuildingStore = create<BuildingState>((set, get) => ({
 		}
 	},
 
-	fetchAllBuildings: async () => {
+	fetchAllBuildings: async (params = {}) => {
 		const currentState = get();
 
 		// Prevent multiple simultaneous fetches
@@ -171,51 +181,47 @@ export const useBuildingStore = create<BuildingState>((set, get) => ({
 			// Get token from localStorage
 			const token = TokenManager.getAccessToken();
 
-			// Fetch all buildings for properties management page
-			const buildingsResult = await getBuildings({ limit: 100 }, token);
+			// Fetch buildings with pagination support
+			// Default to page 1, limit 20 for better performance
+			const buildingsResult = await getBuildings(
+				{
+					page: params.page || 1,
+					limit: params.limit || 20,
+					search: params.search,
+				},
+				token,
+			);
+
 			if (!buildingsResult.success) {
 				throw new Error(buildingsResult.error || 'Failed to fetch buildings');
 			}
 
 			const buildings = buildingsResult.data.buildings || [];
-			const buildingRooms = new Map<string, Room[]>();
-
-			// Only fetch rooms if there are buildings
-			if (buildings.length > 0) {
-				for (const building of buildings) {
-					const roomsResult = await getRoomsByBuilding(building.id, { limit: 50 }, token);
-					if (roomsResult.success) {
-						buildingRooms.set(building.id, roomsResult.data.rooms || []);
-					} else {
-						buildingRooms.set(building.id, []);
-					}
-				}
-			}
-
-			const stats = calculateStats(buildings, buildingRooms);
-
-			const dashboardData: DashboardData = {
-				buildings,
-				buildingRooms,
-				stats,
+			const pagination = {
+				page: buildingsResult.data.page || 1,
+				limit: buildingsResult.data.limit || 20,
+				total: buildingsResult.data.total || buildings.length,
+				totalPages: buildingsResult.data.totalPages || 1,
 			};
+
+			// Do NOT fetch rooms here - let individual building detail pages load them on demand
+			// This dramatically reduces initial load time and prevents rate limiting
 
 			set({
 				buildings,
-				buildingRooms,
-				dashboardData,
+				buildingRooms: new Map(), // Empty map - rooms will be loaded on demand
+				pagination,
 				isLoading: false,
 				error: null,
 				hasFetched: true,
 			});
 		} catch (error) {
-			const errorMessage =
-				error instanceof Error ? error.message : 'Failed to fetch dashboard data';
+			const errorMessage = error instanceof Error ? error.message : 'Failed to fetch buildings';
 
 			set({
 				buildings: [],
 				buildingRooms: new Map(),
-				dashboardData: null,
+				pagination: null,
 				isLoading: false,
 				error: errorMessage,
 				hasFetched: true,
