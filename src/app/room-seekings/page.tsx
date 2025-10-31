@@ -1,22 +1,24 @@
 "use client"
 
-import { Suspense, useEffect, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { RoomSeekingCard } from '@/components/ui/room-seeking-card'
 import { Button } from '@/components/ui/button'
 import { Loader2, SlidersHorizontal, SearchX } from 'lucide-react'
-import { useRoomSeekingStore } from '@/stores/roomSeekingStore'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { useRoomSeekingsQuery } from '@/hooks/useRoomSeekingsQuery'
+import { useScrollRestoration } from '@/hooks/useScrollRestoration'
+import type { RoomSeekingPublicSearchParams } from '@/types/types'
 
 function RoomSeekingsContent() {
   const searchParams = useSearchParams()
-  const isRequestInProgress = useRef(false)
 
-  const { publicPosts, publicPostsLoading, publicPostsError, loadPublicPosts } = useRoomSeekingStore()
+  // Khôi phục scroll position
+  useScrollRestoration('room-seekings-list')
 
-  const computedParams = useMemo(() => {
-    const params: Record<string, string | number | boolean> = {}
+  const computedParams = useMemo((): RoomSeekingPublicSearchParams => {
+    const params: RoomSeekingPublicSearchParams = {}
     const search = searchParams.get('search')
     if (search) params.search = search
     const provinceId = searchParams.get('provinceId')
@@ -35,23 +37,47 @@ function RoomSeekingsContent() {
     if (maxBudget) params.maxBudget = Number(maxBudget)
     if (roomType) params.roomType = roomType
     if (occupancy) params.occupancy = Number(occupancy)
-    if (sortBy) params.sortBy = sortBy
-    if (sortOrder) params.sortOrder = sortOrder
+    if (sortBy && ['createdAt', 'updatedAt', 'title', 'maxBudget', 'viewCount', 'contactCount'].includes(sortBy)) {
+      params.sortBy = sortBy as 'createdAt' | 'updatedAt' | 'title' | 'maxBudget' | 'viewCount' | 'contactCount'
+    }
+    if (sortOrder && ['asc', 'desc'].includes(sortOrder)) {
+      params.sortOrder = sortOrder as 'asc' | 'desc'
+    }
     return params
   }, [searchParams])
 
+  // Sử dụng TanStack Query
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    error,
+  } = useRoomSeekingsQuery(computedParams)
+
+  // Flatten all pages into single array
+  const posts = useMemo(() => {
+    return data?.pages.flatMap((page) => page.data) ?? []
+  }, [data])
+
+  // Infinite scroll handler
   useEffect(() => {
-    const run = async () => {
-      if (isRequestInProgress.current) return
-      isRequestInProgress.current = true
-      try {
-        await loadPublicPosts({ page: 1, ...computedParams })
-      } finally {
-        isRequestInProgress.current = false
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop >=
+        document.documentElement.offsetHeight - 1000 &&
+        hasNextPage &&
+        !isFetchingNextPage
+      ) {
+        fetchNextPage()
       }
     }
-    run()
-  }, [computedParams, loadPublicPosts])
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -70,29 +96,51 @@ function RoomSeekingsContent() {
         </div>
       </div>
 
-      {publicPostsLoading && (
+      {isLoading && (
         <div className="text-center py-12">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-green-600" />
           <p className="text-gray-600 mt-2">Đang tải...</p>
         </div>
       )}
 
-      {publicPostsError && (
+      {isError && (
         <div className="text-center py-12">
-          <p className="text-red-600 mb-4">{publicPostsError}</p>
-          <Button onClick={() => loadPublicPosts({ page: 1, ...computedParams })} variant="outline">Thử lại</Button>
+          <p className="text-red-600 mb-4">{error?.message || 'Có lỗi xảy ra'}</p>
+          <Button onClick={() => window.location.reload()} variant="outline">Thử lại</Button>
         </div>
       )}
 
-      {!publicPostsLoading && !publicPostsError && (
-        publicPosts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {publicPosts.map(post => (
-              <Link key={post.id} href={`/room-seekings/${post.id}`} className="block">
-                <RoomSeekingCard post={post} asLink={false} />
-              </Link>
-            ))}
-          </div>
+      {!isLoading && !isError && (
+        posts.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {posts.map(post => (
+                <Link key={post.id} href={`/room-seekings/${post.id}`} className="block">
+                  <RoomSeekingCard post={post} asLink={false} />
+                </Link>
+              ))}
+            </div>
+
+            {/* Load More Button / Loading More */}
+            {hasNextPage && (
+              <div className="text-center mt-8">
+                {isFetchingNextPage ? (
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-green-600 mr-2" />
+                    <span className="text-gray-600">Đang tải thêm...</span>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => fetchNextPage()}
+                    className="px-8"
+                  >
+                    Tải thêm bài đăng
+                  </Button>
+                )}
+              </div>
+            )}
+          </>
         ) : (
           <Empty>
             <EmptyHeader>
@@ -104,7 +152,6 @@ function RoomSeekingsContent() {
                 Không có bài đăng tìm phòng nào phù hợp với tiêu chí tìm kiếm của bạn. Hãy thử lại hoặc điều chỉnh bộ lọc.
               </EmptyDescription>
             </EmptyHeader>
-            <Button onClick={() => loadPublicPosts({ page: 1, ...computedParams })} variant="outline">Thử lại</Button>
           </Empty>
         )
       )}

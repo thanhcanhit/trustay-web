@@ -1,53 +1,61 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users } from 'lucide-react';
-import { getRoommateSeekingListings, type RoommateSeekingListingItem } from '@/actions/roommate-seeking-posts.action';
+import { Users, Loader2 } from 'lucide-react';
 import { RoommateSeekingCard } from '@/components/roommate/roommate-seeking-card';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
+import { useRoommatesQuery } from '@/hooks/useRoommatesQuery';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import { Button } from '@/components/ui/button';
 
 function RoommateListingsContent() {
-	const isRequestInProgress = useRef(false);
-	const [listings, setListings] = useState<RoommateSeekingListingItem[]>([]);
-	const [loading, setLoading] = useState(true);
 	const [sortBy, setSortBy] = useState<'createdAt' | 'maxBudget' | 'updatedAt'>('createdAt');
 	const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+	// Khôi phục scroll position
+	useScrollRestoration('roommates-list');
 
 	const computedParams = useMemo(() => {
 		return {
 			sortBy,
 			sortOrder,
+			limit: 50,
 		};
 	}, [sortBy, sortOrder]);
 
+	// Sử dụng TanStack Query
+	const {
+		data,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+		isLoading,
+		isError,
+		error,
+	} = useRoommatesQuery(computedParams);
+
+	// Flatten all pages into single array
+	const listings = useMemo(() => {
+		return data?.pages.flatMap((page) => page.data) ?? [];
+	}, [data]);
+
+	// Infinite scroll handler
 	useEffect(() => {
-		const run = async () => {
-			if (isRequestInProgress.current) return;
-			isRequestInProgress.current = true;
-			setLoading(true);
-			
-			try {
-				const result = await getRoommateSeekingListings({ page: 1, limit: 50, ...computedParams });
-				
-				console.log('Roommate listings result:', result);
-				
-				if (result.success && result.data) {
-					// Filter only active posts
-					const activeListings = result.data.data.filter(listing => listing.status === 'active');
-					console.log('Active listings:', activeListings.length, 'out of', result.data.data.length);
-					setListings(activeListings);
-				}
-			} catch (err) {
-				console.error('Error loading roommate listings:', err);
-			} finally {
-				setLoading(false);
-				isRequestInProgress.current = false;
+		const handleScroll = () => {
+			if (
+				window.innerHeight + document.documentElement.scrollTop >=
+				document.documentElement.offsetHeight - 1000 &&
+				hasNextPage &&
+				!isFetchingNextPage
+			) {
+				fetchNextPage();
 			}
 		};
-		
-		run();
-	}, [computedParams]);
+
+		window.addEventListener('scroll', handleScroll);
+		return () => window.removeEventListener('scroll', handleScroll);
+	}, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
 	return (
 		<div className="container mx-auto px-4 py-8">
@@ -80,14 +88,23 @@ function RoommateListingsContent() {
 			</div>
 
 			{/* Loading State */}
-			{loading && (
+			{isLoading && (
 				<div className="text-center py-12">
-					<p className="text-gray-600">Đang tải...</p>
+					<Loader2 className="h-8 w-8 animate-spin mx-auto text-green-600" />
+					<p className="text-gray-600 mt-2">Đang tải...</p>
+				</div>
+			)}
+
+			{/* Error State */}
+			{isError && (
+				<div className="text-center py-12">
+					<p className="text-red-600 mb-4">{error?.message || 'Có lỗi xảy ra'}</p>
+					<Button onClick={() => window.location.reload()} variant="outline">Thử lại</Button>
 				</div>
 			)}
 
 			{/* Empty State */}
-			{!loading && listings.length === 0 && (
+			{!isLoading && !isError && listings.length === 0 && (
 				<Empty>
 					<EmptyHeader>
 						<EmptyMedia variant="icon">
@@ -102,19 +119,39 @@ function RoommateListingsContent() {
 			)}
 
 			{/* Listings Grid */}
-			{!loading && listings.length > 0 && (
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-					{listings.map((listing) => (
-						<RoommateSeekingCard key={listing.id} listing={listing} />
-					))}
-				</div>
-			)}
+			{!isLoading && !isError && listings.length > 0 && (
+				<>
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+						{listings.map((listing) => (
+							<RoommateSeekingCard key={listing.id} listing={listing} />
+						))}
+					</div>
 
-			{/* Result Count */}
-			{!loading && listings.length > 0 && (
-				<div className="mt-6 text-center text-gray-600">
-					Hiển thị {listings.length} bài đăng
-				</div>
+					{/* Load More Button / Loading More */}
+					{hasNextPage && (
+						<div className="text-center mt-8">
+							{isFetchingNextPage ? (
+								<div className="flex items-center justify-center">
+									<Loader2 className="h-6 w-6 animate-spin text-green-600 mr-2" />
+									<span className="text-gray-600">Đang tải thêm...</span>
+								</div>
+							) : (
+								<Button
+									variant="outline"
+									onClick={() => fetchNextPage()}
+									className="px-8"
+								>
+									Tải thêm bài đăng
+								</Button>
+							)}
+						</div>
+					)}
+
+					{/* Result Count */}
+					<div className="mt-6 text-center text-gray-600">
+						Hiển thị {listings.length} bài đăng
+					</div>
+				</>
 			)}
 		</div>
 	);
