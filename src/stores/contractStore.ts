@@ -3,6 +3,7 @@ import {
 	activateContract,
 	autoGenerateContract,
 	createContract,
+	deleteContract,
 	downloadContractPDF,
 	generateContractPDF,
 	getContractById,
@@ -44,6 +45,7 @@ interface ContractState {
 	signing: boolean;
 	verifying: boolean;
 	requestingOTP: boolean;
+	deleting: boolean;
 
 	// Error states
 	error: string | null;
@@ -54,6 +56,7 @@ interface ContractState {
 	signError: string | null;
 	verifyError: string | null;
 	otpError: string | null;
+	deleteError: string | null;
 
 	// Metadata
 	meta: ContractListResponse['meta'] | null;
@@ -90,6 +93,7 @@ interface ContractState {
 	requestOTP: (contractId: string) => Promise<boolean>;
 	sign: (contractId: string, signatureData: string, otpCode?: string) => Promise<boolean>;
 	activate: (contractId: string) => Promise<boolean>;
+	delete: (contractId: string) => Promise<boolean>;
 	clearCurrent: () => void;
 	clearErrors: () => void;
 }
@@ -111,6 +115,7 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	signing: false,
 	verifying: false,
 	requestingOTP: false,
+	deleting: false,
 
 	error: null,
 	errorCurrent: null,
@@ -120,6 +125,7 @@ export const useContractStore = create<ContractState>((set, get) => ({
 	signError: null,
 	verifyError: null,
 	otpError: null,
+	deleteError: null,
 
 	meta: null,
 
@@ -586,6 +592,33 @@ export const useContractStore = create<ContractState>((set, get) => ({
 			set({
 				submitError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
 				submitting: false,
+			});
+			return false;
+		}
+	},
+
+	// Delete contract (Landlord only - draft status only)
+	delete: async (contractId) => {
+		set({ deleting: true, deleteError: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await deleteContract(contractId, token);
+			if (result.success) {
+				set({ deleting: false });
+				// Reload contracts lists to reflect changes
+				await get().loadContracts();
+				return true;
+			} else {
+				set({
+					deleteError: result.error,
+					deleting: false,
+				});
+				return false;
+			}
+		} catch (error) {
+			set({
+				deleteError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				deleting: false,
 			});
 			return false;
 		}

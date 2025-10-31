@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Download, Eye, Plus, RotateCcw, AlertCircle, FileSignature, Loader2, MoreHorizontal, FileText } from "lucide-react"
+import { Search, Download, Eye, Plus, RotateCcw, AlertCircle, FileSignature, Loader2, MoreHorizontal, FileText, Trash2 } from "lucide-react"
 import { useContractStore } from "@/stores/contractStore"
 import { useRentalStore } from "@/stores/rentalStore"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -44,6 +44,8 @@ export default function ContractsPage() {
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [contractToDelete, setContractToDelete] = useState<Contract | null>(null)
 
   const {
     contracts,
@@ -51,11 +53,14 @@ export default function ContractsPage() {
     error,
     downloading,
     downloadError,
+    deleting,
+    deleteError,
     loadAll,
     downloadPDF,
     clearErrors,
     autoGenerate,
-    submitting
+    submitting,
+    delete: deleteContract
   } = useContractStore()
 
   const {
@@ -115,6 +120,24 @@ export default function ContractsPage() {
       }
     } catch (error) {
       console.error('Download failed:', error)
+    }
+  }
+
+  const handleDeleteClick = (contract: Contract) => {
+    setContractToDelete(contract)
+    setShowDeleteDialog(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!contractToDelete?.id) return
+
+    const success = await deleteContract(contractToDelete.id)
+    if (success) {
+      toast.success('Xóa hợp đồng thành công!')
+      setShowDeleteDialog(false)
+      setContractToDelete(null)
+    } else {
+      toast.error(deleteError || 'Không thể xóa hợp đồng')
     }
   }
 
@@ -496,13 +519,23 @@ export default function ContractsPage() {
                                   Ký hợp đồng
                                 </DropdownMenuItem>
                               )}
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 onClick={() => handleDownload(contract.id!, `HĐ-${contract.id?.slice(-8)}`)}
                                 disabled={downloading}
                               >
                                 <Download className={`h-4 w-4 mr-2 ${downloading ? 'animate-spin' : ''}`} />
                                 Tải PDF
                               </DropdownMenuItem>
+                              {/* Only show delete for draft contracts */}
+                              {contract.status === 'draft' && (
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteClick(contract)}
+                                  className="text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Xóa hợp đồng
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -514,6 +547,47 @@ export default function ContractsPage() {
             </Table>
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Xác nhận xóa hợp đồng</DialogTitle>
+              <DialogDescription>
+                Bạn có chắc chắn muốn xóa hợp đồng này không? Hành động này không thể hoàn tác.
+              </DialogDescription>
+            </DialogHeader>
+            {contractToDelete && (
+              <div className="py-4">
+                <div className="space-y-2 text-sm">
+                  <p><strong>Mã hợp đồng:</strong> HĐ-{contractToDelete.id?.slice(-8)}</p>
+                  <p><strong>Người thuê:</strong> {contractToDelete.tenant?.firstName} {contractToDelete.tenant?.lastName}</p>
+                  <p><strong>Phòng:</strong> {contractToDelete.room?.name}</p>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteDialog(false)
+                  setContractToDelete(null)
+                }}
+                disabled={deleting}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+              >
+                {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Xóa hợp đồng
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {!loading && filteredContracts.length === 0 && (
           <Empty>
