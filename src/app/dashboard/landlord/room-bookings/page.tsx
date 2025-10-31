@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/tooltip"
 import { ClickableUserAvatar } from "@/components/profile/clickable-user-avatar"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
+import { toast } from "sonner"
 
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -62,6 +63,22 @@ export default function BookingRequestsPage() {
   const handleWithdraw = async (id: string) => {
     await withdraw(id)
     loadSent({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
+  }
+
+  const handleConfirm = async (id: string) => {
+    const result = await useInvitationStore.getState().confirm(id)
+    if (result?.rentalId) {
+      toast.success('Đã tạo hợp đồng thuê thành công!', {
+        description: `Mã hợp đồng: ${result.rentalId}`,
+        duration: 5000,
+      })
+      loadSent({ page, limit: 12, status: statusFilter === 'all' ? undefined : statusFilter })
+    } else {
+      const error = useInvitationStore.getState().submitError
+      toast.error('Không thể xác nhận lời mời', {
+        description: error || 'Vui lòng thử lại sau',
+      })
+    }
   }
 
   return (
@@ -244,16 +261,28 @@ export default function BookingRequestsPage() {
                     </TableCell>
 
                     <TableCell className="text-right">
-                      {invitation.status === 'pending' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-red-600 border-red-300 hover:bg-red-50"
-                          onClick={() => handleWithdraw(invitation.id)}
-                        >
-                          Thu hồi
-                        </Button>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {invitation.status === 'pending' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-300 hover:bg-red-50"
+                            onClick={() => handleWithdraw(invitation.id)}
+                          >
+                            Thu hồi
+                          </Button>
+                        )}
+                        {invitation.status === 'accepted' && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => handleConfirm(invitation.id)}
+                          >
+                            Xác nhận
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
