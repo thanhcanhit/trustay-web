@@ -7,6 +7,7 @@ import { MessageInput } from '@/components/chat/message-input';
 import { cn } from '@/lib/utils';
 import { Loader2, Sparkles, Trash2, ChevronDown } from 'lucide-react';
 import type { AIHistoryMessage } from '@/types';
+import ReactMarkdown from 'react-markdown';
 
 export function AISidebar() {
   const isSidebarOpen = useAIAssistantStore((s) => s.isSidebarOpen);
@@ -79,8 +80,24 @@ export function AISidebar() {
             )}
             {messageList.map((m) => (
               <div key={m.id} className={cn('flex', m.role === 'user' ? 'justify-end' : 'justify-start')}>
-                <div className={cn('max-w-[85%] rounded-lg px-3 py-2 whitespace-pre-wrap break-words', m.role === 'user' ? 'bg-primary text-white' : 'bg-gray-100')}>
-                  {m.content}
+                  <div className={cn('max-w-[85%] rounded-lg px-3 py-2 break-words', m.role === 'user' ? 'bg-primary text-white' : 'bg-gray-100')}>
+                    {m.role === 'assistant' ? (
+                      <div className="prose prose-sm max-w-none">
+                        <ReactMarkdown
+                          components={{
+                            a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" />,
+                            pre: ({ children }) => (
+                              <pre className="overflow-auto max-h-64">{children as React.ReactNode}</pre>
+                            ),
+                            code: (props) => <code className={props.className}>{props.children as React.ReactNode}</code>,
+                          }}
+                        >
+                          {m.content}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      <span className="whitespace-pre-wrap">{m.content}</span>
+                    )}
                   {hasAssistantResult(m) && m.sql && (
                     <details className="mt-2 text-xs">
                       <summary className="cursor-pointer inline-flex items-center gap-1">
