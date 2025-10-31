@@ -6,13 +6,15 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { MapPin, Home, Users, DollarSign, TrendingUp, Building as BuildingIcon, MoreVertical, Trash } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { MapPin, Home, Users, DollarSign, TrendingUp, MoreVertical, Trash, Edit, Plus } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useBuildingStore } from "@/stores/buildingStore"
-import { type Building as BuildingType } from "@/types/types"
+import { type Building as BuildingType, type Room } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
 import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
+import { ROOM_TYPE_LABELS } from "@/constants/basic"
 
 export default function BuildingDetailPage() {
   const params = useParams()
@@ -21,7 +23,13 @@ export default function BuildingDetailPage() {
 
   const { loadBuildingById, deleteBuilding: deleteBuildingAction, loadRoomsByBuilding } = useBuildingStore()
   const [building, setBuilding] = useState<BuildingType | null>(null)
+  const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
+  const [roomsLoading, setRoomsLoading] = useState(false)
+  const [roomsLoaded, setRoomsLoaded] = useState(false) // Track if rooms have been loaded
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const pageLimit = 20
   const [roomsCount, setRoomsCount] = useState({
     total: 0,
     available: 0,
@@ -41,37 +49,6 @@ export default function BuildingDetailPage() {
       }
 
       setBuilding(buildingData)
-
-      // Fetch rooms data for this building
-      try {
-        const roomsData = await loadRoomsByBuilding(buildingId, { limit: 1000 })
-
-        if (roomsData && Array.isArray(roomsData)) {
-          const totalRooms = roomsData.reduce((sum: number, room: { totalRooms?: number }) => sum + (room.totalRooms || 0), 0)
-
-          // Get status counts for all rooms
-          let availableCount = 0
-          let occupiedCount = 0
-          let maintenanceCount = 0
-
-          for (const room of roomsData) {
-            if (room.statusCounts) {
-              availableCount += room.statusCounts.available
-              occupiedCount += room.statusCounts.occupied
-              maintenanceCount += room.statusCounts.maintenance
-            }
-          }
-
-          setRoomsCount({
-            total: totalRooms,
-            available: availableCount,
-            occupied: occupiedCount,
-            maintenance: maintenanceCount
-          })
-        }
-      } catch (roomsError) {
-        console.error('Error fetching rooms data:', roomsError)
-      }
     } catch (error) {
       console.error('Error fetching building detail:', error)
       toast.error('Không thể tải thông tin dãy trọ')
@@ -79,13 +56,76 @@ export default function BuildingDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [buildingId, router, loadBuildingById, loadRoomsByBuilding])
+  }, [buildingId, router, loadBuildingById])
+
+  const loadRooms = useCallback(async (page = 1) => {
+    try {
+      setRoomsLoading(true)
+      setCurrentPage(page)
+      // Use pagination with page parameter
+      const response = await loadRoomsByBuilding(buildingId, { 
+        limit: pageLimit,
+        page: page 
+      })
+
+      if (response && Array.isArray(response)) {
+        setRooms(response)
+        
+        // Calculate total pages from response metadata if available
+        // For now, estimate based on building data
+        if (building?.totalRooms) {
+          const estimated = Math.ceil(building.totalRooms / pageLimit)
+          setTotalPages(estimated)
+        }
+        
+        // Calculate actual stats from loaded rooms
+        const totalRooms = response.reduce((sum: number, room: { totalRooms?: number }) => sum + (room.totalRooms || 0), 0)
+
+        let availableCount = 0
+        let occupiedCount = 0
+        let maintenanceCount = 0
+
+        for (const room of response) {
+          if (room.statusCounts) {
+            availableCount += room.statusCounts.available
+            occupiedCount += room.statusCounts.occupied
+            maintenanceCount += room.statusCounts.maintenance
+          }
+        }
+
+        // Only update counts if we have actual data
+        if (page === 1) {
+          setRoomsCount({
+            total: totalRooms,
+            available: availableCount,
+            occupied: occupiedCount,
+            maintenance: maintenanceCount
+          })
+        }
+      }
+    } catch (roomsError) {
+      console.error('Error loading rooms:', roomsError)
+      toast.error('Không thể tải danh sách phòng')
+    } finally {
+      setRoomsLoading(false)
+    }
+  }, [buildingId, loadRoomsByBuilding, building, pageLimit])
 
   useEffect(() => {
     if (buildingId) {
       fetchBuildingDetail()
     }
   }, [buildingId, fetchBuildingDetail])
+
+  // Auto-load rooms only once after building is loaded
+  useEffect(() => {
+    if (building && !roomsLoaded && !roomsLoading && rooms.length === 0) {
+      setRoomsLoaded(true)
+      loadRooms(1)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [building?.id]) // Only depend on building.id to prevent infinite loops
+
 
   const handleDeleteBuilding = async () => {
     if (!building) return
@@ -160,6 +200,12 @@ export default function BuildingDetailPage() {
           backLabel="Quay lại"
           actions={
             <>
+              <Link href={`/dashboard/landlord/properties/rooms/add?buildingId=${building.id}`}>
+                <Button className="bg-blue-500 hover:bg-blue-600 cursor-pointer">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Thêm loại phòng
+                </Button>
+              </Link>
               <PageHeaderActions.Edit href={`/dashboard/landlord/properties/${building.id}/edit`} />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -168,18 +214,6 @@ export default function BuildingDetailPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href={`/dashboard/landlord/properties/rooms?buildingId=${building.id}`} className="cursor-pointer">
-                      <Home className="h-4 w-4 mr-2" />
-                      Quản lý phòng
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/dashboard/landlord/properties/rooms/add?buildingId=${building.id}`} className="cursor-pointer">
-                      <BuildingIcon className="h-4 w-4 mr-2" />
-                      Thêm loại phòng
-                    </Link>
-                  </DropdownMenuItem>
                   <DropdownMenuItem onSelect={handleDeleteBuilding} className="cursor-pointer text-red-600 hover:bg-red-100">
                     <Trash className="h-4 w-4 mr-2" />
                     Xóa dãy trọ
@@ -323,6 +357,146 @@ export default function BuildingDetailPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Rooms List Section */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Danh sách loại phòng</h3>
+            <Link href={`/dashboard/landlord/properties/rooms/add?buildingId=${building.id}`}>
+              <Button variant="outline" size="sm" className="cursor-pointer">
+                <Plus className="h-4 w-4 mr-2" />
+                Thêm loại phòng
+              </Button>
+            </Link>
+          </div>
+
+          {roomsLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Đang tải danh sách phòng...</p>
+            </div>
+          ) : rooms.length === 0 ? (
+            <div className="text-center py-8">
+              <Home className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600 mb-4">Chưa có loại phòng nào</p>
+              <Link href={`/dashboard/landlord/properties/rooms/add?buildingId=${building.id}`}>
+                <Button className="bg-blue-500 hover:bg-blue-600 cursor-pointer">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Thêm loại phòng đầu tiên
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tên phòng</TableHead>
+                      <TableHead>Loại phòng</TableHead>
+                      <TableHead>Diện tích</TableHead>
+                      <TableHead>Sức chứa</TableHead>
+                      <TableHead>Tổng số phòng</TableHead>
+                      <TableHead>Trạng thái</TableHead>
+                      <TableHead>Giá thuê</TableHead>
+                      <TableHead className="text-right">Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rooms.map((room) => (
+                      <TableRow 
+                        key={room.id}
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => window.location.href = `/dashboard/landlord/properties/rooms/${room.id}`}
+                      >
+                        <TableCell className="font-medium">{room.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {ROOM_TYPE_LABELS[room.roomType.toUpperCase() as keyof typeof ROOM_TYPE_LABELS] || room.roomType}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{room.areaSqm}m²</TableCell>
+                        <TableCell>{room.maxOccupancy} người</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-semibold">{room.totalRooms}</span>
+                            <span className="text-xs text-gray-500">
+                              {room.statusCounts?.available || 0} trống / {room.statusCounts?.occupied || 0} đã thuê
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={room.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                            {room.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {room.pricing?.basePriceMonthly 
+                            ? `${Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN')}đ/tháng`
+                            : 'N/A'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="cursor-pointer">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/dashboard/landlord/properties/rooms/${room.id}/edit`} className="cursor-pointer">
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Chỉnh sửa
+                                  </Link>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const prev = currentPage - 1
+                      setCurrentPage(prev)
+                      loadRooms(prev)
+                    }}
+                    disabled={currentPage === 1 || roomsLoading}
+                    className="cursor-pointer"
+                  >
+                    Trang trước
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Trang {currentPage} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const next = currentPage + 1
+                      setCurrentPage(next)
+                      loadRooms(next)
+                    }}
+                    disabled={currentPage === totalPages || roomsLoading}
+                    className="cursor-pointer"
+                  >
+                    Trang sau
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </DashboardLayout>

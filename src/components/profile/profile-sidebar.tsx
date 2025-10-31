@@ -6,18 +6,12 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import {
   User,
-  Home,
   Bell,
-  //Users,
   Heart,
   LogOut,
   ChevronDown,
   ChevronRight,
-  Receipt,
-  Send,
   Shield,
-  FileText,
-  UserPlus,
 } from "lucide-react"
 import { useUserStore } from "@/stores/userStore"
 
@@ -52,64 +46,16 @@ const profileItems: ProfileSidebarItem[] = [
         icon: User
       },
       {
+        title: "Sở thích & Ưu tiên",
+        href: "/profile/preferences",
+        icon: Heart
+      },
+      {
         title: "Bảo mật",
         href: "/profile/security",
         icon: Shield
       }
     ]
-  },
-  {
-    title: "Quản lý lưu trú",
-    icon: Home,
-    subItems: [
-      {
-        title: "Trọ của tôi",
-        href: "/profile/accommodation",
-        icon: Home,
-        disabled: false
-      },
-      {
-        title: "Hợp đồng",
-        href: "/profile/contracts",
-        icon: FileText,
-        disabled: false
-      },
-      {
-        title: "Hóa đơn",
-        href: "/profile/bills",
-        icon: Receipt,
-        disabled: true
-      }
-    ]
-  },
-  {
-    title: "Quản lý bài đăng",
-    icon: FileText,
-    subItems: [
-      {
-        title: "Tìm trọ",
-        href: "/profile/posts/room-seeking",
-        icon: FileText
-      },
-      {
-        title: "Tìm người ở ghép",
-        href: "/profile/posts/roommate",
-        icon: FileText,
-        disabled: true
-      }
-    ]
-  },
-  {
-    title: "Yêu cầu thuê",
-    href: "/profile/requests",
-    icon: Send,
-    disabled: false
-  },
-  {
-    title: "Lời mời thuê",
-    href: "/profile/booking-requests",
-    icon: UserPlus,
-    disabled: false
   },
   {
     title: "Trọ đã lưu",

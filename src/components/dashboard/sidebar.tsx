@@ -16,7 +16,6 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
-  Key,
   Receipt,
   Send,
   Building2,
@@ -51,66 +50,46 @@ interface SidebarProps {
 
 const tenantItems: SidebarItem[] = [
   {
-    title: "Quản lý cá nhân",
-    icon: User,
-    subItems: [
-      {
-        title: "Thông tin cơ bản",
-        href: "/profile/personal",
-        icon: User
-      },
-      {
-        title: "Bảo mật",
-        href: "/profile/security",
-        icon: Key
-      }
-    ]
-  },
-  {
-    title: "Quản lý lưu trú",
+    title: "Quản lý thuê trọ",
     icon: Home,
     subItems: [
       {
         title: "Trọ của tôi",
-        href: "/profile/accommodation",
-        icon: Home
+        href: "/dashboard/tenant/accommodation",
+        icon: Home,
+        disabled: false
       },
       {
         title: "Hợp đồng",
-        href: "/profile/contracts",
-        icon: FileText
+        href: "/dashboard/tenant/contracts",
+        icon: FileText,
+        disabled: false
       },
       {
         title: "Hóa đơn",
-        href: "/profile/bills",
-        icon: Receipt
+        href: "/dashboard/tenant/bills",
+        icon: Receipt,
+        disabled: true
       }
     ]
   },
   {
-    title: "Tìm bạn cùng phòng",
-    href: "/profile/roommate",
-    icon: Users
+    title: "Quản lý bài đăng",
+    href: "/dashboard/tenant/posts",
+    icon: FileText,
+    disabled: false
   },
   {
     title: "Yêu cầu thuê",
-    href: "/profile/requests",
-    icon: Send
+    href: "/dashboard/tenant/requests",
+    icon: Send,
+    disabled: false
   },
   {
-    title: "Lời mời thuê",
-    href: "/profile/booking-requests",
-    icon: UserPlus
-  },
-  {
-    title: "Trọ đã lưu",
-    href: "/profile/saved",
-    icon: Heart
-  },
-  {
-    title: "Thông báo",
-    href: "/profile/notifications",
-    icon: Bell
+    title: "Yêu cầu ở ghép",
+    href: "/dashboard/tenant/roommate-applications",
+    icon: Users,
+    disabled: false
   }
 ]
 
@@ -130,11 +109,6 @@ const landlordItems: SidebarItem[] = [
         icon: Building2
       },
       {
-        title: "Quản lý phòng",
-        href: "/dashboard/landlord/properties/rooms",
-        icon: Home
-      },
-      {
         title: "Yêu cầu thuê trọ",
         href: "/dashboard/landlord/rental-requests",
         icon: Send,
@@ -142,8 +116,20 @@ const landlordItems: SidebarItem[] = [
       },
       {
         title: "Lời mời thuê",
-        href: "/dashboard/landlord/booking-requests",
+        href: "/dashboard/landlord/room-bookings",
         icon: UserPlus,
+        disabled: false
+      },
+      {
+        title: "Ứng tuyển nhận được",
+        href: "/dashboard/landlord/roommate-applications/received",
+        icon: Users,
+        disabled: false
+      },
+      {
+        title: "Ứng tuyển đã gửi",
+        href: "/dashboard/landlord/roommate-applications/sent",
+        icon: Send,
         disabled: false
       },
       {
@@ -192,7 +178,7 @@ const landlordItems: SidebarItem[] = [
         title: "Khách hàng đánh giá",
         href: "/dashboard/landlord/reviews",
         icon: Star,
-        disabled: true
+        disabled: false
       }
     ]
   },
@@ -219,7 +205,9 @@ const landlordItems: SidebarItem[] = [
 export function Sidebar({ userType }: SidebarProps) {
   const pathname = usePathname()
   const { user, logout } = useUserStore()
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Quản lý Trọ'])
+  const [expandedItems, setExpandedItems] = useState<string[]>(
+    userType === 'tenant' ? ['Quản lý thuê trọ'] : ['Quản lý Trọ']
+  )
 
   const items = userType === 'tenant' ? tenantItems : landlordItems
 

@@ -1,5 +1,12 @@
 // Export all types for easy importing
 
+// Export bill types
+export * from './bill.types';
+export type { ContractSignature } from './contract.types';
+// Export contract types
+export * from './contract.types';
+// Export preferences types
+export * from './preferences.types';
 // Export property types (excluding Room to avoid conflict)
 export type {
 	CreateRentalPostData,
@@ -8,6 +15,17 @@ export type {
 	RentalPost,
 	RoommatePost,
 } from './property';
+// Re-export rental types
+export type {
+	CreateRentalRequest,
+	PaginatedRentalResponse as RentalListResponse,
+	RenewRentalRequest,
+	Rental,
+	TerminateRentalRequest,
+	UpdateRentalRequest,
+} from './rental.types';
+// Export rental types
+export * from './rental.types';
 export * from './report';
 // Export room seeking types
 export * from './room-seeking';
@@ -22,20 +40,16 @@ export type {
 	ChangePasswordRequest,
 	CheckPassword,
 	CreateBuildingRequest,
-	CreateRentalRequest,
 	CreateRoomRequest,
 	GeneratePasswordResponse,
 	// Authentication Types
 	LoginRequest,
 	PasswordStrengthResponse,
 	PublicUserProfile,
+	RatingStats,
 	RefreshTokenRequest,
 	RegisterDirectRequest,
 	RegisterRequest,
-	RenewRentalRequest,
-	// Rental Types
-	Rental,
-	RentalListResponse,
 	// Room Types (from types.ts)
 	RoomAmenity,
 	RoomCost,
@@ -46,14 +60,13 @@ export type {
 	RoomStatus,
 	RoomsListResponse,
 	RoomType,
-	TerminateRentalRequest,
 	UpdateBuildingRequest,
 	UpdateProfileRequest,
-	UpdateRentalRequest,
 	UpdateRoomInstanceStatusRequest,
 	UpdateRoomRequest,
 	// User Types
 	UserProfile,
+	UserRating,
 	VerificationRequest,
 	VerificationResponse,
 } from './types';

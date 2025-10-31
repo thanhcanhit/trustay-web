@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { useContractStore } from "@/stores/contractStore"
 import { Contract } from "@/types/types"
+import { ContractSignature } from "@/types/contract.types"
 import ContractSigningWorkflow from "@/components/contract/ContractSigningWorkflow"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
@@ -63,6 +64,7 @@ export default function ContractDetailPage() {
     if (!contract) return
 
     try {
+      // Download PDF (store handles 404 and auto-generate)
       const blob = await downloadPDF(contract.id!)
       if (blob) {
         const url = window.URL.createObjectURL(blob)
@@ -74,6 +76,8 @@ export default function ContractDetailPage() {
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
         toast.success('Đã tải xuống hợp đồng thành công!')
+      } else {
+        toast.error('Không thể tải xuống PDF')
       }
     } catch (error) {
       console.error('Download failed:', error)
@@ -202,7 +206,7 @@ export default function ContractDetailPage() {
                       <Avatar className="h-12 w-12 flex-shrink-0">
                         <AvatarImage src={contract.tenant?.avatarUrl || ''} alt={tenantName} />
                         <AvatarFallback className="bg-blue-100 text-blue-600">
-                          {tenantName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          {tenantName.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
@@ -223,7 +227,7 @@ export default function ContractDetailPage() {
                       <Avatar className="h-12 w-12 flex-shrink-0">
                         <AvatarImage src={contract.landlord?.avatarUrl || ''} alt={landlordName} />
                         <AvatarFallback className="bg-green-100 text-green-600">
-                          {landlordName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          {landlordName.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
@@ -347,7 +351,7 @@ export default function ContractDetailPage() {
                         Trạng thái ký
                       </h3>
                       <div className="space-y-2">
-                        {contract.signatures.map((sig, index) => (
+                        {contract.signatures.map((sig: ContractSignature, index: number) => (
                           <div key={index} className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-100">
                             <div className="flex items-center space-x-2">
                               <CheckCircle className="h-4 w-4 text-green-600" />
@@ -381,14 +385,16 @@ export default function ContractDetailPage() {
                             <div className="border border-gray-300 rounded bg-white p-2 mb-1 flex justify-center">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
-                                src={contract.landlordSignature.signatureData}
+                                src={typeof contract.landlordSignature === 'string' ? contract.landlordSignature : contract.landlordSignature.signatureData}
                                 alt={`Chữ ký của ${landlordName}`}
                                 className="max-w-full h-auto max-h-24 object-contain"
                               />
                             </div>
-                            <p className="text-xs text-gray-500">
-                              Đã ký: {format(new Date(contract.landlordSignature.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                            </p>
+                            {typeof contract.landlordSignature !== 'string' && contract.landlordSignature.signedAt && (
+                              <p className="text-xs text-gray-500">
+                                Đã ký: {format(new Date(contract.landlordSignature.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                              </p>
+                            )}
                           </div>
                         )}
                         
@@ -399,14 +405,16 @@ export default function ContractDetailPage() {
                             <div className="border border-gray-300 rounded bg-white p-2 mb-1 flex justify-center">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
-                                src={contract.tenantSignature.signatureData}
+                                src={typeof contract.tenantSignature === 'string' ? contract.tenantSignature : contract.tenantSignature.signatureData}
                                 alt={`Chữ ký của ${tenantName}`}
                                 className="max-w-full h-auto max-h-24 object-contain"
                               />
                             </div>
-                            <p className="text-xs text-gray-500">
-                              Đã ký: {format(new Date(contract.tenantSignature.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                            </p>
+                            {typeof contract.tenantSignature !== 'string' && contract.tenantSignature.signedAt && (
+                              <p className="text-xs text-gray-500">
+                                Đã ký: {format(new Date(contract.tenantSignature.signedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>

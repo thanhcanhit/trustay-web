@@ -82,7 +82,7 @@ export const createBookingRequest = async (
 		};
 
 		const response = await apiCall<{ data: BookingRequest }>(
-			`/api/booking-requests`,
+			`/api/room-bookings`,
 			{
 				method: 'POST',
 				data: apiPayload,
@@ -113,7 +113,7 @@ export const getReceivedBookingRequests = async (
 		if (params?.buildingId) q.append('buildingId', params.buildingId);
 		if (params?.roomId) q.append('roomId', params.roomId);
 
-		const endpoint = `/api/booking-requests/received${q.toString() ? `?${q.toString()}` : ''}`;
+		const endpoint = `/api/room-bookings/received${q.toString() ? `?${q.toString()}` : ''}`;
 		const response = await apiCall<BookingRequestListResponse>(endpoint, { method: 'GET' }, token);
 		return { success: true, data: response };
 	} catch (error) {
@@ -138,9 +138,56 @@ export const getMyBookingRequests = async (
 		if (params?.limit) q.append('limit', String(params.limit));
 		if (params?.status) q.append('status', params.status);
 
-		const endpoint = `/api/booking-requests/my-requests${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<BookingRequestListResponse>(endpoint, { method: 'GET' }, token);
-		return { success: true, data: response };
+		const endpoint = `/api/room-bookings/my-requests${q.toString() ? `?${q.toString()}` : ''}`;
+		const response = await apiCall<{
+			data: BookingRequest[];
+			pagination: { page: number; limit: number; total: number; totalPages: number };
+		}>(endpoint, { method: 'GET' }, token);
+
+		// Transform pagination to meta format and normalize Decimal objects
+		const normalizedData = response.data.map((item) => {
+			// Helper to convert Decimal-like objects {s, e, d} to string
+			const decimalToString = (val: unknown): string => {
+				if (val && typeof val === 'object' && 'd' in val && 's' in val && 'e' in val) {
+					// Decimal.js object format: {s: sign, e: exponent, d: digits array}
+					const decimalObj = val as { s: number; e: number; d: number[] };
+					const sign = decimalObj.s < 0 ? '-' : '';
+					const digits = decimalObj.d.join('');
+					const exp = decimalObj.e;
+					if (exp >= 0) {
+						return sign + digits.slice(0, exp + 1) + (digits.slice(exp + 1) || '');
+					}
+					return sign + '0.' + '0'.repeat(-exp - 1) + digits;
+				}
+				return String(val);
+			};
+
+			return {
+				...item,
+				room: item.room
+					? {
+							...item.room,
+							areaSqm: decimalToString(item.room.areaSqm),
+						}
+					: undefined,
+			};
+		});
+
+		return {
+			success: true,
+			data: {
+				data: normalizedData,
+				meta: {
+					page: response.pagination.page,
+					limit: response.pagination.limit,
+					total: response.pagination.total,
+					totalPages: response.pagination.totalPages,
+					hasPrev: response.pagination.page > 1,
+					hasNext: response.pagination.page < response.pagination.totalPages,
+					itemCount: normalizedData.length,
+				},
+			},
+		};
 	} catch (error) {
 		return {
 			success: false,
@@ -155,7 +202,7 @@ export const getBookingRequestById = async (
 ): Promise<ApiResult<{ data: BookingRequest }>> => {
 	try {
 		const response = await apiCall<{ data: BookingRequest }>(
-			`/api/booking-requests/${id}`,
+			`/api/room-bookings/${id}`,
 			{
 				method: 'GET',
 			},
@@ -174,7 +221,7 @@ export const updateBookingRequestAsOwner = async (
 ): Promise<ApiResult<{ message: string }>> => {
 	try {
 		const response = await apiCall<{ message: string }>(
-			`/api/booking-requests/${id}`,
+			`/api/room-bookings/${id}`,
 			{
 				method: 'PATCH',
 				data,
@@ -197,7 +244,7 @@ export const cancelMyBookingRequest = async (
 ): Promise<ApiResult<{ message: string }>> => {
 	try {
 		const response = await apiCall<{ message: string }>(
-			`/api/booking-requests/${id}/cancel`,
+			`/api/room-bookings/${id}/cancel`,
 			{
 				method: 'PATCH',
 				data,
@@ -228,7 +275,7 @@ export const getMyBookingRequestsMe = async (
 		if (params?.buildingId) q.append('buildingId', params.buildingId);
 		if (params?.roomId) q.append('roomId', params.roomId);
 
-		const endpoint = `/api/booking-requests/me${q.toString() ? `?${q.toString()}` : ''}`;
+		const endpoint = `/api/room-bookings/me${q.toString() ? `?${q.toString()}` : ''}`;
 		const response = await apiCall<BookingRequestListResponse>(endpoint, { method: 'GET' }, token);
 		return { success: true, data: response };
 	} catch (error) {
@@ -246,7 +293,7 @@ export const confirmBookingRequest = async (
 ): Promise<ApiResult<{ data: BookingRequest; rental?: { id: string } }>> => {
 	try {
 		const response = await apiCall<{ data: BookingRequest; rental?: { id: string } }>(
-			`/api/booking-requests/${id}/confirm`,
+			`/api/room-bookings/${id}/confirm`,
 			{
 				method: 'POST',
 				data,
@@ -285,7 +332,7 @@ export const approveBookingRequestAndCreateRental = async (
 		const approveResult = await updateBookingRequestAsOwner(
 			bookingRequestId,
 			{
-				status: 'approved',
+				status: 'accepted',
 				ownerNotes,
 			},
 			token,

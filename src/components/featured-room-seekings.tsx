@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { useRoomSeekingStore } from "@/stores/roomSeekingStore"
 import { RoomSeekingCard } from "@/components/ui/room-seeking-card"
+import { Search } from "lucide-react"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty"
 
 export function FeaturedRoomSeekings() {
   const {
@@ -72,15 +74,25 @@ export function FeaturedRoomSeekings() {
 
         {/* No Posts State */}
         {!isLoading && !error && publicPosts.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-600 mb-4">Chưa có bài đăng nào</p>
-            <Button 
-              variant="outline" 
-              onClick={() => loadPublicPosts({ page: 1, limit: 4 })}
-            >
-              Tải lại
-            </Button>
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Search />
+              </EmptyMedia>
+              <EmptyTitle>Chưa có bài đăng tìm trọ</EmptyTitle>
+              <EmptyDescription>
+                Hiện tại chưa có bài đăng tìm chỗ thuê nào. Hãy quay lại sau để xem các bài đăng mới nhất.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button
+                variant="outline"
+                onClick={() => loadPublicPosts({ page: 1, limit: 4 })}
+              >
+                Tải lại
+              </Button>
+            </EmptyContent>
+          </Empty>
         )}
 
         {/* View More Button */}

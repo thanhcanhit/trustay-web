@@ -35,6 +35,7 @@ interface NotificationState {
 	markAllAsRead: () => void;
 	markAsRead: (notificationId: string) => void;
 	removeNotification: (notificationId: string) => void;
+	removeAllNotifications: () => void;
 
 	// Getters
 	getUserNotifications: (userId?: string) => NotificationItem[];
@@ -196,6 +197,13 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 				items: updatedItems,
 				unread: unreadCount,
 			};
+		});
+	},
+
+	removeAllNotifications: () => {
+		set({
+			items: [],
+			unread: 0,
 		});
 	},
 

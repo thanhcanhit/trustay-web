@@ -1,5 +1,11 @@
 // API Types for Trustay backend integration
 
+import type { Contract } from './contract.types';
+// Import and re-export types from separate files to avoid duplication
+import type { Rental } from './rental.types';
+
+export type { Rental, Contract };
+
 // Authentication Types
 export interface LoginRequest {
 	email: string;
@@ -74,6 +80,7 @@ export interface UserProfile {
 	email: string;
 	firstName: string;
 	lastName: string;
+	fullName?: string; // Computed field: firstName + lastName
 	phone: string;
 	gender: 'male' | 'female' | 'other';
 	role: 'tenant' | 'landlord';
@@ -92,11 +99,32 @@ export interface UserProfile {
 	updatedAt: string;
 }
 
+export interface RatingStats {
+	totalRatings: number;
+	averageRating: number;
+	distribution: {
+		1: number;
+		2: number;
+		3: number;
+		4: number;
+		5: number;
+	};
+}
+
+export interface UserRating {
+	id: string;
+	rating: number;
+	comment: string | null;
+	createdAt: string;
+	raterName: string;
+	raterAvatarUrl: string | null;
+}
+
 export interface PublicUserProfile {
 	id: string;
 	name: string;
 	email: string;
-	phone: string;
+	phone?: string | null;
 	avatarUrl: string | null;
 	gender: 'male' | 'female' | 'other';
 	role: 'tenant' | 'landlord';
@@ -109,6 +137,9 @@ export interface PublicUserProfile {
 	totalRatings: number;
 	createdAt: string;
 	updatedAt: string;
+	ratingStats?: RatingStats;
+	recentRatings?: UserRating[];
+	recentGivenRatings?: UserRating[];
 }
 
 export interface UpdateProfileRequest {
@@ -371,6 +402,12 @@ export interface RoomInstance {
 	notes?: string | null;
 	createdAt: string;
 	updatedAt: string;
+	// Optional fields from API responses
+	name?: string;
+	roomName?: string;
+	buildingName?: string;
+	areaSqm?: string;
+	roomType?: string;
 }
 
 export interface Room {
@@ -504,10 +541,41 @@ export interface BulkUpdateRoomInstancesRequest {
 export type UserRole = 'tenant' | 'landlord';
 export type Gender = 'male' | 'female' | 'other';
 export type VerificationType = 'email' | 'phone';
-export type RoomType = 'boarding_house' | 'dormitory' | 'sleepbox' | 'apartment' | 'whole_house';
+export type RoomType =
+	| 'boarding_house'
+	| 'dormitory'
+	| 'sleepbox'
+	| 'apartment'
+	| 'whole_house'
+	| 'mini_apartment'
+	| 'dorm'
+	| 'shared_house';
 export type RoomStatus = 'available' | 'occupied' | 'maintenance' | 'reserved' | 'unavailable';
 export type CostType = 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
 export type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
+
+// Rental Status từ API guide
+export type RentalStatus = 'active' | 'pending' | 'expired' | 'terminated';
+
+// Contract Status và Type từ API guide
+export type ContractStatus =
+	| 'draft'
+	| 'pending_signatures'
+	| 'partially_signed'
+	| 'fully_signed'
+	| 'active'
+	| 'expired'
+	| 'terminated'
+	| 'signed'
+	| 'cancelled';
+export type ContractType =
+	| 'monthly_rental'
+	| 'yearly_rental'
+	| 'short_term_rental'
+	| 'fixed_term_rental';
+
+// Bill Status từ API guide
+export type BillStatus = 'draft' | 'pending' | 'paid' | 'overdue' | 'cancelled';
 
 // Listings (public rooms) types
 export interface RoomListing {
@@ -647,7 +715,7 @@ export interface BookingRequest {
 	id: string;
 	roomId: string;
 	tenantId: string;
-	status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+	status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'accepted';
 	moveInDate: string;
 	moveOutDate?: string | null;
 	rentalMonths?: number | null;
@@ -696,7 +764,7 @@ export interface CreateBookingRequestRequest {
 
 export interface UpdateBookingRequestRequest {
 	ownerNotes?: string;
-	status?: 'approved' | 'rejected';
+	status?: 'accepted' | 'rejected';
 }
 
 export interface CancelBookingRequestRequest {
@@ -858,89 +926,13 @@ export interface RoomSeekingPublicSearchParams {
 	sortOrder?: 'asc' | 'desc';
 }
 
-// Contract Types
-export interface Contract {
-	id: string;
-	contractCode?: string;
-	landlordId?: string;
-	tenantId?: string;
-	roomId?: string;
-	rentalId?: string;
-	terms?: string;
-	monthlyRent?: number;
-	depositAmount?: number;
-	startDate: string;
-	endDate?: string | null;
-	status:
-		| 'draft'
-		| 'pending_signatures'
-		| 'partially_signed'
-		| 'fully_signed'
-		| 'active'
-		| 'expired'
-		| 'terminated';
-	contractType?: 'monthly_rental' | 'fixed_term_rental' | 'short_term_rental';
-
-	// Digital Signature Fields
-	landlordSignature?: ContractSignature;
-	tenantSignature?: ContractSignature;
-	signatureDeadline?: string;
-	fullySignedAt?: string;
-	signedAt?: string | null;
-	pdfUrl?: string | null;
-
-	// Nested objects from API
-	landlord?: {
-		id: string;
-		fullName: string;
-		email: string;
-		phone?: string | null;
-		avatarUrl?: string;
-		// Computed fields
-		firstName?: string;
-		lastName?: string;
-	};
-	tenant?: {
-		id: string;
-		fullName: string;
-		email: string;
-		phone?: string | null;
-		avatarUrl?: string;
-		// Computed fields
-		firstName?: string;
-		lastName?: string;
-	};
-	room?: {
-		roomNumber: string;
-		roomName: string;
-		buildingName: string;
-		// Computed fields
-		name?: string;
-		roomType?: string;
-		areaSqm?: number;
-	};
-	contractData?: {
-		roomName: string;
-		roomNumber: string;
-		monthlyRent: number;
-		buildingName: string;
-		depositAmount: number;
-		buildingAddress: string;
-	};
-	signatures?: {
-		signerRole: 'landlord' | 'tenant';
-		signedAt: string;
-	}[];
-
-	createdAt: string;
-	updatedAt: string;
-	amendments?: ContractAmendment[];
-}
+// Contract type is re-exported from contract.types.ts (see top of file)
 
 export interface ContractSignature {
 	signatureData: string; // Base64 encoded signature from canvas
 	signedAt: string; // Timestamp when signed
 	signedBy: string; // User ID của người ký
+	signerRole?: 'landlord' | 'tenant';
 	ipAddress?: string; // IP address khi ký
 	deviceInfo?: string; // Device information
 	signatureMethod: 'canvas' | 'upload';
@@ -988,138 +980,7 @@ export interface ContractListResponse {
 	};
 }
 
-// Rental Types
-export interface Rental {
-	id: string;
-	bookingRequestId?: string | null;
-	invitationId?: string | null;
-	roomInstanceId: string;
-	tenantId: string;
-	ownerId: string;
-	contractStartDate: string;
-	contractEndDate?: string | null;
-	monthlyRent: string;
-	depositPaid: string;
-	status: 'active' | 'terminated' | 'expired' | 'pending';
-	contractDocumentUrl?: string | null;
-	terminationNoticeDate?: string | null;
-	terminationReason?: string | null;
-	createdAt: string;
-	updatedAt: string;
-
-	// Related entities
-	tenant?: {
-		id: string;
-		firstName: string;
-		lastName: string;
-		email: string;
-		phone?: string | null;
-	};
-	owner?: {
-		id: string;
-		firstName: string;
-		lastName: string;
-		email: string;
-		phone?: string | null;
-	};
-	roomInstance?: {
-		id: string;
-		roomId: string;
-		roomNumber: string;
-		status: 'available' | 'occupied' | 'maintenance' | 'reserved';
-		isActive: boolean;
-		notes?: string | null;
-		createdAt: string;
-		updatedAt: string;
-		room?: {
-			id: string;
-			slug: string;
-			buildingId: string;
-			floorNumber: number;
-			name: string;
-			description: string;
-			roomType: string;
-			areaSqm: string;
-			maxOccupancy: number;
-			totalRooms: number;
-			viewCount: number;
-			isActive: boolean;
-			isVerified: boolean;
-			overallRating: string;
-			totalRatings: number;
-			createdAt: string;
-			updatedAt: string;
-			building?: {
-				id: string;
-				name: string;
-				ownerId?: string;
-			};
-		};
-	};
-	bookingRequest?: {
-		id: string;
-		moveInDate: string;
-		moveOutDate?: string | null;
-	} | null;
-	invitation?: {
-		id: string;
-		// Add more fields as needed
-	} | null;
-
-	// Deprecated fields for backward compatibility
-	roomId?: string;
-	landlordId?: string;
-	contractId?: string;
-	depositAmount?: number;
-	startDate?: string;
-	endDate?: string;
-	notes?: string;
-	terminationDate?: string;
-	depositRefundAmount?: number;
-	room?: Room;
-	landlord?: UserProfile;
-	contract?: Contract;
-}
-
-export interface CreateRentalRequest {
-	roomId: string;
-	tenantId: string;
-	monthlyRent: number;
-	depositAmount: number;
-	startDate: string;
-	endDate: string;
-	contractId?: string;
-	notes?: string;
-}
-
-export interface UpdateRentalRequest {
-	monthlyRent?: number;
-	status?: 'active' | 'terminated' | 'expired' | 'pending';
-	notes?: string;
-}
-
-export interface TerminateRentalRequest {
-	status: 'terminated';
-	terminationDate: string;
-	reason: string;
-	depositRefundAmount?: number;
-}
-
-export interface RenewRentalRequest {
-	newEndDate: string;
-	newMonthlyRent?: number;
-	notes?: string;
-}
-
-export interface RentalListResponse {
-	data: Rental[];
-	meta: {
-		total: number;
-		page: number;
-		limit: number;
-		totalPages: number;
-	};
-}
+// Rental type is re-exported from rental.types.ts (see top of file)
 
 // Payment Types
 export interface Payment {
@@ -1207,4 +1068,191 @@ export interface PaymentStatistics {
 		amount: number;
 		count: number;
 	}>;
+}
+
+// Landlord Management Types
+export interface TenantInfo {
+	tenantId: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone?: string;
+	room: {
+		roomId: string;
+		roomNumber: string;
+		roomName?: string;
+		buildingId?: string;
+		buildingName?: string;
+		occupancy?: number;
+	};
+	rentalId: string;
+	rentalStatus: string;
+	contractStartDate: string;
+	contractEndDate?: string;
+}
+
+export interface RoomWithOccupants {
+	id: string;
+	roomNumber: string;
+	roomName?: string;
+	status: string;
+	building: {
+		id: string;
+		name: string;
+		address: string;
+	};
+	occupants: Array<{
+		id: string;
+		firstName: string;
+		lastName: string;
+		email: string;
+		phone?: string;
+		avatarUrl?: string;
+		rental: {
+			id: string;
+			startDate: string;
+			endDate?: string;
+			monthlyRent: number;
+			status: string;
+		};
+	}>;
+}
+
+export interface TenantListResponse {
+	data: TenantInfo[];
+	page?: number;
+	limit?: number;
+	total?: number;
+}
+
+export interface RoomWithOccupantsListResponse {
+	data: RoomWithOccupants[];
+	page?: number;
+	limit?: number;
+	total?: number;
+}
+
+// User Address Types
+export interface CreateAddressRequest {
+	streetAddress: string;
+	wardId: number;
+	districtId: number;
+	provinceId: number;
+	isDefault?: boolean;
+}
+
+export interface UpdateAddressRequest {
+	streetAddress?: string;
+	wardId?: number;
+	districtId?: number;
+	provinceId?: number;
+	isDefault?: boolean;
+}
+
+// User Verification Types
+export interface VerifyPhoneRequest {
+	phone: string;
+	verificationCode: string;
+}
+
+export interface VerifyEmailRequest {
+	email: string;
+	verificationCode: string;
+}
+
+export interface VerifyIdentityRequest {
+	idCardNumber: string;
+	idCardType: 'cmnd' | 'cccd' | 'passport';
+	fullName: string;
+	dateOfBirth: string;
+	placeOfOrigin: string;
+	placeOfResidence: string;
+	frontImageUrl: string;
+	backImageUrl: string;
+}
+
+// Rating & Review System Types
+export type RatingTargetType = 'tenant' | 'landlord' | 'room';
+
+export interface ReviewerInfo {
+	id: string;
+	firstName: string;
+	lastName: string;
+	avatarUrl?: string | null;
+	isVerified: boolean;
+}
+
+export interface RatingResponseDto {
+	id: string;
+	targetType: RatingTargetType;
+	targetId: string;
+	reviewerId: string;
+	rentalId?: string | null;
+	rating: number; // 1-5
+	content?: string | null;
+	images?: string[];
+	createdAt: string;
+	updatedAt: string;
+	reviewer: ReviewerInfo;
+	isCurrentUser: boolean;
+}
+
+export interface CreateRatingRequest {
+	targetType: RatingTargetType;
+	targetId: string;
+	rating: number; // 1-5
+	content?: string;
+	images?: string[];
+	rentalId?: string;
+}
+
+export interface UpdateRatingRequest {
+	rating?: number; // 1-5
+	content?: string;
+	images?: string[];
+}
+
+export interface RatingDistribution {
+	1: number;
+	2: number;
+	3: number;
+	4: number;
+	5: number;
+}
+
+export interface RatingStatistics {
+	totalRatings: number;
+	averageRating: number;
+	distribution: RatingDistribution;
+}
+
+export interface PaginationMeta {
+	page: number;
+	limit: number;
+	total: number;
+	totalPages: number;
+}
+
+export interface PaginatedRatingsResponse {
+	data: RatingResponseDto[];
+	meta: PaginationMeta;
+	stats: RatingStatistics;
+}
+
+export interface GetRatingsQueryParams {
+	// Filters
+	targetType?: RatingTargetType;
+	targetId?: string;
+	reviewerId?: string;
+	rentalId?: string;
+	minRating?: number; // 1-5
+	maxRating?: number; // 1-5
+
+	// Pagination
+	page?: number; // Default: 1
+	limit?: number; // Default: 20
+
+	// Sorting
+	sortBy?: string; // Default: 'createdAt'
+	sortOrder?: 'asc' | 'desc'; // Default: 'desc'
 }

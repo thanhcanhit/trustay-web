@@ -80,12 +80,12 @@ export function RoomCard({
   const wifiAvailable = hasWifi();
 
   return (
-    <div 
+    <div
       className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer ${className}`}
       onClick={handleClick}
     >
       {/* Image Container */}
-      <div className="relative h-48">
+      <div className="relative h-40">
         <Image
           src={imageError ? "/images/error-image.jpg" : getOptimizedImageUrl(room.images?.[0]?.url || '', 'listing')}
           alt={room.name || "Room image"}
@@ -129,7 +129,10 @@ export function RoomCard({
           <span>{room.location.districtName}, {room.location.provinceName}</span>
         </div>
 
-        
+        {/* Price */}
+        <div className="text-green-600 font-bold text-lg mb-2">
+          {formatPrice(room.pricing.basePriceMonthly)}tr/tháng
+        </div>
 
         {/* Room Type & Building */}
         <div className="flex text-xsm text-gray-600 mb-2 gap-1">
@@ -139,29 +142,21 @@ export function RoomCard({
           </span>
           <span className="text-gray-400">•</span>
           {getRoomTypeDisplayName(room.roomType)}
-          
         </div>
 
-        {/* Electricity & Water Costs */}
-        {(electricityCost || waterCost) && (
-          <div className="flex items-center justify-between text-xs text-gray-600 mb -2">
-            <div>
-              {/* Price */}
-              <div className="bg-white text-green-600 font-bold text-lg">
-                {formatPrice(room.pricing.basePriceMonthly)}tr/tháng
-              </div>
-              <div className="h-6 flex items-center min-w-[50px]">
-              {wifiAvailable && 
-                <Badge
-                  className="bg-green-100 text-green-700 font-bold border border-green-200"
-                >
-                  <Wifi className="h-3 w-3" />
-                  Wifi
-                </Badge>}
-              </div>
-            </div>
-            
-            <div className='flex flex-col gap-1 '>
+        {/* Amenities & Costs */}
+        <div className="flex items-center justify-between text-xs text-gray-600">
+          <div className="flex items-center gap-2">
+            {wifiAvailable && (
+              <Badge className="bg-green-100 text-green-700 font-bold border border-green-200">
+                <Wifi className="h-3 w-3" />
+                Wifi
+              </Badge>
+            )}
+          </div>
+
+          {(electricityCost || waterCost) && (
+            <div className='flex flex-col gap-1'>
               {electricityCost && (
                 <div className="flex items-center gap-1">
                   <Zap className="h-3 w-3 text-yellow-600" />
@@ -175,10 +170,8 @@ export function RoomCard({
                 </div>
               )}
             </div>
-          </div>
-        )}
-
-        
+          )}
+        </div>        
       </div>
     </div>
   );

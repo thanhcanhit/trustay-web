@@ -3,12 +3,12 @@
 import { createServerApiCall } from '@/lib/api-client';
 import type {
 	CreateRentalRequest,
+	PaginatedRentalResponse,
 	RenewRentalRequest,
 	Rental,
-	RentalListResponse,
 	TerminateRentalRequest,
 	UpdateRentalRequest,
-} from '@/types/types';
+} from '@/types/rental.types';
 import { extractErrorMessage } from '@/utils/api-error-handler';
 
 interface ApiErrorResult {
@@ -33,6 +33,40 @@ const normalizeEntityResponse = <T extends object>(response: unknown): { data: T
 	return { data: response as T };
 };
 
+// Helper to convert Decimal-like objects {s, e, d} to string
+const decimalToString = (val: unknown): string => {
+	if (val && typeof val === 'object' && 'd' in val) {
+		const decimal = val as { s: number; e: number; d: number[] };
+		const sign = decimal.s < 0 ? '-' : '';
+		const digits = decimal.d.join('');
+		const exp = decimal.e;
+		if (exp >= 0) {
+			const intPart = digits.slice(0, exp + 1) || '0';
+			const decPart = digits.slice(exp + 1);
+			return sign + intPart + (decPart ? '.' + decPart : '');
+		}
+		return sign + '0.' + '0'.repeat(-exp - 1) + digits;
+	}
+	return String(val);
+};
+
+const normalizeRental = (rental: Rental): Rental => ({
+	...rental,
+	monthlyRent: decimalToString(rental.monthlyRent),
+	depositPaid: decimalToString(rental.depositPaid),
+	roomInstance: rental.roomInstance
+		? {
+				...rental.roomInstance,
+				room: rental.roomInstance.room
+					? {
+							...rental.roomInstance.room,
+							areaSqm: decimalToString(rental.roomInstance.room.areaSqm),
+						}
+					: rental.roomInstance.room,
+			}
+		: rental.roomInstance,
+});
+
 // Create rental (Landlord only)
 export const createRental = async (
 	data: CreateRentalRequest,
@@ -40,7 +74,7 @@ export const createRental = async (
 ): Promise<ApiResult<{ data: Rental }>> => {
 	try {
 		const response = await apiCall<{ data: Rental }>(
-			'/api/rentals',
+			'api/rentals',
 			{
 				method: 'POST',
 				data,
@@ -61,7 +95,7 @@ export const getMyRentals = async (
 		status?: string;
 	},
 	token?: string,
-): Promise<ApiResult<RentalListResponse>> => {
+): Promise<ApiResult<PaginatedRentalResponse>> => {
 	try {
 		const q = new URLSearchParams();
 		if (params?.page) q.append('page', String(params.page));
@@ -69,8 +103,14 @@ export const getMyRentals = async (
 		if (params?.status) q.append('status', params.status);
 
 		const endpoint = `/api/rentals${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<RentalListResponse>(endpoint, { method: 'GET' }, token);
-		return { success: true, data: response };
+		const response = await apiCall<PaginatedRentalResponse>(endpoint, { method: 'GET' }, token);
+		return {
+			success: true,
+			data: {
+				...response,
+				data: response.data.map(normalizeRental),
+			},
+		};
 	} catch (error) {
 		return {
 			success: false,
@@ -87,7 +127,7 @@ export const getLandlordRentals = async (
 		status?: string;
 	},
 	token?: string,
-): Promise<ApiResult<RentalListResponse>> => {
+): Promise<ApiResult<PaginatedRentalResponse>> => {
 	try {
 		const q = new URLSearchParams();
 		if (params?.page) q.append('page', String(params.page));
@@ -95,8 +135,14 @@ export const getLandlordRentals = async (
 		if (params?.status) q.append('status', params.status);
 
 		const endpoint = `/api/rentals/owner${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<RentalListResponse>(endpoint, { method: 'GET' }, token);
-		return { success: true, data: response };
+		const response = await apiCall<PaginatedRentalResponse>(endpoint, { method: 'GET' }, token);
+		return {
+			success: true,
+			data: {
+				...response,
+				data: response.data.map(normalizeRental),
+			},
+		};
 	} catch (error) {
 		return {
 			success: false,
@@ -113,7 +159,7 @@ export const getTenantRentals = async (
 		status?: string;
 	},
 	token?: string,
-): Promise<ApiResult<RentalListResponse>> => {
+): Promise<ApiResult<PaginatedRentalResponse>> => {
 	try {
 		const q = new URLSearchParams();
 		if (params?.page) q.append('page', String(params.page));
@@ -121,8 +167,14 @@ export const getTenantRentals = async (
 		if (params?.status) q.append('status', params.status);
 
 		const endpoint = `/api/rentals/my-rentals${q.toString() ? `?${q.toString()}` : ''}`;
-		const response = await apiCall<RentalListResponse>(endpoint, { method: 'GET' }, token);
-		return { success: true, data: response };
+		const response = await apiCall<PaginatedRentalResponse>(endpoint, { method: 'GET' }, token);
+		return {
+			success: true,
+			data: {
+				...response,
+				data: response.data.map(normalizeRental),
+			},
+		};
 	} catch (error) {
 		return {
 			success: false,
@@ -144,7 +196,8 @@ export const getRentalById = async (
 			},
 			token,
 		);
-		return { success: true, data: normalizeEntityResponse<Rental>(response) };
+		const normalized = normalizeEntityResponse<Rental>(response);
+		return { success: true, data: { data: normalizeRental(normalized.data) } };
 	} catch (error) {
 		return {
 			success: false,

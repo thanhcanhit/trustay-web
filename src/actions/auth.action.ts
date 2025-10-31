@@ -231,11 +231,103 @@ export const checkPasswordStrength = async (password: string): Promise<number> =
 	}
 };
 
-// Logout (client-side should handle clearing localStorage)
-export const logout = async (): Promise<void> => {
-	// Server-side logout logic can be added here if needed
-	// Client should handle clearing localStorage
+// Logout
+export const logout = async (token?: string): Promise<ApiResult<{ message: string }>> => {
+	try {
+		const response = await apiCall<{ message: string }>(
+			'/api/auth/logout',
+			{
+				method: 'POST',
+			},
+			token,
+		);
+
+		return {
+			success: true,
+			data: response,
+		};
+	} catch (error: unknown) {
+		const errorMessage = extractErrorMessage(error, 'Failed to logout');
+		return {
+			success: false,
+			error: errorMessage,
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
+	}
 };
+
+// // Change password
+// export const changePassword = async (
+// 	currentPassword: string,
+// 	newPassword: string,
+// 	token?: string,
+// ): Promise<ApiResult<{ message: string }>> => {
+// 	try {
+// 		const response = await apiCall<{ message: string }>(
+// 			'/api/auth/change-password',
+// 			{
+// 				method: 'POST',
+// 				data: {
+// 					currentPassword,
+// 					newPassword,
+// 				},
+// 			},
+// 			token,
+// 		);
+
+// 		return {
+// 			success: true,
+// 			data: response,
+// 		};
+// 	} catch (error: unknown) {
+// 		const errorMessage = extractErrorMessage(error, 'Failed to change password');
+// 		return {
+// 			success: false,
+// 			error: errorMessage,
+// 			status: error instanceof AxiosError ? error.response?.status : undefined,
+// 		};
+// 	}
+// };
+
+// // Update user profile
+// export const updateUserProfile = async (
+// 	data: Partial<{
+// 		firstName: string;
+// 		lastName: string;
+// 		phone: string;
+// 		gender: 'male' | 'female' | 'other';
+// 		bio: string;
+// 		dateOfBirth: string;
+// 		avatarUrl: string;
+// 		idCardNumber: string;
+// 		bankAccount: string;
+// 		bankName: string;
+// 	}>,
+// 	token?: string,
+// ): Promise<ApiResult<UserProfile>> => {
+// 	try {
+// 		const response = await apiCall<UserProfile>(
+// 			'/api/auth/profile',
+// 			{
+// 				method: 'PATCH',
+// 				data,
+// 			},
+// 			token,
+// 		);
+
+// 		return {
+// 			success: true,
+// 			data: response,
+// 		};
+// 	} catch (error: unknown) {
+// 		const errorMessage = extractErrorMessage(error, 'Failed to update profile');
+// 		return {
+// 			success: false,
+// 			error: errorMessage,
+// 			status: error instanceof AxiosError ? error.response?.status : undefined,
+// 		};
+// 	}
+// };
 
 // Complete registration and redirect
 export async function completeRegistration(formData: FormData) {

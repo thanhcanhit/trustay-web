@@ -12,7 +12,6 @@ import { useRoomStore } from "@/stores/roomStore"
 import { AmenitySelector } from "@/components/ui/amenity-selector"
 import { ImageSwiper } from "@/components/ui/image-swiper"
 import { RoomCard } from "@/components/ui/room-card"
-import { StarRating, StarRatingDisplay } from "@/components/ui/star-rating"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -20,7 +19,6 @@ import { getRoomTypeDisplayName } from "@/utils/room-types"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { BreadcrumbNavigation } from "@/components/breadcrumb-navigation"
 import { useBookingRequestStore } from "@/stores/bookingRequestStore"
 import { useUserStore } from "@/stores/userStore"
@@ -29,6 +27,7 @@ import { MESSAGE_TYPES } from "@/constants/chat.constants"
 import { useChatStore } from "@/stores/chat.store"
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination } from 'swiper/modules'
+import { RatingsList } from "@/components/rating"
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
@@ -39,9 +38,6 @@ export default function PropertyDetailPage() {
   const roomSlug = params.slug as string
   const [hasLoaded, setHasLoaded] = useState(false)
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
-  const [userRating, setUserRating] = useState(0)
-  const [userReview, setUserReview] = useState("")
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false)
   const [isBookingOpen, setIsBookingOpen] = useState(false)
   const [selectedInstanceId, setSelectedInstanceId] = useState<string>("")
   const [moveInDate, setMoveInDate] = useState<string>("")
@@ -284,57 +280,6 @@ export default function PropertyDetailPage() {
     } else {
       toast.error('Gửi yêu cầu thất bại')
     }
-  }
-
-  // Mock reviews data
-  const mockReviews = [
-    {
-      id: 1,
-      userName: "Nguyễn Văn A",
-      avatar: "/placeholder-avatar.png",
-      rating: 5,
-      comment: "Phòng trọ rất sạch sẽ, thoáng mát. Chủ trọ thân thiện, giá cả hợp lý. Tôi rất hài lòng!",
-      date: "2024-01-15",
-      isVerified: true
-    },
-    {
-      id: 2,
-      userName: "Trần Thị B",
-      avatar: "/placeholder-avatar.png", 
-      rating: 4,
-      comment: "Vị trí thuận tiện, gần trường học. Tiện nghi đầy đủ nhưng có thể cải thiện thêm về wifi.",
-      date: "2024-01-10",
-      isVerified: false
-    },
-    {
-      id: 3,
-      userName: "Lê Minh C",
-      avatar: "/placeholder-avatar.png",
-      rating: 5,
-      comment: "Tuyệt vời! Phòng đúng như hình ảnh, chủ trọ hỗ trợ nhiệt tình. Sẽ giới thiệu cho bạn bè.",
-      date: "2024-01-08",
-      isVerified: true
-    }
-  ]
-
-  const averageRating = mockReviews.reduce((sum, review) => sum + review.rating, 0) / mockReviews.length
-
-  const handleSubmitReview = async () => {
-    if (userRating === 0 || !userReview.trim()) {
-      alert("Vui lòng đánh giá sao và nhập nhận xét!")
-      return
-    }
-
-    setIsSubmittingReview(true)
-    
-    // Simulate API call
-    setTimeout(() => {
-      // Reset form
-      setUserRating(0)
-      setUserReview("")
-      setIsSubmittingReview(false)
-      alert("Cảm ơn bạn đã đánh giá!")
-    }, 1000)
   }
 
   // Generate breadcrumb items from API response or fallback to generated ones
@@ -1103,120 +1048,21 @@ export default function PropertyDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Reviews Section - Sticky */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm sticky top-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Star className="h-5 w-5 text-yellow-500" />
-                  Đánh giá ({mockReviews.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Average Rating */}
-                <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <StarRatingDisplay rating={averageRating} size="lg" />
-                    <span className="text-2xl font-bold text-gray-900">
-                      {averageRating.toFixed(1)}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-600">Dựa trên {mockReviews.length} đánh giá</div>
-                  </div>
-                </div>
-
-                {/* Review Form */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Đánh giá của bạn
-                    </label>
-                    <StarRating
-                      rating={userRating}
-                      interactive={true}
-                      onRatingChange={setUserRating}
-                      size="lg"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Nhận xét
-                    </label>
-                    <Textarea
-                      placeholder="Chia sẻ trải nghiệm của bạn về phòng trọ này..."
-                      value={userReview}
-                      onChange={(event) => setUserReview(event.target.value)}
-                      className="min-h-[80px] resize-none"
-                    />
-                  </div>
-                  <Button
-                    onClick={handleSubmitReview}
-                    disabled={isSubmittingReview || userRating === 0}
-                    className="w-full"
-                  >
-                    {isSubmittingReview ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Đang gửi...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" />
-                        Gửi đánh giá
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                <Separator />
-
-                {/* Reviews List */}
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {mockReviews.map((review) => (
-                    <div key={review.id} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                      <Avatar className="h-10 w-10 flex-shrink-0">
-                        {review.avatar ? (
-                          <div className="w-full h-full relative">
-                            <SizingImage 
-                              src={review.avatar} 
-                              srcSize="128x128" 
-                              alt={review.userName} 
-                              className="object-cover rounded-full"
-                              fill
-                            />
-                          </div>
-                        ) : (
-                          <AvatarFallback className="bg-blue-100 text-blue-600">
-                            {review.userName.charAt(0)}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h5 className="font-medium text-gray-900">
-                            {review.userName}
-                          </h5>
-                          {review.isVerified && (
-                            <Badge variant="secondary" className="text-xs">
-                              ✓ Đã xác minh
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <StarRatingDisplay rating={review.rating} size="sm" />
-                          <span className="text-sm text-gray-500">
-                            {new Date(review.date).toLocaleDateString('vi-VN')}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-700 leading-relaxed">
-                          {review.comment}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Reviews Section - Using RatingsList Component */}
+            {roomDetail?.id && (
+              <div className="sticky top-6">
+                <RatingsList
+                  targetType="room"
+                  targetId={roomDetail.id}
+                  showStats={true}
+                  initialParams={{
+                    limit: 5,
+                    sortBy: 'createdAt',
+                    sortOrder: 'desc'
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
 
