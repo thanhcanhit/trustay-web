@@ -1,5 +1,7 @@
 // Export all types for easy importing
 
+// Export AI types
+export * from './ai';
 // Export property types (excluding Room to avoid conflict)
 export type {
 	CreateRentalPostData,

@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react"
 import { usePathname, useRouter } from "next/navigation"
 // import { motion, AnimatePresence } from "motion/react"
 import { useUserStore } from "@/stores/userStore"
+import { useAIAssistantStore } from "@/stores/aiAssistant.store"
 import { useSearchFilters } from "@/hooks/use-search-filters"
 import { encodeSearchQuery } from "@/utils/search-params"
 import { Button } from "@/components/ui/button"
@@ -25,7 +26,8 @@ import {
   Plus,
   Funnel,
   Search,
-  Home
+  Home,
+  Sparkles
 } from "lucide-react"
 import Image from "next/image"
 import { Input } from "./ui/input"
@@ -51,6 +53,7 @@ export function Navigation() {
   const [searchType, setSearchType] = useState<string>('rooms')
   const [isMounted, setIsMounted] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const toggleAISidebar = useAIAssistantStore(s => s.toggleSidebar)
 
   useEffect(() => {
     setIsMounted(true)
@@ -199,8 +202,10 @@ export function Navigation() {
     }
   }, [])
 
+  const isAIOpen = useAIAssistantStore(s => s.isSidebarOpen)
+
   return (
-    <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-[9998]" suppressHydrationWarning={true}>
+    <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-[9998]" suppressHydrationWarning={true} style={{ right: isAIOpen ? 360 : 0 }}>
       {/* First Row: Logo, Search, Login/Signup */}
       <div className={isAuthPage ? "" : "border-b border-gray-200"}>
         <div className="container mx-auto px-4 relative">
@@ -556,8 +561,18 @@ export function Navigation() {
               </div>
             )}
 
-            {/* Right Section - Login/Signup or User Menu */}
+            {/* Right Section - AI Button + Login/Signup or User Menu */}
             <div className="flex items-center space-x-2 md:space-x-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 cursor-pointer"
+                onClick={() => toggleAISidebar(true)}
+                aria-label="Mở Trustay AI"
+              >
+                <Sparkles className="h-4 w-4 mr-1" />
+                AI
+              </Button>
               {isAuthenticated && user ? (
                 <>
                 <NotificationBell />
