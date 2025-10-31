@@ -1,35 +1,45 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { 
-	Search, 
-	Users, 
-	Home, 
-	Eye, 
-	MessageCircle, 
-	 
-	Edit, 
-	Trash2, 
+import {
+	Search,
+	Users,
+	Home,
+	Eye,
+	ExternalLink,
+	Edit,
+	Trash2,
 	Calendar,
 	MapPin,
 	DollarSign,
 	//User,
-	Plus
+	Plus,
+	MoreVertical
 } from 'lucide-react'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { RoomSeekingPost, RoommatePost, RentalPost } from '@/types'
+import { RoomSeekingPost, RentalPost } from '@/types'
+import { RoommateSeekingPost } from '@/actions/roommate-seeking-posts.action'
 import { getRoomTypeDisplayName } from '@/utils/room-types'
 
 interface PostListProps {
 	roomSeekingPosts?: RoomSeekingPost[]
-	roommatePosts?: RoommatePost[]
+	roommatePosts?: RoommateSeekingPost[]
 	rentalPosts?: RentalPost[]
 	showRental?: boolean
 	showRoomSeeking?: boolean
@@ -37,9 +47,11 @@ interface PostListProps {
 	initialTab?: 'room-seeking' | 'roommate' | 'rental'
 	onEdit?: (postId: string, type: 'room-seeking' | 'roommate' | 'rental') => void
 	onDelete?: (postId: string, type: 'room-seeking' | 'roommate' | 'rental') => void
+	onStatusChange?: (postId: string, type: 'room-seeking' | 'roommate' | 'rental', newStatus: string) => void
 }
 
 const POST_STATUSES = {
+	draft: { label: 'Bản nháp', color: 'bg-gray-400' },
 	active: { label: 'Đang hoạt động', color: 'bg-green-500' },
 	paused: { label: 'Tạm dừng', color: 'bg-yellow-500' },
 	closed: { label: 'Đã đóng', color: 'bg-gray-500' },
@@ -58,7 +70,8 @@ export function PostList({
 	showRoommate = true,
 	initialTab = 'room-seeking',
 	onEdit,
-	onDelete 
+	onDelete,
+	onStatusChange
 }: PostListProps) {
 	const [activeTab, setActiveTab] = useState(initialTab)
 
@@ -92,8 +105,11 @@ export function PostList({
 		return format(new Date(dateString), 'dd/MM/yyyy', { locale: vi })
 	}
 
-	const getStatusBadge = (status: keyof typeof POST_STATUSES) => {
-		const statusInfo = POST_STATUSES[status]
+	const getStatusBadge = (status: string) => {
+		const statusInfo = POST_STATUSES[status as keyof typeof POST_STATUSES] || { 
+			label: status, 
+			color: 'bg-gray-500' 
+		}
 		return (
 			<Badge className={`${statusInfo.color} text-white`}>
 				{statusInfo.label}
@@ -143,14 +159,48 @@ export function PostList({
 						<Badge variant="outline">{post.occupancy} người</Badge>
 					</div>
 					<div className="flex items-center gap-2">
-						{onEdit && (
-							<Button variant="outline" size="sm" onClick={() => onEdit(post.id, 'room-seeking')}>
-								<Edit className="h-4 w-4" />
+						<Link href={`/room-seekings/${post.id}`}>
+							<Button variant="outline" size="sm">
+								<ExternalLink className="h-4 w-4 mr-1" />
+								Xem
 							</Button>
+						</Link>
+						{/* {onEdit && (
+							<Button variant="outline" size="sm" onClick={() => onEdit(post.id, 'room-seeking')}>
+								<Edit className="h-4 w-4 mr-1" />
+								Sửa
+							</Button>
+						)} */}
+						{onStatusChange && (
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button variant="outline" size="sm">
+										<MoreVertical className="h-4 w-4" />
+										Thay đổi trạng thái
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end">
+									<DropdownMenuLabel>Thay đổi trạng thái</DropdownMenuLabel>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem onClick={() => onStatusChange(post.id, 'room-seeking', 'active')}>
+										Đang hoạt động
+									</DropdownMenuItem>
+									<DropdownMenuItem onClick={() => onStatusChange(post.id, 'room-seeking', 'paused')}>
+										Tạm dừng
+									</DropdownMenuItem>
+									<DropdownMenuItem onClick={() => onStatusChange(post.id, 'room-seeking', 'inactive')}>
+										Tạm dừng (Inactive)
+									</DropdownMenuItem>
+									<DropdownMenuItem onClick={() => onStatusChange(post.id, 'room-seeking', 'found')}>
+										Đã tìm thấy
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
 						)}
 						{onDelete && (
-							<Button variant="outline" size="sm" onClick={() => onDelete(post.id, 'room-seeking')}>
-								<Trash2 className="h-4 w-4" />
+							<Button variant="destructive" size="sm" onClick={() => onDelete(post.id, 'room-seeking')}>
+								<Trash2 className="h-4 w-4 mr-1" />
+								Xóa
 							</Button>
 						)}
 					</div>
@@ -159,72 +209,129 @@ export function PostList({
 		</Card>
 	)
 
-	const renderRoommatePost = (post: RoommatePost) => (
-		<Card key={post.id} className="hover:shadow-md transition-shadow">
-			<CardHeader>
-				<div className="flex justify-between items-start">
-					<div className="flex-1">
-						<CardTitle className="text-lg mb-2">{post.title}</CardTitle>
-						<div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-							<div className="flex items-center gap-1">
-								<Calendar className="h-4 w-4" />
-								{formatDate(post.createdAt)}
+	const renderRoommatePost = (post: RoommateSeekingPost) => {
+		// Get location display text
+		const getLocationText = () => {
+			if (post.roomInstance?.room?.building) {
+				return `${post.roomInstance.room.building.name} - Phòng ${post.roomInstance.roomNumber}`;
+			}
+			if (post.externalAddress) {
+				return post.externalAddress;
+			}
+			return 'Chưa xác định';
+		};
+
+		// Get tenant display info
+		const tenantName = post.tenant 
+			? `${post.tenant.firstName || ''} ${post.tenant.lastName || ''}`.trim() || 'Ẩn danh'
+			: 'Ẩn danh';
+		const tenantAvatar = post.tenant?.avatarUrl;
+
+		return (
+			<Card key={post.id} className="hover:shadow-md transition-shadow">
+				<CardHeader>
+					<div className="flex justify-between items-start">
+						<div className="flex-1">
+							<CardTitle className="text-lg mb-2">{post.title}</CardTitle>
+							<div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
+								<div className="flex items-center gap-1">
+									<Calendar className="h-4 w-4" />
+									{formatDate(post.createdAt)}
+								</div>
+								<div className="flex items-center gap-1">
+									<MapPin className="h-4 w-4" />
+									{getLocationText()}
+								</div>
+								<div className="flex items-center gap-1">
+									<DollarSign className="h-4 w-4" />
+									{formatPrice(post.monthlyRent)}/tháng
+								</div>
 							</div>
-							<div className="flex items-center gap-1">
-								<MapPin className="h-4 w-4" />
-								{post.location}
-							</div>
-							<div className="flex items-center gap-1">
-								<DollarSign className="h-4 w-4" />
-								{formatPrice(post.budget)}
+						</div>
+						<div className="flex items-center gap-2">
+							{getStatusBadge(post.status)}
+							<div className="flex items-center gap-1 text-sm text-muted-foreground">
+								<Eye className="h-4 w-4" />
+								{post.viewCount || 0}
 							</div>
 						</div>
 					</div>
-					<div className="flex items-center gap-2">
-						{getStatusBadge(post.status)}
-						<div className="flex items-center gap-1 text-sm text-muted-foreground">
-							<MessageCircle className="h-4 w-4" />
-							{post.responses}
+				</CardHeader>
+				<CardContent>
+					<div className="flex items-center gap-3 mb-3">
+						<RoommateAuthorAvatar name={tenantName} src={tenantAvatar} />
+						<div>
+							<p className="text-sm font-medium">{tenantName}</p>
+							<p className="text-xs text-muted-foreground">
+								{post.preferredGender === 'male' ? 'Tìm Nam' : post.preferredGender === 'female' ? 'Tìm Nữ' : 'Không phân biệt'}
+							</p>
 						</div>
 					</div>
-				</div>
-			</CardHeader>
-			<CardContent>
-				<div className="flex items-center gap-3 mb-3">
-					<RoommateAuthorAvatar name={post.authorName} src={post.authorAvatar} />
-					<div>
-						<p className="text-sm font-medium">{post.authorName}</p>
-						<p className="text-xs text-muted-foreground">
-							{post.authorGender === 'male' ? 'Nam' : 'Nữ'} • {post.authorAge} tuổi
-						</p>
+					<p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+						{post.description}
+					</p>
+					<div className="flex justify-between items-center">
+						<div className="flex items-center gap-2">
+							<Badge variant="outline">
+								Tìm {post.seekingCount} người
+							</Badge>
+							<Badge variant="outline">
+								{post.remainingSlots}/{post.seekingCount} còn trống
+							</Badge>
+							{post.depositAmount > 0 && (
+								<Badge variant="outline">
+									Đặt cọc: {formatPrice(post.depositAmount)}
+								</Badge>
+							)}
+						</div>
+						<div className="flex items-center gap-2">
+							<Link href={`/roommate/${post.id}`}>
+								<Button variant="outline" size="sm">
+									<ExternalLink className="h-4 w-4 mr-1" />
+									Xem
+								</Button>
+							</Link>
+							{onEdit && (
+								<Button variant="outline" size="sm" onClick={() => onEdit(post.id, 'roommate')}>
+									<Edit className="h-4 w-4 mr-1" />
+									Sửa
+								</Button>
+							)}
+							{onStatusChange && (
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button variant="outline" size="sm">
+											<MoreVertical className="h-4 w-4" />
+											Thay đổi trạng thái
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end">
+										<DropdownMenuLabel>Thay đổi trạng thái</DropdownMenuLabel>
+										<DropdownMenuSeparator />
+										<DropdownMenuItem onClick={() => onStatusChange(post.id, 'roommate', 'active')}>
+											Đang hoạt động
+										</DropdownMenuItem>
+										<DropdownMenuItem onClick={() => onStatusChange(post.id, 'roommate', 'paused')}>
+											Tạm dừng
+										</DropdownMenuItem>
+										<DropdownMenuItem onClick={() => onStatusChange(post.id, 'roommate', 'closed')}>
+											Đã đóng
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							)}
+							{onDelete && (
+								<Button variant="destructive" size="sm" onClick={() => onDelete(post.id, 'roommate')}>
+									<Trash2 className="h-4 w-4 mr-1" />
+									Xóa
+								</Button>
+							)}
+						</div>
 					</div>
-				</div>
-				<p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-					{post.description}
-				</p>
-				<div className="flex justify-between items-center">
-					<div className="flex items-center gap-2">
-						<Badge variant="outline">
-							{post.preferredGender === 'male' ? 'Nam' : post.preferredGender === 'female' ? 'Nữ' : 'Không phân biệt'}
-						</Badge>
-						<Badge variant="outline">{post.preferredAgeRange?.min}-{post.preferredAgeRange?.max} tuổi</Badge>
-					</div>
-					<div className="flex items-center gap-2">
-						{onEdit && (
-							<Button variant="outline" size="sm" onClick={() => onEdit(post.id, 'roommate')}>
-								<Edit className="h-4 w-4" />
-							</Button>
-						)}
-						{onDelete && (
-							<Button variant="outline" size="sm" onClick={() => onDelete(post.id, 'roommate')}>
-								<Trash2 className="h-4 w-4" />
-							</Button>
-						)}
-					</div>
-				</div>
-			</CardContent>
-		</Card>
-	)
+				</CardContent>
+			</Card>
+		);
+	};
 
 	const renderRentalPost = (post: RentalPost) => (
 		<Card key={post.id} className="hover:shadow-md transition-shadow">
@@ -269,13 +376,37 @@ export function PostList({
 					</div>
 					<div className="flex items-center gap-2">
 						{onEdit && (
-							<Button variant="outline" size="sm" onClick={() => onEdit(post.id, 'rental')}>
-								<Edit className="h-4 w-4" />
+							<Button variant="outline" size="sm" onClick={() => onEdit(post.id, 'roommate')}>
+								<Edit className="h-4 w-4 mr-1" />
+								Sửa
 							</Button>
 						)}
+						{onStatusChange && (
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button variant="outline" size="sm">
+										<MoreVertical className="h-4 w-4" />
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end">
+									<DropdownMenuLabel>Thay đổi trạng thái</DropdownMenuLabel>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem onClick={() => onStatusChange(post.id, 'roommate', 'active')}>
+										Đang hoạt động
+									</DropdownMenuItem>
+									<DropdownMenuItem onClick={() => onStatusChange(post.id, 'roommate', 'paused')}>
+										Tạm dừng
+									</DropdownMenuItem>
+									<DropdownMenuItem onClick={() => onStatusChange(post.id, 'roommate', 'closed')}>
+										Đã đóng
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						)}
 						{onDelete && (
-							<Button variant="outline" size="sm" onClick={() => onDelete(post.id, 'rental')}>
-								<Trash2 className="h-4 w-4" />
+							<Button variant="destructive" size="sm" onClick={() => onDelete(post.id, 'roommate')}>
+								<Trash2 className="h-4 w-4 mr-1" />
+								Xóa
 							</Button>
 						)}
 					</div>
@@ -288,12 +419,22 @@ export function PostList({
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
 				<h2 className="text-2xl font-bold">Bài đăng của tôi</h2>
-				<Link href="/profile/posts/room-seeking/add">
-					<Button>
-						<Plus className="h-4 w-4 mr-2" />
-						Tạo bài đăng mới
-					</Button>
-				</Link>
+				{activeTab === 'room-seeking' && (
+					<Link href="/profile/posts/room-seeking/add">
+						<Button>
+							<Plus className="h-4 w-4 mr-2" />
+							Tạo bài tìm trọ
+						</Button>
+					</Link>
+				)}
+				{activeTab === 'roommate' && (
+					<Link href="/profile/posts/roommate/add">
+						<Button>
+							<Plus className="h-4 w-4 mr-2" />
+							Tạo bài tìm bạn cùng trọ
+						</Button>
+					</Link>
+				)}
 			</div>
 
 			<Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'room-seeking' | 'roommate' | 'rental')}>
@@ -321,21 +462,25 @@ export function PostList({
 				{showRoomSeeking && (
 				<TabsContent value="room-seeking" className="space-y-4">
 					{roomSeekingPosts.length === 0 ? (
-						<Card>
-							<CardContent className="flex flex-col items-center justify-center py-12">
-								<Search className="h-12 w-12 text-muted-foreground mb-4" />
-								<h3 className="text-lg font-medium mb-2">Chưa có bài đăng tìm trọ</h3>
-								<p className="text-muted-foreground text-center mb-4">
-									Tạo bài đăng đầu tiên để tìm phòng trọ phù hợp
-								</p>
+						<Empty>
+							<EmptyHeader>
+								<EmptyMedia variant="icon">
+									<Search />
+								</EmptyMedia>
+								<EmptyTitle>Chưa có bài đăng tìm trọ</EmptyTitle>
+								<EmptyDescription>
+									Tạo bài đăng đầu tiên để tìm phòng trọ phù hợp với nhu cầu của bạn.
+								</EmptyDescription>
+							</EmptyHeader>
+							<EmptyContent>
 								<Link href="/profile/posts/room-seeking/add">
 									<Button>
 										<Plus className="h-4 w-4 mr-2" />
 										Tạo bài đăng tìm trọ
 									</Button>
 								</Link>
-							</CardContent>
-						</Card>
+							</EmptyContent>
+						</Empty>
 					) : (
 						<div className="grid gap-4">
 							{roomSeekingPosts.map(renderRoomSeekingPost)}
@@ -344,46 +489,54 @@ export function PostList({
 				</TabsContent>
 				)}
 
-				{showRoommate && (
-				<TabsContent value="roommate" className="space-y-4">
-					{roommatePosts.length === 0 ? (
-						<Card>
-							<CardContent className="flex flex-col items-center justify-center py-12">
-								<Users className="h-12 w-12 text-muted-foreground mb-4" />
-								<h3 className="text-lg font-medium mb-2">Chưa có bài đăng tìm bạn cùng trọ</h3>
-								<p className="text-muted-foreground text-center mb-4">
-									Tạo bài đăng đầu tiên để tìm người ở cùng
-								</p>
+			{showRoommate && (
+			<TabsContent value="roommate" className="space-y-4">
+				{roommatePosts.length === 0 ? (
+					<Empty>
+						<EmptyHeader>
+							<EmptyMedia variant="icon">
+								<Users />
+							</EmptyMedia>
+							<EmptyTitle>Chưa có bài đăng tìm bạn cùng trọ</EmptyTitle>
+							<EmptyDescription>
+								Tạo bài đăng đầu tiên để tìm người ở cùng phù hợp với bạn.
+							</EmptyDescription>
+						</EmptyHeader>
+						<EmptyContent>
+							<Link href="/profile/posts/roommate/add">
 								<Button>
-									<Users className="h-4 w-4 mr-2" />
+									<Plus className="h-4 w-4 mr-2" />
 									Tạo bài đăng tìm bạn cùng trọ
 								</Button>
-							</CardContent>
-						</Card>
-					) : (
-						<div className="grid gap-4">
-							{roommatePosts.map(renderRoommatePost)}
-						</div>
-					)}
-				</TabsContent>
+							</Link>
+						</EmptyContent>
+					</Empty>
+				) : (
+					<div className="grid gap-4">
+						{roommatePosts.map(renderRoommatePost)}
+					</div>
 				)}
-
-				{showRental && (
+			</TabsContent>
+			)}				{showRental && (
 					<TabsContent value="rental" className="space-y-4">
 						{rentalPosts.length === 0 ? (
-							<Card>
-								<CardContent className="flex flex-col items-center justify-center py-12">
-									<Home className="h-12 w-12 text-muted-foreground mb-4" />
-									<h3 className="text-lg font-medium mb-2">Chưa có bài đăng cho thuê</h3>
-									<p className="text-muted-foreground text-center mb-4">
-										Tạo bài đăng đầu tiên để cho thuê phòng trọ
-									</p>
+							<Empty>
+								<EmptyHeader>
+									<EmptyMedia variant="icon">
+										<Home />
+									</EmptyMedia>
+									<EmptyTitle>Chưa có bài đăng cho thuê</EmptyTitle>
+									<EmptyDescription>
+										Tạo bài đăng đầu tiên để cho thuê phòng trọ của bạn.
+									</EmptyDescription>
+								</EmptyHeader>
+								<EmptyContent>
 									<Button>
-										<Home className="h-4 w-4 mr-2" />
+										<Plus className="h-4 w-4 mr-2" />
 										Tạo bài đăng cho thuê
 									</Button>
-								</CardContent>
-							</Card>
+								</EmptyContent>
+							</Empty>
 						) : (
 							<div className="grid gap-4">
 								{rentalPosts.map(renderRentalPost)}

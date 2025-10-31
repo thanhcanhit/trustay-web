@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ChatBubble } from "@/components/chat/chat-bubble";
 import { AISidebar } from "@/components/ai/ai-sidebar";
 import { AIOffset } from "@/components/ai/ai-offset";
+import { QueryProvider } from "@/providers/query-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -101,35 +102,37 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        <AuthProvider>
-          <AppInitializer>
-            <NotificationProvider>
-              <Suspense fallback={
-                <div className="bg-white shadow-sm">
-                  <div className="container mx-auto px-4 py-4">
-                    <div className="animate-pulse h-8 bg-gray-200 rounded"></div>
+        <QueryProvider>
+          <AuthProvider>
+            <AppInitializer>
+              <NotificationProvider>
+                <Suspense fallback={
+                  <div className="bg-white shadow-sm">
+                    <div className="container mx-auto px-4 py-4">
+                      <div className="animate-pulse h-8 bg-gray-200 rounded"></div>
+                    </div>
                   </div>
-                </div>
-              }>
-                <Navigation />
-              </Suspense>
-              <AIOffset>
-                <div className="flex-1 flex min-h-0">
-                  <main className="flex-1 page-content min-h-0">{children}</main>
-                </div>
-              </AIOffset>
-              <AISidebar />
-              <FooterGate />
-              <ChatBubble />
-              <Toaster
-                position="top-center"
-                expand={true}
-                richColors
-                closeButton
-              />
-            </NotificationProvider>
-          </AppInitializer>
-        </AuthProvider>
+                }>
+                  <Navigation />
+                </Suspense>
+                <AIOffset>
+                  <div className="flex-1 flex min-h-0">
+                    <main className="flex-1 page-content min-h-0">{children}</main>
+                  </div>
+                </AIOffset>
+                <AISidebar />
+                <FooterGate />
+                <ChatBubble />
+                <Toaster
+                  position="top-center"
+                  expand={true}
+                  richColors
+                  closeButton
+                />
+              </NotificationProvider>
+            </AppInitializer>
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

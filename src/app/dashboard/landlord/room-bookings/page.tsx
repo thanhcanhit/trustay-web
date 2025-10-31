@@ -19,6 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { ClickableUserAvatar } from "@/components/profile/clickable-user-avatar"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -129,8 +130,25 @@ export default function BookingRequestsPage() {
 
                 {!loadingSent && filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-12 text-gray-500">
-                      Chưa gửi lời mời thuê nào
+                    <TableCell colSpan={9} className="p-0">
+                      <Empty>
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon">
+                            <MessageSquare />
+                          </EmptyMedia>
+                          <EmptyTitle>
+                            {searchTerm || statusFilter !== 'all'
+                              ? 'Không tìm thấy lời mời'
+                              : 'Chưa gửi lời mời thuê'
+                            }
+                          </EmptyTitle>
+                          <EmptyDescription>
+                            {searchTerm || statusFilter !== 'all'
+                              ? 'Không có lời mời nào phù hợp với bộ lọc hiện tại. Hãy thử tìm kiếm hoặc lọc với điều kiện khác.'
+                              : 'Bạn chưa gửi lời mời thuê nào. Gửi lời mời cho khách thuê để mời họ thuê phòng của bạn.'}
+                          </EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
                     </TableCell>
                   </TableRow>
                 )}

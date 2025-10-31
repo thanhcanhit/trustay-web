@@ -14,11 +14,22 @@ function extractDataMessage(data: unknown): string | null {
 			return errorMessage;
 		}
 
+		// Handle nested message object
 		if (typeof errorMessage === 'object' && errorMessage !== null) {
 			const nestedMsg = (errorMessage as Record<string, unknown>).message;
 			if (typeof nestedMsg === 'string') {
 				return nestedMsg;
 			}
+
+			// Handle array of error messages (validation errors)
+			if (Array.isArray(nestedMsg)) {
+				return nestedMsg.join(', ');
+			}
+		}
+
+		// Handle array of error messages directly
+		if (Array.isArray(errorMessage)) {
+			return errorMessage.join(', ');
 		}
 	}
 

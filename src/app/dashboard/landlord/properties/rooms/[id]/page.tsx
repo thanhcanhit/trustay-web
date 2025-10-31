@@ -6,13 +6,30 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Home, Users, DollarSign, Settings, Building as BuildingIcon } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Home, Users, DollarSign, Building as BuildingIcon, Eye } from "lucide-react"
 import { useRoomStore } from "@/stores/roomStore"
-import { type Room } from "@/types/types"
+import { type Room, type RoomInstance } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
 import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
 import { ROOM_TYPE_LABELS } from "@/constants/basic"
+
+const STATUS_COLORS = {
+  available: 'bg-green-100 text-green-800',
+  occupied: 'bg-blue-100 text-blue-800',
+  maintenance: 'bg-yellow-100 text-yellow-800',
+  reserved: 'bg-purple-100 text-purple-800',
+  unavailable: 'bg-gray-100 text-gray-800'
+}
+
+const STATUS_LABELS = {
+  available: 'Còn trống',
+  occupied: 'Đã cho thuê',
+  maintenance: 'Bảo trì',
+  reserved: 'Đã đặt trước',
+  unavailable: 'Không khả dụng'
+}
 
 export default function RoomDetailPage() {
   const params = useParams()
@@ -21,7 +38,9 @@ export default function RoomDetailPage() {
 
   const { loadRoomById, deleteMyRoom, loadRoomInstances } = useRoomStore()
   const [room, setRoom] = useState<Room | null>(null)
+  const [instances, setInstances] = useState<RoomInstance[]>([])
   const [loading, setLoading] = useState(true)
+  const [instancesLoading, setInstancesLoading] = useState(false)
   const [actualStatusCounts, setActualStatusCounts] = useState<{
     available: number;
     occupied: number;
@@ -43,16 +62,18 @@ export default function RoomDetailPage() {
 
       if (!roomData) {
         toast.error('Không tìm thấy phòng')
-        router.push('/dashboard/landlord/properties/rooms')
+        router.push('/dashboard/landlord/properties')
         return
       }
 
       setRoom(roomData)
 
-      // Fetch actual status counts from room instances
+      // Fetch room instances
       try {
+        setInstancesLoading(true)
         const instancesData = await loadRoomInstances(roomId, 'all')
         if (instancesData) {
+          setInstances(instancesData.instances || [])
           setActualStatusCounts(instancesData.statusCounts)
         }
       } catch (instancesError) {
@@ -61,11 +82,13 @@ export default function RoomDetailPage() {
         if (roomData.statusCounts) {
           setActualStatusCounts(roomData.statusCounts)
         }
+      } finally {
+        setInstancesLoading(false)
       }
     } catch (error) {
       console.error('Error fetching room detail:', error)
       toast.error('Không thể tải thông tin phòng')
-      router.push('/dashboard/landlord/properties/rooms')
+      router.push('/dashboard/landlord/properties')
     } finally {
       setLoading(false)
     }
@@ -92,7 +115,12 @@ export default function RoomDetailPage() {
       }
 
       toast.success('Xóa loại phòng thành công')
-      router.push('/dashboard/landlord/properties/rooms')
+      // Navigate back to building detail page
+      if (room.buildingId) {
+        router.push(`/dashboard/landlord/properties/${room.buildingId}`)
+      } else {
+        router.push('/dashboard/landlord/properties')
+      }
     } catch (error) {
       console.error('Error deleting room:', error)
       toast.error('Không thể xóa loại phòng. Vui lòng kiểm tra lại.')
@@ -120,7 +148,7 @@ export default function RoomDetailPage() {
         <div className="p-6">
           <div className="text-center py-12">
             <p className="text-gray-600">Không tìm thấy thông tin phòng</p>
-            <Link href="/dashboard/landlord/properties/rooms">
+            <Link href="/dashboard/landlord/properties">
               <Button className="mt-4 cursor-pointer">Quay lại danh sách</Button>
             </Link>
           </div>
@@ -128,6 +156,10 @@ export default function RoomDetailPage() {
       </DashboardLayout>
     )
   }
+
+  const backUrl = room.buildingId 
+    ? `/dashboard/landlord/properties/${room.buildingId}`
+    : '/dashboard/landlord/properties'
 
   return (
     <DashboardLayout userType="landlord">
@@ -147,16 +179,10 @@ export default function RoomDetailPage() {
               </span>
             </div>
           }
-          backUrl="/dashboard/landlord/properties/rooms"
+          backUrl={backUrl}
           backLabel="Quay lại"
           actions={
             <>
-              <Link href={`/dashboard/landlord/properties/rooms/${room.id}/instances`}>
-                <Button variant="outline" className="cursor-pointer">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Quản lý phòng
-                </Button>
-              </Link>
               <PageHeaderActions.Edit href={`/dashboard/landlord/properties/rooms/${room.id}/edit`} />
               <PageHeaderActions.Delete onClick={handleDeleteRoom} />
             </>
@@ -393,6 +419,108 @@ export default function RoomDetailPage() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Room Instances List */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Danh sách phòng ({instances.length})</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Quản lý từng phòng instance trong loại phòng này
+              </p>
+            </div>
+            <Link href={`/dashboard/landlord/properties/rooms/${room.id}/instances`}>
+              <Button variant="outline" size="sm" className="cursor-pointer">
+                <Eye className="h-4 w-4 mr-2" />
+                Quản lý nâng cao
+              </Button>
+            </Link>
+          </div>
+
+          {instancesLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Đang tải danh sách phòng...</p>
+            </div>
+          ) : instances.length === 0 ? (
+            <div className="text-center py-8">
+              <Home className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600">Chưa có phòng nào</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Số phòng</TableHead>
+                    <TableHead>Tầng</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead>Lý do (nếu có)</TableHead>
+                    <TableHead>Ghi chú</TableHead>
+                    <TableHead className="text-right">Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {instances.map((instance) => (
+                    <TableRow key={instance.id}>
+                      <TableCell className="font-medium">
+                        {instance.roomNumber}
+                      </TableCell>
+                      <TableCell>
+                        {instance.floorNumber ? `Tầng ${instance.floorNumber}` : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={STATUS_COLORS[instance.status as keyof typeof STATUS_COLORS]}>
+                          {STATUS_LABELS[instance.status as keyof typeof STATUS_LABELS]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {instance.statusReason || '-'}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600 max-w-[200px] truncate">
+                        {instance.notes || '-'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link href={`/dashboard/landlord/properties/rooms/${room.id}/instances`}>
+                          <Button variant="ghost" size="sm" className="cursor-pointer">
+                            <Eye className="h-4 w-4 mr-1" />
+                            Chi tiết
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Status Summary */}
+              <div className="mt-4 pt-4 border-t">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500">Còn trống</p>
+                    <p className="text-lg font-bold text-green-600">{actualStatusCounts.available || 0}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500">Đã thuê</p>
+                    <p className="text-lg font-bold text-blue-600">{actualStatusCounts.occupied || 0}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500">Bảo trì</p>
+                    <p className="text-lg font-bold text-yellow-600">{actualStatusCounts.maintenance || 0}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500">Đã đặt</p>
+                    <p className="text-lg font-bold text-purple-600">{actualStatusCounts.reserved || 0}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500">Không khả dụng</p>
+                    <p className="text-lg font-bold text-gray-600">{actualStatusCounts.unavailable || 0}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>

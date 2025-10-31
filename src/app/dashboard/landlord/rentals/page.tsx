@@ -27,7 +27,10 @@ import {
 import { useRentalStore } from "@/stores/rentalStore"
 import { useContractStore } from "@/stores/contractStore"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { ContractCreationForm } from "@/components/contract/ContractCreationForm"
+import { toast } from "sonner"
+import { Rental } from "@/types/rental.types"
 
 const STATUS_COLORS = {
   active: 'bg-green-100 text-green-800',
@@ -48,8 +51,8 @@ const STATUS_LABELS = {
 export default function RentalsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [showContractDialog, setShowContractDialog] = useState(false)
-  const [selectedRental, setSelectedRental] = useState<string | null>(null)
+  const [showFormDialog, setShowFormDialog] = useState(false)
+  const [selectedRental, setSelectedRental] = useState<Rental | null>(null)
 
   const {
     landlordRentals,
@@ -85,13 +88,64 @@ export default function RentalsPage() {
     return matchesSearch && matchesStatus
   })
 
-  const handleGenerateContract = async (rentalId: string) => {
-    const success = await autoGenerate(rentalId)
+  const handleOpenContractForm = (rental: Rental) => {
+    setSelectedRental(rental)
+    setShowFormDialog(true)
+  }
+
+  const handleGenerateContract = async (formData: {
+    financial: {
+      monthlyRent: number;
+      deposit: number;
+      depositMonths: number;
+      paymentMethod: string;
+      paymentDueDate: number;
+      electricityPrice: number;
+      waterPrice: number;
+      internetPrice?: number;
+      parkingFee?: number;
+    };
+    terms: {
+      utilities: string[];
+      restrictions: string[];
+      rules: string[];
+      landlordResponsibilities: string[];
+      tenantResponsibilities: string[];
+    };
+    emergencyContact?: {
+      name: string;
+      phone: string;
+    };
+    specialNote?: string;
+  }) => {
+    if (!selectedRental?.id) {
+      toast.error('Không tìm thấy thông tin cho thuê')
+      return
+    }
+
+    // Prepare contract data to send to backend
+    const additionalContractData = {
+      financial: formData.financial,
+      terms: {
+        ...formData.terms,
+        responsibilities: {
+          landlord: formData.terms.landlordResponsibilities,
+          tenant: formData.terms.tenantResponsibilities
+        }
+      },
+      emergencyContact: formData.emergencyContact,
+      specialNote: formData.specialNote
+    }
+
+    const success = await autoGenerate(selectedRental.id, additionalContractData)
     if (success) {
-      setShowContractDialog(false)
+      toast.success('Tạo hợp đồng thành công!')
+      setShowFormDialog(false)
       setSelectedRental(null)
       // Reload rentals to update contract status
       await loadLandlordRentals()
+    } else {
+      toast.error('Không thể tạo hợp đồng')
     }
   }
 
@@ -292,52 +346,15 @@ export default function RentalsPage() {
                                 Xem
                               </Button>
                               {!hasContract && rental.status === 'active' && (
-                                <Dialog
-                                  open={showContractDialog && selectedRental === rental.id}
-                                  onOpenChange={(open) => {
-                                    setShowContractDialog(open)
-                                    if (!open) setSelectedRental(null)
-                                  }}
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => handleOpenContractForm(rental)}
+                                  className="flex items-center gap-1"
                                 >
-                                  <DialogTrigger asChild>
-                                    <Button
-                                      variant="default"
-                                      size="sm"
-                                      onClick={() => setSelectedRental(rental.id!)}
-                                      className="flex items-center gap-1"
-                                    >
-                                      <FileText className="h-3 w-3" />
-                                      Tạo HĐ
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent>
-                                    <DialogHeader>
-                                      <DialogTitle>Tạo hợp đồng từ cho thuê</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="space-y-4">
-                                      <p>Bạn có muốn tạo hợp đồng từ thông tin cho thuê này không?</p>
-                                      <div className="flex space-x-2">
-                                        <Button
-                                          onClick={() => handleGenerateContract(rental.id!)}
-                                          disabled={contractSubmitting}
-                                          className="flex-1"
-                                        >
-                                          {contractSubmitting ? 'Đang tạo...' : 'Tạo hợp đồng'}
-                                        </Button>
-                                        <Button
-                                          variant="outline"
-                                          onClick={() => {
-                                            setShowContractDialog(false)
-                                            setSelectedRental(null)
-                                          }}
-                                          className="flex-1"
-                                        >
-                                          Hủy
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </DialogContent>
-                                </Dialog>
+                                  <FileText className="h-3 w-3" />
+                                  Tạo HĐ
+                                </Button>
                               )}
                             </div>
                           </TableCell>
@@ -365,6 +382,41 @@ export default function RentalsPage() {
             </Button>
           </div>
         )}
+
+        {/* Contract Creation Form Dialog */}
+        <Dialog open={showFormDialog} onOpenChange={(open) => {
+          if (!open) {
+            setShowFormDialog(false)
+            setSelectedRental(null)
+          }
+        }}>
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Tạo hợp đồng từ cho thuê</DialogTitle>
+              <DialogDescription>
+                {selectedRental && (
+                  <span>
+                    Phòng: {selectedRental.roomInstance?.room?.name} ({selectedRental.roomInstance?.roomNumber}) -
+                    Người thuê: {selectedRental.tenant?.firstName} {selectedRental.tenant?.lastName}
+                  </span>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedRental && (
+              <ContractCreationForm
+                initialMonthlyRent={selectedRental.monthlyRent ? parseFloat(selectedRental.monthlyRent) : 0}
+                initialDeposit={selectedRental.depositPaid ? parseFloat(selectedRental.depositPaid) : 0}
+                onSubmit={handleGenerateContract}
+                onCancel={() => {
+                  setShowFormDialog(false)
+                  setSelectedRental(null)
+                }}
+                isSubmitting={contractSubmitting}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   )

@@ -1,129 +1,68 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense, useRef, useMemo } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Loader2, SlidersHorizontal } from 'lucide-react';
+import { Loader2, SlidersHorizontal, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { useRoomStore } from '@/stores/roomStore';
 import { type RoomSearchParams } from '@/types/types';
 import { RoomCard } from '@/components/ui/room-card';
 import { parseSearchParams } from '@/utils/search-params';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
+import { useRoomsQuery } from '@/hooks/useRoomsQuery';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import Link from 'next/link';
 
 function RoomsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-  const isRequestInProgress = useRef(false);
 
-  const {
-    searchResults: rooms,
-    searchLoading: isLoading,
-    searchError: error,
-    searchPagination,
-    savedRooms,
-    searchRooms,
-    toggleSaveRoom,
-    clearSearchResults
-  } = useRoomStore();
+  const { savedRooms, toggleSaveRoom } = useRoomStore();
 
-  const hasMore = searchPagination?.hasNext || false;
-  console.log('Current search state:', {
-    roomsCount: rooms.length,
-    currentPage,
-    pagination: searchPagination,
-    hasMore,
-    isLoading,
-    isLoadingMore
-  });
+  // Khôi phục scroll position
+  useScrollRestoration('rooms-list');
 
-  // Get search parameters from URL - use useMemo for stable reference
+  // Get search parameters from URL
   const currentSearchParams = useMemo((): RoomSearchParams => {
     return parseSearchParams(searchParams);
   }, [searchParams]);
 
-  // Load initial results - stable function without dependencies
-  const loadRoomsRef = useRef<(page?: number, append?: boolean) => Promise<void>>(async () => {});
-  
-  loadRoomsRef.current = async (page: number = 1, append: boolean = false) => {
-    try {
-      // Prevent multiple simultaneous requests using ref
-      if (isRequestInProgress.current) {
-        console.log('Request already in progress, skipping');
-        return;
-      }
+  // Sử dụng TanStack Query
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    error,
+  } = useRoomsQuery(currentSearchParams);
 
-      isRequestInProgress.current = true;
+  // Flatten all pages into single array
+  const rooms = useMemo(() => {
+    return data?.pages.flatMap((page) => page.data) ?? [];
+  }, [data]);
 
-      if (page === 1 && !append) {
-        clearSearchResults();
-      }
-
-      if (page > 1) {
-        setIsLoadingMore(true);
-      }
-
-      console.log('Loading rooms with params:', { ...currentSearchParams, page }, 'append:', append);
-
-      // Call store action which uses server action
-      await searchRooms({ ...currentSearchParams, page }, append);
-      setCurrentPage(page);
-    } catch (err: unknown) {
-      console.error('Failed to load rooms:', err);
-    } finally {
-      setIsLoadingMore(false);
-      isRequestInProgress.current = false;
-    }
-  };
-
-  const loadRooms = useCallback((page: number = 1, append: boolean = false) => {
-    return loadRoomsRef.current!(page, append);
-  }, []);
-
-  // Load more rooms for infinite scroll
-  const loadMore = useCallback(() => {
-    if (!isLoadingMore && hasMore && !isRequestInProgress.current) {
-      loadRooms(currentPage + 1, true);
-    }
-  }, [currentPage, hasMore, isLoadingMore, loadRooms]);
-
-  // Create a stable key from search params to prevent unnecessary re-renders
-  const searchParamsKey = useMemo(() => {
-    return searchParams.toString();
-  }, [searchParams]);
-
-  // Initial load and reload when search params change
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (!isRequestInProgress.current) {
-        setCurrentPage(1);
-        loadRooms(1, false);
-      }
-    }, 100); // Small debounce to prevent rapid successive calls
-
-    return () => clearTimeout(timeoutId);
-  }, [searchParamsKey, loadRooms]);
+  const totalCount = data?.pages[0]?.meta.total ?? 0;
 
   // Infinite scroll handler
   useEffect(() => {
     const handleScroll = () => {
       if (
-        window.innerHeight + document.documentElement.scrollTop
-        >= document.documentElement.offsetHeight - 1000
+        window.innerHeight + document.documentElement.scrollTop >=
+        document.documentElement.offsetHeight - 1000 &&
+        hasNextPage &&
+        !isFetchingNextPage
       ) {
-        loadMore();
+        fetchNextPage();
       }
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [loadMore]);
-
-  const handleRoomClick = (slug: string) => {
-    window.location.href = `/rooms/${slug}`;
-  };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Handle sorting changes
   const handleSortChange = (sortBy: string, sortOrder: string) => {
@@ -231,7 +170,7 @@ function RoomsPageContent() {
           <div>
             <h1 className="text-2xl font-bold mb-2">Tìm kiếm phòng trọ</h1>
             <p className="text-gray-600">
-              {!isLoading && searchPagination?.total && `Tìm thấy ${searchPagination.total} phòng`}
+              {!isLoading && totalCount > 0 && `Tìm thấy ${totalCount} phòng`}
             </p>
           </div>
           
@@ -272,12 +211,12 @@ function RoomsPageContent() {
           )}
 
           {/* Error State */}
-          {error && (
+          {isError && (
             <div className="text-center py-12">
-              <p className="text-red-600 mb-4">Lỗi: {error}</p>
+              <p className="text-red-600 mb-4">Lỗi: {error?.message || 'Có lỗi xảy ra'}</p>
               <Button
                 variant="outline"
-                onClick={() => loadRooms(1, false)}
+                onClick={() => window.location.reload()}
               >
                 Thử lại
               </Button>
@@ -285,31 +224,39 @@ function RoomsPageContent() {
           )}
 
           {/* No Results */}
-          {!isLoading && !error && rooms.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-600">Không tìm thấy phòng nào phù hợp</p>
-            </div>
+          {!isLoading && !isError && rooms.length === 0 && (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Home />
+                </EmptyMedia>
+                <EmptyTitle>Không tìm thấy phòng nào</EmptyTitle>
+                <EmptyDescription>
+                  Không có phòng trọ phù hợp với tiêu chí tìm kiếm của bạn. Hãy thử điều chỉnh bộ lọc hoặc tìm kiếm lại.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
 
           {/* Results Grid */}
-          {!isLoading && !error && rooms.length > 0 && (
+          {!isLoading && !isError && rooms.length > 0 && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {rooms.map((room) => (
-                  <RoomCard
-                    key={room.id}
-                    room={room}
-                    isSaved={savedRooms.includes(room.id)}
-                    onSaveToggle={toggleSaveRoom}
-                    onClick={handleRoomClick}
-                  />
+                  <Link key={room.id} href={`/rooms/${room.slug}`}>
+                    <RoomCard
+                      room={room}
+                      isSaved={savedRooms.includes(room.id)}
+                      onSaveToggle={toggleSaveRoom}
+                    />
+                  </Link>
                 ))}
               </div>
 
               {/* Load More Button / Loading More */}
-              {hasMore && (
+              {hasNextPage && (
                 <div className="text-center mt-8">
-                  {isLoadingMore ? (
+                  {isFetchingNextPage ? (
                     <div className="flex items-center justify-center">
                       <Loader2 className="h-6 w-6 animate-spin text-green-600 mr-2" />
                       <span className="text-gray-600">Đang tải thêm...</span>
@@ -317,7 +264,7 @@ function RoomsPageContent() {
                   ) : (
                     <Button
                       variant="outline"
-                      onClick={loadMore}
+                      onClick={() => fetchNextPage()}
                       className="px-8"
                     >
                       Tải thêm phòng
@@ -327,9 +274,9 @@ function RoomsPageContent() {
               )}
 
               {/* End of results */}
-              {!hasMore && searchPagination?.total && (
+              {!hasNextPage && totalCount > 0 && (
                 <div className="text-center mt-8">
-                  <p className="text-gray-500">Đã hiển thị tất cả {searchPagination.total} kết quả</p>
+                  <p className="text-gray-500">Đã hiển thị tất cả {totalCount} kết quả</p>
                 </div>
               )}
             </>

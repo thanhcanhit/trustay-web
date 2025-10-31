@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Contract } from "@/types/types"
+import { Rental } from "@/types/rental.types"
 import {
   Dialog,
   DialogContent,
@@ -28,9 +29,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import ContractPreviewDialog from "@/components/contract/ContractPreviewDialog"
 import { STATUS_COLORS, CONTRACT_SIGN } from "@/constants/basic"
 import { UserProfileModal } from "@/components/profile/user-profile-modal"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty"
+import { ContractCreationForm } from "@/components/contract/ContractCreationForm"
 
 export default function ContractsPage() {
   const router = useRouter()
@@ -38,9 +40,10 @@ export default function ContractsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [selectedRentalId, setSelectedRentalId] = useState<string>('')
-  const [previewContractId, setPreviewContractId] = useState<string | null>(null)
+  const [showFormDialog, setShowFormDialog] = useState(false)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [selectedRental, setSelectedRental] = useState<Rental | null>(null)
 
   const {
     contracts,
@@ -115,17 +118,73 @@ export default function ContractsPage() {
     }
   }
 
-  const handleCreateContract = async () => {
+  const handleRentalSelected = () => {
     if (!selectedRentalId) {
       toast.error('Vui lòng chọn hợp đồng cho thuê')
       return
     }
 
-    const success = await autoGenerate(selectedRentalId)
+    const rental = rentalsWithoutContract.find(r => r.id === selectedRentalId)
+    if (!rental) {
+      toast.error('Không tìm thấy hợp đồng cho thuê')
+      return
+    }
+
+    setSelectedRental(rental)
+    setShowCreateDialog(false)
+    setShowFormDialog(true)
+  }
+
+  const handleCreateContract = async (formData: {
+    financial: {
+      monthlyRent: number;
+      deposit: number;
+      depositMonths: number;
+      paymentMethod: string;
+      paymentDueDate: number;
+      electricityPrice: number;
+      waterPrice: number;
+      internetPrice?: number;
+      parkingFee?: number;
+    };
+    terms: {
+      utilities: string[];
+      restrictions: string[];
+      rules: string[];
+      landlordResponsibilities: string[];
+      tenantResponsibilities: string[];
+    };
+    emergencyContact?: {
+      name: string;
+      phone: string;
+    };
+    specialNote?: string;
+  }) => {
+    if (!selectedRentalId) {
+      toast.error('Vui lòng chọn hợp đồng cho thuê')
+      return
+    }
+
+    // Prepare contract data to send to backend
+    const additionalContractData = {
+      financial: formData.financial,
+      terms: {
+        ...formData.terms,
+        responsibilities: {
+          landlord: formData.terms.landlordResponsibilities,
+          tenant: formData.terms.tenantResponsibilities
+        }
+      },
+      emergencyContact: formData.emergencyContact,
+      specialNote: formData.specialNote
+    }
+
+    const success = await autoGenerate(selectedRentalId, additionalContractData)
     if (success) {
       toast.success('Tạo hợp đồng thành công!')
-      setShowCreateDialog(false)
+      setShowFormDialog(false)
       setSelectedRentalId('')
+      setSelectedRental(null)
       loadAll()
     } else {
       toast.error('Không thể tạo hợp đồng')
@@ -186,18 +245,19 @@ export default function ContractsPage() {
             </Button>
           </div>
 
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <Button 
-              className="flex items-center space-x-2"
-              onClick={() => setShowCreateDialog(true)}
-            >
-              <Plus className="h-4 w-4" />
-              <span>Tạo hợp đồng mới</span>
-            </Button>
+          <Button
+            className="flex items-center space-x-2"
+            onClick={() => setShowCreateDialog(true)}
+          >
+            <Plus className="h-4 w-4" />
+            <span>Tạo hợp đồng mới</span>
+          </Button>
 
+          {/* Step 1: Select Rental Dialog */}
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Tạo hợp đồng mới</DialogTitle>
+                <DialogTitle>Chọn hợp đồng cho thuê</DialogTitle>
                 <DialogDescription>
                   Chọn hợp đồng cho thuê để tạo hợp đồng chính thức
                 </DialogDescription>
@@ -234,8 +294,7 @@ export default function ContractsPage() {
                     {selectedRentalId && (
                       <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                         <p className="text-sm text-blue-800">
-                          <strong>Lưu ý:</strong> Hợp đồng sẽ được tạo tự động dựa trên thông tin từ hợp đồng cho thuê. 
-                          Bạn có thể chỉnh sửa sau khi tạo.
+                          <strong>Lưu ý:</strong> Bạn sẽ nhập các thông tin tài chính và điều khoản chi tiết ở bước tiếp theo.
                         </p>
                       </div>
                     )}
@@ -244,8 +303,8 @@ export default function ContractsPage() {
               </div>
 
               <DialogFooter>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setShowCreateDialog(false)
                     setSelectedRentalId('')
@@ -253,20 +312,50 @@ export default function ContractsPage() {
                 >
                   Hủy
                 </Button>
-                <Button 
-                  onClick={handleCreateContract}
-                  disabled={!selectedRentalId || submitting}
+                <Button
+                  onClick={handleRentalSelected}
+                  disabled={!selectedRentalId}
                 >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Đang tạo...
-                    </>
-                  ) : (
-                    'Tạo hợp đồng'
-                  )}
+                  Tiếp tục
                 </Button>
               </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Step 2: Contract Details Form Dialog */}
+          <Dialog open={showFormDialog} onOpenChange={(open) => {
+            if (!open) {
+              setShowFormDialog(false)
+              setSelectedRentalId('')
+              setSelectedRental(null)
+            }
+          }}>
+            <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Nhập thông tin hợp đồng</DialogTitle>
+                <DialogDescription>
+                  {selectedRental && (
+                    <span>
+                      Phòng: {selectedRental.roomInstance?.room?.name} ({selectedRental.roomInstance?.roomNumber}) -
+                      Người thuê: {selectedRental.tenant?.firstName} {selectedRental.tenant?.lastName}
+                    </span>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+
+              {selectedRental && (
+                <ContractCreationForm
+                  initialMonthlyRent={parseFloat(selectedRental.monthlyRent) || 0}
+                  initialDeposit={parseFloat(selectedRental.depositPaid) || 0}
+                  onSubmit={handleCreateContract}
+                  onCancel={() => {
+                    setShowFormDialog(false)
+                    setSelectedRentalId('')
+                    setSelectedRental(null)
+                  }}
+                  isSubmitting={submitting}
+                />
+              )}
             </DialogContent>
           </Dialog>
         </div>
@@ -395,9 +484,9 @@ export default function ContractsPage() {
                                 <FileText className="h-4 w-4 mr-2" />
                                 Xem chi tiết
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setPreviewContractId(contract.id!)}>
+                              <DropdownMenuItem onClick={() => router.push(`/dashboard/landlord/contracts/${contract.id}/preview`)}>
                                 <Eye className="h-4 w-4 mr-2" />
-                                Xem nhanh
+                                Xem trước hợp đồng
                               </DropdownMenuItem>
                               {/* Hiển thị nút Ký nếu status là draft, pending_signatures, hoặc partially_signed VÀ landlord chưa ký */}
                               {(contract.status === 'draft' || contract.status === 'pending_signatures' || contract.status === 'partially_signed') && 
@@ -427,49 +516,32 @@ export default function ContractsPage() {
         )}
 
         {!loading && filteredContracts.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-lg border">
-            <div className="text-gray-500 mb-4">
-              {(contracts || []).length === 0
-                ? 'Chưa có hợp đồng nào'
-                : 'Không tìm thấy hợp đồng phù hợp'
-              }
-            </div>
-            {/* Debug info */}
-            <div className="text-xs text-gray-400 mb-4">
-              <p>Total contracts: {(contracts || []).length}</p>
-              <p>Filtered contracts: {filteredContracts.length}</p>
-              <p>Search term: {searchTerm || '(empty)'}</p>
-              <p>Status filter: {statusFilter}</p>
-            </div>
-            <Button 
-              className="flex items-center space-x-2"
-              onClick={() => setShowCreateDialog(true)}
-            >
-              <Plus className="h-4 w-4" />
-              <span>Tạo hợp đồng đầu tiên</span>
-            </Button>
-          </div>
-        )}
-
-        {/* Preview Dialog */}
-        {previewContractId && (
-          <ContractPreviewDialog
-            contractId={previewContractId}
-            open={!!previewContractId}
-            onOpenChange={(open) => !open && setPreviewContractId(null)}
-            showSignButton={
-              // Hiển thị nút ký nếu status là draft, pending_signatures, hoặc partially_signed VÀ landlord chưa ký
-              (() => {
-                const contract = contracts?.find(c => c.id === previewContractId)
-                return (contract?.status === 'draft' || contract?.status === 'pending_signatures' || contract?.status === 'partially_signed') && 
-                       !contract?.landlordSignature
-              })()
-            }
-            onSignClick={() => {
-              setPreviewContractId(null)
-              router.push(`/dashboard/landlord/contracts/${previewContractId}`)
-            }}
-          />
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <FileText />
+              </EmptyMedia>
+              <EmptyTitle>
+                {searchTerm || statusFilter !== 'all'
+                  ? 'Không tìm thấy hợp đồng'
+                  : 'Chưa có hợp đồng'
+                }
+              </EmptyTitle>
+              <EmptyDescription>
+                {searchTerm || statusFilter !== 'all'
+                  ? 'Không có hợp đồng nào phù hợp với bộ lọc hiện tại. Hãy thử tìm kiếm hoặc lọc với điều kiện khác.'
+                  : 'Bạn chưa có hợp đồng nào. Hãy tạo hợp đồng đầu tiên từ các hợp đồng cho thuê đang hoạt động.'}
+              </EmptyDescription>
+            </EmptyHeader>
+            {!searchTerm && statusFilter === 'all' && (
+              <EmptyContent>
+                <Button onClick={() => setShowCreateDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Tạo hợp đồng đầu tiên
+                </Button>
+              </EmptyContent>
+            )}
+          </Empty>
         )}
 
         {/* User Profile Modal */}

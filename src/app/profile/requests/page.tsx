@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Send, XCircle, Clock, CheckCircle2, Home, Calendar, Square, AlertCircle, Loader2, FileText, User } from "lucide-react"
 import { ProfileLayout } from "@/components/profile/profile-layout"
 import { useBookingRequestStore } from "@/stores/bookingRequestStore"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { Textarea } from "@/components/ui/textarea"
@@ -16,10 +17,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "sonner"
 import { ClickableUserAvatar } from "@/components/profile/clickable-user-avatar"
 
-function StatusBadge({ status }: { status: 'pending' | 'approved' | 'rejected' | 'cancelled' }) {
+function StatusBadge({ status }: { status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'accepted' }) {
   const map = {
     pending: { label: 'Đang chờ', className: 'bg-amber-100 text-amber-800' },
     approved: { label: 'Đã duyệt', className: 'bg-emerald-100 text-emerald-800' },
+    accepted: { label: 'Đã chấp nhận', className: 'bg-green-100 text-green-800' },
     rejected: { label: 'Từ chối', className: 'bg-red-100 text-red-800' },
     cancelled: { label: 'Đã hủy', className: 'bg-gray-100 text-gray-800' },
   } as const
@@ -296,9 +298,17 @@ function RequestsContent() {
         </div>
 
         {!loadingMine && mine.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">Chưa có yêu cầu thuê nào</div>
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Send />
+              </EmptyMedia>
+              <EmptyTitle>Chưa có yêu cầu thuê</EmptyTitle>
+              <EmptyDescription>
+                Bạn chưa gửi yêu cầu thuê nào. Hãy tìm phòng trọ phù hợp và gửi yêu cầu thuê để bắt đầu.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
 
         <div className="flex items-center justify-between mt-4">

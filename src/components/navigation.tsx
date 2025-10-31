@@ -623,8 +623,16 @@ export function Navigation() {
                       >
                         Quản lý trọ
                       </Link>
-                      ): null}
-                      
+                      ): (
+                        <Link
+                        href={"/dashboard/tenant"}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => setShowUserDropdown(false)}
+                      >
+                        Quản lý thuê
+                      </Link>
+                      )}
+
                       <hr className="border-gray-200" />
                       <button
                         onClick={handleLogout}

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import {
+	confirmInvitation,
 	createRoomInvitation,
 	getInvitationById,
 	getReceivedInvitations,
@@ -43,6 +44,7 @@ interface InvitationState {
 	loadById: (id: string) => Promise<void>;
 	create: (data: CreateRoomInvitationRequest) => Promise<boolean>;
 	respond: (id: string, status: 'accepted' | 'declined', tenantNotes?: string) => Promise<boolean>;
+	confirm: (id: string) => Promise<{ rentalId?: string } | null>;
 	withdraw: (id: string) => Promise<boolean>;
 	clearCurrent: () => void;
 	clearErrors: () => void;
@@ -124,6 +126,20 @@ export const useInvitationStore = create<InvitationState>((set, get) => ({
 		}
 		set({ submitting: false, submitError: res.error });
 		return false;
+	},
+
+	confirm: async (id) => {
+		set({ submitting: true, submitError: null });
+		const token = TokenManager.getAccessToken();
+		const res = await confirmInvitation(id, token);
+		if (res.success) {
+			// reload current
+			await get().loadById(id);
+			set({ submitting: false });
+			return { rentalId: res.data.rental?.id };
+		}
+		set({ submitting: false, submitError: res.error });
+		return null;
 	},
 
 	withdraw: async (id) => {

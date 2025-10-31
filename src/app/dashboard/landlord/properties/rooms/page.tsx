@@ -127,8 +127,8 @@ function RoomsManagementPageContent() {
           }
         />
         {/* Search and Filter */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+          <div className="flex flex-col lg:flex-row gap-3">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -136,11 +136,11 @@ function RoomsManagementPageContent() {
                 placeholder="Tìm kiếm theo tên phòng..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-200"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full lg:w-40">
               <SelectValue placeholder="Trạng thái" />
             </SelectTrigger>
             <SelectContent>
@@ -154,7 +154,7 @@ function RoomsManagementPageContent() {
             setBuildingFilter(value)
             setCurrentPage(1) // Reset pagination when changing building
           }}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full lg:w-48">
               <SelectValue placeholder="Dãy trọ" />
             </SelectTrigger>
             <SelectContent>
@@ -166,10 +166,6 @@ function RoomsManagementPageContent() {
               ))}
             </SelectContent>
           </Select>
-            <Button variant="outline" className="cursor-pointer">
-              <Search className="h-4 w-4 mr-2" />
-              Tìm kiếm
-            </Button>
           </div>
         </div>
 
@@ -187,29 +183,32 @@ function RoomsManagementPageContent() {
         {!loading && (
           <>
             {filteredRooms.length > 0 && (
-              <div className="mb-4 text-sm text-gray-600">
-                Hiển thị {filteredRooms.length} loại phòng
+              <div className="mb-3 px-1">
+                <span className="text-sm font-medium text-gray-700">
+                  Hiển thị <span className="text-blue-600">{filteredRooms.length}</span> loại phòng
+                </span>
                 {buildingFilter !== 'all' && buildings.find(b => b.id === buildingFilter) && (
-                  <span> trong dãy trọ <strong>{buildings.find(b => b.id === buildingFilter)?.name}</strong></span>
+                  <span className="text-sm text-gray-600"> trong dãy trọ <span className="font-semibold text-gray-800">{buildings.find(b => b.id === buildingFilter)?.name}</span></span>
                 )}
                 {totalPages > 1 && (
-                  <span> • Trang {currentPage}/{totalPages}</span>
+                  <span className="text-sm text-gray-500"> • Trang {currentPage}/{totalPages}</span>
                 )}
               </div>
             )}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
+                <div className="min-w-[900px]">
+                  <Table>
+                    <TableHeader>
                     <TableRow>
-                      <TableHead>Tên phòng</TableHead>
-                      <TableHead>Dãy trọ</TableHead>
-                      <TableHead>Loại phòng</TableHead>
-                      <TableHead>Diện tích</TableHead>
-                      <TableHead>Giá thuê</TableHead>
-                      <TableHead>Trạng thái</TableHead>
-                      <TableHead>Số người tối đa</TableHead>
-                      <TableHead className="text-center">Thao tác</TableHead>
+                      <TableHead className="w-[200px]">Tên phòng</TableHead>
+                      <TableHead className="w-[120px]">Dãy trọ</TableHead>
+                      <TableHead className="w-[100px]">Loại phòng</TableHead>
+                      <TableHead className="w-[80px]">Diện tích</TableHead>
+                      <TableHead className="w-[120px]">Giá thuê</TableHead>
+                      <TableHead className="w-[100px]">Trạng thái</TableHead>
+                      <TableHead className="w-[80px]">Số người</TableHead>
+                      <TableHead className="w-[80px] text-center">Thao tác</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -217,30 +216,34 @@ function RoomsManagementPageContent() {
                       <TableRow key={room.id}>
                         <TableCell className="font-medium">
                           <div className="max-w-[200px]">
-                            <div className="font-semibold text-gray-900">{room.name}</div>
-                            <div className="text-xs text-gray-500 mt-1">
+                            <div className="font-semibold text-gray-900 truncate" title={room.name}>
+                              {room.name}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-0.5">
                               Tổng: {room.totalRooms || 0} phòng
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="max-w-[150px]">
-                            <div>{room.buildingName || 'N/A'}</div>
+                          <div className="max-w-[120px]">
+                            <div className="truncate text-sm" title={room.buildingName || 'N/A'}>
+                              {room.buildingName || 'N/A'}
+                            </div>
                             {room.floorNumber && (
-                              <div className="text-xs text-gray-500 mt-1">Tầng {room.floorNumber}</div>
+                              <div className="text-xs text-gray-500 mt-0.5">Tầng {room.floorNumber}</div>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="text-xs whitespace-nowrap">
                             {ROOM_TYPE_LABELS[room.roomType as keyof typeof ROOM_TYPE_LABELS]}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-sm">
                           {room.areaSqm ? `${room.areaSqm}m²` : 'N/A'}
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium text-green-600">
+                          <div className="font-semibold text-green-600 text-sm whitespace-nowrap">
                             {room.pricing?.basePriceMonthly ?
                               Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN') :
                               'N/A'}
@@ -248,19 +251,17 @@ function RoomsManagementPageContent() {
                           <div className="text-xs text-gray-500">VNĐ/tháng</div>
                         </TableCell>
                         <TableCell>
-                          <div className="space-y-1">
-                            <Badge className={room.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                              {room.isActive ? 'Hoạt động' : 'Tạm dừng'}
-                            </Badge>
-                            {room.availableInstancesCount !== undefined && room.occupiedInstancesCount !== undefined && (
-                              <div className="text-xs text-gray-500">
-                                <div>Trống: {room.availableInstancesCount}</div>
-                                <div>Đã thuê: {room.occupiedInstancesCount}</div>
-                              </div>
-                            )}
-                          </div>
+                          <Badge className={room.isActive ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-800 border-gray-200'}>
+                            {room.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                          </Badge>
+                          {room.availableInstancesCount !== undefined && room.occupiedInstancesCount !== undefined && (
+                            <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                              <div>Trống: {room.availableInstancesCount}</div>
+                              <div>Thuê: {room.occupiedInstancesCount}</div>
+                            </div>
+                          )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-sm">
                           {room.maxOccupancy ? `${room.maxOccupancy} người` : 'N/A'}
                         </TableCell>
                         <TableCell>
@@ -323,6 +324,7 @@ function RoomsManagementPageContent() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               </div>
             </div>
           </>
@@ -362,18 +364,18 @@ function RoomsManagementPageContent() {
 
         {/* Pagination */}
         {!loading && filteredRooms.length > 0 && totalPages > 1 && (
-          <div className="flex justify-center mt-8">
-            <div className="flex space-x-2">
+          <div className="flex justify-center items-center mt-6">
+            <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 p-2 shadow-sm">
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="cursor-pointer"
+                className="cursor-pointer disabled:opacity-50"
               >
                 Trước
               </Button>
-              <span className="flex items-center px-4 text-sm text-gray-600">
+              <span className="flex items-center px-3 py-1 text-sm font-medium text-gray-700 bg-gray-50 rounded">
                 Trang {currentPage} / {totalPages}
               </span>
               <Button 
@@ -381,7 +383,7 @@ function RoomsManagementPageContent() {
                 size="sm"
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="cursor-pointer"
+                className="cursor-pointer disabled:opacity-50"
               >
                 Sau
               </Button>

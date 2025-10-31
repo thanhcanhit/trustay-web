@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import {
 	createPayment,
 	createPaymentReceipt,
+	deletePayment,
 	generatePaymentQRCode,
 	getPaymentById,
 	getPaymentHistory,
@@ -75,6 +76,7 @@ interface PaymentState {
 	}) => Promise<void>;
 	create: (data: CreatePaymentRequest) => Promise<boolean>;
 	update: (id: string, data: UpdatePaymentRequest) => Promise<boolean>;
+	delete: (id: string) => Promise<boolean>;
 	createReceipt: (
 		paymentId: string,
 		data: Omit<CreatePaymentReceiptRequest, 'paymentId'>,
@@ -256,6 +258,34 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
 				});
 				// Reload payments list
 				await get().loadPayments();
+				return true;
+			} else {
+				set({
+					submitError: result.error,
+					submitting: false,
+				});
+				return false;
+			}
+		} catch (error) {
+			set({
+				submitError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				submitting: false,
+			});
+			return false;
+		}
+	},
+
+	// Delete payment
+	delete: async (id) => {
+		set({ submitting: true, submitError: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await deletePayment(id, token);
+			if (result.success) {
+				set({ submitting: false });
+				// Remove from payments list
+				const { payments } = get();
+				set({ payments: payments.filter((p) => p.id !== id) });
 				return true;
 			} else {
 				set({

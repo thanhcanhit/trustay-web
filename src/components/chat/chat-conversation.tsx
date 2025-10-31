@@ -12,6 +12,7 @@ import { InvitationRequestMessage } from "./invitation-request-message";
 import { MessageInput } from "./message-input";
 import { MessageAttachments } from "./message-attachments";
 import { getMessageMetadata } from "@/lib/message-metadata";
+import { decodeStructuredMessage } from "@/lib/chat-message-encoder";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { UserProfileModal } from "../profile/user-profile-modal";
 
@@ -211,7 +212,13 @@ export function ChatConversation() {
                             ? "bg-primary text-white"
                             : "bg-gray-200"
                         }`}>
-                        <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere">{msg.content}</p>
+                        <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere">
+                          {(() => {
+                            // Try to decode structured message
+                            const structuredData = decodeStructuredMessage(msg.content);
+                            return structuredData?.message || msg.content;
+                          })()}
+                        </p>
                       </div>
                     )}
 

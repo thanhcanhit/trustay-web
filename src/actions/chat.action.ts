@@ -28,6 +28,11 @@ export interface MessageData {
 		roomSeekingLocation?: string;
 		bookingRequestId?: string;
 		roomInvitationId?: string;
+		roommateApplicationId?: string;
+		roommateSeekingPostId?: string;
+		roommateSeekingPostTitle?: string;
+		roommateSeekingPostLocation?: string;
+		roommateSeekingPostBudget?: string;
 	};
 }
 

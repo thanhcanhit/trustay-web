@@ -12,12 +12,12 @@ import {
 import { TokenManager } from '@/lib/api-client';
 import type {
 	CreateRentalRequest,
+	PaginatedRentalResponse,
 	RenewRentalRequest,
 	Rental,
-	RentalListResponse,
 	TerminateRentalRequest,
 	UpdateRentalRequest,
-} from '@/types/types';
+} from '@/types/rental.types';
 
 interface RentalState {
 	// Data
@@ -41,9 +41,9 @@ interface RentalState {
 	submitError: string | null;
 
 	// Metadata
-	meta: RentalListResponse['meta'] | null;
-	landlordMeta: RentalListResponse['meta'] | null;
-	tenantMeta: RentalListResponse['meta'] | null;
+	meta: PaginatedRentalResponse['pagination'] | null;
+	landlordMeta: PaginatedRentalResponse['pagination'] | null;
+	tenantMeta: PaginatedRentalResponse['pagination'] | null;
 
 	// Actions
 	loadRentals: (params?: { page?: number; limit?: number; status?: string }) => Promise<void>;
@@ -89,8 +89,18 @@ export const useRentalStore = create<RentalState>((set, get) => ({
 			const result = await getMyRentals(params, token);
 			if (result.success) {
 				set({
-					rentals: result.data.data,
-					meta: result.data.meta,
+					rentals: (result.data.data as Rental[]).map((r: Rental) => ({
+						...r,
+						contractEndDate:
+							typeof r.contractEndDate === 'string'
+								? r.contractEndDate
+								: r.contractEndDate instanceof Date
+									? r.contractEndDate.toISOString()
+									: r.contractEndDate === undefined
+										? null
+										: r.contractEndDate,
+					})),
+					meta: result.data.pagination,
 					loading: false,
 				});
 			} else {
@@ -115,8 +125,16 @@ export const useRentalStore = create<RentalState>((set, get) => ({
 			const result = await getLandlordRentals(params, token);
 			if (result.success) {
 				set({
-					landlordRentals: result.data.data,
-					landlordMeta: result.data.meta,
+					landlordRentals: (result.data.data as Rental[]).map((r: Rental) => ({
+						...r,
+						contractStartDate:
+							typeof r.contractStartDate === 'string'
+								? r.contractStartDate
+								: r.contractStartDate instanceof Date
+									? r.contractStartDate.toISOString()
+									: '',
+					})),
+					landlordMeta: result.data.pagination,
 					loadingLandlord: false,
 				});
 			} else {
@@ -142,7 +160,7 @@ export const useRentalStore = create<RentalState>((set, get) => ({
 			if (result.success) {
 				set({
 					tenantRentals: result.data.data,
-					tenantMeta: result.data.meta,
+					tenantMeta: result.data.pagination,
 					loadingTenant: false,
 				});
 			} else {

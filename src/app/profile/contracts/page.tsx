@@ -11,6 +11,7 @@ import { Search, Download, RotateCcw, AlertCircle, FileSignature, Loader2, MoreH
 import { useContractStore } from "@/stores/contractStore"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useRouter } from "next/navigation"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -276,17 +277,23 @@ export default function TenantContractsPage() {
         )}
 
         {!loading && filteredContracts.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-lg border">
-            <div className="text-gray-500 mb-4">
-              {(contracts || []).length === 0
-                ? 'Bạn chưa có hợp đồng nào'
-                : 'Không tìm thấy hợp đồng phù hợp'
-              }
-            </div>
-            <p className="text-sm text-gray-400">
-              Hợp đồng sẽ được tạo sau khi bạn hoàn tất thuê trọ với chủ nhà
-            </p>
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <FileText />
+              </EmptyMedia>
+              <EmptyTitle>
+                {(contracts || []).length === 0
+                  ? 'Chưa có hợp đồng'
+                  : 'Không tìm thấy hợp đồng'}
+              </EmptyTitle>
+              <EmptyDescription>
+                {(contracts || []).length === 0
+                  ? 'Bạn chưa có hợp đồng thuê trọ nào. Hợp đồng sẽ được tạo tự động sau khi bạn xác nhận yêu cầu thuê được chấp nhận từ chủ nhà.'
+                  : 'Không có hợp đồng nào phù hợp với tiêu chí tìm kiếm. Hãy thử lại với từ khóa hoặc bộ lọc khác.'}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
 
         {/* User Profile Modal */}

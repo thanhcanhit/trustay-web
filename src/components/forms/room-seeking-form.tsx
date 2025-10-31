@@ -226,11 +226,11 @@ export function RoomSeekingForm({ onBack, postId, initialData, mode = 'create' }
 				success = await createPost(submitData)
 			}
 
-			if (success) {
-				toast.success(mode === 'edit' ? 'Cập nhật bài đăng thành công!' : 'Tạo bài đăng tìm trọ thành công!')
-				if (onBack) onBack()
-				else router.push('/profile/posts/room-seeking')
-			} else {
+		if (success) {
+			toast.success(mode === 'edit' ? 'Cập nhật bài đăng thành công!' : 'Tạo bài đăng tìm trọ thành công!')
+			if (onBack) onBack()
+			else router.push('/profile/posts?tab=room-seeking')
+		} else {
 				toast.error(mode === 'edit' ? 'Có lỗi khi cập nhật' : 'Có lỗi xảy ra khi tạo bài đăng')
 			}
 		} catch (error) {
