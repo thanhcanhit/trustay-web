@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import { Contract } from "@/types/types"
 import { UserProfileModal } from "@/components/profile/user-profile-modal"
-import { CONTRACT_SIGN, STATUS_COLORS } from "@/constants/basic"
 import { translateContractStatus } from "@/utils"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 

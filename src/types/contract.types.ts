@@ -1,4 +1,4 @@
-import { ContractStatus, ContractType, RoomInstance, UserProfile } from './types';
+import { ContractStatus, ContractType } from './types';
 
 // ============= CONTRACT TYPES =============
 
@@ -26,6 +26,7 @@ export interface Contract {
 		phone?: string | null;
 		firstName?: string;
 		lastName?: string;
+		avatarUrl?: string;
 	};
 	tenant?: {
 		id: string;
@@ -34,6 +35,7 @@ export interface Contract {
 		phone?: string | null;
 		firstName?: string;
 		lastName?: string;
+		avatarUrl?: string;
 	};
 	// Room Relations
 	room?: {
@@ -41,6 +43,8 @@ export interface Contract {
 		roomName: string;
 		buildingName: string;
 		name?: string; // Alias for roomName for backwards compatibility
+		areaSqm?: number;
+		roomType?: string;
 	};
 	// Contract Data with full structure from API
 	contractData?: {

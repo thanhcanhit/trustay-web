@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -52,7 +53,7 @@ const STATUS_LABELS = {
   expired: 'Đã hết hạn'
 } as const
 
-export default function ReceivedRoommateApplicationsPage() {
+export default function RoommateApplicationsPage() {
   const { applicationsForMyPosts, pagination, isLoading, error, fetchApplicationsForMyPosts, respondToApplication, confirmApplication } = useRoommateApplicationsStore()
   const { sendMessage: sendChatMessage, setCurrentUserId } = useChatStore()
   const { user } = useUserStore()
@@ -86,13 +87,13 @@ export default function ReceivedRoommateApplicationsPage() {
   const filtered = useMemo(() => {
     const term = searchTerm.trim().toLowerCase()
     // Landlord chỉ quan tâm đến Platform Room (có roomInstanceId)
-    const platformRoomApps = applicationsForMyPosts.filter(app => 
+    const platformRoomApps = applicationsForMyPosts.filter(app =>
       app.roommateSeekingPost?.roomInstanceId != null
     )
-    
+
     if (!term) return platformRoomApps
     return platformRoomApps.filter(app => {
-      return app.fullName.toLowerCase().includes(term) || 
+      return app.fullName.toLowerCase().includes(term) ||
              app.phoneNumber.toLowerCase().includes(term) ||
              app.occupation.toLowerCase().includes(term)
     })
@@ -100,10 +101,10 @@ export default function ReceivedRoommateApplicationsPage() {
 
   const handleRespond = async () => {
     if (!respondDialog.applicationId) return
-    
+
     // Find the application to get applicant info
     const application = applicationsForMyPosts.find(app => app.id === respondDialog.applicationId)
-    
+
     const success = await respondToApplication(respondDialog.applicationId, {
       status: respondDialog.approve ? 'approved_by_landlord' : 'rejected_by_landlord'
     })
@@ -113,12 +114,12 @@ export default function ReceivedRoommateApplicationsPage() {
       if (application?.applicantId) {
         try {
           console.log('🚀 Sending roommate application response notification')
-          
+
           // Encode structured message with minimal info
-          const defaultMessage = respondDialog.approve 
-            ? 'Đơn ứng tuyển của bạn đã được chấp nhận!' 
+          const defaultMessage = respondDialog.approve
+            ? 'Đơn ứng tuyển của bạn đã được chấp nhận!'
             : 'Rất tiếc, đơn ứng tuyển của bạn không được chấp nhận.'
-          
+
           const encodedContent = encodeStructuredMessage({
             type: respondDialog.approve ? 'roommate_application_approved' : 'roommate_application_rejected',
             roommateSeeking: {
@@ -129,7 +130,7 @@ export default function ReceivedRoommateApplicationsPage() {
             },
             message: responseMessage || defaultMessage
           })
-          
+
           await sendChatMessage({
             recipientId: application.applicantId,
             content: encodedContent,
@@ -158,15 +159,15 @@ export default function ReceivedRoommateApplicationsPage() {
 
   const handleConfirm = async () => {
     if (!confirmDialog.applicationId) return
-    
+
     const application = applicationsForMyPosts.find(app => app.id === confirmDialog.applicationId)
-    
+
     const success = await confirmApplication(confirmDialog.applicationId)
-    
+
     if (success) {
       toast.success('Đã xác nhận đơn ứng tuyển. Hợp đồng sẽ được tạo tự động.')
       setConfirmDialog({ open: false, applicationId: null })
-      
+
       // Send notification to applicant and tenant
       if (application?.applicantId) {
         try {
@@ -180,7 +181,7 @@ export default function ReceivedRoommateApplicationsPage() {
             },
             message: 'Chủ trọ đã xác nhận đơn ứng tuyển. Hợp đồng đã được tạo!'
           })
-          
+
           await sendChatMessage({
             recipientId: application.applicantId,
             content: encodedContent,
@@ -190,7 +191,7 @@ export default function ReceivedRoommateApplicationsPage() {
           console.error('Failed to send confirmation notification:', error)
         }
       }
-      
+
       fetchApplicationsForMyPosts({ page, limit: 12 })
     } else {
       toast.error('Không thể xác nhận đơn ứng tuyển')
@@ -201,10 +202,9 @@ export default function ReceivedRoommateApplicationsPage() {
     <DashboardLayout userType="landlord">
       <div className="px-6">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Đơn ứng tuyển nhận được (Phòng trên nền tảng)</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Yêu cầu ở ghép</h1>
           <p className="text-gray-600">
-            Quản lý các đơn ứng tuyển tìm bạn cùng phòng cho các phòng được quản lý trên nền tảng. 
-            Các đơn ứng tuyển cho phòng ngoài hệ thống không hiển thị ở đây.
+            Quản lý các đơn ứng tuyển tìm bạn cùng phòng cho các phòng được quản lý trên nền tảng
           </p>
         </div>
 
@@ -219,8 +219,8 @@ export default function ReceivedRoommateApplicationsPage() {
             />
           </div>
 
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => fetchApplicationsForMyPosts({ page, limit: 12 })}
           >
             Làm mới
@@ -231,37 +231,45 @@ export default function ReceivedRoommateApplicationsPage() {
           <div className="bg-red-50 text-red-700 border border-red-200 rounded p-3 mb-4 text-sm">{error}</div>
         )}
 
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[180px]">Ứng viên</TableHead>
-                  <TableHead className="w-[150px]">Liên hệ</TableHead>
-                  <TableHead className="w-[120px]">Nghề nghiệp</TableHead>
-                  <TableHead className="w-[120px]">Ngày chuyển vào</TableHead>
-                  <TableHead className="w-[100px]">Thời gian ở</TableHead>
-                  <TableHead className="w-[120px]">Trạng thái</TableHead>
-                  <TableHead className="w-[120px]">Ngày gửi</TableHead>
-                  <TableHead className="w-[250px]">Lời nhắn</TableHead>
-                  <TableHead className="w-[150px] text-right">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow key="loading">
-                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
-                      Đang tải...
-                    </TableCell>
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-6 text-center text-gray-500">Đang tải...</CardContent>
+          </Card>
+        ) : filtered.length === 0 ? (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <MessageSquare />
+              </EmptyMedia>
+              <EmptyTitle>
+                {searchTerm ? 'Không tìm thấy đơn ứng tuyển' : 'Chưa có đơn ứng tuyển'}
+              </EmptyTitle>
+              <EmptyDescription>
+                {searchTerm
+                  ? 'Không có đơn ứng tuyển nào phù hợp với tìm kiếm.'
+                  : 'Bạn chưa nhận được đơn ứng tuyển nào cho các bài đăng tìm bạn cùng phòng.'}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[180px]">Ứng viên</TableHead>
+                    <TableHead className="w-[150px]">Liên hệ</TableHead>
+                    <TableHead className="w-[120px]">Nghề nghiệp</TableHead>
+                    <TableHead className="w-[120px]">Ngày chuyển vào</TableHead>
+                    <TableHead className="w-[100px]">Thời gian ở</TableHead>
+                    <TableHead className="w-[120px]">Trạng thái</TableHead>
+                    <TableHead className="w-[120px]">Ngày gửi</TableHead>
+                    <TableHead className="w-[250px]">Lời nhắn</TableHead>
+                    <TableHead className="w-[150px] text-right">Thao tác</TableHead>
                   </TableRow>
-                ) : filtered.length === 0 ? (
-                  <TableRow key="empty">
-                    <TableCell colSpan={9} className="text-center py-12 text-gray-500">
-                      Chưa có đơn ứng tuyển nào
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filtered.map((application) => (
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((application) => (
                   <TableRow key={application.id} className="hover:bg-gray-50">
                     <TableCell>
                       <div className="space-y-1">
@@ -334,79 +342,68 @@ export default function ReceivedRoommateApplicationsPage() {
                     </TableCell>
 
                     <TableCell className="text-right">
-                      {/* Chỉ hiển thị cho Platform Room (có roomInstanceId) */}
-                      {application.roommateSeekingPost?.roomInstanceId != null && (
-                        <>
-                          {application.status === 'approved_by_tenant' && (
-                            <div className="flex gap-1 justify-end">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-green-600 border-green-300 hover:bg-green-50"
-                                onClick={() => openRespondDialog(application.id, true)}
-                              >
-                                <Check className="h-4 w-4 mr-1" />
-                                Chấp nhận
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 border-red-300 hover:bg-red-50"
-                                onClick={() => openRespondDialog(application.id, false)}
-                              >
-                                <X className="h-4 w-4 mr-1" />
-                                Từ chối
-                              </Button>
-                            </div>
-                          )}
-                          {application.status === 'approved_by_landlord' && application.isConfirmedByTenant && !application.isConfirmedByLandlord && (
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => setConfirmDialog({ open: true, applicationId: application.id })}
-                            >
-                              Xác nhận
-                            </Button>
-                          )}
-                          {application.isConfirmedByLandlord && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700">
-                              Đã xác nhận - Rental đã tạo
-                            </Badge>
-                          )}
-                        </>
+                      {application.status === 'approved_by_tenant' && (
+                        <div className="flex gap-1 justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-green-600 border-green-300 hover:bg-green-50"
+                            onClick={() => openRespondDialog(application.id, true)}
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Chấp nhận
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-300 hover:bg-red-50"
+                            onClick={() => openRespondDialog(application.id, false)}
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Từ chối
+                          </Button>
+                        </div>
                       )}
-                      {/* External Room - Không cần landlord xử lý */}
-                      {application.roommateSeekingPost?.roomInstanceId == null && (
-                        <Badge variant="outline" className="bg-gray-100 text-gray-600">
-                          Phòng ngoài hệ thống
+                      {application.status === 'approved_by_landlord' && application.isConfirmedByTenant && !application.isConfirmedByLandlord && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => setConfirmDialog({ open: true, applicationId: application.id })}
+                        >
+                          Xác nhận
+                        </Button>
+                      )}
+                      {application.isConfirmedByLandlord && (
+                        <Badge variant="outline" className="bg-green-50 text-green-700">
+                          Đã xác nhận
                         </Badge>
                       )}
                     </TableCell>
                   </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="flex items-center justify-between mt-6">
           <div className="text-sm text-gray-600">
             Trang {pagination?.page || 1}/{pagination?.totalPages || 1}
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setPage((p) => Math.max(1, p - 1))} 
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={!canPrev}
             >
               Trước
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setPage((p) => p + 1)} 
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => p + 1)}
               disabled={!canNext}
             >
               Sau
@@ -423,13 +420,13 @@ export default function ReceivedRoommateApplicationsPage() {
               {respondDialog.approve ? 'Chấp nhận đơn ứng tuyển' : 'Từ chối đơn ứng tuyển'}
             </DialogTitle>
             <DialogDescription>
-              {respondDialog.approve 
+              {respondDialog.approve
                 ? 'Bạn có chắc chắn muốn chấp nhận đơn ứng tuyển này không?'
                 : 'Bạn có chắc chắn muốn từ chối đơn ứng tuyển này không?'
               }
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium mb-2 block">
@@ -445,13 +442,13 @@ export default function ReceivedRoommateApplicationsPage() {
           </div>
 
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setRespondDialog({ open: false, applicationId: null, approve: false })}
             >
               Hủy
             </Button>
-            <Button 
+            <Button
               variant={respondDialog.approve ? "default" : "destructive"}
               onClick={handleRespond}
             >
@@ -465,24 +462,21 @@ export default function ReceivedRoommateApplicationsPage() {
       <Dialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Xác nhận đơn ứng tuyển (Platform Room)</DialogTitle>
+            <DialogTitle>Xác nhận đơn ứng tuyển</DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn xác nhận đơn ứng tuyển này? 
-              Sau khi xác nhận, hợp đồng thuê (Rental) sẽ được tạo tự động trong hệ thống với thông tin:
-              <br />- Tenant: Người ứng tuyển
-              <br />- Landlord: Bạn
-              <br />- Thời hạn hợp đồng: Theo đơn ứng tuyển
+              Bạn có chắc chắn muốn xác nhận đơn ứng tuyển này?
+              Sau khi xác nhận, hợp đồng thuê (Rental) sẽ được tạo tự động trong hệ thống.
             </DialogDescription>
           </DialogHeader>
 
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setConfirmDialog({ open: false, applicationId: null })}
             >
               Hủy
             </Button>
-            <Button 
+            <Button
               variant="default"
               onClick={handleConfirm}
             >

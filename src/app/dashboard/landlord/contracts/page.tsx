@@ -22,7 +22,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import { STATUS_COLORS, CONTRACT_SIGN } from "@/constants/basic"
 import { translateContractStatus } from "@/utils"
 import { UserProfileModal } from "@/components/profile/user-profile-modal"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty"

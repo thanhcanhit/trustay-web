@@ -8,14 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
   Search,
   Plus,
   RotateCcw,
@@ -26,6 +18,10 @@ import {
   ExternalLink,
   Edit,
   XCircle,
+  Home,
+  User,
+  Calendar,
+  DollarSign,
 } from "lucide-react"
 import { useRentalStore } from "@/stores/rentalStore"
 import { useContractStore } from "@/stores/contractStore"
@@ -284,170 +280,179 @@ export default function RentalsPage() {
           </div>
         )}
 
-        {/* Rentals Table */}
+        {/* Rentals Grid */}
         {!loadingLandlord && filteredRentals.length > 0 && (
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px]">Mã Rental</TableHead>
-                      <TableHead className="min-w-[150px]">Người thuê</TableHead>
-                      <TableHead className="min-w-[180px]">Phòng/Tòa nhà</TableHead>
-                      <TableHead className="min-w-[120px]">Số phòng</TableHead>
-                      <TableHead className="text-right min-w-[120px]">Tiền thuê</TableHead>
-                      <TableHead className="text-right min-w-[120px]">Tiền cọc</TableHead>
-                      <TableHead className="min-w-[110px]">Ngày bắt đầu</TableHead>
-                      <TableHead className="min-w-[110px]">Ngày kết thúc</TableHead>
-                      <TableHead className="min-w-[120px]">Trạng thái</TableHead>
-                      <TableHead className="text-center min-w-[100px]">Hợp đồng</TableHead>
-                      <TableHead className="text-center min-w-[280px]">Thao tác</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredRentals.map((rental) => {
-                      const hasContract = rental.contract != null
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredRentals.map((rental) => {
+              const hasContract = rental.contract != null
+              const tenantName = rental.tenant
+                ? `${rental.tenant.firstName} ${rental.tenant.lastName}`
+                : 'Chưa có thông tin'
 
-                      const tenantName = rental.tenant
-                        ? `${rental.tenant.firstName} ${rental.tenant.lastName}`
-                        : 'Chưa có thông tin'
+              // Get room info from roomInstance
+              const roomName = rental.roomInstance?.room?.name || 'N/A'
+              const buildingName = rental.roomInstance?.room?.building?.name || 'N/A'
+              const roomNumber = rental.roomInstance?.roomNumber || 'N/A'
 
-                      // Get room info from roomInstance
-                      const roomName = rental.roomInstance?.room?.name || 'N/A'
-                      const buildingName = rental.roomInstance?.room?.building?.name || 'N/A'
-                      const roomNumber = rental.roomInstance?.roomNumber || 'N/A'
-                      
-                      // Parse monthly rent and deposit
-                      const monthlyRent = rental.monthlyRent ? parseFloat(rental.monthlyRent) : 0
-                      const depositPaid = rental.depositPaid ? parseFloat(rental.depositPaid) : 0
+              // Parse monthly rent and deposit
+              const monthlyRent = rental.monthlyRent ? parseFloat(rental.monthlyRent) : 0
+              const depositPaid = rental.depositPaid ? parseFloat(rental.depositPaid) : 0
 
-                      // Get dates
-                      const startDate = rental.contractStartDate || rental.startDate
-                      const endDate = rental.contractEndDate || rental.endDate
+              // Get dates
+              const startDate = rental.contractStartDate || rental.startDate
+              const endDate = rental.contractEndDate || rental.endDate
 
-                      return (
-                        <TableRow key={rental.id}>
-                          <TableCell className="font-medium">
-                            {rental.id?.slice(-8)}
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{tenantName}</div>
-                              {rental.tenant?.email && (
-                                <div className="text-xs text-gray-500">{rental.tenant.email}</div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <div>
-                                <div className="font-medium">{roomName}</div>
-                                <div className="text-xs text-gray-500">{buildingName}</div>
-                              </div>
-                              {rental.roomInstance?.room?.slug && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleViewRoomPost(rental.roomInstance!.room!.slug)}
-                                  className="h-6 w-6 p-0"
-                                  title="Xem bài đăng"
-                                >
-                                  <ExternalLink className="h-3 w-3" />
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{roomNumber}</Badge>
-                          </TableCell>
-                          <TableCell className="text-right font-medium text-green-600">
-                            {monthlyRent.toLocaleString('vi-VN')} đ
-                          </TableCell>
-                          <TableCell className="text-right font-medium text-blue-600">
-                            {depositPaid.toLocaleString('vi-VN')} đ
-                          </TableCell>
-                          <TableCell>
-                            {startDate
-                              ? new Date(startDate).toLocaleDateString('vi-VN')
-                              : 'N/A'}
-                          </TableCell>
-                          <TableCell>
-                            {endDate
-                              ? new Date(endDate).toLocaleDateString('vi-VN')
-                              : 'Không xác định'}
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={STATUS_COLORS[rental.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'}>
-                              {STATUS_LABELS[rental.status as keyof typeof STATUS_LABELS] || rental.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {hasContract ? (
-                              <Badge variant="outline" className="text-blue-600 border-blue-200">
-                                <FileCheck className="h-3 w-3 mr-1" />
-                                Có
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-gray-500 border-gray-200">
-                                Chưa có
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center gap-2 flex-wrap">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleViewDetail(rental.id!)}
-                                className="flex items-center gap-1"
-                              >
-                                <Eye className="h-3 w-3" />
-                                Xem
-                              </Button>
-                              {!hasContract && rental.status === 'active' && (
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  onClick={() => handleOpenContractForm(rental)}
-                                  className="flex items-center gap-1"
-                                >
-                                  <FileText className="h-3 w-3" />
-                                  Tạo HĐ
-                                </Button>
-                              )}
-                              {rental.status === 'active' && (
-                                <>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleOpenUpdateDialog(rental)}
-                                    className="flex items-center gap-1"
-                                  >
-                                    <Edit className="h-3 w-3" />
-                                    Sửa
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => handleOpenTerminateDialog(rental)}
-                                    className="flex items-center gap-1"
-                                  >
-                                    <XCircle className="h-3 w-3" />
-                                    Chấm dứt
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+              return (
+                <Card key={rental.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Home className="h-4 w-4 text-gray-500" />
+                          <h3 className="font-semibold text-lg">{roomName}</h3>
+                          {rental.roomInstance?.room?.slug && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewRoomPost(rental.roomInstance!.room!.slug)}
+                              className="h-6 w-6 p-0"
+                              title="Xem bài đăng"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500">{buildingName}</p>
+                        <Badge variant="outline" className="mt-2">{roomNumber}</Badge>
+                      </div>
+                      <Badge className={STATUS_COLORS[rental.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'}>
+                        {STATUS_LABELS[rental.status as keyof typeof STATUS_LABELS] || rental.status}
+                      </Badge>
+                    </div>
+
+                    {/* Tenant Info */}
+                    <div className="mb-4 pb-4 border-b">
+                      <div className="flex items-center gap-2 mb-1">
+                        <User className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium">Người thuê</span>
+                      </div>
+                      <p className="font-medium ml-6">{tenantName}</p>
+                      {rental.tenant?.email && (
+                        <p className="text-xs text-gray-500 ml-6">{rental.tenant.email}</p>
+                      )}
+                    </div>
+
+                    {/* Financial Info */}
+                    <div className="mb-4 pb-4 border-b space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm text-gray-600">Tiền thuê</span>
+                        </div>
+                        <span className="font-semibold text-green-600">
+                          {monthlyRent.toLocaleString('vi-VN')} đ
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm text-gray-600">Tiền cọc</span>
+                        </div>
+                        <span className="font-semibold text-blue-600">
+                          {depositPaid.toLocaleString('vi-VN')} đ
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Date Info */}
+                    <div className="mb-4 pb-4 border-b space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">Ngày bắt đầu:</span>
+                        <span className="text-sm font-medium">
+                          {startDate ? new Date(startDate).toLocaleDateString('vi-VN') : 'N/A'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">Ngày kết thúc:</span>
+                        <span className="text-sm font-medium">
+                          {endDate ? new Date(endDate).toLocaleDateString('vi-VN') : 'Không xác định'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Contract Status */}
+                    <div className="mb-4 flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Hợp đồng:</span>
+                      {hasContract ? (
+                        <Badge variant="outline" className="text-blue-600 border-blue-200">
+                          <FileCheck className="h-3 w-3 mr-1" />
+                          Có
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-gray-500 border-gray-200">
+                          Chưa có
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewDetail(rental.id!)}
+                        className="flex items-center gap-1 flex-1"
+                      >
+                        <Eye className="h-3 w-3" />
+                        Xem
+                      </Button>
+                      {!hasContract && rental.status === 'active' && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleOpenContractForm(rental)}
+                          className="flex items-center gap-1 flex-1"
+                        >
+                          <FileText className="h-3 w-3" />
+                          Tạo HĐ
+                        </Button>
+                      )}
+                      {rental.status === 'active' && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenUpdateDialog(rental)}
+                            className="flex items-center gap-1"
+                          >
+                            <Edit className="h-3 w-3" />
+                            Sửa
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleOpenTerminateDialog(rental)}
+                            className="flex items-center gap-1"
+                          >
+                            <XCircle className="h-3 w-3" />
+                            Chấm dứt
+                          </Button>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Rental ID */}
+                    <div className="mt-3 pt-3 border-t">
+                      <p className="text-xs text-gray-400">ID: {rental.id?.slice(-8)}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
         )}
 
         {!loadingLandlord && filteredRentals.length === 0 && (
