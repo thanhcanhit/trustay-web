@@ -54,7 +54,7 @@ const tenantItems: SidebarItem[] = [
     subItems: [
       {
         title: "Trọ của tôi",
-        href: "/dashboard/tenant/accommodation",
+        href: "/dashboard/tenant/rentals",
         icon: Home,
         disabled: false
       },
