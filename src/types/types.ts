@@ -39,6 +39,16 @@ export interface ChangePasswordRequest {
 	newPassword: string;
 }
 
+export interface RequestChangeEmailRequest {
+	newEmail: string;
+	password: string;
+}
+
+export interface ConfirmChangeEmailRequest {
+	newEmail: string;
+	verificationCode: string;
+}
+
 export interface CheckPassword {
 	isValid: boolean;
 	errors: Array<string>;
