@@ -282,7 +282,7 @@ export interface RoomCost {
 	roomId: string;
 	systemCostTypeId: string;
 	costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
-	baseRate?: number | null;
+	// baseRate?: number | null;
 	unitPrice?: number | null;
 	fixedAmount?: string;
 	value?: number; // For form handling
@@ -652,6 +652,9 @@ export interface RoomInvitation {
 	invitationMessage?: string | null;
 	proposedRent?: string | null;
 	expiresAt?: string | null;
+	isConfirmedBySender?: boolean;
+	confirmedAt?: string | null;
+	respondedAt?: string | null;
 	createdAt: string;
 	updatedAt: string;
 	// Related

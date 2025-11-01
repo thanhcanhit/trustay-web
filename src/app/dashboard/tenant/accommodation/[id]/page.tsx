@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useEffect } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,6 @@ import { Separator } from "@/components/ui/separator"
 import {
   Home,
   Calendar,
-  DollarSign,
   MapPin,
   Loader2,
   AlertCircle,
@@ -21,11 +20,19 @@ import {
   User,
   FileText,
   Clock,
-  Info
+  CalendarCheck,
+  XCircle,
+  Wrench,
+  ExternalLink,
+  ImageIcon
 } from "lucide-react"
 import { useRentalStore } from "@/stores/rentalStore"
-//import { Rental} from "@/types/rental.types"
+import { useRoomStore } from "@/stores/roomStore"
 import { RentalStatus } from "@/types/types"
+import { RenewRentalDialog } from "@/components/rental/RenewRentalDialog"
+import { TerminateRentalDialog } from "@/components/rental/TerminateRentalDialog"
+import { RenewRentalRequest, TerminateRentalRequest } from "@/types/rental.types"
+import { toast } from "sonner"
 
 const RENTAL_STATUS_CONFIG: Record<RentalStatus, { label: string; className: string }> = {
   active: { label: 'Đang thuê', className: 'bg-green-100 text-green-800' },
@@ -84,7 +91,15 @@ function RentalDetailContent() {
     errorCurrent,
     loadById,
     clearCurrent,
+    renew,
+    terminate,
+    submitting,
   } = useRentalStore()
+
+  const { currentRoom, loadRoomDetail } = useRoomStore()
+
+  const [showRenewDialog, setShowRenewDialog] = useState(false)
+  const [showTerminateDialog, setShowTerminateDialog] = useState(false)
 
   useEffect(() => {
     if (rentalId) {
@@ -94,6 +109,13 @@ function RentalDetailContent() {
       clearCurrent()
     }
   }, [rentalId, loadById, clearCurrent])
+
+  // Load room detail when rental is loaded
+  useEffect(() => {
+    if (rental?.roomInstance?.room?.id) {
+      loadRoomDetail(rental.roomInstance.room.slug)
+    }
+  }, [rental, loadRoomDetail])
 
   if (loadingCurrent) {
     return (
@@ -145,17 +167,80 @@ function RentalDetailContent() {
 
   const daysRemaining = getDaysRemaining()
 
+  const handleRenewRental = async (rentalId: string, data: RenewRentalRequest) => {
+    const success = await renew(rentalId, data)
+    if (success) {
+      toast.success('Yêu cầu gia hạn đã được gửi đến chủ trọ!')
+      setShowRenewDialog(false)
+      await loadById(rentalId)
+    } else {
+      toast.error('Không thể gửi yêu cầu gia hạn')
+    }
+  }
+
+  const handleTerminateRental = async (rentalId: string, data: TerminateRentalRequest) => {
+    const success = await terminate(rentalId, data)
+    if (success) {
+      toast.success('Yêu cầu chấm dứt hợp đồng đã được gửi!')
+      setShowTerminateDialog(false)
+      await loadById(rentalId)
+    } else {
+      toast.error('Không thể gửi yêu cầu chấm dứt hợp đồng')
+    }
+  }
+
+  const handleViewRoomPost = () => {
+    if (rental?.roomInstance?.room?.slug) {
+      window.open(`/rooms/${rental.roomInstance.room.slug}`, '_blank')
+    }
+  }
+
+  const handleReportIssue = () => {
+    // TODO: Implement report issue functionality
+    toast.info('Chức năng báo cáo sự cố đang được phát triển')
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <Button variant="outline" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Quay lại
         </Button>
-        <Badge className={RENTAL_STATUS_CONFIG[rental.status].className}>
-          {RENTAL_STATUS_CONFIG[rental.status].label}
-        </Badge>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge className={RENTAL_STATUS_CONFIG[rental.status].className}>
+            {RENTAL_STATUS_CONFIG[rental.status].label}
+          </Badge>
+          {rental.status === 'active' && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowRenewDialog(true)}
+              >
+                <CalendarCheck className="h-4 w-4 mr-2" />
+                Gia hạn
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleReportIssue}
+              >
+                <Wrench className="h-4 w-4 mr-2" />
+                Báo cáo sự cố
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => setShowTerminateDialog(true)}
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Chấm dứt
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Days Remaining Alert */}
@@ -177,268 +262,361 @@ function RentalDetailContent() {
         </Card>
       )}
 
-      {/* Room Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Home className="h-5 w-5" />
-            Thông tin phòng trọ
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
-            <div className="p-3 bg-blue-200 rounded-lg">
-              <MapPin className="h-6 w-6 text-blue-700" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-lg mb-1">
-                {rental.roomInstance?.room?.name || 'N/A'}
-              </h3>
-              <div className="flex items-center gap-2 text-gray-600 mb-2">
-                <Building2 className="h-4 w-4" />
-                <span>{rental.roomInstance?.room?.building?.name || 'N/A'}</span>
-              </div>
-              {rental.roomInstance?.roomNumber && (
-                <p className="text-sm text-gray-600">
-                  Phòng số: <span className="font-medium">{rental.roomInstance.roomNumber}</span>
-                </p>
-              )}
-              {rental.roomInstance?.room?.description && (
-                <p className="text-sm text-gray-600 mt-2">
-                  {rental.roomInstance.room.description}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {rental.roomInstance?.room && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
-              <div>
-                <p className="text-sm text-gray-600">Loại phòng</p>
-                <p className="font-medium capitalize">{rental.roomInstance.room.roomType || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Diện tích</p>
-                <p className="font-medium">
-                  {String(resolveDecimal(rental.roomInstance?.room?.areaSqm) ?? '0')} m²
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Sức chứa</p>
-                <p className="font-medium">{String(resolveDecimal(rental.roomInstance?.room?.maxOccupancy) ?? '0')} người</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Tầng</p>
-                <p className="font-medium">Tầng {String(resolveDecimal(rental.roomInstance?.room?.floorNumber) ?? '0')}</p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Rental Contract Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Thông tin hợp đồng
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Financial Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
-              <div className="p-3 bg-green-200 rounded-lg">
-                <DollarSign className="h-6 w-6 text-green-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Tiền thuê hàng tháng</p>
-                <p className="text-xl font-bold text-green-700">
-                  {formatCurrency(rental.monthlyRent)}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
-              <div className="p-3 bg-blue-200 rounded-lg">
-                <DollarSign className="h-6 w-6 text-blue-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Tiền cọc đã đặt</p>
-                <p className="text-xl font-bold text-blue-700">
-                  {formatCurrency(rental.depositPaid)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Contract Dates */}
-          <div className="space-y-3">
-            <h4 className="font-medium flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Thời hạn hợp đồng
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600 mb-1">Ngày bắt đầu</p>
-                <p className="font-semibold">{formatDate(rental.contractStartDate)}</p>
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600 mb-1">Ngày kết thúc</p>
-                <p className="font-semibold">{formatDate(rental.contractEndDate)}</p>
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600 mb-1">Thời hạn</p>
-                <p className="font-semibold">{getDuration()}</p>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Contract Metadata */}
-          <div className="space-y-3">
-            <h4 className="font-medium flex items-center gap-2">
-              <Info className="h-4 w-4" />
-              Thông tin khác
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div className="flex justify-between p-2">
-                <span className="text-gray-600">Mã hợp đồng:</span>
-                <span className="font-medium">#{rental.id.slice(0, 8).toUpperCase()}</span>
-              </div>
-              <div className="flex justify-between p-2">
-                <span className="text-gray-600">Ngày tạo:</span>
-                <span className="font-medium">{formatDate(rental.createdAt)}</span>
-              </div>
-              {rental.contractDocumentUrl && (
-                <div className="col-span-2 p-2">
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href={rental.contractDocumentUrl} target="_blank" rel="noopener noreferrer">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Xem tài liệu hợp đồng
-                    </a>
+      {/* Two Column Layout: Room Detail (Left) and Room Instance (Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Room Detail */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Room Information */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Home className="h-5 w-5" />
+                  Thông tin phòng trọ
+                </CardTitle>
+                {rental.roomInstance?.room?.slug && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleViewRoomPost}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Xem bài đăng
                   </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
+                <div className="p-3 bg-blue-200 rounded-lg">
+                  <MapPin className="h-6 w-6 text-blue-700" />
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Termination Info */}
-          {rental.terminationNoticeDate && (
-            <>
-              <Separator />
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <h4 className="font-medium text-red-800 mb-2">Thông tin chấm dứt hợp đồng</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Ngày thông báo:</span>
-                    <span className="font-medium">{formatDate(rental.terminationNoticeDate)}</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-1">
+                    {rental.roomInstance?.room?.name || 'N/A'}
+                  </h3>
+                  <div className="flex items-center gap-2 text-gray-600 mb-2">
+                    <Building2 className="h-4 w-4" />
+                    <span>{rental.roomInstance?.room?.building?.name || 'N/A'}</span>
                   </div>
-                  {rental.terminationReason && (
-                    <div>
-                      <span className="text-gray-600">Lý do:</span>
-                      <p className="mt-1 text-gray-800">{rental.terminationReason}</p>
-                    </div>
+                  {rental.roomInstance?.room?.description && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      {rental.roomInstance.room.description}
+                    </p>
                   )}
                 </div>
               </div>
-            </>
+
+              {/* Room Details from API */}
+              {currentRoom && (
+                <>
+                  {/* Room Images */}
+                  {currentRoom.images && currentRoom.images.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4" />
+                        Hình ảnh phòng
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {currentRoom.images.slice(0, 4).map((img, idx) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            key={idx}
+                            src={img.url}
+                            alt={`Room ${idx + 1}`}
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Room Amenities */}
+                  {currentRoom.amenities && currentRoom.amenities.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Tiện nghi</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {currentRoom.amenities.map((amenity, idx) => (
+                          <Badge key={idx} variant="secondary">
+                            {typeof amenity === 'string' ? amenity : amenity.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pricing */}
+                  {currentRoom.pricing && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Chi phí</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-green-50 rounded-lg">
+                          <p className="text-sm text-gray-600">Giá thuê/tháng</p>
+                          <p className="font-semibold text-green-700">
+                            {formatCurrency(currentRoom.pricing.basePriceMonthly)}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-blue-50 rounded-lg">
+                          <p className="text-sm text-gray-600">Tiền cọc</p>
+                          <p className="font-semibold text-blue-700">
+                            {formatCurrency(currentRoom.pricing.depositAmount)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Costs */}
+                  {currentRoom.costs && currentRoom.costs.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Chi phí khác</h4>
+                      <div className="space-y-2">
+                        {currentRoom.costs.map((cost) => (
+                          <div key={cost.id} className="flex justify-between p-2 bg-gray-50 rounded">
+                            <span className="text-sm">{cost.name}</span>
+                            <span className="text-sm font-medium">{formatCurrency(cost.value)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {rental.roomInstance?.room && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
+                  <div>
+                    <p className="text-sm text-gray-600">Loại phòng</p>
+                    <p className="font-medium capitalize">{rental.roomInstance.room.roomType || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Diện tích</p>
+                    <p className="font-medium">
+                      {String(resolveDecimal(rental.roomInstance?.room?.areaSqm) ?? '0')} m²
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Sức chứa</p>
+                    <p className="font-medium">{String(resolveDecimal(rental.roomInstance?.room?.maxOccupancy) ?? '0')} người</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Tầng</p>
+                    <p className="font-medium">Tầng {String(resolveDecimal(rental.roomInstance?.room?.floorNumber) ?? '0')}</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Landlord Information */}
+          {rental.owner && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Thông tin chủ nhà
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-gray-600">Họ tên:</span>
+                    <span className="font-medium">
+                      {rental.owner.lastName} {rental.owner.firstName}
+                    </span>
+                  </div>
+                  {rental.owner.email && (
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <span className="text-gray-600 flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        Email:
+                      </span>
+                      <a
+                        href={`mailto:${rental.owner.email}`}
+                        className="font-medium text-blue-600 hover:underline"
+                      >
+                        {rental.owner.email}
+                      </a>
+                    </div>
+                  )}
+                  {rental.owner.phone && (
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <span className="text-gray-600 flex items-center gap-2">
+                        <Phone className="h-4 w-4" />
+                        Số điện thoại:
+                      </span>
+                      <a
+                        href={`tel:${rental.owner.phone}`}
+                        className="font-medium text-blue-600 hover:underline"
+                      >
+                        {rental.owner.phone}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Landlord Information */}
-      {rental.owner && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Thông tin chủ nhà
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-gray-600">Họ tên:</span>
-                <span className="font-medium">
-                  {rental.owner.lastName} {rental.owner.firstName}
-                </span>
-              </div>
-              {rental.owner.email && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-gray-600 flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email:
-                  </span>
-                  <a
-                    href={`mailto:${rental.owner.email}`}
-                    className="font-medium text-blue-600 hover:underline"
-                  >
-                    {rental.owner.email}
-                  </a>
-                </div>
-              )}
-              {rental.owner.phone && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-gray-600 flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    Số điện thoại:
-                  </span>
-                  <a
-                    href={`tel:${rental.owner.phone}`}
-                    className="font-medium text-blue-600 hover:underline"
-                  >
-                    {rental.owner.phone}
-                  </a>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* Right Column: Room Instance & Rental Contract */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Room Instance Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Home className="h-5 w-5" />
+                Phòng của bạn
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {rental.roomInstance && (
+                <>
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">Room Instance</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Số phòng:</span>
+                        <span className="font-medium">{rental.roomInstance.roomNumber || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Trạng thái:</span>
+                        <Badge variant={rental.roomInstance.status === 'occupied' ? 'default' : 'secondary'}>
+                          {rental.roomInstance.status === 'occupied' ? 'Đang thuê' : rental.roomInstance.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
 
-      {/* Tenant Information */}
-      {rental.tenant && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Thông tin người thuê
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-gray-600">Họ tên:</span>
-                <span className="font-medium">
-                  {rental.tenant.lastName} {rental.tenant.firstName}
-                </span>
+                  {rental.roomInstance.notes && (
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">Ghi chú:</p>
+                      <p className="text-sm">{rental.roomInstance.notes}</p>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Rental Contract Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Hợp đồng thuê
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Financial Info */}
+              <div className="space-y-3">
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Tiền thuê/tháng</p>
+                  <p className="text-lg font-bold text-green-700">
+                    {formatCurrency(rental.monthlyRent)}
+                  </p>
+                </div>
+
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Tiền cọc đã đặt</p>
+                  <p className="text-lg font-bold text-blue-700">
+                    {formatCurrency(rental.depositPaid)}
+                  </p>
+                </div>
               </div>
-              {rental.tenant.email && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-gray-600 flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email:
-                  </span>
-                  <span className="font-medium">{rental.tenant.email}</span>
+
+              <Separator />
+
+              {/* Contract Dates */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="h-4 w-4 text-gray-600" />
+                  <h4 className="font-medium text-sm">Thời hạn</h4>
                 </div>
-              )}
-              {rental.tenant.phone && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-gray-600 flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    Số điện thoại:
-                  </span>
-                  <span className="font-medium">{rental.tenant.phone}</span>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between p-2 bg-gray-50 rounded">
+                    <span className="text-gray-600">Bắt đầu:</span>
+                    <span className="font-medium">{formatDate(rental.contractStartDate)}</span>
+                  </div>
+                  <div className="flex justify-between p-2 bg-gray-50 rounded">
+                    <span className="text-gray-600">Kết thúc:</span>
+                    <span className="font-medium">{formatDate(rental.contractEndDate)}</span>
+                  </div>
+                  <div className="flex justify-between p-2 bg-gray-50 rounded">
+                    <span className="text-gray-600">Thời hạn:</span>
+                    <span className="font-medium">{getDuration()}</span>
+                  </div>
                 </div>
+              </div>
+
+              <Separator />
+
+              {/* Contract Metadata */}
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between p-2">
+                  <span className="text-gray-600">Mã HĐ:</span>
+                  <span className="font-medium">#{rental.id.slice(0, 8).toUpperCase()}</span>
+                </div>
+                <div className="flex justify-between p-2">
+                  <span className="text-gray-600">Ngày tạo:</span>
+                  <span className="font-medium">{formatDate(rental.createdAt)}</span>
+                </div>
+              </div>
+
+              {rental.contractDocumentUrl && (
+                <>
+                  <Separator />
+                  <Button variant="outline" className="w-full" asChild>
+                    <a href={rental.contractDocumentUrl} target="_blank" rel="noopener noreferrer">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Xem hợp đồng
+                    </a>
+                  </Button>
+                </>
               )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
+              {/* Termination Info */}
+              {rental.terminationNoticeDate && (
+                <>
+                  <Separator />
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <h4 className="font-medium text-red-800 text-sm mb-2">Thông tin chấm dứt</h4>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Ngày thông báo:</span>
+                        <span className="font-medium">{formatDate(rental.terminationNoticeDate)}</span>
+                      </div>
+                      {rental.terminationReason && (
+                        <div>
+                          <span className="text-gray-600">Lý do:</span>
+                          <p className="mt-1 text-gray-800">{rental.terminationReason}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Dialogs */}
+      <RenewRentalDialog
+        rental={rental}
+        open={showRenewDialog}
+        onOpenChange={setShowRenewDialog}
+        onSubmit={handleRenewRental}
+        isSubmitting={submitting}
+      />
+
+      <TerminateRentalDialog
+        rental={rental}
+        open={showTerminateDialog}
+        onOpenChange={setShowTerminateDialog}
+        onSubmit={handleTerminateRental}
+        isSubmitting={submitting}
+      />
     </div>
   )
 }

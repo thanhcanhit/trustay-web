@@ -1,4 +1,4 @@
-import { ContractStatus, ContractType, RoomInstance, UserProfile } from './types';
+import { ContractStatus, ContractType } from './types';
 
 // ============= CONTRACT TYPES =============
 
@@ -15,48 +15,97 @@ export interface ContractSignature {
 
 export interface Contract {
 	id: string;
-	rentalId?: string;
-	landlordId: string;
-	tenantId: string;
-	roomInstanceId: string;
-	contractType: ContractType;
-	startDate: string | Date;
-	endDate?: string | Date;
-	monthlyRent: number;
-	depositAmount: number;
+	contractCode?: string;
 	status: ContractStatus;
-	// Contract Data
+	contractType: ContractType;
+	// User Relations
+	landlord?: {
+		id: string;
+		fullName?: string;
+		email: string;
+		phone?: string | null;
+		firstName?: string;
+		lastName?: string;
+		avatarUrl?: string;
+	};
+	tenant?: {
+		id: string;
+		fullName?: string;
+		email: string;
+		phone?: string | null;
+		firstName?: string;
+		lastName?: string;
+		avatarUrl?: string;
+	};
+	// Room Relations
+	room?: {
+		roomNumber: string;
+		roomName: string;
+		buildingName: string;
+		name?: string; // Alias for roomName for backwards compatibility
+		areaSqm?: number;
+		roomType?: string;
+	};
+	// Contract Data with full structure from API
+	contractData?: {
+		terms?: {
+			rules?: string[];
+			utilities?: string[];
+			restrictions?: string[];
+			responsibilities?: {
+				tenant?: string[];
+				landlord?: string[];
+			};
+			tenantResponsibilities?: string[];
+			landlordResponsibilities?: string[];
+		};
+		roomName?: string;
+		financial?: {
+			deposit?: number;
+			waterPrice?: number;
+			monthlyRent?: number;
+			depositMonths?: number;
+			internetPrice?: number;
+			paymentMethod?: string;
+			paymentDueDate?: number;
+			electricityPrice?: number;
+		};
+		roomNumber?: string;
+		monthlyRent?: number;
+		buildingName?: string;
+		depositAmount?: number;
+		buildingAddress?: string;
+	};
+	// Date fields
+	startDate: string | Date;
+	endDate?: string | Date | null;
+	signedAt?: Date | string | null;
+	// PDF
+	pdfUrl?: string | null;
+	// Signatures
+	signatures?: ContractSignature[];
+	landlordSignature?: string | ContractSignature;
+	tenantSignature?: string | ContractSignature;
+	landlordSignedAt?: Date | string;
+	tenantSignedAt?: Date | string;
+	fullySignedAt?: Date | string;
+	// Timestamps
+	createdAt: Date | string;
+	updatedAt: Date | string;
+	// Legacy fields for backwards compatibility
+	rentalId?: string;
+	landlordId?: string;
+	tenantId?: string;
+	roomInstanceId?: string;
+	monthlyRent?: number;
+	depositAmount?: number;
 	additionalTerms?: string;
 	rules?: string[];
 	amenities?: string[];
 	terms?: string;
-	contractCode?: string;
-	contractData?: {
-		monthlyRent?: number;
-		depositAmount?: number;
-		buildingName?: string;
-		buildingAddress?: string;
-	};
-	// Signatures - can be string (simple) or full signature object
-	landlordSignature?: string | ContractSignature;
-	tenantSignature?: string | ContractSignature;
-	signatures?: ContractSignature[];
-	landlordSignedAt?: Date | string;
-	tenantSignedAt?: Date | string;
-	fullySignedAt?: Date | string;
-	signedAt?: Date | string;
-	// PDF
-	pdfUrl?: string;
 	pdfHash?: string;
 	pdfSize?: number;
 	lastVerified?: Date | string;
-	// Timestamps
-	createdAt: Date | string;
-	updatedAt: Date | string;
-	// Relations
-	landlord?: UserProfile;
-	tenant?: UserProfile;
-	room?: RoomInstance;
 }
 
 export interface ContractData {

@@ -7,3 +7,4 @@ export * from './passwordValidation';
 export * from './phoneValidation';
 export * from './registrationErrorHandler';
 export * from './slug';
+export * from './statusTranslation';

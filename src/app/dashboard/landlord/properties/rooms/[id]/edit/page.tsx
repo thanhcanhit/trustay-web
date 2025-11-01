@@ -48,7 +48,7 @@ interface ApiCost {
   roomId: string;
   systemCostTypeId: string;
   costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
-  baseRate?: number | null;
+  // baseRate?: number | null;
   unitPrice?: number | null;
   fixedAmount?: string;
   currency: string;
@@ -128,7 +128,7 @@ const convertCostsToObjects = (costs: string[] | RoomCost[]): UpdateRoomCost[] =
     
     // Handle API response data with extended fields
     const apiCost = cost as ApiCost;
-    const value = parseFloat(apiCost.fixedAmount || '0') || apiCost.unitPrice || apiCost.baseRate || 0;
+    const value = parseFloat(apiCost.fixedAmount || '0') || apiCost.unitPrice || 0;
     
     // Return only the fields allowed by the API specification
     return {

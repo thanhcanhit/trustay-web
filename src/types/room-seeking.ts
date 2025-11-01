@@ -18,6 +18,7 @@ export interface RoomSeekingPost {
 	expiresAt: string;
 	amenityIds: string[];
 	contactCount: number;
+	viewCount?: number;
 	status: 'active' | 'paused' | 'closed' | 'expired';
 	createdAt: string;
 	updatedAt: string;

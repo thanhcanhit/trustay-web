@@ -542,3 +542,25 @@ export const activateContract = async (
 		};
 	}
 };
+
+// Delete contract (Landlord only - draft status only)
+export const deleteContract = async (
+	contractId: string,
+	token?: string,
+): Promise<ApiResult<{ message: string }>> => {
+	try {
+		const response = await apiCall<{ message: string }>(
+			`/api/contracts/${contractId}`,
+			{
+				method: 'DELETE',
+			},
+			token,
+		);
+		return { success: true, data: response };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể xóa hợp đồng'),
+		};
+	}
+};

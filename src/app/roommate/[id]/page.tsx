@@ -17,6 +17,7 @@ import { useChatStore } from "@/stores/chat.store"
 import { MESSAGE_TYPES } from "@/constants/chat.constants"
 import { encodeStructuredMessage } from "@/lib/chat-message-encoder"
 import { toast } from "sonner"
+import { HTMLContent } from "@/components/ui/html-content"
 
 export default function RoommateDetailPage() {
   const params = useParams()
@@ -275,63 +276,71 @@ export default function RoommateDetailPage() {
       <div className="container mx-auto px-4 py-6 max-w-6xl">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content - 2/3 */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Title & Status */}
-            <div>
-              <div className="flex items-start justify-between gap-4 mb-3">
-                <h1 className="text-3xl font-bold text-gray-900">
-                  {post.title}
-                </h1>
-                {getStatusBadge(post.status)}
-              </div>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4" />
-                  <span>{getLocationText()}</span>
+          <div className="lg:col-span-2">
+            {/* Single Comprehensive Card */}
+            <div className="bg-white rounded-xl shadow-lg border-0 p-6">
+              {/* Header Section */}
+              <div className="mb-6">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      {getStatusBadge(post.status)}
+                    </div>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-3 leading-tight">
+                      {post.title}
+                    </h1>
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="h-4 w-4" />
+                        <span>{getLocationText()}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4" />
+                        <span>{formatDate(post.createdAt)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setIsSaved(!isSaved)}>
+                      <Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Share2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4" />
-                  <span>{formatDate(post.createdAt)}</span>
-                </div>
-              </div>
-            </div>
 
-            {/* Price & Key Info */}
-            <div className="border-l-4 border-green-500 bg-green-50 px-4 py-3 rounded">
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                <div>
-                  <span className="text-sm text-green-700">Tiền thuê</span>
-                  <p className="text-2xl font-bold text-green-900">{formatPrice(post.monthlyRent)}<span className="text-base font-normal">/tháng</span></p>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-600">Tiền cọc</span>
-                  <p className="text-xl font-semibold text-gray-900">{formatPrice(post.depositAmount)}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-600">Chuyển vào</span>
-                  <p className="text-xl font-semibold text-gray-900">{formatDate(post.availableFromDate)}</p>
+                {/* Price Display */}
+                <div className="flex items-center justify-between p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-green-500 rounded-lg">
+                      <DollarSign className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-green-600 font-medium mb-1">Tiền thuê hàng tháng</p>
+                      <div className="text-2xl font-bold text-green-600">
+                        {formatPrice(post.monthlyRent)}<span className="text-base font-normal">/tháng</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-gray-600 mb-1">Tiền cọc</div>
+                    <div className="text-xl font-semibold text-gray-900">{formatPrice(post.depositAmount)}</div>
+                    <div className="text-sm text-gray-600 mt-2">Chuyển vào: {formatDate(post.availableFromDate)}</div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Description */}
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-3">Mô tả</h2>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-line">{post.description}</p>
-            </div>
+              {/* Divider */}
+              <div className="border-t border-gray-200 my-6"></div>
 
-            {/* Additional Requirements */}
-            {post.additionalRequirements && (
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-3">Yêu cầu thêm</h2>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">{post.additionalRequirements}</p>
-              </div>
-            )}
-
-            {/* Details Grid */}
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Thông tin chi tiết</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+              {/* Details Grid */}
+              <div className="mb-6">
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+                  <Home className="h-5 w-5 text-blue-600" />
+                  Thông tin chi tiết
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Users className="h-5 w-5 text-purple-600" />
@@ -401,7 +410,34 @@ export default function RoommateDetailPage() {
                 )}
               </div>
             </div>
+
+            {/* Divider */}
+            <div className="border-t border-gray-200 my-6"></div>
+
+            {/* Description */}
+            <div className="mb-6">
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+                <Home className="h-5 w-5 text-blue-600" />
+                Mô tả
+              </h3>
+              <HTMLContent content={post.description} />
+            </div>
+
+            {/* Additional Requirements */}
+            {post.additionalRequirements && (
+              <>
+                <div className="border-t border-gray-200 my-6"></div>
+                <div>
+                  <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+                    <Home className="h-5 w-5 text-blue-600" />
+                    Yêu cầu thêm
+                  </h3>
+                  <HTMLContent content={post.additionalRequirements} />
+                </div>
+              </>
+            )}
           </div>
+        </div>
 
           {/* Sidebar - 1/3 - Sticky Card */}
           <div className="lg:col-span-1">

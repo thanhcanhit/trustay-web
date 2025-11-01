@@ -84,6 +84,48 @@ export const verifyEmailCode = async (
 	}
 };
 
+// Send phone verification code
+export const sendPhoneVerification = async (
+	phone: string,
+): Promise<ApiResult<VerificationResponse>> => {
+	try {
+		const response = await apiClient.post<VerificationResponse>('/api/verification/send', {
+			type: 'phone',
+			phone,
+		});
+		return { success: true, data: response.data };
+	} catch (error: unknown) {
+		const errorMessage = extractErrorMessage(error, 'Failed to send verification SMS');
+		return {
+			success: false,
+			error: errorMessage,
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
+	}
+};
+
+// Verify phone code
+export const verifyPhoneCode = async (
+	phone: string,
+	code: string,
+): Promise<ApiResult<VerificationResponse>> => {
+	try {
+		const response = await apiClient.post<VerificationResponse>('/api/verification/verify', {
+			type: 'phone',
+			phone,
+			code,
+		});
+		return { success: true, data: response.data };
+	} catch (error: unknown) {
+		const errorMessage = extractErrorMessage(error, 'Failed to verify phone code');
+		return {
+			success: false,
+			error: errorMessage,
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
+	}
+};
+
 // Register with verification
 export const registerWithVerification = async (
 	userData: RegisterRequest,

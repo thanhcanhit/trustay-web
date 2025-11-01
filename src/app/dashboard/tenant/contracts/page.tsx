@@ -4,22 +4,15 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Download, RotateCcw, AlertCircle, FileSignature, Loader2, MoreHorizontal, FileText, Eye } from "lucide-react"
+import { ContractCard } from "@/components/contract/ContractCard"
+import { Search, RotateCcw, AlertCircle, Loader2, FileText } from "lucide-react"
 import { useContractStore } from "@/stores/contractStore"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useRouter } from "next/navigation"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Contract } from "@/types/types"
 import { UserProfileModal } from "@/components/profile/user-profile-modal"
-import { CONTRACT_SIGN, STATUS_COLORS } from "@/constants/basic"
+import { translateContractStatus } from "@/utils"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 
 export default function TenantContractsPage() {
@@ -108,13 +101,15 @@ export default function TenantContractsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả trạng thái</SelectItem>
-              <SelectItem value="active">Đang hiệu lực</SelectItem>
-              <SelectItem value="draft">Bản nháp</SelectItem>
-              <SelectItem value="pending_signatures">Chờ ký</SelectItem>
-              <SelectItem value="signed">Đã ký</SelectItem>
-              <SelectItem value="expired">Hết hạn</SelectItem>
-              <SelectItem value="terminated">Đã chấm dứt</SelectItem>
-              <SelectItem value="cancelled">Đã hủy</SelectItem>
+              <SelectItem value="active">{translateContractStatus('active')}</SelectItem>
+              <SelectItem value="draft">{translateContractStatus('draft')}</SelectItem>
+              <SelectItem value="pending_signatures">{translateContractStatus('pending_signatures')}</SelectItem>
+              <SelectItem value="partially_signed">{translateContractStatus('partially_signed')}</SelectItem>
+              <SelectItem value="signed">{translateContractStatus('signed')}</SelectItem>
+              <SelectItem value="fully_signed">{translateContractStatus('fully_signed')}</SelectItem>
+              <SelectItem value="expired">{translateContractStatus('expired')}</SelectItem>
+              <SelectItem value="terminated">{translateContractStatus('terminated')}</SelectItem>
+              <SelectItem value="cancelled">{translateContractStatus('cancelled')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -175,111 +170,25 @@ export default function TenantContractsPage() {
         </div>
       )}
 
-      {/* Contracts Table */}
+      {/* Contracts Grid */}
       {!loading && filteredContracts.length > 0 && (
-        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Mã HĐ</TableHead>
-                <TableHead className="min-w-[150px]">Chủ nhà</TableHead>
-                <TableHead className="min-w-[120px]">Phòng</TableHead>
-                <TableHead className="text-right min-w-[120px]">Tiền thuê</TableHead>
-                <TableHead className="text-right min-w-[120px]">Tiền cọc</TableHead>
-                <TableHead className="min-w-[110px]">Ngày bắt đầu</TableHead>
-                <TableHead className="min-w-[110px]">Ngày kết thúc</TableHead>
-                <TableHead className="min-w-[120px]">Trạng thái</TableHead>
-                <TableHead className="text-right w-[80px]">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredContracts.map((contract: Contract) => {
-                const landlordName = contract.landlord
-                  ? `${contract.landlord.firstName} ${contract.landlord.lastName}`
-                  : 'Chưa có thông tin'
-
-                const roomName = contract.room?.name || 'N/A'
-
-                return (
-                  <TableRow key={contract.id}>
-                    <TableCell className="font-medium">
-                      {contract.id ? `HĐ-${contract.id.slice(-8)}` : 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      <button
-                        onClick={() => {
-                          if (contract.landlord?.id) {
-                            setSelectedUserId(contract.landlord.id)
-                            setProfileModalOpen(true)
-                          }
-                        }}
-                        className="font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left"
-                        disabled={!contract.landlord?.id}
-                      >
-                        {landlordName}
-                      </button>
-                    </TableCell>
-                    <TableCell>{roomName}</TableCell>
-                    <TableCell className="text-right font-medium text-green-600">
-                      {(contract.monthlyRent || 0).toLocaleString('vi-VN')} đ
-                    </TableCell>
-                    <TableCell className="text-right font-medium text-blue-600">
-                      {(contract.depositAmount || 0).toLocaleString('vi-VN')} đ
-                    </TableCell>
-                    <TableCell>
-                      {contract.startDate
-                        ? new Date(contract.startDate).toLocaleDateString('vi-VN')
-                        : 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      {contract.endDate
-                        ? new Date(contract.endDate).toLocaleDateString('vi-VN')
-                        : 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={STATUS_COLORS[contract.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'}>
-                        {CONTRACT_SIGN[contract.status as keyof typeof CONTRACT_SIGN] || contract.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewContract(contract.id!)}>
-                              <FileText className="h-4 w-4 mr-2" />
-                              Xem chi tiết
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push(`/dashboard/tenant/contracts/${contract.id}/preview`)}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              Xem trước hợp đồng
-                            </DropdownMenuItem>
-                            {(contract.status === 'draft' || contract.status === 'pending_signatures') && (
-                              <DropdownMenuItem onClick={() => handleViewContract(contract.id!)}>
-                                <FileSignature className="h-4 w-4 mr-2" />
-                                Ký hợp đồng
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem
-                              onClick={() => handleDownload(contract.id!, `HĐ-${contract.id?.slice(-8)}`)}
-                              disabled={downloading}
-                            >
-                              <Download className={`h-4 w-4 mr-2 ${downloading ? 'animate-spin' : ''}`} />
-                              Tải PDF
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredContracts.map((contract: Contract) => (
+            <ContractCard
+              key={contract.id}
+              contract={contract}
+              userType="tenant"
+              onViewDetails={handleViewContract}
+              onViewPreview={(contractId) => router.push(`/dashboard/tenant/contracts/${contractId}/preview`)}
+              onSign={handleViewContract}
+              onDownload={handleDownload}
+              onViewProfile={(userId) => {
+                setSelectedUserId(userId)
+                setProfileModalOpen(true)
+              }}
+              downloading={downloading}
+            />
+          ))}
         </div>
       )}
 

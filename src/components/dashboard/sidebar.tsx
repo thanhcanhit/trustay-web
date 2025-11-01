@@ -24,7 +24,6 @@ import {
   Wrench,
   AlertTriangle,
   Star,
-  UserPlus,
 } from "lucide-react"
 import { useUserStore } from "@/stores/userStore"
 
@@ -109,27 +108,15 @@ const landlordItems: SidebarItem[] = [
         icon: Building2
       },
       {
-        title: "Yêu cầu thuê trọ",
-        href: "/dashboard/landlord/rental-requests",
+        title: "Yêu cầu thuê",
+        href: "/dashboard/landlord/requests",
         icon: Send,
         disabled: false
       },
       {
-        title: "Lời mời thuê",
-        href: "/dashboard/landlord/room-bookings",
-        icon: UserPlus,
-        disabled: false
-      },
-      {
-        title: "Ứng tuyển nhận được",
-        href: "/dashboard/landlord/roommate-applications/received",
+        title: "Yêu cầu ở ghép",
+        href: "/dashboard/landlord/roommate-applications",
         icon: Users,
-        disabled: false
-      },
-      {
-        title: "Ứng tuyển đã gửi",
-        href: "/dashboard/landlord/roommate-applications/sent",
-        icon: Send,
         disabled: false
       },
       {
