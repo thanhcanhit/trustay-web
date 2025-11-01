@@ -14,7 +14,6 @@ import { useBuildingStore } from "@/stores/buildingStore"
 import { type Building, type CreateBuildingRequest, type UpdateBuildingRequest } from "@/types/types"
 import { MapPin, Building as BuildingIcon, Save, X } from "lucide-react"
 import { toast } from "sonner"
-import { cleanDescriptionText } from "@/utils/textProcessing"
 
 interface BuildingFormProps {
   building?: Building
@@ -147,7 +146,7 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
 
       const buildingData: CreateBuildingRequest | UpdateBuildingRequest = {
         name: formData.name.trim(),
-        description: formData.description ? cleanDescriptionText(formData.description) : undefined,
+        description: formData.description || undefined,
         addressLine1: addressData.street.trim(),
         addressLine2: formData.addressLine2.trim() || undefined,
         wardId: addressData.ward.id,

@@ -74,7 +74,6 @@ interface ApiCost {
 import { Building as BuildingIcon, Home, DollarSign } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
-import { cleanDescriptionText } from "@/utils/textProcessing"
 import { validateReferenceIds } from "@/utils/referenceValidation"
 import { getRoomTypeOptions } from "@/utils/room-types"
 import { PageHeader } from "@/components/dashboard/page-header"
@@ -316,7 +315,7 @@ export default function EditRoomPage() {
       // Prepare update data according to API specification - only allowed fields
       const updateData: UpdateRoomRequest = {
         name: formData.name!,
-        description: formData.description ? cleanDescriptionText(formData.description) : undefined,
+        description: formData.description || undefined,
         roomType: formData.roomType!,
         areaSqm: formData.areaSqm!,
         totalRooms: formData.totalRooms!,

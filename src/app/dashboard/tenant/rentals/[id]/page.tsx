@@ -190,8 +190,8 @@ function RentalDetailContent() {
   }
 
   const handleViewRoomPost = () => {
-    if (rental?.roomInstance?.room?.slug) {
-      window.open(`/rooms/${rental.roomInstance.room.slug}`, '_blank')
+    if (rental?.roomInstance?.room?.id) {
+      window.open(`/rooms/${rental.roomInstance.room.id}`, '_blank')
     }
   }
 

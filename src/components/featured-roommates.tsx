@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getRoommateSeekingListings, type RoommateSeekingListingItem } from "@/actions/roommate-seeking-posts.action"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty"
+import { stripHtmlTags } from "@/utils/textProcessing"
 
 export function FeaturedRoommates() {
   const [savedPosts, setSavedPosts] = useState<string[]>([])
@@ -182,7 +183,7 @@ export function FeaturedRoommates() {
 
                   {/* Description */}
                   {listing.description && (
-                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">{listing.description}</p>
+                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">{stripHtmlTags(listing.description)}</p>
                   )}
 
                   {/* Max Budget */}

@@ -15,6 +15,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
 import { ROOM_TYPE_LABELS } from "@/constants/basic"
+import { HTMLContent } from "@/components/ui/html-content"
 
 export default function BuildingDetailPage() {
   const params = useParams()
@@ -290,7 +291,7 @@ export default function BuildingDetailPage() {
                 {building.description && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Mô tả</label>
-                    <p className="mt-0.5 text-gray-900">{building.description}</p>
+                    <HTMLContent content={building.description} className="mt-0.5" />
                   </div>
                 )}
               </div>

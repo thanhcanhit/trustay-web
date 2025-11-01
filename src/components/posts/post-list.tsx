@@ -36,6 +36,7 @@ import { vi } from 'date-fns/locale'
 import { RoomSeekingPost, RentalPost } from '@/types'
 import { RoommateSeekingPost } from '@/actions/roommate-seeking-posts.action'
 import { getRoomTypeDisplayName } from '@/utils/room-types'
+import { stripHtmlTags } from '@/utils/textProcessing'
 
 interface PostListProps {
 	roomSeekingPosts?: RoomSeekingPost[]
@@ -151,7 +152,7 @@ export function PostList({
 			</CardHeader>
 			<CardContent>
 				<p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-					{post.description}
+					{stripHtmlTags(post.description)}
 				</p>
 				<div className="flex justify-between items-center">
 					<div className="flex items-center gap-2">
@@ -268,7 +269,7 @@ export function PostList({
 						</div>
 					</div>
 					<p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-						{post.description}
+						{stripHtmlTags(post.description)}
 					</p>
 					<div className="flex justify-between items-center">
 						<div className="flex items-center gap-2">
@@ -365,7 +366,7 @@ export function PostList({
 			</CardHeader>
 			<CardContent>
 				<p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-					{post.description}
+					{stripHtmlTags(post.description)}
 				</p>
 				<div className="flex justify-between items-center">
 					<div className="flex items-center gap-2">

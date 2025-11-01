@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { getBuildings } from '@/actions/building.action';
 import {
 	getFeaturedRoomListings,
-	getRoomBySlug,
+	getRoomById as getRoomByIdListing,
 	searchRoomListings,
 } from '@/actions/listings.action';
 import {
@@ -200,12 +200,12 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 		}
 	},
 
-	// Load room detail by slug
-	loadRoomDetail: async (slug: string) => {
+	// Load room detail by id
+	loadRoomDetail: async (id: string) => {
 		set({ roomLoading: true, roomError: null });
 
 		try {
-			const room = await getRoomBySlug(slug);
+			const room = await getRoomByIdListing(id);
 			set({
 				currentRoom: room,
 				roomLoading: false,

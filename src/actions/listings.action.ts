@@ -69,11 +69,11 @@ export async function searchRoomListings(params: RoomSearchParams): Promise<Room
 }
 
 /**
- * Get room detail by slug
+ * Get room detail by id
  */
-export async function getRoomBySlug(slug: string): Promise<RoomDetail> {
+export async function getRoomById(id: string): Promise<RoomDetail> {
 	try {
-		const response = await serverApiCall<RoomDetail>(`/api/rooms/public/${slug}`, {
+		const response = await serverApiCall<RoomDetail>(`/api/rooms/public/${id}`, {
 			method: 'GET',
 		});
 

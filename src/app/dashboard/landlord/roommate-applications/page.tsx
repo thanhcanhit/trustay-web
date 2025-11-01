@@ -106,7 +106,7 @@ export default function RoommateApplicationsPage() {
     const application = applicationsForMyPosts.find(app => app.id === respondDialog.applicationId)
 
     const success = await respondToApplication(respondDialog.applicationId, {
-      status: respondDialog.approve ? 'approved_by_landlord' : 'rejected_by_landlord'
+      status: respondDialog.approve ? 'accepted' : 'rejected'
     })
 
     if (success) {

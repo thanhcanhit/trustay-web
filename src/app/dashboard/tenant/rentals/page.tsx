@@ -57,8 +57,8 @@ function RentalContent() {
   const activeRental = rentals.find(r => r.status === 'active')
   const otherRentals = filteredRentals.filter(r => r.id !== activeRental?.id)
 
-  const handleViewRoomPost = (roomSlug: string) => {
-    window.open(`/rooms/${roomSlug}`, '_blank')
+  const handleViewRoomPost = (roomId: string) => {
+    window.open(`/rooms/${roomId}`, '_blank')
   }
 
   const handleOpenRenewDialog = (rental: Rental) => {
@@ -298,10 +298,10 @@ function RentalContent() {
                 >
                   Xem chi tiết
                 </Button>
-                {activeRental.roomInstance?.room?.slug && (
+                {activeRental.roomInstance?.room?.id && (
                   <Button
                     variant="outline"
-                    onClick={() => handleViewRoomPost(activeRental.roomInstance!.room!.slug!)}
+                    onClick={() => handleViewRoomPost(activeRental.roomInstance!.room!.id!)}
                     title="Xem bài đăng phòng trọ"
                   >
                     <ExternalLink className="h-4 w-4" />
@@ -348,13 +348,13 @@ function RentalContent() {
                       <Badge className={RENTAL_STATUS_CONFIG[rental.status as RentalStatus].className}>
                         {RENTAL_STATUS_CONFIG[rental.status as RentalStatus].label}
                       </Badge>
-                      {rental.roomInstance?.room?.slug && (
+                      {rental.roomInstance?.room?.id && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleViewRoomPost(rental.roomInstance!.room!.slug)
+                            handleViewRoomPost(rental.roomInstance!.room!.id)
                           }}
                           className="h-6 w-6 p-0"
                           title="Xem bài đăng"

@@ -38,7 +38,7 @@ interface ApiCost extends Omit<RoomCost, 'fixedAmount' | 'unitPrice' | 'baseRate
 import { Building as BuildingIcon, Home, DollarSign, ArrowLeft, ImageIcon } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
-import { cleanDescriptionText } from "@/utils/textProcessing"
+import { getCleanTextLength } from "@/utils/textProcessing"
 import { validateReferenceIds } from "@/utils/referenceValidation"
 import { getRoomTypeOptions } from "@/utils/room-types"
 
@@ -331,8 +331,8 @@ function AddRoomPageContent() {
         
         // Validate description length (clean HTML tags and entities first)
         if (formData.description) {
-          const cleanText = cleanDescriptionText(formData.description)
-          if (cleanText.length > 1000) {
+          const cleanTextLength = getCleanTextLength(formData.description)
+          if (cleanTextLength > 1000) {
             newErrors.description = 'Mô tả không được vượt quá 1000 ký tự'
           }
         }
@@ -384,10 +384,7 @@ function AddRoomPageContent() {
       // Prepare room data with only allowed fields (see Postman collection)
       const roomData: CreateRoomRequest = {
         name: formData.name!,
-        description: formData.description ? 
-          // Clean description text and limit to 1000 characters
-          cleanDescriptionText(formData.description, 1000) || undefined
-          : undefined,
+        description: formData.description || undefined,
         roomType: formData.roomType!,
         areaSqm: parseFloat(String(formData.areaSqm!)) || 0,
         maxOccupancy: parseInt(String(formData.maxOccupancy!)) || 1,

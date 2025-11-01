@@ -306,7 +306,7 @@ export default function RoomSeekingDetailPage() {
                 {/* Header Section */}
                 <div className="mb-6">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                           {getRoomTypeDisplayName(currentPost.preferredRoomType)}
@@ -320,7 +320,7 @@ export default function RoomSeekingDetailPage() {
                           {STATUS_LABELS[currentPost.status]}
                         </Badge>
                       </div>
-                      <h1 className="text-3xl font-bold text-gray-900 mb-3 leading-tight">
+                      <h1 className="text-3xl font-bold text-gray-900 mb-3 leading-tight break-words">
                         {currentPost.title}
                       </h1>
                       <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">

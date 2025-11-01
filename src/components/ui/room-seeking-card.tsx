@@ -5,6 +5,7 @@ import { MapPin, Users, Home } from 'lucide-react'
 import { SizingImage } from '@/components/sizing-image'
 import { getRoomTypeDisplayName } from '@/utils/room-types'
 import type { RoomSeekingPost } from '@/types/room-seeking'
+import { stripHtmlTags } from '@/utils/textProcessing'
 
 interface RoomSeekingCardProps {
   post: RoomSeekingPost & {
@@ -72,7 +73,7 @@ export function RoomSeekingCard({ post, className = '', asLink = true }: RoomSee
         </div>
 
         {post.description && (
-          <p className="text-gray-600 line-clamp-3">{post.description}</p>
+          <p className="text-gray-600 line-clamp-3">{stripHtmlTags(post.description)}</p>
         )}
       </div>
     </div>

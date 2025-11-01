@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar, DollarSign, Users, Eye } from 'lucide-react';
 import type { RoommateSeekingListingItem } from '@/actions/roommate-seeking-posts.action';
+import { stripHtmlTags } from '@/utils/textProcessing';
 
 interface RoommateSeekingCardProps {
 	listing: RoommateSeekingListingItem;
@@ -71,7 +72,7 @@ export function RoommateSeekingCard({ listing }: RoommateSeekingCardProps) {
 
 						{/* Description */}
 						{listing.description && (
-							<p className="text-sm text-gray-600 line-clamp-2">{listing.description}</p>
+							<p className="text-sm text-gray-600 line-clamp-2">{stripHtmlTags(listing.description)}</p>
 						)}
 
 						{/* Max Budget */}
