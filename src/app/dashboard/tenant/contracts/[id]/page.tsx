@@ -49,8 +49,8 @@ export default function ContractDetailPage() {
     const result = await loadContractById(contractId)
     if (result) {
       setContract(result)
-      // Determine current user ID (landlord)
-      setCurrentUserId(result.landlordId || '')
+      // Determine current user ID (tenant)
+      setCurrentUserId(result.tenantId || '')
     }
   }, [contractId, loadContractById])
 
@@ -93,7 +93,7 @@ export default function ContractDetailPage() {
 
   if (loading) {
     return (
-      <DashboardLayout userType="landlord">
+      <DashboardLayout userType="tenant">
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center space-x-2">
             <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
@@ -106,7 +106,7 @@ export default function ContractDetailPage() {
 
   if (error || !contract) {
     return (
-      <DashboardLayout userType="landlord">
+      <DashboardLayout userType="tenant">
         <div className="px-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <div className="flex items-center space-x-3">
@@ -131,10 +131,10 @@ export default function ContractDetailPage() {
     )
   }
 
-  const tenantName = contract.tenant?.fullName || 
+  const tenantName = contract.tenant?.fullName ||
     (contract.tenant ? `${contract.tenant.firstName} ${contract.tenant.lastName}` : 'Chưa có thông tin')
 
-  const landlordName = contract.landlord?.fullName || 
+  const landlordName = contract.landlord?.fullName ||
     (contract.landlord ? `${contract.landlord.firstName} ${contract.landlord.lastName}` : 'Chưa có thông tin')
 
   const roomInfo = contract.room?.roomName || contract.room?.name || 'Chưa có thông tin'
@@ -143,7 +143,7 @@ export default function ContractDetailPage() {
   const buildingAddress = contract.contractData?.buildingAddress || 'N/A'
 
   return (
-    <DashboardLayout userType="landlord">
+    <DashboardLayout userType="tenant">
       <div className="px-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -543,7 +543,7 @@ export default function ContractDetailPage() {
                             )}
                           </div>
                         )}
-                        
+
                         {contract.tenantSignature && (
                           <div className="border rounded-lg p-3 bg-gray-50">
                             <h4 className="text-xs font-semibold text-gray-800 mb-1">Chữ ký Người thuê</h4>
@@ -600,7 +600,7 @@ export default function ContractDetailPage() {
               <ContractSigningWorkflow
                 contract={contract}
                 currentUserId={currentUserId}
-                currentUserRole="landlord"
+                currentUserRole="tenant"
                 onSigningComplete={handleSigningComplete}
               />
 
