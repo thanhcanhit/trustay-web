@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { Label } from '@/components/ui/label'
+import { getCleanTextLength } from '@/utils/textProcessing'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Calendar } from '@/components/ui/calendar'
@@ -147,11 +148,12 @@ export function RoommatePostForm({ onBack, postId, initialData, mode = 'create' 
 					newErrors.title = 'Tiêu đề không được quá 200 ký tự'
 				}
 				
-				if (!formData.description.trim()) {
+				const descriptionLength = getCleanTextLength(formData.description)
+				if (descriptionLength === 0) {
 					newErrors.description = 'Mô tả là bắt buộc'
-				} else if (formData.description.trim().length < 50) {
+				} else if (descriptionLength < 50) {
 					newErrors.description = 'Mô tả phải có ít nhất 50 ký tự'
-				} else if (formData.description.trim().length > 2000) {
+				} else if (descriptionLength > 2000) {
 					newErrors.description = 'Mô tả không được quá 2000 ký tự'
 				}
 				break
@@ -354,24 +356,17 @@ export function RoommatePostForm({ onBack, postId, initialData, mode = 'create' 
 								</div>
 							</div>
 							<div>
-								<Label htmlFor="description">Mô tả chi tiết *</Label>
-								<Textarea
-									id="description"
-									placeholder="Mô tả chi tiết về phòng, yêu cầu, tiện ích, môi trường sống..."
-									rows={8}
+								<RichTextEditor
 									value={formData.description}
-									onChange={(e) => updateFormData('description', e.target.value)}
+									onChange={(value) => updateFormData('description', value)}
+									placeholder="Mô tả chi tiết về phòng, yêu cầu, tiện ích, môi trường sống..."
 									error={!!errors.description}
 									maxLength={2000}
+									showCharCount={true}
 								/>
-								<div className="flex justify-between items-center mt-1">
-									{errors.description && (
-										<p className="text-sm text-destructive">{errors.description}</p>
-									)}
-									<p className="text-sm text-muted-foreground ml-auto">
-										{formData.description.length}/2000
-									</p>
-								</div>
+								{errors.description && (
+									<p className="text-sm text-destructive mt-1">{errors.description}</p>
+								)}
 							</div>
 						</div>
 					</div>
@@ -634,17 +629,13 @@ export function RoommatePostForm({ onBack, postId, initialData, mode = 'create' 
 
 						<div>
 							<Label htmlFor="additionalRequirements">Yêu cầu khác (không bắt buộc)</Label>
-							<Textarea
-								id="additionalRequirements"
-								placeholder="VD: Không hút thuốc, sạch sẽ, yên tĩnh. Ưu tiên sinh viên hoặc nhân viên văn phòng."
-								rows={4}
+							<RichTextEditor
 								value={formData.additionalRequirements}
-								onChange={(e) => updateFormData('additionalRequirements', e.target.value)}
+								onChange={(value) => updateFormData('additionalRequirements', value)}
+								placeholder="VD: Không hút thuốc, sạch sẽ, yên tĩnh. Ưu tiên sinh viên hoặc nhân viên văn phòng."
 								maxLength={500}
+								showCharCount={true}
 							/>
-							<p className="text-sm text-muted-foreground mt-1">
-								{formData.additionalRequirements.length}/500
-							</p>
 						</div>
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">

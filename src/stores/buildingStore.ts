@@ -377,7 +377,15 @@ export const useBuildingStore = create<BuildingState>((set, get) => ({
 				return [];
 			}
 
-			return response.data.rooms || [];
+			const rooms = response.data.rooms || [];
+
+			// Update buildingRooms map in store
+			const currentState = get();
+			const updatedBuildingRooms = new Map(currentState.buildingRooms);
+			updatedBuildingRooms.set(buildingId, rooms);
+			set({ buildingRooms: updatedBuildingRooms });
+
+			return rooms;
 		} catch (error: unknown) {
 			console.error('Failed to load rooms:', error);
 			return [];

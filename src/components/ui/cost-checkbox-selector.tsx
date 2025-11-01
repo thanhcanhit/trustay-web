@@ -13,7 +13,7 @@ import { type RoomCost } from '@/types/types';
 interface ExtendedRoomCost extends Omit<RoomCost, 'fixedAmount' | 'unitPrice' | 'baseRate'> {
   fixedAmount?: number;
   unitPrice?: number;
-  baseRate?: number;
+  // baseRate?: number;
 }
 
 interface CostCheckboxSelectorProps {
@@ -45,7 +45,7 @@ export function CostCheckboxSelector({
           selectedCosts.forEach(cost => {
         // Lấy giá trị từ cost, có thể là từ API response với fixedAmount, unitPrice, baseRate
         const extendedCost = cost as ExtendedRoomCost;
-        const value = extendedCost.fixedAmount || extendedCost.unitPrice || extendedCost.baseRate || cost.value || 0;
+        const value = extendedCost.fixedAmount || extendedCost.unitPrice || cost.value || 0;
         initialValues[cost.systemCostTypeId] = value;
       });
     setCostValues(prev => {

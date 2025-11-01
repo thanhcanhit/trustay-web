@@ -33,7 +33,7 @@ import {
 interface ApiCost extends Omit<RoomCost, 'fixedAmount' | 'unitPrice' | 'baseRate'> {
   fixedAmount?: number;
   unitPrice?: number;
-  baseRate?: number;
+  // baseRate?: number;
 }
 import { Building as BuildingIcon, Home, DollarSign, ArrowLeft, ImageIcon } from "lucide-react"
 import { toast } from "sonner"
@@ -222,7 +222,7 @@ function AddRoomPageContent() {
       }
       // Handle API response data with extended fields
       const apiCost = cost as ApiCost;
-      const value = apiCost.fixedAmount || apiCost.unitPrice || apiCost.baseRate || parseFloat(String(cost.value)) || 0;
+      const value = apiCost.fixedAmount || apiCost.unitPrice || parseFloat(String(cost.value)) || 0;
       
       return {
         id: cost.id || '',
@@ -248,7 +248,7 @@ function AddRoomPageContent() {
         // Preserve API response fields for component to use
         fixedAmount: apiCost.fixedAmount ? String(apiCost.fixedAmount) : undefined,
         unitPrice: apiCost.unitPrice,
-        baseRate: apiCost.baseRate
+        // baseRate: apiCost.baseRate
       }
     })
   }

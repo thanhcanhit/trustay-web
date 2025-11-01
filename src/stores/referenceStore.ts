@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { getAmenities, getAppEnums, getCostTypes, getRules } from '@/actions/reference.action';
 
 // Types for reference data
@@ -204,104 +203,100 @@ interface ReferenceState {
 	error: string | null;
 
 	// Actions
-	loadReferenceData: () => Promise<void>;
+	loadReferenceData: (force?: boolean) => Promise<void>;
 	getAmenitiesByCategory: (category?: string) => Amenity[];
 	getCostTypesByCategory: (category?: string) => CostType[];
 	getRulesByCategory: (category?: string) => Rule[];
 	translateEnum: (enumType: string, value: string) => string;
 	clearError: () => void;
+	clearCache: () => void;
 }
 
-export const useReferenceStore = create<ReferenceState>()(
-	persist(
-		(set, get) => ({
-			// Initial state
+export const useReferenceStore = create<ReferenceState>()((set, get) => ({
+	// Initial state
+	amenities: [],
+	costTypes: [],
+	rules: [],
+	enums: null,
+	isLoading: false,
+	isLoaded: false,
+	error: null,
+
+	// Load all reference data
+	loadReferenceData: async (force = false) => {
+		const state = get();
+		if (!force && (state.isLoaded || state.isLoading)) return;
+
+		set({ isLoading: true, error: null });
+
+		try {
+			// Load all reference data in parallel using server actions
+			const [amenities, costTypes, rules, enums] = await Promise.all([
+				getAmenities(),
+				getCostTypes(),
+				getRules(),
+				getAppEnums(),
+			]);
+
+			set({
+				amenities: amenities || [],
+				costTypes: costTypes || [],
+				rules: rules || [],
+				enums: enums || null,
+				isLoading: false,
+				isLoaded: true,
+				error: null,
+			});
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Failed to load reference data';
+			set({
+				isLoading: false,
+				error: errorMessage,
+			});
+			console.error('Failed to load reference data:', error);
+		}
+	},
+
+	// Get amenities by category
+	getAmenitiesByCategory: (category?: string) => {
+		const { amenities } = get();
+		if (!category) return amenities;
+		// Normalize category to match API response (lowercase)
+		const normalizedCategory = category.toLowerCase();
+		return amenities.filter((amenity) => amenity.category.toLowerCase() === normalizedCategory);
+	},
+
+	// Get cost types by category
+	getCostTypesByCategory: (category?: string) => {
+		const { costTypes } = get();
+		if (!category) return costTypes;
+		return costTypes.filter((costType) => costType.category === category);
+	},
+
+	// Get rules by category
+	getRulesByCategory: (category?: string) => {
+		const { rules } = get();
+		if (!category) return rules;
+		return rules.filter((rule) => rule.category === category);
+	},
+
+	// Translate enum value to Vietnamese
+	translateEnum: (enumType: string, value: string) => {
+		const translations = enumTranslations[enumType];
+		return translations?.[value] || value;
+	},
+
+	// Clear error
+	clearError: () => set({ error: null }),
+
+	// Clear cache
+	clearCache: () =>
+		set({
 			amenities: [],
 			costTypes: [],
 			rules: [],
 			enums: null,
-			isLoading: false,
 			isLoaded: false,
 			error: null,
-
-			// Load all reference data
-			loadReferenceData: async () => {
-				const state = get();
-				if (state.isLoaded || state.isLoading) return;
-
-				set({ isLoading: true, error: null });
-
-				try {
-					// Load all reference data in parallel using server actions
-					const [amenities, costTypes, rules, enums] = await Promise.all([
-						getAmenities(),
-						getCostTypes(),
-						getRules(),
-						getAppEnums(),
-					]);
-
-					set({
-						amenities: amenities || [],
-						costTypes: costTypes || [],
-						rules: rules || [],
-						enums: enums || null,
-						isLoading: false,
-						isLoaded: true,
-						error: null,
-					});
-				} catch (error: unknown) {
-					const errorMessage =
-						error instanceof Error ? error.message : 'Failed to load reference data';
-					set({
-						isLoading: false,
-						error: errorMessage,
-					});
-					console.error('Failed to load reference data:', error);
-				}
-			},
-
-			// Get amenities by category
-			getAmenitiesByCategory: (category?: string) => {
-				const { amenities } = get();
-				if (!category) return amenities;
-				// Normalize category to match API response (lowercase)
-				const normalizedCategory = category.toLowerCase();
-				return amenities.filter((amenity) => amenity.category.toLowerCase() === normalizedCategory);
-			},
-
-			// Get cost types by category
-			getCostTypesByCategory: (category?: string) => {
-				const { costTypes } = get();
-				if (!category) return costTypes;
-				return costTypes.filter((costType) => costType.category === category);
-			},
-
-			// Get rules by category
-			getRulesByCategory: (category?: string) => {
-				const { rules } = get();
-				if (!category) return rules;
-				return rules.filter((rule) => rule.category === category);
-			},
-
-			// Translate enum value to Vietnamese
-			translateEnum: (enumType: string, value: string) => {
-				const translations = enumTranslations[enumType];
-				return translations?.[value] || value;
-			},
-
-			// Clear error
-			clearError: () => set({ error: null }),
 		}),
-		{
-			name: 'reference-storage',
-			// Persist all data except loading states
-			partialize: (state) => ({
-				amenities: state.amenities,
-				costTypes: state.costTypes,
-				rules: state.rules,
-				enums: state.enums,
-				isLoaded: state.isLoaded,
-			}),
-		},
-	),
-);
+}));

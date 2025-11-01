@@ -133,8 +133,15 @@ export const useInvitationStore = create<InvitationState>((set, get) => ({
 		const token = TokenManager.getAccessToken();
 		const res = await confirmInvitation(id, token);
 		if (res.success) {
-			// reload current
-			await get().loadById(id);
+			// Update the invitation in sent list with new status
+			const { sent } = get();
+			const updatedSent = sent.map((inv) => (inv.id === id ? res.data.data : inv));
+			set({ sent: updatedSent });
+
+			// reload current if needed
+			if (get().current?.id === id) {
+				await get().loadById(id);
+			}
 			set({ submitting: false });
 			return { rentalId: res.data.rental?.id };
 		}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Loader2, Calendar, MapPin, Users, DollarSign, Info, ChevronDown, ChevronUp, CheckCircle, XCircle, Home, Star, Globe, TrendingUp, Heart, Share2, Flag, Mail, MessageCircle, Phone, Send } from 'lucide-react'
+import { Loader2, Calendar as CalendarIcon, MapPin, Users, DollarSign, Info, ChevronDown, ChevronUp, CheckCircle, XCircle, Home, Star, Globe, TrendingUp, Heart, Share2, Flag, Mail, MessageCircle, Phone, Send } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -14,7 +14,6 @@ import { useInvitationStore } from '@/stores/invitationStore'
 import { useUserStore } from '@/stores/userStore'
 import { useBuildingStore } from '@/stores/buildingStore'
 import { STATUS_LABELS, type RoomSeekingPost } from '@/types/room-seeking'
-import { AmenitySelector } from '@/components/ui/amenity-selector'
 import { RoomSeekingCard } from '@/components/ui/room-seeking-card'
 import { getRoomTypeDisplayName } from '@/utils/room-types'
 import { toast } from 'sonner'
@@ -30,6 +29,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MESSAGE_TYPES } from '@/constants/chat.constants'
 import { useChatStore } from '@/stores/chat.store'
+import { HTMLContent } from '@/components/ui/html-content'
 
 export default function RoomSeekingDetailPage() {
   const params = useParams()
@@ -67,6 +67,7 @@ export default function RoomSeekingDetailPage() {
     buildings,
     buildingRooms,
     fetchAllBuildings,
+    loadRoomsByBuilding,
     isLoading: buildingsLoading
   } = useBuildingStore()
   const { sendMessage: sendChatMessage, setCurrentUserId } = useChatStore()
@@ -209,9 +210,14 @@ export default function RoomSeekingDetailPage() {
     minute: '2-digit'
   })
   const formatAddress = () => {
-    const ward = (currentPost as unknown as { preferredWard?: { name?: string } }).preferredWard?.name
-    const district = (currentPost as unknown as { preferredDistrict?: { name?: string } }).preferredDistrict?.name
-    const province = (currentPost as unknown as { preferredProvince?: { name?: string } }).preferredProvince?.name
+    const post = currentPost as unknown as {
+      preferredWard?: { name?: string };
+      preferredDistrict?: { name?: string };
+      preferredProvince?: { name?: string };
+    }
+    const ward = post.preferredWard?.name
+    const district = post.preferredDistrict?.name
+    const province = post.preferredProvince?.name
     return [ward, district, province].filter(Boolean).join(', ')
   }
 
@@ -294,258 +300,256 @@ export default function RoomSeekingDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-1">
-            {/* Header Image - Placeholder for now */}
-            <div className="relative mb-4">
-              <div className="w-full h-80 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl shadow-xl flex items-center justify-center">
-                <div className="text-center">
-                  <Home className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-                  <h2 className="text-xl font-semibold text-gray-700">Tìm phòng trọ</h2>
-                  <p className="text-gray-500">Hình ảnh sẽ được thêm sau</p>
-                </div>
-              </div>
-              {/* Status Badge */}
-              <div className="absolute top-4 right-4 bg-gradient-to-r from-green-400 to-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg flex items-center gap-1">
-                <CheckCircle className="h-4 w-4" />
-                {STATUS_LABELS[currentPost.status]}
-              </div>
-            </div>
+            {/* Single Comprehensive Card */}
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                {/* Header Section */}
+                <div className="mb-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                          {getRoomTypeDisplayName(currentPost.preferredRoomType)}
+                        </Badge>
+                        <Badge variant="outline" className="text-green-600 border-green-200">
+                          {currentPost.occupancy} người
+                        </Badge>
+                        {/* Status Badge */}
+                        <Badge className="bg-gradient-to-r from-green-400 to-green-500 text-white">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          {STATUS_LABELS[currentPost.status]}
+                        </Badge>
+                      </div>
+                      <h1 className="text-3xl font-bold text-gray-900 mb-3 leading-tight">
+                        {currentPost.title}
+                      </h1>
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4 text-gray-500" />
+                          <span>{formatAddress()}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <CalendarIcon className="h-4 w-4 text-gray-500" />
+                          <span>Đăng lúc: {formatDate(currentPost.createdAt)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" className="text-gray-600">
+                        <Heart className="h-4 w-4 mr-1" />
+                        Lưu
+                      </Button>
+                      <Button variant="outline" size="sm" className="text-gray-600">
+                        <Share2 className="h-4 w-4 mr-1" />
+                        Chia sẻ
+                      </Button>
+                    </div>
+                  </div>
 
-            {/* Post Header */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm mb-4">
-              <CardContent>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2 leading-tight">
-                      {currentPost.title}
-                    </h1>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                        {getRoomTypeDisplayName(currentPost.preferredRoomType)}
-                      </Badge>
-                      <Badge variant="outline" className="text-green-600 border-green-200">
-                        {currentPost.occupancy} người
-                      </Badge>
-                      <Badge variant="outline" className="text-purple-600 border-purple-200">
-                        {formatDate(currentPost.moveInDate)}
-                      </Badge>
+                  {/* Budget Display */}
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border border-red-200">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-red-500 rounded-lg">
+                        <DollarSign className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-red-600 font-medium mb-1">Ngân sách mong muốn</p>
+                        <div className="text-2xl font-bold text-red-600">
+                          {formatCurrency(Number(currentPost.minBudget))} - {formatCurrency(Number(currentPost.maxBudget))} VNĐ/tháng
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="text-gray-600">
-                      <Heart className="h-4 w-4 mr-1" />
-                      Lưu
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-gray-600">
-                      <Share2 className="h-4 w-4 mr-1" />
-                      Chia sẻ
-                    </Button>
-                  </div>
-                </div>
-              
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="text-3xl font-bold text-red-600">
-                      {formatCurrency(Number(currentPost.minBudget))} - {formatCurrency(Number(currentPost.maxBudget))} VNĐ/tháng
-                    </div>
-                    <Badge className="bg-green-100 text-green-800">
-                      Ngân sách linh hoạt
-                    </Badge>
-                  </div>
-                  <div className="text-right text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <TrendingUp className="h-4 w-4" />
-                      <span>0 lượt xem</span>
+                    <div className="text-right text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <TrendingUp className="h-4 w-4" />
+                        <span>{currentPost.viewCount || 0} lượt xem</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4 text-gray-500" />
-                    <span>{formatAddress()}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4 text-gray-500" />
-                    <span>Đăng lúc: {formatDate(currentPost.createdAt)}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Post Information */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm mb-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <Info className="h-5 w-5 text-blue-600" />
-                  Thông tin chi tiết
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                {/* Divider */}
+                <div className="border-t border-gray-200 my-6"></div>
+
                 {/* Basic Info Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                    <div className="p-2 bg-blue-500 rounded-lg">
-                      <Home className="h-5 w-5 text-white" />
+                <div className="mb-6">
+                  <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+                    <Info className="h-5 w-5 text-blue-600" />
+                    Thông tin chi tiết
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                      <div className="p-2 bg-blue-500 rounded-lg">
+                        <Home className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm text-blue-600 font-medium">Loại phòng mong muốn</p>
+                        <p className="font-semibold text-gray-900 truncate">{getRoomTypeDisplayName(currentPost.preferredRoomType)}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm text-blue-600 font-medium">Loại phòng mong muốn</p>
-                      <p className="font-semibold text-gray-900 truncate">{getRoomTypeDisplayName(currentPost.preferredRoomType)}</p>
+                    <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+                      <div className="p-2 bg-green-500 rounded-lg">
+                        <Users className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm text-green-600 font-medium">Số người ở</p>
+                        <p className="font-semibold text-gray-900">{currentPost.occupancy} người</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
-                    <div className="p-2 bg-green-500 rounded-lg">
-                      <Users className="h-5 w-5 text-white" />
+                    <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+                      <div className="p-2 bg-purple-500 rounded-lg">
+                        <CalendarIcon className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm text-purple-600 font-medium">Ngày dự định vào ở</p>
+                        <p className="font-semibold text-gray-900">{formatDate(currentPost.moveInDate)}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm text-green-600 font-medium">Số người ở</p>
-                      <p className="font-semibold text-gray-900">{currentPost.occupancy} người</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
-                    <div className="p-2 bg-purple-500 rounded-lg">
-                      <Calendar className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm text-purple-600 font-medium">Ngày dự định vào ở</p>
-                      <p className="font-semibold text-gray-900">{formatDate(currentPost.moveInDate)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200">
-                    <div className="p-2 bg-orange-500 rounded-lg">
-                      <MessageCircle className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm text-orange-600 font-medium">Lượt liên hệ</p>
-                      <p className="font-semibold text-gray-900">{currentPost.contactCount}</p>
+                    <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200">
+                      <div className="p-2 bg-orange-500 rounded-lg">
+                        <MessageCircle className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm text-orange-600 font-medium">Lượt liên hệ</p>
+                        <p className="font-semibold text-gray-900">{currentPost.contactCount || 0}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Amenities */}
-            {currentPost.amenityIds && currentPost.amenityIds.length > 0 && (
-              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm mb-4">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <Home className="h-5 w-5 text-blue-600" />
-                    Tiện nghi mong muốn
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <AmenitySelector
-                    selectedAmenities={currentPost.amenityIds}
-                    onSelectionChange={() => {}} // Read-only
-                    mode="display"
-                  />
-                </CardContent>
-              </Card>
-            )}
+                {/* Divider */}
+                <div className="border-t border-gray-200 my-6"></div>
 
-            {/* Description */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm mb-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <MessageCircle className="h-5 w-5 text-blue-600" />
-                  Mô tả chi tiết
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className={`text-gray-700 whitespace-pre-line leading-relaxed ${!isDescriptionExpanded ? 'line-clamp-3' : ''}`}>
-                  {currentPost.description}
-                </div>
-                {currentPost.description && currentPost.description.length > 150 && (
-                  <button
-                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                    className="mt-4 text-blue-600 hover:text-blue-800 flex items-center text-sm font-medium transition-colors"
-                  >
-                    {isDescriptionExpanded ? (
-                      <>
-                        Thu gọn <ChevronUp className="h-4 w-4 ml-1" />
-                      </>
-                    ) : (
-                      <>
-                        Xem thêm <ChevronDown className="h-4 w-4 ml-1" />
-                      </>
-                    )}
-                  </button>
-                )}
-              </CardContent>
-            </Card>           
-
-            {/* Location */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm mb-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <MapPin className="h-5 w-5 text-red-600" />
-                  Vị trí mong muốn
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="w-full h-80 bg-gray-200 rounded-xl overflow-hidden shadow-inner">
-                  {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      className="rounded-xl border-0"
-                      src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(formatAddress())}&zoom=16`}
-                      allowFullScreen
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      title="Vị trí mong muốn"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 rounded-xl">
-                      <MapPin className="h-16 w-16 text-gray-400 mb-4" />
-                      <p className="text-gray-500 text-center">
-                        Bản đồ chưa được cấu hình
-                        <br />
-                        <span className="text-sm">Vui lòng thêm Google Maps API key</span>
-                      </p>
-                    </div>
+                {/* Description */}
+                <div className="mb-6">
+                  <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+                    <MessageCircle className="h-5 w-5 text-blue-600" />
+                    Mô tả chi tiết
+                  </h3>
+                  <div className={`${!isDescriptionExpanded ? 'line-clamp-3' : ''}`}>
+                    <HTMLContent content={currentPost.description} />
+                  </div>
+                  {currentPost.description && currentPost.description.length > 150 && (
+                    <button
+                      onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                      className="mt-4 text-blue-600 hover:text-blue-800 flex items-center text-sm font-medium transition-colors"
+                    >
+                      {isDescriptionExpanded ? (
+                        <>
+                          Thu gọn <ChevronUp className="h-4 w-4 ml-1" />
+                        </>
+                      ) : (
+                        <>
+                          Xem thêm <ChevronDown className="h-4 w-4 ml-1" />
+                        </>
+                      )}
+                    </button>
                   )}
                 </div>
-                
-                <div className="flex items-center gap-2 p-4 bg-gray-50 rounded-xl">
-                  <MapPin className="h-5 w-5 text-gray-500" />
-                  <span className="text-gray-700 font-medium">
-                    {formatAddress()}
-                  </span>
-                </div>
-                
-                {/* Map Action Buttons */}
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatAddress())}`
-                      window.open(googleMapsUrl, '_blank')
-                    }}
-                    className="flex-1"
-                  >
-                    <Globe className="h-4 w-4 mr-2" />
-                    Mở Google Maps
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      const mapsUrl = `maps://maps.apple.com/?q=${encodeURIComponent(formatAddress())}`
-                      const fallbackUrl = `https://maps.apple.com/?q=${encodeURIComponent(formatAddress())}`
-                      
-                      if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-                        window.location.href = mapsUrl
-                        setTimeout(() => {
-                          window.open(fallbackUrl, '_blank')
-                        }, 1000)
-                      } else {
-                        window.open(fallbackUrl, '_blank')
-                      }
-                    }}
-                    className="flex-1"
-                  >
-                    <MapPin className="h-4 w-4 mr-2" />
-                    Apple Maps
-                  </Button>
+
+                {/* Amenities */}
+                {(() => {
+                  const amenities = (currentPost as unknown as { amenities?: Array<{ id: string; name: string; nameEn: string; category: string }> }).amenities
+                  if (amenities && amenities.length > 0) {
+                    return (
+                      <>
+                        <div className="border-t border-gray-200 my-6"></div>
+                        <div className="mb-6">
+                          <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+                            <Home className="h-5 w-5 text-blue-600" />
+                            Tiện nghi mong muốn
+                          </h3>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {amenities.map((amenity) => (
+                              <div key={amenity.id} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <span className="text-sm text-gray-700">{amenity.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )
+                  }
+                  return null
+                })()}
+
+                {/* Divider */}
+                <div className="border-t border-gray-200 my-6"></div>
+
+                {/* Location */}
+                <div>
+                  <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+                    <MapPin className="h-5 w-5 text-red-600" />
+                    Vị trí mong muốn
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="w-full h-80 bg-gray-200 rounded-xl overflow-hidden shadow-inner">
+                      {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          className="rounded-xl border-0"
+                          src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(formatAddress())}&zoom=16`}
+                          allowFullScreen
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          title="Vị trí mong muốn"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 rounded-xl">
+                          <MapPin className="h-16 w-16 text-gray-400 mb-4" />
+                          <p className="text-gray-500 text-center">
+                            Bản đồ chưa được cấu hình
+                            <br />
+                            <span className="text-sm">Vui lòng thêm Google Maps API key</span>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 p-4 bg-gray-50 rounded-xl">
+                      <MapPin className="h-5 w-5 text-gray-500" />
+                      <span className="text-gray-700 font-medium">
+                        {formatAddress()}
+                      </span>
+                    </div>
+
+                    {/* Map Action Buttons */}
+                    <div className="flex gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatAddress())}`
+                          window.open(googleMapsUrl, '_blank')
+                        }}
+                        className="flex-1"
+                      >
+                        <Globe className="h-4 w-4 mr-2" />
+                        Mở Google Maps
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          const mapsUrl = `maps://maps.apple.com/?q=${encodeURIComponent(formatAddress())}`
+                          const fallbackUrl = `https://maps.apple.com/?q=${encodeURIComponent(formatAddress())}`
+
+                          if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                            window.location.href = mapsUrl
+                            setTimeout(() => {
+                              window.open(fallbackUrl, '_blank')
+                            }, 1000)
+                          } else {
+                            window.open(fallbackUrl, '_blank')
+                          }
+                        }}
+                        className="flex-1"
+                      >
+                        <MapPin className="h-4 w-4 mr-2" />
+                        Apple Maps
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -555,49 +559,52 @@ export default function RoomSeekingDetailPage() {
           <div className="lg:col-span-1 space-y-1">
             {/* Requester Profile Section */}
             <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-gray-50 mb-4">
-              <CardContent className="">
+              <CardContent className="pt-6">
                 {/* Requester Profile */}
                 {(() => {
-                  interface Requester { 
-                    firstName?: string; 
-                    lastName?: string; 
-                    phone?: string; 
-                    avatarUrl?: string | null; 
+                  interface Requester {
+                    name?: string;
+                    avatarUrl?: string | null;
                     isVerifiedIdentity?: boolean;
                     email?: string;
                     isVerifiedEmail?: boolean;
                     isVerifiedPhone?: boolean;
+                    isOnline?: boolean;
+                    lastActiveAt?: string;
                   }
                   const requester = (currentPost as unknown as { requester?: Requester }).requester ?? ({} as Requester)
 
                   return (
                     <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Người đăng</h3>
                       <div className="flex items-center gap-4 mb-4">
                         <div className="relative">
-                          <Avatar className="h-16 w-16 ring-4 ring-yellow-200">
+                          <Avatar className="h-16 w-16 ring-4 ring-blue-200">
                             {requester.avatarUrl && requester.avatarUrl.trim() !== '' ? (
                               <div className="w-full h-full relative">
-                                <SizingImage 
-                                  src={requester.avatarUrl} 
-                                  srcSize="128x128" 
-                                  alt={`${requester.firstName || 'User'} ${requester.lastName || ''}`}
+                                <SizingImage
+                                  src={requester.avatarUrl}
+                                  srcSize="128x128"
+                                  alt={requester.name || 'User'}
                                   className="object-cover rounded-full"
                                   fill
                                 />
                               </div>
                             ) : (
                               <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-lg">
-                                {(requester.firstName?.charAt(0) || 'U').toUpperCase()}
+                                {(requester.name?.charAt(0) || 'U').toUpperCase()}
                               </AvatarFallback>
                             )}
                           </Avatar>
-                          <div className="absolute -bottom-1 -right-1 bg-green-500 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center">
-                            <div className="w-2 h-2 bg-white rounded-full"></div>
-                          </div>
+                          {requester.isOnline && (
+                            <div className="absolute -bottom-1 -right-1 bg-green-500 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center">
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                          )}
                         </div>
                         <div className="flex-1">
                           <h3 className="font-bold text-gray-900 text-lg mb-1">
-                            {requester.firstName || 'Người'} {requester.lastName || 'dùng'}
+                            {requester.name || 'Người dùng'}
                           </h3>
                           <div className="flex items-center gap-2 mb-2">
                             <div className="flex">
@@ -611,10 +618,17 @@ export default function RoomSeekingDetailPage() {
                             <Flag className="h-3 w-3" />
                             <span>Việt Nam</span>
                           </div>
-                          <div className="flex items-center gap-1 text-sm text-green-600 mt-1">
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            <span>Hoạt động 2 ngày trước</span>
-                          </div>
+                          {requester.isOnline ? (
+                            <div className="flex items-center gap-1 text-sm text-green-600 mt-1">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <span>Đang hoạt động</span>
+                            </div>
+                          ) : requester.lastActiveAt && (
+                            <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                              <span>Hoạt động {new Date(requester.lastActiveAt).toLocaleDateString('vi-VN')}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -622,7 +636,7 @@ export default function RoomSeekingDetailPage() {
                       <div className="space-y-2 mb-4">
                         <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                           <Phone className="h-4 w-4 text-gray-600" />
-                          <span className="text-sm text-gray-700">Điện thoại: {requester.phone || 'Chưa cập nhật'}</span>
+                          <span className="text-sm text-gray-700 flex-1 truncate">Điện thoại: Chưa cập nhật</span>
                           <div className="ml-auto">
                             {requester.isVerifiedPhone ? (
                               <CheckCircle className="h-4 w-4 text-green-500" />
@@ -631,10 +645,10 @@ export default function RoomSeekingDetailPage() {
                             )}
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                           <Mail className="h-4 w-4 text-gray-600" />
-                          <span className="text-sm text-gray-700">Email: {requester.email || 'Chưa cập nhật'}</span>
+                          <span className="text-sm text-gray-700 flex-1 truncate" title={requester.email}>Email: {requester.email || 'Chưa cập nhật'}</span>
                           <div className="ml-auto">
                             {requester.isVerifiedEmail ? (
                               <CheckCircle className="h-4 w-4 text-green-500" />
@@ -647,10 +661,14 @@ export default function RoomSeekingDetailPage() {
 
                       {/* Verification Details Overlay */}
                       <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
-                        <h4 className="font-semibold text-green-600 text-sm mb-3">Chi tiết xác minh</h4>
+                        <h4 className="font-semibold text-gray-700 text-sm mb-3">Chi tiết xác minh</h4>
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <XCircle className="h-4 w-4 text-red-500" />
+                            {requester.isVerifiedIdentity ? (
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <XCircle className="h-4 w-4 text-red-500" />
+                            )}
                             <span className="text-sm text-gray-700">Xác minh giấy tờ tùy thân</span>
                           </div>
                           <div className="flex items-center gap-2">
@@ -697,11 +715,13 @@ export default function RoomSeekingDetailPage() {
                         <div className="space-y-4">
                           <div className="space-y-2">
                             <Label htmlFor="buildingId">Chọn tòa nhà *</Label>
-                            <Select 
-                              value={selectedBuildingId} 
-                              onValueChange={(value) => {
+                            <Select
+                              value={selectedBuildingId}
+                              onValueChange={async (value) => {
                                 setSelectedBuildingId(value)
                                 setSelectedRoomId('') // Reset room selection when building changes
+                                // Load rooms for the selected building
+                                await loadRoomsByBuilding(value)
                               }}
                             >
                               <SelectTrigger>
@@ -765,21 +785,31 @@ export default function RoomSeekingDetailPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="space-y-2">
                             <Label htmlFor="availableFrom">Có thể vào ở từ</Label>
-                            <Input 
-                              id="availableFrom"
-                              type="date" 
-                              value={availableFrom} 
-                              onChange={(e) => setAvailableFrom(e.target.value)} 
-                            />
+                            <div className="relative">
+                              <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none z-10" />
+                              <Input
+                                id="availableFrom"
+                                type="date"
+                                value={availableFrom}
+                                onChange={(e) => setAvailableFrom(e.target.value)}
+                                min={new Date().toISOString().split('T')[0]}
+                                className="pl-10"
+                              />
+                            </div>
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="availableUntil">Có thể ở đến</Label>
-                            <Input 
-                              id="availableUntil"
-                              type="date" 
-                              value={availableUntil} 
-                              onChange={(e) => setAvailableUntil(e.target.value)} 
-                            />
+                            <div className="relative">
+                              <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none z-10" />
+                              <Input
+                                id="availableUntil"
+                                type="date"
+                                value={availableUntil}
+                                onChange={(e) => setAvailableUntil(e.target.value)}
+                                min={new Date().toISOString().split('T')[0]}
+                                className="pl-10"
+                              />
+                            </div>
                           </div>
                         </div>
                         
@@ -859,34 +889,6 @@ export default function RoomSeekingDetailPage() {
                     </div>
                   )
                 })()}
-              </CardContent>
-            </Card>
-
-            {/* Budget Section - Sticky */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm sticky top-6 mb-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <DollarSign className="h-5 w-5 text-green-600" />
-                  Ngân sách mong muốn
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Budget Display */}
-                <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="text-3xl font-bold text-green-600">
-                      {formatCurrency(Number(currentPost.minBudget))} - {formatCurrency(Number(currentPost.maxBudget))}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-600">VNĐ/tháng</div>
-                  </div>
-                </div>
-                
-                <div className="text-sm text-gray-600 flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  {formatAddress()}
-                </div>
               </CardContent>
             </Card>
           </div>

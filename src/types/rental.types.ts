@@ -1,5 +1,8 @@
 import { RentalStatus, RoomInstance, UserProfile } from './types';
 
+// Re-export for convenience
+export type { RentalStatus };
+
 // ============= RENTAL TYPES =============
 
 export interface Rental {
@@ -98,6 +101,7 @@ export interface UpdateRentalRequest {
 }
 
 export interface TerminateRentalRequest {
+	terminationNoticeDate: string;
 	terminationReason: string;
 }
 

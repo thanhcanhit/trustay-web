@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ProfileLayout } from "@/components/profile/profile-layout"
+import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -29,7 +29,7 @@ import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { CONTRACT_SIGN, STATUS_COLORS, CONTRACT_TYPE_LABELS } from "@/constants/basic"
 
-export default function TenantContractDetailPage() {
+export default function ContractDetailPage() {
   const params = useParams()
   const router = useRouter()
   const contractId = params.id as string
@@ -64,6 +64,7 @@ export default function TenantContractDetailPage() {
     if (!contract) return
 
     try {
+      // Download PDF (store handles 404 and auto-generate)
       const blob = await downloadPDF(contract.id!)
       if (blob) {
         const url = window.URL.createObjectURL(blob)
@@ -75,6 +76,8 @@ export default function TenantContractDetailPage() {
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
         toast.success('Đã tải xuống hợp đồng thành công!')
+      } else {
+        toast.error('Không thể tải xuống PDF')
       }
     } catch (error) {
       console.error('Download failed:', error)
@@ -90,20 +93,20 @@ export default function TenantContractDetailPage() {
 
   if (loading) {
     return (
-      <ProfileLayout>
+      <DashboardLayout userType="tenant">
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center space-x-2">
             <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
             <span className="text-gray-500">Đang tải hợp đồng...</span>
           </div>
         </div>
-      </ProfileLayout>
+      </DashboardLayout>
     )
   }
 
   if (error || !contract) {
     return (
-      <ProfileLayout>
+      <DashboardLayout userType="tenant">
         <div className="px-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <div className="flex items-center space-x-3">
@@ -124,14 +127,14 @@ export default function TenantContractDetailPage() {
             </div>
           </div>
         </div>
-      </ProfileLayout>
+      </DashboardLayout>
     )
   }
 
-  const tenantName = contract.tenant?.fullName || 
+  const tenantName = contract.tenant?.fullName ||
     (contract.tenant ? `${contract.tenant.firstName} ${contract.tenant.lastName}` : 'Chưa có thông tin')
 
-  const landlordName = contract.landlord?.fullName || 
+  const landlordName = contract.landlord?.fullName ||
     (contract.landlord ? `${contract.landlord.firstName} ${contract.landlord.lastName}` : 'Chưa có thông tin')
 
   const roomInfo = contract.room?.roomName || contract.room?.name || 'Chưa có thông tin'
@@ -140,7 +143,7 @@ export default function TenantContractDetailPage() {
   const buildingAddress = contract.contractData?.buildingAddress || 'N/A'
 
   return (
-    <ProfileLayout>
+    <DashboardLayout userType="tenant">
       <div className="px-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -294,13 +297,13 @@ export default function TenantContractDetailPage() {
                     <div className="p-3 bg-green-50 rounded-lg border border-green-100">
                       <p className="text-xs text-gray-600 mb-1">Tiền thuê/tháng</p>
                       <p className="text-base font-bold text-green-600">
-                        {(contract.monthlyRent || contract.contractData?.monthlyRent || 0).toLocaleString('vi-VN')} ₫
+                        {(contract.monthlyRent || contract.contractData?.monthlyRent || contract.contractData?.financial?.monthlyRent || 0).toLocaleString('vi-VN')} ₫
                       </p>
                     </div>
                     <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
                       <p className="text-xs text-gray-600 mb-1">Tiền cọc</p>
                       <p className="text-base font-bold text-blue-600">
-                        {(contract.depositAmount || contract.contractData?.depositAmount || 0).toLocaleString('vi-VN')} ₫
+                        {(contract.depositAmount || contract.contractData?.depositAmount || contract.contractData?.financial?.deposit || 0).toLocaleString('vi-VN')} ₫
                       </p>
                     </div>
                     <div className="p-3 bg-purple-50 rounded-lg border border-purple-100">
@@ -322,9 +325,155 @@ export default function TenantContractDetailPage() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Additional Financial Details */}
+                  {contract.contractData?.financial && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                      {contract.contractData.financial.electricityPrice && (
+                        <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                          <p className="text-xs text-gray-600 mb-1">Giá điện</p>
+                          <p className="text-sm font-semibold text-yellow-700">
+                            {contract.contractData.financial.electricityPrice.toLocaleString('vi-VN')} ₫/kWh
+                          </p>
+                        </div>
+                      )}
+                      {contract.contractData.financial.waterPrice && (
+                        <div className="p-3 bg-cyan-50 rounded-lg border border-cyan-100">
+                          <p className="text-xs text-gray-600 mb-1">Giá nước</p>
+                          <p className="text-sm font-semibold text-cyan-700">
+                            {contract.contractData.financial.waterPrice.toLocaleString('vi-VN')} ₫/m³
+                          </p>
+                        </div>
+                      )}
+                      {contract.contractData.financial.internetPrice && (
+                        <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                          <p className="text-xs text-gray-600 mb-1">Giá Internet</p>
+                          <p className="text-sm font-semibold text-indigo-700">
+                            {contract.contractData.financial.internetPrice.toLocaleString('vi-VN')} ₫/tháng
+                          </p>
+                        </div>
+                      )}
+                      {contract.contractData.financial.depositMonths && (
+                        <div className="p-3 bg-pink-50 rounded-lg border border-pink-100">
+                          <p className="text-xs text-gray-600 mb-1">Số tháng cọc</p>
+                          <p className="text-sm font-semibold text-pink-700">
+                            {contract.contractData.financial.depositMonths} tháng
+                          </p>
+                        </div>
+                      )}
+                      {contract.contractData.financial.paymentDueDate && (
+                        <div className="p-3 bg-rose-50 rounded-lg border border-rose-100">
+                          <p className="text-xs text-gray-600 mb-1">Hạn thanh toán</p>
+                          <p className="text-sm font-semibold text-rose-700">
+                            Ngày {contract.contractData.financial.paymentDueDate} hàng tháng
+                          </p>
+                        </div>
+                      )}
+                      {contract.contractData.financial.paymentMethod && (
+                        <div className="p-3 bg-teal-50 rounded-lg border border-teal-100 md:col-span-2">
+                          <p className="text-xs text-gray-600 mb-1">Phương thức thanh toán</p>
+                          <p className="text-sm font-semibold text-teal-700">
+                            {contract.contractData.financial.paymentMethod}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {contract.terms && (
+                {/* Contract Terms & Rules */}
+                {contract.contractData?.terms && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Điều khoản hợp đồng</h3>
+                      <div className="space-y-4">
+                        {/* Utilities */}
+                        {contract.contractData.terms.utilities && contract.contractData.terms.utilities.length > 0 && (
+                          <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                            <h4 className="text-xs font-semibold text-blue-800 mb-2">Tiện ích</h4>
+                            <ul className="space-y-1">
+                              {contract.contractData.terms.utilities.map((utility, idx) => (
+                                <li key={idx} className="text-sm text-blue-700 flex items-start">
+                                  <span className="mr-2">✓</span>
+                                  <span>{utility}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Rules */}
+                        {contract.contractData.terms.rules && contract.contractData.terms.rules.length > 0 && (
+                          <div className="bg-green-50 p-3 rounded-lg border border-green-100">
+                            <h4 className="text-xs font-semibold text-green-800 mb-2">Quy định chung</h4>
+                            <ul className="space-y-1">
+                              {contract.contractData.terms.rules.map((rule, idx) => (
+                                <li key={idx} className="text-sm text-green-700 flex items-start">
+                                  <span className="mr-2">•</span>
+                                  <span>{rule}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Restrictions */}
+                        {contract.contractData.terms.restrictions && contract.contractData.terms.restrictions.length > 0 && (
+                          <div className="bg-red-50 p-3 rounded-lg border border-red-100">
+                            <h4 className="text-xs font-semibold text-red-800 mb-2">Hạn chế</h4>
+                            <ul className="space-y-1">
+                              {contract.contractData.terms.restrictions.map((restriction, idx) => (
+                                <li key={idx} className="text-sm text-red-700 flex items-start">
+                                  <span className="mr-2">✕</span>
+                                  <span>{restriction}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Responsibilities */}
+                        {(contract.contractData.terms.landlordResponsibilities || contract.contractData.terms.tenantResponsibilities || contract.contractData.terms.responsibilities) && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {/* Landlord Responsibilities */}
+                            {(contract.contractData.terms.landlordResponsibilities || contract.contractData.terms.responsibilities?.landlord) && (
+                              <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
+                                <h4 className="text-xs font-semibold text-purple-800 mb-2">Trách nhiệm Chủ nhà</h4>
+                                <ul className="space-y-1">
+                                  {(contract.contractData.terms.landlordResponsibilities || contract.contractData.terms.responsibilities?.landlord || []).map((resp, idx) => (
+                                    <li key={idx} className="text-sm text-purple-700 flex items-start">
+                                      <span className="mr-2">→</span>
+                                      <span>{resp}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Tenant Responsibilities */}
+                            {(contract.contractData.terms.tenantResponsibilities || contract.contractData.terms.responsibilities?.tenant) && (
+                              <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                                <h4 className="text-xs font-semibold text-orange-800 mb-2">Trách nhiệm Người thuê</h4>
+                                <ul className="space-y-1">
+                                  {(contract.contractData.terms.tenantResponsibilities || contract.contractData.terms.responsibilities?.tenant || []).map((resp, idx) => (
+                                    <li key={idx} className="text-sm text-orange-700 flex items-start">
+                                      <span className="mr-2">→</span>
+                                      <span>{resp}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Legacy terms field (fallback) */}
+                {contract.terms && typeof contract.terms === 'string' && !contract.contractData?.terms && (
                   <>
                     <Separator />
                     <div>
@@ -394,7 +543,7 @@ export default function TenantContractDetailPage() {
                             )}
                           </div>
                         )}
-                        
+
                         {contract.tenantSignature && (
                           <div className="border rounded-lg p-3 bg-gray-50">
                             <h4 className="text-xs font-semibold text-gray-800 mb-1">Chữ ký Người thuê</h4>
@@ -446,7 +595,7 @@ export default function TenantContractDetailPage() {
           </div>
 
           {/* Right Column - Signing Section (1/3 width) */}
-          <div className="lg:col-span-1 sticky">
+          <div className="lg:col-span-1">
             <div className="sticky top-6">
               <ContractSigningWorkflow
                 contract={contract}
@@ -482,6 +631,6 @@ export default function TenantContractDetailPage() {
           </div>
         </div>
       </div>
-    </ProfileLayout>
+    </DashboardLayout>
   )
 }

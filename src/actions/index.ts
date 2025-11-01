@@ -24,9 +24,11 @@ export {
 	registerWithVerification,
 	registerWithVerificationNoPhone,
 	sendEmailVerification,
+	sendPhoneVerification,
 	skipProfileUpdate,
 	//updateUserProfile as updateAuthUserProfile,
 	verifyEmailCode,
+	verifyPhoneCode,
 } from './auth.action';
 // Export booking request actions
 export {

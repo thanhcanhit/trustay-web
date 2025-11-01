@@ -5,12 +5,15 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Home, Calendar, DollarSign, MapPin, Loader2, AlertCircle, ChevronRight, Building2, Phone, Mail } from "lucide-react"
+import { Home, Calendar, DollarSign, MapPin, Loader2, AlertCircle, ChevronRight, Building2, Phone, Mail, ExternalLink, CalendarCheck } from "lucide-react"
 import { useRentalStore } from "@/stores/rentalStore"
-import { RentalStatus } from "@/types/types"
+import { RentalStatus, Rental } from "@/types/types"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { useRouter } from "next/navigation"
+import { RenewRentalDialog } from "@/components/rental/RenewRentalDialog"
+import { RenewRentalRequest } from "@/types/rental.types"
+import { toast } from "sonner"
 
 const RENTAL_STATUS_CONFIG: Record<RentalStatus, { label: string; className: string }> = {
   active: { label: 'Đang thuê', className: 'bg-green-100 text-green-800' },
@@ -37,8 +40,10 @@ const formatCurrency = (amount: string | number) => {
 
 function AccommodationContent() {
   const router = useRouter()
-  const { tenantRentals, loadingTenant, errorTenant, loadTenantRentals } = useRentalStore()
+  const { tenantRentals, loadingTenant, errorTenant, submitting, loadTenantRentals, renew } = useRentalStore()
   const [selectedStatus, setSelectedStatus] = useState<RentalStatus | 'all'>('all')
+  const [showRenewDialog, setShowRenewDialog] = useState(false)
+  const [selectedRental, setSelectedRental] = useState<Rental | null>(null)
 
   useEffect(() => {
     loadTenantRentals()
@@ -51,6 +56,27 @@ function AccommodationContent() {
 
   const activeRental = rentals.find(r => r.status === 'active')
   const otherRentals = filteredRentals.filter(r => r.id !== activeRental?.id)
+
+  const handleViewRoomPost = (roomSlug: string) => {
+    window.open(`/rooms/${roomSlug}`, '_blank')
+  }
+
+  const handleOpenRenewDialog = (rental: Rental) => {
+    setSelectedRental(rental)
+    setShowRenewDialog(true)
+  }
+
+  const handleRenewRental = async (rentalId: string, data: RenewRentalRequest) => {
+    const success = await renew(rentalId, data)
+    if (success) {
+      toast.success('Yêu cầu gia hạn đã được gửi đến chủ trọ!')
+      setShowRenewDialog(false)
+      setSelectedRental(null)
+      await loadTenantRentals()
+    } else {
+      toast.error('Không thể gửi yêu cầu gia hạn')
+    }
+  }
 
   if (loadingTenant) {
     return (
@@ -265,12 +291,33 @@ function AccommodationContent() {
                 </div>
               </div>
 
-              <Button
-                className="w-full"
-                onClick={() => router.push(`/dashboard/tenant/accommodation/${activeRental.id}`)}
-              >
-                Xem chi tiết
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  className="flex-1"
+                  onClick={() => router.push(`/dashboard/tenant/accommodation/${activeRental.id}`)}
+                >
+                  Xem chi tiết
+                </Button>
+                {activeRental.roomInstance?.room?.slug && (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleViewRoomPost(activeRental.roomInstance!.room!.slug!)}
+                    title="Xem bài đăng phòng trọ"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                )}
+                {activeRental.status === 'active' && (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleOpenRenewDialog(activeRental)}
+                    title="Yêu cầu gia hạn"
+                  >
+                    <CalendarCheck className="h-4 w-4 mr-2" />
+                    Gia hạn
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -301,6 +348,20 @@ function AccommodationContent() {
                       <Badge className={RENTAL_STATUS_CONFIG[rental.status as RentalStatus].className}>
                         {RENTAL_STATUS_CONFIG[rental.status as RentalStatus].label}
                       </Badge>
+                      {rental.roomInstance?.room?.slug && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleViewRoomPost(rental.roomInstance!.room!.slug)
+                          }}
+                          className="h-6 w-6 p-0"
+                          title="Xem bài đăng"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                     <p className="text-sm text-gray-600">
                       {rental.roomInstance?.room?.building?.name || ''}
@@ -320,6 +381,15 @@ function AccommodationContent() {
           </CardContent>
         </Card>
       )}
+
+      {/* Renew Rental Dialog */}
+      <RenewRentalDialog
+        rental={selectedRental}
+        open={showRenewDialog}
+        onOpenChange={setShowRenewDialog}
+        onSubmit={handleRenewRental}
+        isSubmitting={submitting}
+      />
     </div>
   )
 }
