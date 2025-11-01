@@ -281,7 +281,7 @@ export interface RoomCost {
 	id: string;
 	roomId: string;
 	systemCostTypeId: string;
-	costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
+	costType: 'fixed' | 'per_person' | 'metered';
 	// baseRate?: number | null;
 	unitPrice?: number | null;
 	fixedAmount?: string;
@@ -364,7 +364,7 @@ export interface RoomAmenityCreate {
 export interface RoomCostCreate {
 	systemCostTypeId: string;
 	value: number;
-	costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
+	costType: 'fixed' | 'per_person' | 'metered';
 	unit?: string;
 	billingCycle?: 'monthly' | 'quarterly' | 'yearly';
 	includedInRent?: boolean;
@@ -490,7 +490,7 @@ export interface UpdateRoomRequest {
 	costs?: Array<{
 		systemCostTypeId: string;
 		value: number;
-		costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
+		costType: 'fixed' | 'per_person' | 'metered';
 		unit?: string;
 		isMandatory?: boolean;
 		isIncludedInRent?: boolean;

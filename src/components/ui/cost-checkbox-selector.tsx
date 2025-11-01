@@ -60,18 +60,51 @@ export function CostCheckboxSelector({
 
   const filteredCostTypes = category ? getCostTypesByCategory(category) : costTypes;
 
+  // Helper function to determine cost type based on name or category
+  const determineCostTypeAndMetered = (costType: CostType): { 
+    type: 'fixed' | 'per_person' | 'metered', 
+    isMetered: boolean 
+  } => {
+    // If backend provides costType, use it
+    if (costType.costType) {
+      return {
+        type: costType.costType,
+        isMetered: costType.costType === 'metered' || costType.isMetered === true
+      };
+    }
+
+    // Otherwise, determine by name
+    const nameLower = costType.name.toLowerCase();
+    
+    // Metered costs (electricity, water)
+    if (nameLower.includes('điện') || nameLower.includes('electric') || 
+        nameLower.includes('nước') || nameLower.includes('water')) {
+      return { type: 'metered', isMetered: true };
+    }
+    
+    // Per person costs (người)
+    if (nameLower.includes('người')) {
+      return { type: 'per_person', isMetered: false };
+    }
+    
+    // Fixed costs (internet, parking, cleaning, etc.)
+    return { type: 'fixed', isMetered: false };
+  };
+
   const handleCostToggle = (costType: CostType, checked: boolean) => {
     if (checked) {
+      const { type: determinedCostType, isMetered } = determineCostTypeAndMetered(costType);
+      
       // Add cost type
       const newCost: RoomCost = {
         id: '', // Will be set by API
         roomId: '', // Will be set by API
         systemCostTypeId: costType.id,
         value: costValues[costType.id] || 0,
-        costType: 'fixed',
+        costType: determinedCostType,
         currency: 'VND',
         unit: costType.unit || 'VND',
-        isMetered: false,
+        isMetered: isMetered,
         billingCycle: 'monthly',
         includedInRent: false,
         isOptional: true,

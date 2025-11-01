@@ -194,18 +194,52 @@ function AddRoomPageContent() {
   const convertCostsToObjects = (costs: string[] | RoomCost[]): RoomCost[] => {
     if (!Array.isArray(costs)) return []
     
+    // Helper function to determine cost type based on name
+    const determineCostTypeAndMetered = (costTypeId: string): { 
+      type: 'fixed' | 'per_person' | 'metered', 
+      isMetered: boolean 
+    } => {
+      const costTypeData = useReferenceStore.getState().costTypes.find(c => c.id === costTypeId);
+      
+      // If backend provides costType, use it
+      if (costTypeData?.costType) {
+        return {
+          type: costTypeData.costType,
+          isMetered: costTypeData.costType === 'metered' || costTypeData.isMetered === true
+        };
+      }
+      
+      // Otherwise, determine by name
+      const nameLower = (costTypeData?.name || '').toLowerCase();
+      
+      // Metered costs (electricity, water)
+      if (nameLower.includes('điện') || nameLower.includes('electric') || 
+          nameLower.includes('nước') || nameLower.includes('water')) {
+        return { type: 'metered', isMetered: true };
+      }
+      
+      // Per person costs
+      if (nameLower.includes('người')) {
+        return { type: 'per_person', isMetered: false };
+      }
+      
+      return { type: 'fixed', isMetered: false };
+    };
+    
     return costs.map(cost => {
       if (typeof cost === 'string') {
         const costTypeData = useReferenceStore.getState().costTypes.find(c => c.id === cost)
+        const { type: determinedCostType, isMetered } = determineCostTypeAndMetered(cost);
+        
         return {
           id: '',
           roomId: '',
           systemCostTypeId: cost,
           value: 0,
-          costType: 'fixed' as const,
+          costType: determinedCostType,
           currency: 'VND',
           unit: 'VND',
-          isMetered: false,
+          isMetered: isMetered,
           billingCycle: 'monthly' as const,
           includedInRent: false,
           isOptional: true,

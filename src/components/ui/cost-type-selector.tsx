@@ -19,7 +19,7 @@ interface SelectedCostType {
 interface RoomCost {
   systemCostTypeId: string;
   value: number;
-  costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
+  costType: 'fixed' | 'per_person' | 'metered';
   unit?: string;
   billingCycle: 'monthly' | 'quarterly' | 'yearly';
   includedInRent: boolean;

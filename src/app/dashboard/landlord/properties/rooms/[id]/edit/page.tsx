@@ -28,7 +28,7 @@ import {
 interface UpdateRoomCost {
   systemCostTypeId: string;
   value: number;
-  costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
+  costType: 'fixed' | 'per_person' | 'metered';
   unit?: string;
   isMandatory?: boolean;
   isIncludedInRent?: boolean;
@@ -47,7 +47,7 @@ interface ApiCost {
   id: string;
   roomId: string;
   systemCostTypeId: string;
-  costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
+  costType: 'fixed' | 'per_person' | 'metered';
   // baseRate?: number | null;
   unitPrice?: number | null;
   fixedAmount?: string;
@@ -111,13 +111,39 @@ const convertAmenitiesToObjects = (amenities: string[] | RoomAmenity[]): RoomAme
 const convertCostsToObjects = (costs: string[] | RoomCost[]): UpdateRoomCost[] => {
   if (!Array.isArray(costs)) return []
   
+  // Helper function to determine cost type based on name
+  const determineCostType = (costTypeId: string): 'fixed' | 'per_person' | 'metered' => {
+    const costTypeData = useReferenceStore.getState().costTypes.find(c => c.id === costTypeId);
+    
+    // If backend provides costType, use it
+    if (costTypeData?.costType) {
+      return costTypeData.costType;
+    }
+    
+    // Otherwise, determine by name
+    const nameLower = (costTypeData?.name || '').toLowerCase();
+    
+    // Metered costs (electricity, water)
+    if (nameLower.includes('điện') || nameLower.includes('electric') || 
+        nameLower.includes('nước') || nameLower.includes('water')) {
+      return 'metered';
+    }
+    
+    // Per person costs
+    if (nameLower.includes('người')) {
+      return 'per_person';
+    }
+    
+    return 'fixed';
+  };
+  
   return costs.map(cost => {
     if (typeof cost === 'string') {
       const costTypeData = useReferenceStore.getState().costTypes.find(c => c.id === cost)
       return {
         systemCostTypeId: cost,
         value: 0,
-        costType: 'fixed' as const,
+        costType: determineCostType(cost),
         unit: 'VND',
         isMandatory: true,
         isIncludedInRent: false,

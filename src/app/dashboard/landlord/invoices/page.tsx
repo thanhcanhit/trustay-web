@@ -1,107 +1,120 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Calendar, Receipt, Clock, Download, Send, Eye } from "lucide-react"
+import { Search, Receipt, Filter, AlertCircle } from "lucide-react"
 import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
-
-// Mock data for invoices
-const MOCK_INVOICES = [
-  {
-    id: '1',
-    invoiceNumber: 'HD-2024-001',
-    tenantName: 'Nguyễn Văn A',
-    roomInfo: 'A102 - Studio cao cấp',
-    issueDate: '2024-01-01',
-    dueDate: '2024-01-15',
-    totalAmount: 5200000,
-    status: 'paid',
-    paidDate: '2024-01-10',
-    avatar: '',
-    items: [
-      { name: 'Tiền phòng', amount: 4500000 },
-      { name: 'Tiền điện', amount: 350000 },
-      { name: 'Tiền nước', amount: 150000 },
-      { name: 'Tiền internet', amount: 200000 }
-    ]
-  },
-  {
-    id: '2',
-    invoiceNumber: 'HD-2024-002',
-    tenantName: 'Trần Thị B',
-    roomInfo: 'B201 - Phòng đôi',
-    issueDate: '2024-01-01',
-    dueDate: '2024-01-15',
-    totalAmount: 4200000,
-    status: 'pending',
-    paidDate: null,
-    avatar: '',
-    items: [
-      { name: 'Tiền phòng', amount: 3800000 },
-      { name: 'Tiền điện', amount: 250000 },
-      { name: 'Tiền nước', amount: 100000 },
-      { name: 'Tiền internet', amount: 200000 }
-    ]
-  },
-  {
-    id: '3',
-    invoiceNumber: 'HD-2024-003',
-    tenantName: 'Lê Văn C',
-    roomInfo: 'A301 - Phòng đơn',
-    issueDate: '2024-01-01',
-    dueDate: '2024-01-15',
-    totalAmount: 3800000,
-    status: 'overdue',
-    paidDate: null,
-    avatar: '',
-    items: [
-      { name: 'Tiền phòng', amount: 3200000 },
-      { name: 'Tiền điện', amount: 300000 },
-      { name: 'Tiền nước', amount: 120000 },
-      { name: 'Tiền internet', amount: 200000 }
-    ]
-  }
-]
-
-const STATUS_COLORS = {
-  paid: 'bg-green-100 text-green-800',
-  pending: 'bg-yellow-100 text-yellow-800',
-  overdue: 'bg-red-100 text-red-800',
-  cancelled: 'bg-gray-100 text-gray-800'
-}
-
-const STATUS_LABELS = {
-  paid: 'Đã thanh toán',
-  pending: 'Chờ thanh toán',
-  overdue: 'Quá hạn',
-  cancelled: 'Đã hủy'
-}
+import { BillCard } from "@/components/billing/BillCard"
+import { useBillStore } from "@/stores/billStore"
+import { useBuildingStore } from "@/stores/buildingStore"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { getCurrentBillingPeriod } from "@/utils/billUtils"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent } from "@/components/ui/card"
+import type { Bill, LandlordBillQueryParams } from "@/types/bill.types"
 
 export default function InvoicesPage() {
+  const router = useRouter()
+  const {
+    bills,
+    loading,
+    loadLandlordBills,
+    markPaid,
+    remove,
+    markingPaid,
+    deleting,
+    deleteError,
+    markPaidError,
+    meta,
+  } = useBillStore()
+
+  const { buildings, fetchAllBuildings } = useBuildingStore()
+
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [buildingFilter, setBuildingFilter] = useState('all')
+  const [billingPeriod, setBillingPeriod] = useState(getCurrentBillingPeriod())
+  const [sortBy, setSortBy] = useState<'roomName' | 'status' | 'totalAmount' | 'createdAt' | 'dueDate'>('roomName')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [showFilters, setShowFilters] = useState(false)
 
-  const filteredInvoices = MOCK_INVOICES.filter(invoice => {
-    const matchesSearch = invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         invoice.tenantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         invoice.roomInfo.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter
-    
-    return matchesSearch && matchesStatus
-  })
+  // Count bills that need meter data
+  const billsNeedingMeterData = bills.filter(b => b.requiresMeterData).length
 
-  const getDaysUntilDue = (dueDate: string) => {
-    const due = new Date(dueDate)
-    const today = new Date()
-    const diffTime = due.getTime() - today.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
+  // Load buildings on mount
+  useEffect(() => {
+    fetchAllBuildings()
+  }, [fetchAllBuildings])
+
+  // Load bills when filters change
+  useEffect(() => {
+    const params: LandlordBillQueryParams = {
+      page: 1,
+      limit: 50,
+      sortBy,
+      sortOrder,
+    }
+
+    if (buildingFilter !== 'all') {
+      params.buildingId = buildingFilter
+    }
+
+    if (statusFilter !== 'all') {
+      params.status = statusFilter as any
+    }
+
+    if (searchTerm) {
+      params.search = searchTerm
+    }
+
+    if (billingPeriod) {
+      params.billingPeriod = billingPeriod
+    }
+
+    loadLandlordBills(params)
+  }, [loadLandlordBills, buildingFilter, statusFilter, searchTerm, billingPeriod, sortBy, sortOrder])
+
+  const handleViewDetail = (bill: Bill) => {
+    router.push(`/dashboard/landlord/invoices/${bill.id}`)
+  }
+
+  const handleMarkAsPaid = async (bill: Bill) => {
+    if (markingPaid) return
+
+    const success = await markPaid(bill.id)
+    if (success) {
+      toast.success('Đã đánh dấu thanh toán')
+    } else {
+      toast.error(markPaidError || 'Có lỗi xảy ra khi đánh dấu thanh toán')
+    }
+  }
+
+  const handleDeleteBill = async (billId: string) => {
+    if (deleting) return
+
+    if (!confirm('Bạn có chắc chắn muốn xóa hóa đơn này?')) {
+      return
+    }
+
+    const success = await remove(billId)
+    if (success) {
+      toast.success('Đã xóa hóa đơn thành công')
+    } else {
+      toast.error(deleteError || 'Có lỗi xảy ra khi xóa hóa đơn')
+    }
+  }
+
+  const resetFilters = () => {
+    setBuildingFilter('all')
+    setStatusFilter('all')
+    setSearchTerm('')
+    setBillingPeriod(getCurrentBillingPeriod())
+    setSortBy('roomName')
+    setSortOrder('asc')
   }
 
   return (
@@ -112,7 +125,10 @@ export default function InvoicesPage() {
           subtitle="Quản lý tất cả hóa đơn và thanh toán"
           actions={
             <PageHeaderActions.Custom>
-              <Button className="flex items-center space-x-2">
+              <Button
+                className="flex items-center space-x-2"
+                onClick={() => router.push('/dashboard/landlord/invoices/create')}
+              >
                 <Receipt className="h-4 w-4" />
                 <span>Tạo hóa đơn mới</span>
               </Button>
@@ -120,158 +136,182 @@ export default function InvoicesPage() {
           }
         />
 
-        {/* Filters and Actions */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between">
-          <div className="flex flex-col sm:flex-row gap-4 flex-1">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Tìm kiếm hóa đơn..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="paid">Đã thanh toán</SelectItem>
-                <SelectItem value="pending">Chờ thanh toán</SelectItem>
-                <SelectItem value="overdue">Quá hạn</SelectItem>
-                <SelectItem value="cancelled">Đã hủy</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        {/* Filters Section */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {/* Quick Filters Row */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Search */}
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Tìm kiếm theo tên/số phòng..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
 
-        {/* Invoices Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredInvoices.map((invoice) => {
-            const daysUntilDue = getDaysUntilDue(invoice.dueDate)
-            const isDueSoon = daysUntilDue <= 7 && daysUntilDue > 0
-            
-            return (
-              <Card key={invoice.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <Receipt className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">{invoice.invoiceNumber}</CardTitle>
-                        <Badge className={STATUS_COLORS[invoice.status as keyof typeof STATUS_COLORS]}>
-                          {STATUS_LABELS[invoice.status as keyof typeof STATUS_COLORS]}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={invoice.avatar} alt={invoice.tenantName} />
-                        <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                          {invoice.tenantName.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium text-sm">{invoice.tenantName}</span>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 text-sm">
-                      <span className="text-gray-600">Phòng:</span>
-                      <span className="font-medium">{invoice.roomInfo}</span>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        <div>
-                          <p className="text-gray-600">Ngày tạo</p>
-                          <p className="font-medium">{invoice.issueDate}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        <div>
-                          <p className="text-gray-600">Hạn thanh toán</p>
-                          <p className="font-medium">{invoice.dueDate}</p>
-                        </div>
-                      </div>
-                    </div>
-                    
+                {/* Billing Period */}
+                <div className="w-full sm:w-48">
+                  <Input
+                    type="month"
+                    value={billingPeriod}
+                    onChange={(e) => setBillingPeriod(e.target.value)}
+                  />
+                </div>
+
+                {/* Building Filter */}
+                <div className="w-full sm:w-56">
+                  <Select value={buildingFilter} onValueChange={setBuildingFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tất cả toà nhà" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả toà nhà</SelectItem>
+                      {buildings.map((building) => (
+                        <SelectItem key={building.id} value={building.id}>
+                          {building.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Status Filter */}
+                <div className="w-full sm:w-48">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                      <SelectItem value="draft">Nháp</SelectItem>
+                      <SelectItem value="pending">Chờ thanh toán</SelectItem>
+                      <SelectItem value="paid">Đã thanh toán</SelectItem>
+                      <SelectItem value="overdue">Quá hạn</SelectItem>
+                      <SelectItem value="cancelled">Đã hủy</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Toggle Advanced Filters */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="w-full sm:w-auto"
+                >
+                  <Filter className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Advanced Filters */}
+              {showFilters && (
+                <div className="pt-4 border-t space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Sort By */}
                     <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-600">Chi tiết:</p>
-                      <div className="space-y-1">
-                        {invoice.items.map((item, index) => (
-                          <div key={index} className="flex justify-between text-xs">
-                            <span className="text-gray-600">{item.name}:</span>
-                            <span className="font-medium">{item.amount.toLocaleString('vi-VN')} VNĐ</span>
-                          </div>
-                        ))}
-                      </div>
+                      <Label className="text-sm font-medium">Sắp xếp theo</Label>
+                      <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="roomName">Tên phòng</SelectItem>
+                          <SelectItem value="status">Trạng thái</SelectItem>
+                          <SelectItem value="totalAmount">Tổng tiền</SelectItem>
+                          <SelectItem value="createdAt">Ngày tạo</SelectItem>
+                          <SelectItem value="dueDate">Hạn thanh toán</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    
-                    <div className="flex items-center justify-between text-sm border-t pt-2">
-                      <span className="text-gray-600 font-medium">Tổng cộng:</span>
-                      <span className="font-bold text-lg text-green-600">
-                        {invoice.totalAmount.toLocaleString('vi-VN')} VNĐ
-                      </span>
+
+                    {/* Sort Order */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Thứ tự</Label>
+                      <Select value={sortOrder} onValueChange={(value: any) => setSortOrder(value)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="asc">Tăng dần</SelectItem>
+                          <SelectItem value="desc">Giảm dần</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    
-                    {invoice.status === 'paid' && (
-                      <div className="flex items-center space-x-2 text-sm text-green-600">
-                        <Clock className="h-4 w-4" />
-                        <span>Đã thanh toán: {invoice.paidDate}</span>
-                      </div>
-                    )}
-                    
-                    {isDueSoon && invoice.status === 'pending' && (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2">
-                        <p className="text-yellow-800 text-xs font-medium">
-                          ⚠️ Hạn thanh toán còn {daysUntilDue} ngày
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="mt-4 flex space-x-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <Eye className="h-4 w-4 mr-1" />
-                      Xem
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <Download className="h-4 w-4 mr-1" />
-                      Tải
-                    </Button>
-                  </div>
-                  
-                  {invoice.status === 'pending' && (
-                    <div className="mt-2">
-                      <Button size="sm" className="w-full">
-                        <Send className="h-4 w-4 mr-1" />
-                        Gửi nhắc nhở
+
+                    {/* Reset Filters */}
+                    <div className="flex items-end">
+                      <Button variant="outline" onClick={resetFilters} className="w-full">
+                        Đặt lại bộ lọc
                       </Button>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            )
-          })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Stats Summary */}
+        <div className="mb-6 flex items-center justify-between">
+          {meta && (
+            <div className="text-sm text-muted-foreground">
+              Hiển thị <span className="font-semibold">{bills.length}</span> trong tổng số{' '}
+              <span className="font-semibold">{meta.total}</span> hóa đơn
+            </div>
+          )}
+          {billsNeedingMeterData > 0 && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+              <AlertCircle className="w-4 h-4 text-blue-600" />
+              <span className="text-blue-900">
+                <span className="font-semibold">{billsNeedingMeterData}</span> hóa đơn cần nhập số đồng hồ
+              </span>
+              <Button
+                size="sm"
+                variant="link"
+                className="text-blue-600 h-auto p-0"
+                onClick={() => setStatusFilter('draft')}
+              >
+                Xem ngay
+              </Button>
+            </div>
+          )}
         </div>
 
-        {filteredInvoices.length === 0 && (
+        {/* Bills Grid */}
+        {loading || deleting || markingPaid ? (
           <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">Không có hóa đơn nào</div>
-            <Button>Tạo hóa đơn đầu tiên</Button>
+            {loading && 'Đang tải...'}
+            {deleting && 'Đang xóa hóa đơn...'}
+            {markingPaid && 'Đang cập nhật trạng thái...'}
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {bills.map((bill) => (
+                <BillCard
+                  key={bill.id}
+                  bill={bill}
+                  onViewDetail={handleViewDetail}
+                  onMarkAsPaid={handleMarkAsPaid}
+                  onDelete={handleDeleteBill}
+                  userRole="landlord"
+                />
+              ))}
+            </div>
+
+            {bills.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-gray-500 mb-4">Không có hóa đơn nào</div>
+                <Button onClick={() => router.push('/dashboard/landlord/invoices/create')}>
+                  Tạo hóa đơn đầu tiên
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </DashboardLayout>

@@ -2,11 +2,15 @@ import { create } from 'zustand';
 import {
 	createBillForRoom,
 	deleteBill,
+	generateMonthlyBillsForBuilding,
 	getBillById,
 	getBills,
+	getLandlordBillsByMonth,
+	getTenantBills,
 	markBillAsPaid,
 	previewBillsForBuilding,
 	updateBill,
+	updateBillWithMeterData,
 	updateMeterData,
 } from '@/actions/bill.action';
 import { TokenManager } from '@/lib/api-client';
@@ -14,9 +18,13 @@ import type {
 	Bill,
 	BillQueryParams,
 	CreateBillRequest,
+	GenerateMonthlyBillsRequest,
+	GenerateMonthlyBillsResponse,
+	LandlordBillQueryParams,
 	PaginatedBillResponse,
 	PreviewBillForBuildingRequest,
 	UpdateBillRequest,
+	UpdateBillWithMeterDataRequest,
 	UpdateMeterDataRequest,
 } from '@/types/bill.types';
 
@@ -25,6 +33,7 @@ interface BillState {
 	bills: Bill[];
 	current: Bill | null;
 	previewData: unknown | null;
+	generateResult: GenerateMonthlyBillsResponse | null;
 
 	// Loading states
 	loading: boolean;
@@ -34,6 +43,7 @@ interface BillState {
 	markingPaid: boolean;
 	updatingMeter: boolean;
 	previewing: boolean;
+	generating: boolean;
 
 	// Error states
 	error: string | null;
@@ -43,12 +53,15 @@ interface BillState {
 	markPaidError: string | null;
 	meterError: string | null;
 	previewError: string | null;
+	generateError: string | null;
 
 	// Metadata
 	meta: PaginatedBillResponse['meta'] | null;
 
 	// Actions
 	loadBills: (params?: BillQueryParams) => Promise<void>;
+	loadLandlordBills: (params?: LandlordBillQueryParams) => Promise<void>;
+	loadTenantBills: (params?: BillQueryParams) => Promise<void>;
 	loadAll: () => Promise<void>;
 	loadById: (id: string) => Promise<void>;
 	loadBillById: (id: string) => Promise<Bill | null>;
@@ -57,7 +70,11 @@ interface BillState {
 	remove: (id: string) => Promise<boolean>;
 	markPaid: (id: string) => Promise<boolean>;
 	updateMeter: (id: string, data: UpdateMeterDataRequest) => Promise<boolean>;
+	updateWithMeterData: (data: UpdateBillWithMeterDataRequest) => Promise<boolean>;
 	preview: (data: PreviewBillForBuildingRequest) => Promise<boolean>;
+	generateMonthlyBills: (
+		data: GenerateMonthlyBillsRequest,
+	) => Promise<GenerateMonthlyBillsResponse | null>;
 	clearCurrent: () => void;
 	clearErrors: () => void;
 }
@@ -67,6 +84,7 @@ export const useBillStore = create<BillState>((set, get) => ({
 	bills: [],
 	current: null,
 	previewData: null,
+	generateResult: null,
 
 	loading: false,
 	loadingCurrent: false,
@@ -75,6 +93,7 @@ export const useBillStore = create<BillState>((set, get) => ({
 	markingPaid: false,
 	updatingMeter: false,
 	previewing: false,
+	generating: false,
 
 	error: null,
 	errorCurrent: null,
@@ -83,6 +102,7 @@ export const useBillStore = create<BillState>((set, get) => ({
 	markPaidError: null,
 	meterError: null,
 	previewError: null,
+	generateError: null,
 
 	meta: null,
 
@@ -351,6 +371,118 @@ export const useBillStore = create<BillState>((set, get) => ({
 		});
 	},
 
+	// Load bills for landlord by month
+	loadLandlordBills: async (params) => {
+		set({ loading: true, error: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await getLandlordBillsByMonth(params, token);
+			if (result.success) {
+				set({
+					bills: result.data.data,
+					meta: result.data.meta,
+					loading: false,
+				});
+			} else {
+				set({
+					error: result.error,
+					loading: false,
+				});
+			}
+		} catch (error) {
+			set({
+				error: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				loading: false,
+			});
+		}
+	},
+
+	// Load bills for tenant
+	loadTenantBills: async (params) => {
+		set({ loading: true, error: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await getTenantBills(params, token);
+			if (result.success) {
+				set({
+					bills: result.data.data,
+					meta: result.data.meta,
+					loading: false,
+				});
+			} else {
+				set({
+					error: result.error,
+					loading: false,
+				});
+			}
+		} catch (error) {
+			set({
+				error: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				loading: false,
+			});
+		}
+	},
+
+	// Update bill with meter data and occupancy
+	updateWithMeterData: async (data) => {
+		set({ updatingMeter: true, meterError: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await updateBillWithMeterData(data, token);
+			if (result.success) {
+				set({
+					current: result.data.data,
+					updatingMeter: false,
+				});
+				// Reload bills list
+				await get().loadBills();
+				return true;
+			} else {
+				set({
+					meterError: result.error,
+					updatingMeter: false,
+				});
+				return false;
+			}
+		} catch (error) {
+			set({
+				meterError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				updatingMeter: false,
+			});
+			return false;
+		}
+	},
+
+	// Generate monthly bills for building
+	generateMonthlyBills: async (data) => {
+		set({ generating: true, generateError: null, generateResult: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await generateMonthlyBillsForBuilding(data, token);
+			if (result.success) {
+				set({
+					generateResult: result.data,
+					generating: false,
+				});
+				// Reload bills list
+				await get().loadBills();
+				return result.data;
+			} else {
+				set({
+					generateError: result.error,
+					generating: false,
+				});
+				return null;
+			}
+		} catch (error) {
+			set({
+				generateError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				generating: false,
+			});
+			return null;
+		}
+	},
+
 	// Clear all errors
 	clearErrors: () => {
 		set({
@@ -361,6 +493,7 @@ export const useBillStore = create<BillState>((set, get) => ({
 			markPaidError: null,
 			meterError: null,
 			previewError: null,
+			generateError: null,
 		});
 	},
 }));
