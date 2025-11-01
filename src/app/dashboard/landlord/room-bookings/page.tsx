@@ -53,9 +53,10 @@ export default function BookingRequestsPage() {
     const term = searchTerm.trim().toLowerCase()
     if (!term) return sent
     return sent.filter(invitation => {
-      const name = `${invitation.recipient?.firstName || ''} ${invitation.recipient?.lastName || ''}`.toLowerCase()
-      const phone = invitation.recipient?.phone?.toLowerCase() || ''
-      const email = invitation.recipient?.email?.toLowerCase() || ''
+      if (!invitation.recipient) return false
+      const name = `${invitation.recipient.firstName || ''} ${invitation.recipient.lastName || ''}`.toLowerCase()
+      const phone = invitation.recipient.phone?.toLowerCase() || ''
+      const email = invitation.recipient.email?.toLowerCase() || ''
       return name.includes(term) || phone.includes(term) || email.includes(term)
     })
   }, [sent, searchTerm])
@@ -246,9 +247,14 @@ export default function BookingRequestsPage() {
                     </TableCell>
 
                     <TableCell>
-                      <Badge className={STATUS_COLORS[invitation.status as keyof typeof STATUS_COLORS]}>
-                        {STATUS_LABELS[invitation.status as keyof typeof STATUS_LABELS]}
-                      </Badge>
+                      <div className="space-y-1">
+                        <Badge className={STATUS_COLORS[invitation.status as keyof typeof STATUS_COLORS]}>
+                          {STATUS_LABELS[invitation.status as keyof typeof STATUS_LABELS]}
+                        </Badge>
+                        {invitation.status === 'accepted' && invitation.isConfirmedBySender && (
+                          <div className="text-xs text-green-600 font-medium">✓ Đã xác nhận</div>
+                        )}
+                      </div>
                     </TableCell>
 
                     <TableCell>
@@ -272,7 +278,7 @@ export default function BookingRequestsPage() {
                             Thu hồi
                           </Button>
                         )}
-                        {invitation.status === 'accepted' && (
+                        {invitation.status === 'accepted' && !invitation.isConfirmedBySender && (
                           <Button
                             variant="default"
                             size="sm"
