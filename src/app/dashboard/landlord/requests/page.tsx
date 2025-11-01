@@ -502,9 +502,11 @@ export default function RequestsPage() {
                           </div>
                           <div>
                             <h3 className="text-lg font-semibold line-clamp-1">
-                              {invitation.room?.name}
+                              {invitation.room?.name || 'Phòng không xác định'}
                             </h3>
-                            <p className="text-xs text-gray-500">{invitation.room?.building?.name}</p>
+                            {invitation.room?.building?.name && (
+                              <p className="text-xs text-gray-500">{invitation.room.building.name}</p>
+                            )}
                           </div>
                         </div>
                         <Badge className={INVITATION_STATUS_COLORS[invitation.status as keyof typeof INVITATION_STATUS_COLORS]}>

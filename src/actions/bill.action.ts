@@ -32,12 +32,12 @@ type ApiResult<T> = ApiSuccessResult<T> | ApiErrorResult;
 const apiCall = createServerApiCall();
 
 // Helper to convert Decimal objects to numbers
-const parseDecimalValue = (value: any): number => {
+const parseDecimalValue = (value: unknown): number => {
 	if (value && typeof value === 'object' && 's' in value && 'e' in value && 'd' in value) {
 		// Decimal format: {s: sign, e: exponent, d: digits array}
-		const sign = value.s;
-		const exponent = value.e;
-		const digits = value.d;
+		const sign = value.s as number;
+		const exponent = value.e as number;
+		const digits = value.d as number[];
 
 		// Reconstruct the number
 		const numStr = digits.join('');
@@ -49,7 +49,7 @@ const parseDecimalValue = (value: any): number => {
 };
 
 // Helper to recursively parse all Decimal objects in response
-const parseDecimalFields = (obj: any): any => {
+const parseDecimalFields = (obj: unknown): unknown => {
 	if (obj === null || obj === undefined) return obj;
 
 	if (Array.isArray(obj)) {
@@ -61,9 +61,11 @@ const parseDecimalFields = (obj: any): any => {
 	}
 
 	if (typeof obj === 'object') {
-		const result: any = {};
+		const result: Record<string, unknown> = {};
 		for (const key in obj) {
-			result[key] = parseDecimalFields(obj[key]);
+			if (Object.hasOwn(obj, key)) {
+				result[key] = parseDecimalFields((obj as Record<string, unknown>)[key]);
+			}
 		}
 		return result;
 	}
@@ -137,7 +139,7 @@ export const getBills = async (
 		const endpoint = `/api/bills${q.toString() ? `?${q.toString()}` : ''}`;
 		const response = await apiCall<PaginatedBillResponse>(endpoint, { method: 'GET' }, token);
 
-		return { success: true, data: parseDecimalFields(response) };
+		return { success: true, data: parseDecimalFields(response) as PaginatedBillResponse };
 	} catch (error) {
 		return {
 			success: false,
@@ -290,7 +292,7 @@ export const getLandlordBillsByMonth = async (
 		const endpoint = `/api/bills/landlord/by-month${q.toString() ? `?${q.toString()}` : ''}`;
 		const response = await apiCall<PaginatedBillResponse>(endpoint, { method: 'GET' }, token);
 
-		return { success: true, data: parseDecimalFields(response) };
+		return { success: true, data: parseDecimalFields(response) as PaginatedBillResponse };
 	} catch (error) {
 		return {
 			success: false,
@@ -341,7 +343,7 @@ export const getTenantBills = async (
 		const endpoint = `/api/bills/tenant/my-bills${q.toString() ? `?${q.toString()}` : ''}`;
 		const response = await apiCall<PaginatedBillResponse>(endpoint, { method: 'GET' }, token);
 
-		return { success: true, data: parseDecimalFields(response) };
+		return { success: true, data: parseDecimalFields(response) as PaginatedBillResponse };
 	} catch (error) {
 		return {
 			success: false,

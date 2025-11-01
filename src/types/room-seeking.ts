@@ -1,40 +1,76 @@
 // Room Seeking Post Types
 
+export interface Decimal {
+	s: number;
+	e: number;
+	d: number[];
+}
+
+export interface Amenity {
+	id: string;
+	name: string;
+	nameEn: string;
+	category: string;
+	description?: string;
+}
+
 export interface RoomSeekingPost {
 	id: string;
 	title: string;
 	description: string;
 	slug: string;
+	requesterId: string;
 	preferredDistrictId: number;
 	preferredWardId: number;
 	preferredProvinceId: number;
-	minBudget: number;
-	maxBudget: number;
+	minBudget: number | Decimal;
+	maxBudget: number | Decimal;
 	currency: 'VND' | 'USD';
 	preferredRoomType: 'boarding_house' | 'apartment' | 'house' | 'studio';
 	occupancy: number;
 	moveInDate: string;
 	isPublic: boolean;
 	expiresAt: string;
-	amenityIds: string[];
+	amenityIds?: string[];
 	contactCount: number;
 	viewCount?: number;
 	status: 'active' | 'paused' | 'closed' | 'expired';
 	createdAt: string;
 	updatedAt: string;
-	userId: string;
+	userId?: string; // Legacy field for backwards compatibility
 	// Location name fields from API response
 	preferredProvince?: { id: number; name: string; nameEn?: string | null };
 	preferredDistrict?: { id: number; name: string; nameEn?: string | null };
 	preferredWard?: { id: number; name: string; nameEn?: string | null };
-	// Requester info
+	// Amenities array
+	amenities?: Amenity[];
+	// Requester info (the person looking for a room)
 	requester?: {
 		id: string;
+		name?: string;
 		firstName?: string;
 		lastName?: string;
 		email?: string;
 		phone?: string;
-		avatarUrl?: string;
+		avatarUrl?: string | null;
+		isVerifiedPhone?: boolean;
+		isVerifiedEmail?: boolean;
+		isVerifiedIdentity?: boolean;
+		isOnline?: boolean;
+		lastActiveAt?: string;
+	};
+	// SEO metadata
+	seo?: {
+		title: string;
+		description: string;
+		keywords: string;
+	};
+	// Breadcrumb data
+	breadcrumb?: {
+		items: Array<{
+			title: string;
+			path: string;
+		}>;
 	};
 }
 

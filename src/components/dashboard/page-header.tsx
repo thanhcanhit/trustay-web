@@ -1,4 +1,15 @@
 import { Button } from "@/components/ui/button"
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { ArrowLeft, Plus, Edit, Trash2, Eye, LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { ReactNode } from "react"
@@ -68,11 +79,32 @@ export const PageHeaderActions = {
     </Link>
   ),
   
-  Delete: ({ onClick, label = "Xóa" }: { onClick: () => void; label?: string }) => (
-    <Button variant="destructive" onClick={onClick} className="cursor-pointer">
-      <Trash2 className="h-4 w-4 mr-2" />
-      {label}
-    </Button>
+  Delete: ({ onClick, label = "Xóa", confirmTitle = "Xác nhận xóa", confirmDescription = "Bạn có chắc chắn muốn xóa? Hành động này không thể hoàn tác." }: { onClick: () => void; label?: string; confirmTitle?: string; confirmDescription?: string }) => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" className="cursor-pointer">
+          <Trash2 className="h-4 w-4 mr-2" />
+          {label}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{confirmTitle}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {confirmDescription}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Hủy</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onClick}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            Xóa
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   ),
   
   View: ({ href, label = "Xem" }: { href: string; label?: string }) => (

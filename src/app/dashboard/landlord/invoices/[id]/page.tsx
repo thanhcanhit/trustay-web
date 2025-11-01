@@ -8,9 +8,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useBillStore } from '@/stores/billStore';
+import { UpdateMeterDataDialog } from '@/components/billing/UpdateMeterDataDialog';
 import {
 	formatCurrency,
 	formatBillingPeriod,
@@ -28,11 +38,10 @@ import {
 	AlertCircle,
 	CheckCircle2,
 	Receipt,
-	Edit,
+	Gauge,
 	Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Bill } from '@/types/bill.types';
 
 export default function BillDetailPage() {
 	const params = useParams();
@@ -45,36 +54,17 @@ export default function BillDetailPage() {
 		loadById,
 		markPaid,
 		remove,
-		updateWithMeterData,
 		markingPaid,
 		deleting,
-		updatingMeter,
 	} = useBillStore();
 
-	const [isEditingMeter, setIsEditingMeter] = useState(false);
-	const [meterData, setMeterData] = useState<Record<string, { current: number; last: number }>>(
-		{},
-	);
+	const [showMeterDialog, setShowMeterDialog] = useState(false);
 
 	useEffect(() => {
 		if (billId) {
 			loadById(billId);
 		}
 	}, [billId, loadById]);
-
-	// Initialize meter data when bill loads
-	useEffect(() => {
-		if (bill?.meteredCostsToInput) {
-			const initialData: Record<string, { current: number; last: number }> = {};
-			bill.meteredCostsToInput.forEach((cost) => {
-				initialData[cost.roomCostId] = {
-					current: 0,
-					last: 0,
-				};
-			});
-			setMeterData(initialData);
-		}
-	}, [bill]);
 
 	const handleMarkAsPaid = async () => {
 		if (!bill) return;
@@ -91,10 +81,6 @@ export default function BillDetailPage() {
 	const handleDelete = async () => {
 		if (!bill) return;
 
-		if (!confirm('Bạn có chắc chắn muốn xóa hóa đơn này?')) {
-			return;
-		}
-
 		const success = await remove(bill.id);
 		if (success) {
 			toast.success('Đã xóa hóa đơn');
@@ -104,28 +90,9 @@ export default function BillDetailPage() {
 		}
 	};
 
-	const handleUpdateMeterData = async () => {
-		if (!bill) return;
-
-		const meterDataArray = Object.entries(meterData).map(([roomCostId, values]) => ({
-			roomCostId,
-			currentReading: values.current,
-			lastReading: values.last,
-		}));
-
-		const success = await updateWithMeterData({
-			billId: bill.id,
-			occupancyCount: bill.occupancyCount || 1,
-			meterData: meterDataArray,
-		});
-
-		if (success) {
-			toast.success('Đã cập nhật số đồng hồ');
-			setIsEditingMeter(false);
-			loadById(billId);
-		} else {
-			toast.error('Có lỗi khi cập nhật số đồng hồ');
-		}
+	const handleMeterDataUpdated = () => {
+		// Reload bill after meter data is updated
+		loadById(billId);
 	};
 
 	if (loading) {
@@ -160,21 +127,19 @@ export default function BillDetailPage() {
 	return (
 		<DashboardLayout userType="landlord">
 			<div className="px-6 pb-6">
-				<PageHeader
-					title={
-						<div className="flex items-center gap-4">
-							<Button
-								variant="ghost"
-								size="icon"
-								onClick={() => router.push('/dashboard/landlord/invoices')}
-							>
-								<ArrowLeft className="h-5 w-5" />
-							</Button>
-							<span>Chi tiết hóa đơn</span>
-						</div>
-					}
-					subtitle={`Hóa đơn ${formatBillingPeriod(bill.billingPeriod)}`}
-				/>
+				<div className="flex items-center gap-4 mb-6">
+					<Button
+						variant="ghost"
+						size="icon"
+						onClick={() => router.push('/dashboard/landlord/invoices')}
+					>
+						<ArrowLeft className="h-5 w-5" />
+					</Button>
+					<PageHeader
+						title="Chi tiết hóa đơn"
+						subtitle={`Hóa đơn ${formatBillingPeriod(bill.billingPeriod)}`}
+					/>
+				</div>
 
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 					{/* Left Column - Bill Details */}
@@ -317,100 +282,62 @@ export default function BillDetailPage() {
 												Hóa đơn sẽ tự động chuyển sang trạng thái <span className="font-medium">Chờ thanh toán</span> sau khi nhập đủ số đồng hồ
 											</p>
 										</div>
-										{!isEditingMeter && (
-											<Button size="sm" onClick={() => setIsEditingMeter(true)} className="bg-blue-600 hover:bg-blue-700">
-												<Edit className="w-4 h-4 mr-2" />
-												Nhập ngay
-											</Button>
-										)}
+										<Button
+											size="sm"
+											onClick={() => setShowMeterDialog(true)}
+											className="bg-blue-600 hover:bg-blue-700"
+										>
+											<Gauge className="w-4 h-4 mr-2" />
+											Nhập ngay
+										</Button>
 									</div>
 								</CardHeader>
 								<CardContent>
-									{isEditingMeter ? (
-										<div className="space-y-4">
-											<div className="p-3 bg-blue-100 border border-blue-200 rounded text-sm text-blue-800">
-												💡 <strong>Hướng dẫn:</strong> Nhập chỉ số cũ (kỳ trước) và chỉ số mới (hiện tại) cho mỗi loại chi phí. Hệ thống sẽ tự động tính tiêu thụ và cập nhật tổng tiền.
+									<div className="space-y-2">
+										{bill.meteredCostsToInput.map((cost) => (
+											<div
+												key={cost.roomCostId}
+												className="flex items-center gap-2 text-sm p-2 bg-white rounded border border-blue-200"
+											>
+												<Receipt className="w-4 h-4 text-blue-600" />
+												<span className="font-medium">
+													{cost.name} ({cost.unit})
+												</span>
 											</div>
-											{bill.meteredCostsToInput.map((cost) => {
-												const consumption = (meterData[cost.roomCostId]?.current || 0) - (meterData[cost.roomCostId]?.last || 0);
-												return (
-													<div key={cost.roomCostId} className="p-4 bg-white rounded-lg border border-blue-200 shadow-sm">
-														<p className="font-semibold mb-3 text-blue-900">{cost.name}</p>
-														<div className="grid grid-cols-2 gap-3 mb-2">
-															<div>
-																<Label className="text-xs font-medium">Chỉ số cũ ({cost.unit})</Label>
-																<Input
-																	type="number"
-																	step="0.01"
-																	min={0}
-																	placeholder="0"
-																	value={meterData[cost.roomCostId]?.last || ''}
-																	onChange={(e) =>
-																		setMeterData((prev) => ({
-																			...prev,
-																			[cost.roomCostId]: {
-																				...prev[cost.roomCostId],
-																				last: parseFloat(e.target.value) || 0,
-																			},
-																		}))
-																	}
-																	className="mt-1"
-																/>
-															</div>
-															<div>
-																<Label className="text-xs font-medium">Chỉ số mới ({cost.unit})</Label>
-																<Input
-																	type="number"
-																	step="0.01"
-																	min={0}
-																	placeholder="0"
-																	value={meterData[cost.roomCostId]?.current || ''}
-																	onChange={(e) =>
-																		setMeterData((prev) => ({
-																			...prev,
-																			[cost.roomCostId]: {
-																				...prev[cost.roomCostId],
-																				current: parseFloat(e.target.value) || 0,
-																			},
-																		}))
-																	}
-																	className="mt-1"
-																/>
-															</div>
-														</div>
-														{consumption > 0 && (
-															<div className="text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded">
-																Tiêu thụ: <span className="font-semibold">{consumption.toFixed(2)} {cost.unit}</span>
-															</div>
-														)}
-													</div>
-												);
-											})}
-											<div className="flex gap-2 pt-2">
-												<Button
-													onClick={handleUpdateMeterData}
-													disabled={updatingMeter}
-													className="bg-blue-600 hover:bg-blue-700"
-												>
-													{updatingMeter ? 'Đang cập nhật...' : 'Lưu và hoàn thành hóa đơn'}
-												</Button>
-												<Button variant="outline" onClick={() => setIsEditingMeter(false)}>
-													Hủy
-												</Button>
-											</div>
+										))}
+									</div>
+								</CardContent>
+							</Card>
+						)}
+
+						{/* Update button for draft bills without requiresMeterData */}
+						{!bill.requiresMeterData && bill.status === 'draft' && (
+							<Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+								<CardHeader>
+									<div className="flex items-center justify-between">
+										<div>
+											<CardTitle className="flex items-center gap-2 text-blue-900">
+												<AlertCircle className="w-5 h-5 text-blue-600" />
+												Hóa đơn chưa hoàn thành
+											</CardTitle>
+											<p className="text-sm text-muted-foreground mt-1">
+												Cập nhật số đồng hồ (nếu có) và số người ở để hoàn thành hóa đơn
+											</p>
 										</div>
-									) : (
-										<div className="space-y-2">
-											{bill.meteredCostsToInput.map((cost) => (
-												<div key={cost.roomCostId} className="flex items-center gap-2 text-sm p-2 bg-white rounded border border-blue-200">
-													<Receipt className="w-4 h-4 text-blue-600" />
-													<span className="font-medium">
-														{cost.name} ({cost.unit})
-													</span>
-												</div>
-											))}
-										</div>
-									)}
+										<Button
+											size="sm"
+											onClick={() => setShowMeterDialog(true)}
+											className="bg-blue-600 hover:bg-blue-700"
+										>
+											<Gauge className="w-4 h-4 mr-2" />
+											Cập nhật ngay
+										</Button>
+									</div>
+								</CardHeader>
+								<CardContent>
+									<div className="text-sm text-muted-foreground">
+										<p>Hóa đơn này đang ở trạng thái nháp. Vui lòng cập nhật thông tin để chuyển sang trạng thái chờ thanh toán.</p>
+									</div>
 								</CardContent>
 							</Card>
 						)}
@@ -485,19 +412,37 @@ export default function BillDetailPage() {
 									</Button>
 								)}
 
-								{(bill.status === 'draft' || bill.status === 'pending') && (
-									<Button
-										variant="destructive"
-										className="w-full"
-										onClick={handleDelete}
-										disabled={deleting}
-									>
-										<Trash2 className="w-4 h-4 mr-2" />
-										{deleting ? 'Đang xóa...' : 'Xóa hóa đơn'}
-									</Button>
-								)}
-
-								<Button
+							{(bill.status === 'draft' || bill.status === 'pending') && (
+								<AlertDialog>
+									<AlertDialogTrigger asChild>
+										<Button
+											variant="destructive"
+											className="w-full"
+											disabled={deleting}
+										>
+											<Trash2 className="w-4 h-4 mr-2" />
+											{deleting ? 'Đang xóa...' : 'Xóa hóa đơn'}
+										</Button>
+									</AlertDialogTrigger>
+									<AlertDialogContent>
+										<AlertDialogHeader>
+											<AlertDialogTitle>Xác nhận xóa hóa đơn</AlertDialogTitle>
+											<AlertDialogDescription>
+												Bạn có chắc chắn muốn xóa hóa đơn này? Hành động này không thể hoàn tác.
+											</AlertDialogDescription>
+										</AlertDialogHeader>
+										<AlertDialogFooter>
+											<AlertDialogCancel>Hủy</AlertDialogCancel>
+											<AlertDialogAction
+												onClick={handleDelete}
+												className="bg-red-600 hover:bg-red-700"
+											>
+												Xóa
+											</AlertDialogAction>
+										</AlertDialogFooter>
+									</AlertDialogContent>
+								</AlertDialog>
+							)}								<Button
 									variant="outline"
 									className="w-full"
 									onClick={() => router.push('/dashboard/landlord/invoices')}
@@ -521,6 +466,16 @@ export default function BillDetailPage() {
 					</div>
 				</div>
 			</div>
+
+			{/* Meter Data Dialog - Show for bills with requiresMeterData or draft status */}
+			{bill && (bill.requiresMeterData || bill.status === 'draft') && (
+				<UpdateMeterDataDialog
+					bill={bill}
+					open={showMeterDialog}
+					onOpenChange={setShowMeterDialog}
+					onSuccess={handleMeterDataUpdated}
+				/>
+			)}
 		</DashboardLayout>
 	);
 }

@@ -9,6 +9,16 @@ import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { MapPin, Home, Users, DollarSign, TrendingUp, MoreVertical, Trash, Edit, Plus } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useBuildingStore } from "@/stores/buildingStore"
 import { type Building as BuildingType, type Room } from "@/types/types"
 import Link from "next/link"
@@ -31,6 +41,7 @@ export default function BuildingDetailPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const pageLimit = 20
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [roomsCount, setRoomsCount] = useState({
     total: 0,
     available: 0,
@@ -131,10 +142,6 @@ export default function BuildingDetailPage() {
   const handleDeleteBuilding = async () => {
     if (!building) return
 
-    if (!confirm(`Bạn có chắc chắn muốn xóa dãy trọ "${building.name}"? Hành động này không thể hoàn tác.`)) {
-      return
-    }
-
     try {
       const success = await deleteBuildingAction(building.id)
       if (!success) {
@@ -215,7 +222,7 @@ export default function BuildingDetailPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={handleDeleteBuilding} className="cursor-pointer text-red-600 hover:bg-red-100">
+                  <DropdownMenuItem onSelect={() => setShowDeleteDialog(true)} className="cursor-pointer text-red-600 hover:bg-red-100">
                     <Trash className="h-4 w-4 mr-2" />
                     Xóa dãy trọ
                   </DropdownMenuItem>
@@ -228,6 +235,29 @@ export default function BuildingDetailPage() {
             </>
           }
         />
+
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận xóa dãy trọ</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc chắn muốn xóa dãy trọ &quot;{building?.name}&quot;? Hành động này không thể hoàn tác.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Hủy</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  handleDeleteBuilding()
+                  setShowDeleteDialog(false)
+                }}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Xóa
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Stats Overview */}
         <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">

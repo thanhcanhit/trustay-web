@@ -2,6 +2,17 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
 	formatCurrency,
 	formatBillingPeriod,
 	getBillStatusColor,
@@ -12,45 +23,57 @@ import {
 } from '@/utils/billUtils';
 import type { Bill } from '@/types/bill.types';
 import { Calendar, Home, AlertCircle, Receipt, Gauge } from 'lucide-react';
+import { UpdateMeterDataDialog } from './UpdateMeterDataDialog';
+import { useState } from 'react';
 
 interface BillCardProps {
 	bill: Bill;
 	onViewDetail: (bill: Bill) => void;
 	onMarkAsPaid?: (bill: Bill) => void;
 	onDelete?: (billId: string) => void;
+	onMeterDataUpdated?: () => void;
 	userRole: 'landlord' | 'tenant';
 }
 
-export function BillCard({ bill, onViewDetail, onMarkAsPaid, onDelete, userRole }: BillCardProps) {
+export function BillCard({
+	bill,
+	onViewDetail,
+	onMarkAsPaid,
+	onDelete,
+	onMeterDataUpdated,
+	userRole,
+}: BillCardProps) {
+	const [showMeterDialog, setShowMeterDialog] = useState(false);
 	const isOverdue = isBillOverdue(bill);
 	const daysUntilDue = getDaysUntilDue(bill.dueDate);
 	const isDueSoon = daysUntilDue <= 7 && daysUntilDue > 0 && bill.status === 'pending';
 
 	return (
-		<Card className={isOverdue ? 'border-red-500' : ''}>
-			<CardHeader>
-				<div className="flex items-start justify-between">
-					<div className="space-y-1">
-						<h3 className="font-semibold text-lg">{formatBillingPeriod(bill.billingPeriod)}</h3>
-						{bill.rental?.roomInstance && (
-							<div className="flex items-center gap-2 text-sm text-muted-foreground">
-								<Home className="w-4 h-4" />
-								<span>Phòng {bill.rental.roomInstance.roomNumber}</span>
-							</div>
-						)}
-					</div>
-					<div className="flex flex-col gap-1 items-end">
-						<Badge variant={getBillStatusColor(bill.status)}>
-							{getBillStatusLabel(bill.status)}
-						</Badge>
-						{bill.requiresMeterData && (
-							<Badge variant="outline" className="text-blue-600 border-blue-600 text-xs">
-								Cần nhập đồng hồ
+		<>
+			<Card className={isOverdue ? 'border-red-500' : ''}>
+				<CardHeader>
+					<div className="flex items-start justify-between">
+						<div className="space-y-1">
+							<h3 className="font-semibold text-lg">{formatBillingPeriod(bill.billingPeriod)}</h3>
+							{bill.rental?.roomInstance && (
+								<div className="flex items-center gap-2 text-sm text-muted-foreground">
+									<Home className="w-4 h-4" />
+									<span>Phòng {bill.rental.roomInstance.roomNumber}</span>
+								</div>
+							)}
+						</div>
+						<div className="flex flex-col gap-1 items-end">
+							<Badge variant={getBillStatusColor(bill.status)}>
+								{getBillStatusLabel(bill.status)}
 							</Badge>
-						)}
+							{bill.requiresMeterData && (
+								<Badge variant="outline" className="text-blue-600 border-blue-600 text-xs">
+									Cần nhập đồng hồ
+								</Badge>
+							)}
+						</div>
 					</div>
-				</div>
-			</CardHeader>
+				</CardHeader>
 
 			<CardContent>
 				<div className="space-y-3">
@@ -128,13 +151,26 @@ export function BillCard({ bill, onViewDetail, onMarkAsPaid, onDelete, userRole 
 				{bill.requiresMeterData && userRole === 'landlord' && (
 					<Button
 						variant="default"
-						onClick={() => onViewDetail(bill)}
+						onClick={() => setShowMeterDialog(true)}
 						className="w-full bg-blue-600 hover:bg-blue-700"
 					>
 						<Gauge className="w-4 h-4 mr-2" />
 						Nhập số đồng hồ
 					</Button>
 				)}
+				
+				{/* Show update button for draft bills even without requiresMeterData flag */}
+				{!bill.requiresMeterData && bill.status === 'draft' && userRole === 'landlord' && (
+					<Button
+						variant="default"
+						onClick={() => setShowMeterDialog(true)}
+						className="w-full bg-blue-600 hover:bg-blue-700"
+					>
+						<Gauge className="w-4 h-4 mr-2" />
+						Cập nhật số đồng hồ
+					</Button>
+				)}
+				
 				<div className="flex gap-2 w-full">
 					<Button variant="outline" onClick={() => onViewDetail(bill)} className="flex-1">
 						Xem chi tiết
@@ -145,16 +181,44 @@ export function BillCard({ bill, onViewDetail, onMarkAsPaid, onDelete, userRole 
 						</Button>
 					)}
 					{userRole === 'landlord' && bill.status === 'draft' && !bill.requiresMeterData && onDelete && (
-						<Button
-							variant="destructive"
-							onClick={() => onDelete(bill.id)}
-							className="flex-1"
-						>
-							Xóa
-						</Button>
+						<AlertDialog>
+							<AlertDialogTrigger asChild>
+								<Button variant="destructive" className="flex-1">
+									Xóa
+								</Button>
+							</AlertDialogTrigger>
+							<AlertDialogContent>
+								<AlertDialogHeader>
+									<AlertDialogTitle>Xác nhận xóa hóa đơn</AlertDialogTitle>
+									<AlertDialogDescription>
+										Bạn có chắc chắn muốn xóa hóa đơn này? Hành động này không thể hoàn tác.
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel>Hủy</AlertDialogCancel>
+									<AlertDialogAction
+										onClick={() => onDelete(bill.id)}
+										className="bg-red-600 hover:bg-red-700"
+									>
+										Xóa
+									</AlertDialogAction>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
 					)}
 				</div>
 			</CardFooter>
-		</Card>
+			</Card>
+
+			{/* Meter Data Dialog - Show for bills with requiresMeterData or draft status */}
+			{(bill.requiresMeterData || bill.status === 'draft') && (
+				<UpdateMeterDataDialog
+					bill={bill}
+					open={showMeterDialog}
+					onOpenChange={setShowMeterDialog}
+					onSuccess={onMeterDataUpdated}
+				/>
+			)}
+		</>
 	);
 }

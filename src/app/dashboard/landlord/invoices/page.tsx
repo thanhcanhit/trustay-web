@@ -16,6 +16,7 @@ import { getCurrentBillingPeriod } from "@/utils/billUtils"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import type { Bill, LandlordBillQueryParams } from "@/types/bill.types"
+import type { BillStatus } from "@/types/types"
 
 export default function InvoicesPage() {
   const router = useRouter()
@@ -64,7 +65,7 @@ export default function InvoicesPage() {
     }
 
     if (statusFilter !== 'all') {
-      params.status = statusFilter as any
+      params.status = statusFilter as BillStatus
     }
 
     if (searchTerm) {
@@ -96,16 +97,40 @@ export default function InvoicesPage() {
   const handleDeleteBill = async (billId: string) => {
     if (deleting) return
 
-    if (!confirm('Bạn có chắc chắn muốn xóa hóa đơn này?')) {
-      return
-    }
-
     const success = await remove(billId)
     if (success) {
       toast.success('Đã xóa hóa đơn thành công')
     } else {
       toast.error(deleteError || 'Có lỗi xảy ra khi xóa hóa đơn')
     }
+  }
+
+  const handleMeterDataUpdated = () => {
+    // Reload bills list after meter data is updated
+    const params: LandlordBillQueryParams = {
+      page: 1,
+      limit: 50,
+      sortBy,
+      sortOrder,
+    }
+
+    if (buildingFilter !== 'all') {
+      params.buildingId = buildingFilter
+    }
+
+    if (statusFilter !== 'all') {
+      params.status = statusFilter as BillStatus
+    }
+
+    if (searchTerm) {
+      params.search = searchTerm
+    }
+
+    if (billingPeriod) {
+      params.billingPeriod = billingPeriod
+    }
+
+    loadLandlordBills(params)
   }
 
   const resetFilters = () => {
@@ -214,7 +239,7 @@ export default function InvoicesPage() {
                     {/* Sort By */}
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Sắp xếp theo</Label>
-                      <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                      <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -231,7 +256,7 @@ export default function InvoicesPage() {
                     {/* Sort Order */}
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Thứ tự</Label>
-                      <Select value={sortOrder} onValueChange={(value: any) => setSortOrder(value)}>
+                      <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as typeof sortOrder)}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -298,6 +323,7 @@ export default function InvoicesPage() {
                   onViewDetail={handleViewDetail}
                   onMarkAsPaid={handleMarkAsPaid}
                   onDelete={handleDeleteBill}
+                  onMeterDataUpdated={handleMeterDataUpdated}
                   userRole="landlord"
                 />
               ))}

@@ -35,6 +35,19 @@ export default function CreateBillPage() {
 		fetchAllBuildings();
 	}, [fetchAllBuildings]);
 
+	// Helper function to translate message to Vietnamese
+	const translateMessage = (message: string): string => {
+		// Check if message is in English format
+		if (message.includes('Successfully created')) {
+			const match = message.match(/Successfully created (\d+) bill\(s\) and found (\d+) existing bill\(s\) for billing period (.+)/);
+			if (match) {
+				const [, created, existed, period] = match;
+				return `Đã tạo thành công ${created} hóa đơn và tìm thấy ${existed} hóa đơn đã tồn tại cho kỳ thanh toán ${period}`;
+			}
+		}
+		return message;
+	};
+
 	const handleGenerateBills = async () => {
 		if (!selectedBuildingId) {
 			toast.error('Vui lòng chọn toà nhà');
@@ -54,7 +67,8 @@ export default function CreateBillPage() {
 		});
 
 		if (result) {
-			toast.success(result.message);
+			const translatedMessage = translateMessage(result.message);
+			toast.success(translatedMessage);
 			// Navigate to bills list after successful generation
 			setTimeout(() => {
 				router.push('/dashboard/landlord/invoices');
@@ -72,15 +86,16 @@ export default function CreateBillPage() {
 					subtitle="Tạo hóa đơn tự động cho tất cả phòng trong toà nhà"
 				/>
 
-				<div className="max-w-3xl mx-auto space-y-6">
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 					{/* Main Card */}
-					<Card>
-						<CardHeader>
-							<CardTitle>Tạo hóa đơn tự động cho toà nhà</CardTitle>
-							<p className="text-sm text-muted-foreground mt-2">
-								Hệ thống sẽ tự động tạo hóa đơn cho tất cả phòng đang có người thuê trong toà nhà đã chọn
-							</p>
-						</CardHeader>
+					<div className="lg:col-span-2">
+						<Card>
+							<CardHeader>
+								<CardTitle>Tạo hóa đơn tự động cho toà nhà</CardTitle>
+								<p className="text-sm text-muted-foreground mt-2">
+									Hệ thống sẽ tự động tạo hóa đơn cho tất cả phòng đang có người thuê trong toà nhà đã chọn
+								</p>
+							</CardHeader>
 						<CardContent className="space-y-6">
 							{/* Building Selection */}
 							<div className="space-y-2">
@@ -185,12 +200,14 @@ export default function CreateBillPage() {
 							</div>
 						</CardContent>
 					</Card>
+					</div>
 
-					{/* How it works */}
-					<Card>
-						<CardHeader>
-							<CardTitle className="text-base">Quy trình tạo hóa đơn</CardTitle>
-						</CardHeader>
+					{/* How it works - Right Side */}
+					<div className="lg:col-span-1">
+						<Card className="sticky top-6">
+							<CardHeader>
+								<CardTitle className="text-base">Quy trình tạo hóa đơn</CardTitle>
+							</CardHeader>
 						<CardContent>
 							<ol className="space-y-3 text-sm">
 								<li className="flex gap-3">
@@ -238,6 +255,7 @@ export default function CreateBillPage() {
 							</ol>
 						</CardContent>
 					</Card>
+					</div>
 				</div>
 			</div>
 		</DashboardLayout>

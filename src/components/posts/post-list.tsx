@@ -7,6 +7,17 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import {
 	Search,
 	Users,
 	Home,
@@ -199,10 +210,31 @@ export function PostList({
 							</DropdownMenu>
 						)}
 						{onDelete && (
-							<Button variant="destructive" size="sm" onClick={() => onDelete(post.id, 'room-seeking')}>
-								<Trash2 className="h-4 w-4 mr-1" />
-								Xóa
-							</Button>
+							<AlertDialog>
+								<AlertDialogTrigger asChild>
+									<Button variant="destructive" size="sm">
+										<Trash2 className="h-4 w-4 mr-1" />
+										Xóa
+									</Button>
+								</AlertDialogTrigger>
+								<AlertDialogContent>
+									<AlertDialogHeader>
+										<AlertDialogTitle>Xác nhận xóa bài đăng</AlertDialogTitle>
+										<AlertDialogDescription>
+											Bạn có chắc chắn muốn xóa bài đăng này? Hành động này không thể hoàn tác.
+										</AlertDialogDescription>
+									</AlertDialogHeader>
+									<AlertDialogFooter>
+										<AlertDialogCancel>Hủy</AlertDialogCancel>
+										<AlertDialogAction
+											onClick={() => onDelete(post.id, 'room-seeking')}
+											className="bg-red-600 hover:bg-red-700"
+										>
+											Xóa
+										</AlertDialogAction>
+									</AlertDialogFooter>
+								</AlertDialogContent>
+							</AlertDialog>
 						)}
 					</div>
 				</div>
@@ -322,10 +354,31 @@ export function PostList({
 								</DropdownMenu>
 							)}
 							{onDelete && (
-								<Button variant="destructive" size="sm" onClick={() => onDelete(post.id, 'roommate')}>
-									<Trash2 className="h-4 w-4 mr-1" />
-									Xóa
-								</Button>
+								<AlertDialog>
+									<AlertDialogTrigger asChild>
+										<Button variant="destructive" size="sm">
+											<Trash2 className="h-4 w-4 mr-1" />
+											Xóa
+										</Button>
+									</AlertDialogTrigger>
+									<AlertDialogContent>
+										<AlertDialogHeader>
+											<AlertDialogTitle>Xác nhận xóa bài đăng</AlertDialogTitle>
+											<AlertDialogDescription>
+												Bạn có chắc chắn muốn xóa bài đăng này? Hành động này không thể hoàn tác.
+											</AlertDialogDescription>
+										</AlertDialogHeader>
+										<AlertDialogFooter>
+											<AlertDialogCancel>Hủy</AlertDialogCancel>
+											<AlertDialogAction
+												onClick={() => onDelete(post.id, 'roommate')}
+												className="bg-red-600 hover:bg-red-700"
+											>
+												Xóa
+											</AlertDialogAction>
+										</AlertDialogFooter>
+									</AlertDialogContent>
+								</AlertDialog>
 							)}
 						</div>
 					</div>
@@ -405,10 +458,31 @@ export function PostList({
 							</DropdownMenu>
 						)}
 						{onDelete && (
-							<Button variant="destructive" size="sm" onClick={() => onDelete(post.id, 'roommate')}>
-								<Trash2 className="h-4 w-4 mr-1" />
-								Xóa
-							</Button>
+							<AlertDialog>
+								<AlertDialogTrigger asChild>
+									<Button variant="destructive" size="sm">
+										<Trash2 className="h-4 w-4 mr-1" />
+										Xóa
+									</Button>
+								</AlertDialogTrigger>
+								<AlertDialogContent>
+									<AlertDialogHeader>
+										<AlertDialogTitle>Xác nhận xóa bài đăng</AlertDialogTitle>
+										<AlertDialogDescription>
+											Bạn có chắc chắn muốn xóa bài đăng này? Hành động này không thể hoàn tác.
+										</AlertDialogDescription>
+									</AlertDialogHeader>
+									<AlertDialogFooter>
+										<AlertDialogCancel>Hủy</AlertDialogCancel>
+										<AlertDialogAction
+											onClick={() => onDelete(post.id, 'roommate')}
+											className="bg-red-600 hover:bg-red-700"
+										>
+											Xóa
+										</AlertDialogAction>
+									</AlertDialogFooter>
+								</AlertDialogContent>
+							</AlertDialog>
 						)}
 					</div>
 				</div>

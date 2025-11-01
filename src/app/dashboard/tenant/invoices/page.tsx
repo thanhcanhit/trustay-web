@@ -10,10 +10,10 @@ import { PageHeader } from "@/components/dashboard/page-header"
 import { BillCard } from "@/components/billing/BillCard"
 import { useBillStore } from "@/stores/billStore"
 import { useRouter } from "next/navigation"
-import { getCurrentBillingPeriod } from "@/utils/billUtils"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import type { Bill } from "@/types/bill.types"
+import type { BillStatus } from "@/types/types"
 
 export default function TenantInvoicesPage() {
   const router = useRouter()
@@ -31,13 +31,18 @@ export default function TenantInvoicesPage() {
 
   // Load bills when filters change
   useEffect(() => {
-    const params: any = {
+    const params: {
+      page: number;
+      limit: number;
+      status?: BillStatus;
+      billingPeriod?: string;
+    } = {
       page: 1,
       limit: 50,
     }
 
     if (statusFilter !== 'all') {
-      params.status = statusFilter
+      params.status = statusFilter as BillStatus
     }
 
     if (billingPeriod) {
@@ -69,8 +74,6 @@ export default function TenantInvoicesPage() {
   })
 
   // Calculate summary stats
-  const totalAmount = bills.reduce((sum, b) => sum + b.totalAmount, 0)
-  const paidAmount = bills.reduce((sum, b) => sum + b.paidAmount, 0)
   const remainingAmount = bills.reduce((sum, b) => sum + b.remainingAmount, 0)
   const overdueCount = bills.filter(b => b.status === 'overdue').length
   const pendingCount = bills.filter(b => b.status === 'pending').length
