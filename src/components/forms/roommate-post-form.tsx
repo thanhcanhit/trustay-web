@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,13 +13,13 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
-import { AddressSelector } from '@/components/ui/address-selector'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { CalendarIcon, ArrowLeft, ArrowRight, Check, Info } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useRoommateSeekingPostsStore } from '@/stores/roommate-seeking-posts.store'
+import { useRentalStore } from '@/stores/rentalStore'
 import { toast } from 'sonner'
 import { CreateRoommateSeekingPostRequest } from '@/actions/roommate-seeking-posts.action'
 
@@ -43,15 +43,9 @@ interface FormData {
 	title: string
 	description: string
 	
-	// Phòng trong platform (tùy chọn)
+	// Phòng trong platform
 	roomInstanceId: string
 	rentalId: string
-	
-	// Phòng ngoài platform (tùy chọn)
-	externalAddress: string
-	externalProvinceId: string
-	externalDistrictId: string
-	externalWardId: string
 	
 	// Chi phí
 	monthlyRent: string
@@ -76,17 +70,23 @@ interface FormData {
 	// Khác
 	requiresLandlordApproval: boolean
 	expiresAt: string
-	
-	// UI control
-	isExternalRoom: boolean // true = phòng ngoài, false = phòng trong platform
 }
 
 export function RoommatePostForm({ onBack, postId, initialData, mode = 'create' }: RoommatePostFormProps) {
 	const router = useRouter()
 	const { createPost, updatePost, isLoading, error: storeError, clearError } = useRoommateSeekingPostsStore()
+	const { loadTenantRentals, tenantRentals } = useRentalStore()
 	const [currentStep, setCurrentStep] = useState(1)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [errors, setErrors] = useState<Record<string, string>>({})
+
+	// Load active rentals on component mount
+	useEffect(() => {
+		loadTenantRentals()
+	}, [loadTenantRentals])
+
+	// Filter only active rentals
+	const activeRentals = tenantRentals.filter(rental => rental.status === 'active')
 
 	const [formData, setFormData] = useState<FormData>({
 		title: initialData?.title ?? '',
@@ -94,11 +94,6 @@ export function RoommatePostForm({ onBack, postId, initialData, mode = 'create' 
 		
 		roomInstanceId: initialData?.roomInstanceId ?? '',
 		rentalId: initialData?.rentalId ?? '',
-		
-		externalAddress: initialData?.externalAddress ?? '',
-		externalProvinceId: initialData?.externalProvinceId?.toString() ?? '',
-		externalDistrictId: initialData?.externalDistrictId?.toString() ?? '',
-		externalWardId: initialData?.externalWardId?.toString() ?? '',
 		
 		monthlyRent: initialData?.monthlyRent?.toString() ?? '',
 		currency: (initialData?.currency as FormData['currency']) ?? 'VND',
@@ -118,8 +113,6 @@ export function RoommatePostForm({ onBack, postId, initialData, mode = 'create' 
 		
 		requiresLandlordApproval: initialData?.requiresLandlordApproval ?? false,
 		expiresAt: initialData?.expiresAt ?? '',
-		
-		isExternalRoom: initialData?.isExternalRoom ?? true,
 	})
 
 	const updateFormData = <K extends keyof FormData>(field: K, value: FormData[K]) => {
@@ -159,25 +152,9 @@ export function RoommatePostForm({ onBack, postId, initialData, mode = 'create' 
 				break
 
 			case 2: // Vị trí
-				if (formData.isExternalRoom) {
-					// Phòng ngoài platform
-					if (!formData.externalAddress.trim()) {
-						newErrors.externalAddress = 'Địa chỉ là bắt buộc'
-					}
-					if (!formData.externalProvinceId) {
-						newErrors.externalProvinceId = 'Vui lòng chọn tỉnh/thành phố'
-					}
-					if (!formData.externalDistrictId) {
-						newErrors.externalDistrictId = 'Vui lòng chọn quận/huyện'
-					}
-					if (!formData.externalWardId) {
-						newErrors.externalWardId = 'Vui lòng chọn phường/xã'
-					}
-				} else {
-					// Phòng trong platform
-					if (!formData.roomInstanceId.trim()) {
-						newErrors.roomInstanceId = 'Vui lòng chọn phòng'
-					}
+				// Phòng trong platform - người dùng phải chọn phòng
+				if (!formData.roomInstanceId.trim()) {
+					newErrors.roomInstanceId = 'Vui lòng chọn phòng'
 				}
 				break
 
@@ -266,7 +243,7 @@ export function RoommatePostForm({ onBack, postId, initialData, mode = 'create' 
 			const submitData: CreateRoommateSeekingPostRequest = {
 				// Thông tin cơ bản
 				title: formData.title.trim(),
-				description: formData.description.trim(),
+				description: formData.description,
 				
 				// Chi phí
 				monthlyRent: Number(formData.monthlyRent),
@@ -293,18 +270,9 @@ export function RoommatePostForm({ onBack, postId, initialData, mode = 'create' 
 				expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : undefined,
 			}
 
-			// Thêm thông tin phòng (chọn 1 trong 2 loại)
-			if (formData.isExternalRoom) {
-				// Phòng ngoài platform
-				submitData.externalAddress = formData.externalAddress.trim()
-				submitData.externalProvinceId = Number(formData.externalProvinceId)
-				submitData.externalDistrictId = Number(formData.externalDistrictId)
-				submitData.externalWardId = Number(formData.externalWardId)
-			} else {
-				// Phòng trong platform
-				submitData.roomInstanceId = formData.roomInstanceId.trim()
-				submitData.rentalId = formData.rentalId.trim() || undefined
-			}
+			// Thêm thông tin phòng trong platform
+			submitData.roomInstanceId = formData.roomInstanceId.trim()
+			submitData.rentalId = formData.rentalId.trim() || undefined
 
 			let success
 			if (mode === 'edit' && postId) {
@@ -375,97 +343,87 @@ export function RoommatePostForm({ onBack, postId, initialData, mode = 'create' 
 			case 2: // Vị trí
 				return (
 					<div className="space-y-6">
-						<div className="flex items-center space-x-2 p-4 bg-muted rounded-lg">
-							<Switch
-								id="isExternalRoom"
-								checked={formData.isExternalRoom}
-								onCheckedChange={(checked) => updateFormData('isExternalRoom', checked)}
-							/>
-							<Label htmlFor="isExternalRoom" className="cursor-pointer">
-								Phòng ngoài hệ thống (không phải phòng đang thuê trên Trustay)
-							</Label>
+						<div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+							<div className="flex items-start space-x-2">
+								<Info className="h-5 w-5 text-blue-600 mt-0.5" />
+								<div className="text-sm text-blue-800">
+									<p className="font-medium mb-1">Phòng trong hệ thống Trustay</p>
+									<p>Vui lòng chọn phòng bạn đang thuê. Hệ thống sẽ tự động lấy thông tin địa chỉ.</p>
+								</div>
+							</div>
 						</div>
-
-						{formData.isExternalRoom ? (
-							// Phòng ngoài platform
-							<>
-								<div>
-									<Label htmlFor="externalAddress">Địa chỉ cụ thể *</Label>
-									<Input
-										id="externalAddress"
-										placeholder="VD: 123 Nguyễn Văn Cừ"
-										value={formData.externalAddress}
-										onChange={(e) => updateFormData('externalAddress', e.target.value)}
-										className={errors.externalAddress ? 'border-destructive' : ''}
-									/>
-									{errors.externalAddress && (
-										<p className="text-sm text-destructive mt-1">{errors.externalAddress}</p>
+						
+						<div>
+							<Label htmlFor="rentalId">Chọn hợp đồng thuê phòng *</Label>
+							<Select
+								value={formData.rentalId}
+								onValueChange={(value) => {
+									updateFormData('rentalId', value)
+									// Find selected rental and auto-populate financial information
+									const selectedRental = activeRentals.find(r => r.id === value)
+									if (selectedRental) {
+										console.log('Selected rental:', selectedRental)
+										console.log('Monthly rent:', selectedRental.monthlyRent)
+										console.log('Deposit paid:', selectedRental.depositPaid)
+										
+										updateFormData('roomInstanceId', selectedRental.roomInstanceId)
+										// Auto-fill financial data from rental
+										// Ensure values are strings for input fields
+										updateFormData('monthlyRent', String(selectedRental.monthlyRent || ''))
+										updateFormData('depositAmount', String(selectedRental.depositPaid || ''))
+										updateFormData('currency', 'VND') // Default currency
+									}
+								}}
+							>
+								<SelectTrigger className={errors.roomInstanceId ? 'border-destructive' : ''}>
+									<SelectValue placeholder="Chọn hợp đồng thuê phòng đang hoạt động" />
+								</SelectTrigger>
+								<SelectContent>
+									{activeRentals.length === 0 ? (
+										<SelectItem value="no-rentals" disabled>
+											Bạn chưa có hợp đồng thuê nào đang hoạt động
+										</SelectItem>
+									) : (
+										activeRentals.map((rental) => (
+											<SelectItem key={rental.id} value={rental.id}>
+												{rental.roomInstance?.room?.name || `Phòng ${rental.roomInstance?.roomNumber}`} - {rental.roomInstance?.room?.building?.name || 'N/A'}
+											</SelectItem>
+										))
 									)}
-								</div>
-								
-								<div>
-									<Label>Khu vực *</Label>
-									<AddressSelector
-										onChange={(address) => {
-											if (address.province) updateFormData('externalProvinceId', address.province.id.toString());
-											if (address.district) updateFormData('externalDistrictId', address.district.id.toString());
-											if (address.ward) updateFormData('externalWardId', address.ward.id.toString());
-										}}
-									/>
-									{(errors.externalProvinceId || errors.externalDistrictId || errors.externalWardId) && (
-										<div className="mt-1 space-y-1">
-											{errors.externalProvinceId && (
-												<p className="text-sm text-destructive">{errors.externalProvinceId}</p>
-											)}
-											{errors.externalDistrictId && (
-												<p className="text-sm text-destructive">{errors.externalDistrictId}</p>
-											)}
-											{errors.externalWardId && (
-												<p className="text-sm text-destructive">{errors.externalWardId}</p>
-											)}
-										</div>
-									)}
-								</div>
-							</>
-						) : (
-							// Phòng trong platform
-							<>
-								<div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-									<div className="flex items-start space-x-2">
-										<Info className="h-5 w-5 text-blue-600 mt-0.5" />
-										<div className="text-sm text-blue-800">
-											<p className="font-medium mb-1">Phòng trong hệ thống Trustay</p>
-											<p>Vui lòng chọn phòng bạn đang thuê. Hệ thống sẽ tự động lấy thông tin địa chỉ.</p>
-										</div>
-									</div>
-								</div>
-								
-								<div>
-									<Label htmlFor="roomInstanceId">Chọn phòng *</Label>
-									<Select
-										value={formData.roomInstanceId}
-										onValueChange={(value) => updateFormData('roomInstanceId', value)}
-									>
-										<SelectTrigger className={errors.roomInstanceId ? 'border-destructive' : ''}>
-											<SelectValue placeholder="Chọn phòng bạn đang thuê" />
-										</SelectTrigger>
-										<SelectContent>
-											{/* TODO: Load danh sách phòng đang thuê từ API */}
-											<SelectItem value="placeholder">Chưa có phòng nào</SelectItem>
-										</SelectContent>
-									</Select>
-									{errors.roomInstanceId && (
-										<p className="text-sm text-destructive mt-1">{errors.roomInstanceId}</p>
-									)}
-								</div>
-							</>
-						)}
+								</SelectContent>
+							</Select>
+							{errors.roomInstanceId && (
+								<p className="text-sm text-destructive mt-1">{errors.roomInstanceId}</p>
+							)}
+							{activeRentals.length === 0 && (
+								<p className="text-sm text-amber-600 mt-2">
+									💡 Bạn cần có hợp đồng thuê phòng đang hoạt động để tạo bài đăng tìm người ở ghép.
+								</p>
+							)}
+							{formData.rentalId && (
+								<p className="text-sm text-green-600 mt-2">
+									✓ Thông tin tài chính đã được tự động điền từ hợp đồng thuê
+								</p>
+							)}
+						</div>
 					</div>
 				)
 
 			case 3: // Chi phí
 				return (
 					<div className="space-y-6">
+						{formData.rentalId && (
+							<div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+								<div className="flex items-start space-x-2">
+									<Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+									<div className="text-sm text-blue-800">
+										<p className="font-medium mb-1">Thông tin tài chính từ hợp đồng thuê</p>
+										<p>Giá thuê và tiền đặt cọc được lấy tự động từ hợp đồng thuê của bạn. Bạn có thể điều chỉnh nếu cần.</p>
+									</div>
+								</div>
+							</div>
+						)}
+						
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 							<div>
 								<Label htmlFor="monthlyRent">Giá thuê hàng tháng (VNĐ) *</Label>

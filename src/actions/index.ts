@@ -97,8 +97,8 @@ export {
 export {
 	getAllRoomListings,
 	getFeaturedRoomListings,
+	getRoomById as getRoomByIdListing,
 	listPublicRoomSeekingPosts,
-	//getRoomBySlug,
 	searchRoomListings,
 } from './listings.action';
 // Export location actions (excluding ApiError)

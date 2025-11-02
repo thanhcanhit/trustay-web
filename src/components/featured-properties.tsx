@@ -30,9 +30,9 @@ export function FeaturedProperties() {
 
 
 
-  const handleRoomClick = (slug: string) => {
-    // Navigate to room detail page using slug
-    window.location.href = `/rooms/${slug}`
+  const handleRoomClick = (id: string) => {
+    // Navigate to room detail page using id
+    window.location.href = `/rooms/${id}`
   }
 
   return (

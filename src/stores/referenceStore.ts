@@ -17,6 +17,8 @@ export interface CostType {
 	category: string;
 	unit?: string;
 	isActive?: boolean;
+	costType?: 'fixed' | 'per_person' | 'metered';
+	isMetered?: boolean;
 }
 
 export interface Rule {
@@ -151,10 +153,8 @@ export const enumTranslations: Record<string, Record<string, string>> = {
 	},
 	costType: {
 		FIXED: 'Cố định',
-		PER_UNIT: 'Theo đơn vị',
+		PER_PERSON: 'Theo người',
 		METERED: 'Theo đồng hồ',
-		PERCENTAGE: 'Theo phần trăm',
-		TIERED: 'Theo bậc',
 	},
 	billingCycle: {
 		DAILY: 'Hàng ngày',

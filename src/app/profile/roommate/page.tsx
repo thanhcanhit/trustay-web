@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Users, Plus, Search, Filter, MapPin, Calendar, DollarSign, Eye } from "lucide-react"
 import { mockRoommatePosts } from "@/data/mock-data"
 import Link from "next/link"
+import { stripHtmlTags } from "@/utils/textProcessing"
 //import { useUserStore } from "@/stores/userStore"
 
 export default function ProfileRoommatePage() {
@@ -155,7 +156,7 @@ export default function ProfileRoommatePage() {
                     </div>
 
                     <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-                      {post.description.replace(/<[^>]*>/g, '')}
+                      {stripHtmlTags(post.description)}
                     </p>
 
                     <div className="flex items-center space-x-4 text-xs text-gray-500">

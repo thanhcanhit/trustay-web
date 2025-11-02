@@ -54,7 +54,7 @@ const tenantItems: SidebarItem[] = [
     subItems: [
       {
         title: "Trọ của tôi",
-        href: "/dashboard/tenant/accommodation",
+        href: "/dashboard/tenant/rentals",
         icon: Home,
         disabled: false
       },
@@ -66,9 +66,9 @@ const tenantItems: SidebarItem[] = [
       },
       {
         title: "Hóa đơn",
-        href: "/dashboard/tenant/bills",
+        href: "/dashboard/tenant/invoices",
         icon: Receipt,
-        disabled: true
+        disabled: false
       }
     ]
   },
@@ -135,7 +135,7 @@ const landlordItems: SidebarItem[] = [
         title: "Hóa đơn",
         href: "/dashboard/landlord/invoices",
         icon: Receipt,
-        disabled: true
+        disabled: false
       },
       {
         title: "Thu chi",

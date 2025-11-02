@@ -4,11 +4,18 @@ import type { LoginRequest, UserProfile } from '@/actions';
 import { login as apiLogin, logout as apiLogout, getCurrentUser } from '@/actions';
 import {
 	changePassword as apiChangePassword,
+	confirmChangeEmail as apiConfirmChangeEmail,
+	requestChangeEmail as apiRequestChangeEmail,
 	updateUserProfile as apiUpdateProfile,
 	uploadAvatar as apiUploadAvatar,
 } from '@/actions/user.action';
 import { TokenManager } from '@/lib/api-client';
-import type { ChangePasswordRequest, UpdateProfileRequest } from '@/types/types';
+import type {
+	ChangePasswordRequest,
+	ConfirmChangeEmailRequest,
+	RequestChangeEmailRequest,
+	UpdateProfileRequest,
+} from '@/types/types';
 import { UserProfile as User } from '@/types/types';
 import { useBuildingStore } from './buildingStore';
 
@@ -36,6 +43,8 @@ interface UserState {
 	updateProfile: (profileData: UpdateProfileRequest) => Promise<void>;
 	uploadAvatar: (file: File) => Promise<string>;
 	changePassword: (passwordData: ChangePasswordRequest) => Promise<void>;
+	requestChangeEmail: (emailData: RequestChangeEmailRequest) => Promise<void>;
+	confirmChangeEmail: (emailData: ConfirmChangeEmailRequest) => Promise<void>;
 	clearError: () => void;
 	switchRole: (newRole: 'tenant' | 'landlord') => void;
 	setHasHydrated: (state: boolean) => void;
@@ -343,6 +352,51 @@ export const useUserStore = create<UserState>()(
 					const errorMessage = error instanceof Error ? error.message : 'Failed to change password';
 					set({
 						isLoading: false,
+						error: errorMessage,
+					});
+					throw error;
+				}
+			},
+
+			requestChangeEmail: async (emailData: RequestChangeEmailRequest) => {
+				try {
+					const token = TokenManager.getAccessToken();
+					if (!token) {
+						throw new Error('No access token found');
+					}
+
+					await apiRequestChangeEmail(emailData, token);
+				} catch (error: unknown) {
+					const errorMessage =
+						error instanceof Error ? error.message : 'Failed to request email change';
+					set({
+						error: errorMessage,
+					});
+					throw error;
+				}
+			},
+
+			confirmChangeEmail: async (emailData: ConfirmChangeEmailRequest) => {
+				try {
+					const token = TokenManager.getAccessToken();
+					if (!token) {
+						throw new Error('No access token found');
+					}
+
+					await apiConfirmChangeEmail(emailData, token);
+
+					// Fetch updated user profile after email change
+					const userProfile = await getCurrentUser(token);
+					const user = convertUserProfile(userProfile);
+
+					set({
+						user,
+						error: null,
+					});
+				} catch (error: unknown) {
+					const errorMessage =
+						error instanceof Error ? error.message : 'Failed to confirm email change';
+					set({
 						error: errorMessage,
 					});
 					throw error;

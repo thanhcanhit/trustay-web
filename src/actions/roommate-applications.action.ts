@@ -26,82 +26,141 @@ export interface RoommateApplication {
 	roommateSeekingPostId: string;
 	applicantId: string;
 	fullName: string;
-	occupation: string;
 	phoneNumber: string;
+	email: string;
+	occupation: string;
+	monthlyIncome: number;
+	applicationMessage: string;
 	moveInDate: string;
 	intendedStayMonths: number;
-	applicationMessage: string;
 	isUrgent: boolean;
-	status:
-		| 'pending'
-		| 'approved_by_tenant'
-		| 'rejected_by_tenant'
-		| 'approved_by_landlord'
-		| 'rejected_by_landlord'
-		| 'cancelled'
-		| 'expired';
-	responseMessage?: string;
-	isConfirmedByTenant?: boolean;
-	isConfirmedByLandlord?: boolean;
-	confirmedAt?: string;
+	status: 'pending' | 'accepted' | 'rejected' | 'awaiting_confirmation' | 'cancelled' | 'expired';
 	tenantResponse?: string;
-	tenantRespondedAt?: string;
 	landlordResponse?: string;
+	tenantRespondedAt?: string;
 	landlordRespondedAt?: string;
+	confirmedAt?: string;
 	createdAt: string;
 	updatedAt: string;
-	// Post information for determining external vs platform room
+	// Related data
+	applicant?: {
+		id: string;
+		firstName: string;
+		lastName: string;
+		email: string;
+		avatarUrl?: string;
+	};
 	roommateSeekingPost?: {
+		id: string;
+		title: string;
+		slug?: string;
+		tenantId?: string;
+		monthlyRent: number;
+		depositAmount?: number;
 		roomInstanceId?: string;
-		externalAddress?: string;
+		roomInstance?: {
+			id: string;
+			roomNumber: string;
+			room: {
+				name: string;
+				building: {
+					name: string;
+					ownerId: string;
+				};
+			};
+		};
+		tenant?: {
+			id: string;
+			firstName: string;
+			lastName: string;
+			avatarUrl?: string | null;
+		};
+	};
+	rental?: {
+		id: string;
+		roomInstanceId: string;
 		tenantId: string;
+		ownerId: string;
+		contractStartDate: string;
+		contractEndDate: string;
+		monthlyRent: number;
+		depositPaid: number;
+		status: string;
 	};
 }
 
 export interface CreateRoommateApplicationRequest {
 	roommateSeekingPostId: string;
 	fullName: string;
+	phone: string;
+	email: string;
 	occupation: string;
-	phoneNumber: string;
+	monthlyIncome: number;
+	applicationMessage: string;
 	moveInDate: string;
 	intendedStayMonths: number;
-	applicationMessage: string;
 	isUrgent?: boolean;
 }
 
 export interface UpdateRoommateApplicationRequest {
 	fullName?: string;
+	phone?: string;
+	email?: string;
 	occupation?: string;
-	phoneNumber?: string;
+	monthlyIncome?: number;
+	applicationMessage?: string;
 	moveInDate?: string;
 	intendedStayMonths?: number;
-	applicationMessage?: string;
 	isUrgent?: boolean;
 }
 
 export interface RespondToApplicationRequest {
-	status:
-		| 'approved_by_tenant'
-		| 'rejected_by_tenant'
-		| 'approved_by_landlord'
-		| 'rejected_by_landlord';
+	status: 'accepted' | 'rejected';
+	response: string;
 }
 
 export interface RoommateApplicationListResponse {
 	data: RoommateApplication[];
-	page: number;
-	limit: number;
-	total: number;
-	totalPages: number;
+	meta: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+		hasNext: boolean;
+		hasPrev: boolean;
+		itemCount: number;
+	};
+	counts: {
+		pending: number;
+		approvedByTenant: number;
+		rejectedByTenant: number;
+		approvedByLandlord: number;
+		rejectedByLandlord: number;
+		cancelled: number;
+		expired: number;
+		total: number;
+	};
 }
 
 export interface ApplicationStatistics {
 	total: number;
 	pending: number;
-	approved: number;
-	rejected: number;
+	approvedByTenant: number;
+	rejectedByTenant: number;
+	approvedByLandlord: number;
+	rejectedByLandlord: number;
 	cancelled: number;
 	expired: number;
+	urgent: number;
+	dailyStats: Array<{
+		date: string;
+		count: number;
+	}>;
+	statusBreakdown: Array<{
+		status: string;
+		count: number;
+		percentage: number;
+	}>;
 }
 
 // Create roommate application
@@ -169,12 +228,16 @@ export const getMyRoommateApplications = async (
 		limit?: number;
 		status?:
 			| 'pending'
-			| 'approved_by_tenant'
-			| 'rejected_by_tenant'
-			| 'approved_by_landlord'
-			| 'rejected_by_landlord'
+			| 'accepted'
+			| 'rejected'
+			| 'awaiting_confirmation'
 			| 'cancelled'
 			| 'expired';
+		search?: string;
+		roommateSeekingPostId?: string;
+		isUrgent?: boolean;
+		sortBy?: string;
+		sortOrder?: 'asc' | 'desc';
 	},
 	token?: string,
 ): Promise<ApiResult<RoommateApplicationListResponse>> => {
@@ -183,6 +246,12 @@ export const getMyRoommateApplications = async (
 		if (params?.page) searchParams.append('page', params.page.toString());
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
 		if (params?.status) searchParams.append('status', params.status);
+		if (params?.search) searchParams.append('search', params.search);
+		if (params?.roommateSeekingPostId)
+			searchParams.append('roommateSeekingPostId', params.roommateSeekingPostId);
+		if (params?.isUrgent !== undefined) searchParams.append('isUrgent', params.isUrgent.toString());
+		if (params?.sortBy) searchParams.append('sortBy', params.sortBy);
+		if (params?.sortOrder) searchParams.append('sortOrder', params.sortOrder);
 
 		const endpoint = `/api/roommate-applications/my-applications${
 			searchParams.toString() ? `?${searchParams.toString()}` : ''
@@ -214,6 +283,18 @@ export const getApplicationsForMyPosts = async (
 	params?: {
 		page?: number;
 		limit?: number;
+		status?:
+			| 'pending'
+			| 'accepted'
+			| 'rejected'
+			| 'awaiting_confirmation'
+			| 'cancelled'
+			| 'expired';
+		search?: string;
+		roommateSeekingPostId?: string;
+		isUrgent?: boolean;
+		sortBy?: string;
+		sortOrder?: 'asc' | 'desc';
 	},
 	token?: string,
 ): Promise<ApiResult<RoommateApplicationListResponse>> => {
@@ -221,6 +302,13 @@ export const getApplicationsForMyPosts = async (
 		const searchParams = new URLSearchParams();
 		if (params?.page) searchParams.append('page', params.page.toString());
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
+		if (params?.status) searchParams.append('status', params.status);
+		if (params?.search) searchParams.append('search', params.search);
+		if (params?.roommateSeekingPostId)
+			searchParams.append('roommateSeekingPostId', params.roommateSeekingPostId);
+		if (params?.isUrgent !== undefined) searchParams.append('isUrgent', params.isUrgent.toString());
+		if (params?.sortBy) searchParams.append('sortBy', params.sortBy);
+		if (params?.sortOrder) searchParams.append('sortOrder', params.sortOrder);
 
 		const endpoint = `/api/roommate-applications/for-my-posts${
 			searchParams.toString() ? `?${searchParams.toString()}` : ''
@@ -318,6 +406,10 @@ export const confirmRoommateApplication = async (
 			`/api/roommate-applications/${id}/confirm`,
 			{
 				method: 'PATCH',
+				data: {},
+				headers: {
+					'Content-Type': 'application/json',
+				},
 			},
 			token,
 		);
@@ -345,6 +437,10 @@ export const cancelRoommateApplication = async (
 			`/api/roommate-applications/${id}/cancel`,
 			{
 				method: 'PATCH',
+				data: {},
+				headers: {
+					'Content-Type': 'application/json',
+				},
 			},
 			token,
 		);
@@ -366,13 +462,31 @@ export const cancelRoommateApplication = async (
 export const bulkRespondToApplications = async (
 	data: {
 		applicationIds: string[];
-		approve: boolean;
-		message?: string;
+		status: 'accepted' | 'rejected';
+		response: string;
 	},
 	token?: string,
-): Promise<ApiResult<{ message: string; updatedCount: number }>> => {
+): Promise<
+	ApiResult<{
+		successCount: number;
+		failureCount: number;
+		processedApplications: string[];
+		errors: Array<{
+			applicationId: string;
+			error: string;
+		}>;
+	}>
+> => {
 	try {
-		const response = await apiCall<{ message: string; updatedCount: number }>(
+		const response = await apiCall<{
+			successCount: number;
+			failureCount: number;
+			processedApplications: string[];
+			errors: Array<{
+				applicationId: string;
+				error: string;
+			}>;
+		}>(
 			'/api/roommate-applications/bulk-respond',
 			{
 				method: 'POST',
@@ -444,6 +558,121 @@ export const getApplicationStatisticsForMyPosts = async (
 				error,
 				'Không thể tải thống kê đơn ứng tuyển cho bài đăng của bạn',
 			),
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
+	}
+};
+
+// Landlord: Get pending applications that need approval (Platform Rooms only)
+export const getLandlordPendingApplications = async (
+	params?: {
+		page?: number;
+		limit?: number;
+		status?: 'accepted' | 'rejected' | 'awaiting_confirmation';
+		search?: string;
+		roommateSeekingPostId?: string;
+		isUrgent?: boolean;
+		sortBy?: string;
+		sortOrder?: 'asc' | 'desc';
+	},
+	token?: string,
+): Promise<ApiResult<RoommateApplicationListResponse>> => {
+	try {
+		const searchParams = new URLSearchParams();
+		if (params?.page) searchParams.append('page', params.page.toString());
+		if (params?.limit) searchParams.append('limit', params.limit.toString());
+		if (params?.status) searchParams.append('status', params.status);
+		if (params?.search) searchParams.append('search', params.search);
+		if (params?.roommateSeekingPostId)
+			searchParams.append('roommateSeekingPostId', params.roommateSeekingPostId);
+		if (params?.isUrgent !== undefined) searchParams.append('isUrgent', params.isUrgent.toString());
+		if (params?.sortBy) searchParams.append('sortBy', params.sortBy);
+		if (params?.sortOrder) searchParams.append('sortOrder', params.sortOrder);
+
+		const endpoint = `/api/roommate-applications/landlord/pending${
+			searchParams.toString() ? `?${searchParams.toString()}` : ''
+		}`;
+
+		const response = await apiCall<RoommateApplicationListResponse>(
+			endpoint,
+			{
+				method: 'GET',
+			},
+			token,
+		);
+
+		return {
+			success: true,
+			data: response,
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể tải danh sách đơn ứng tuyển cần duyệt'),
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
+	}
+};
+
+// Landlord: Approve application (Platform Rooms only)
+export const landlordApproveApplication = async (
+	id: string,
+	response: string,
+	token?: string,
+): Promise<ApiResult<RoommateApplication>> => {
+	try {
+		const result = await apiCall<RoommateApplication>(
+			`/api/roommate-applications/${id}/landlord-approve`,
+			{
+				method: 'POST',
+				data: {
+					status: 'accepted',
+					response,
+				},
+			},
+			token,
+		);
+
+		return {
+			success: true,
+			data: result,
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể phê duyệt đơn ứng tuyển'),
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
+	}
+};
+
+// Landlord: Reject application (Platform Rooms only)
+export const landlordRejectApplication = async (
+	id: string,
+	response: string,
+	token?: string,
+): Promise<ApiResult<RoommateApplication>> => {
+	try {
+		const result = await apiCall<RoommateApplication>(
+			`/api/roommate-applications/${id}/landlord-reject`,
+			{
+				method: 'POST',
+				data: {
+					status: 'rejected',
+					response,
+				},
+			},
+			token,
+		);
+
+		return {
+			success: true,
+			data: result,
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể từ chối đơn ứng tuyển'),
 			status: error instanceof AxiosError ? error.response?.status : undefined,
 		};
 	}

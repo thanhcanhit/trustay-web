@@ -101,6 +101,18 @@ export default function RoomSeekingDetailPage() {
     }
   }, [currentPost, publicPosts.length, loadPublicPosts])
 
+  // Helper function to convert Decimal to number
+  const decimalToNumber = (value: number | { s: number; e: number; d: number[] } | undefined): number => {
+    if (!value) return 0;
+    if (typeof value === 'number') return value;
+    // Convert Decimal object to number
+    // Decimal format: { s: sign, e: exponent, d: [digits] }
+    const sign = value.s === 1 ? 1 : -1;
+    const digits = value.d.join('');
+    const num = Number.parseFloat(`${digits}e${value.e - digits.length + 1}`);
+    return sign * num;
+  }
+
   const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN').format(value)
   
   const handleCreateInvitation = async () => {
@@ -189,7 +201,7 @@ export default function RoomSeekingDetailPage() {
     setAvailableUntil(nextMonth.toISOString().split('T')[0])
     
     setInvitationMessage('Tôi nghĩ phòng này phù hợp với bạn. Bạn có quan tâm không?')
-    setProposedRent(currentPost?.maxBudget?.toString() || '')
+    setProposedRent(currentPost ? decimalToNumber(currentPost.maxBudget).toString() : '')
     setSelectedBuildingId('')
     setSelectedRoomId('')
   }
@@ -229,7 +241,17 @@ export default function RoomSeekingDetailPage() {
 
   // Generate breadcrumb items based on the post data
   const generateBreadcrumbItems = () => {
+    // If breadcrumb data is provided by API, use it
+    if (currentPost?.breadcrumb?.items) {
+      return currentPost.breadcrumb.items.map(item => ({
+        title: item.title,
+        href: item.path
+      }));
+    }
+
+    // Otherwise, generate breadcrumb items manually (fallback)
     const items: Array<{ title: string; href?: string }> = [
+      { title: "Trang chủ", href: "/" },
       { title: "Tìm người thuê", href: "/room-seekings" }
     ]
 
@@ -306,7 +328,7 @@ export default function RoomSeekingDetailPage() {
                 {/* Header Section */}
                 <div className="mb-6">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                           {getRoomTypeDisplayName(currentPost.preferredRoomType)}
@@ -320,7 +342,7 @@ export default function RoomSeekingDetailPage() {
                           {STATUS_LABELS[currentPost.status]}
                         </Badge>
                       </div>
-                      <h1 className="text-3xl font-bold text-gray-900 mb-3 leading-tight">
+                      <h1 className="text-3xl font-bold text-gray-900 mb-3 leading-tight break-words">
                         {currentPost.title}
                       </h1>
                       <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
@@ -355,7 +377,7 @@ export default function RoomSeekingDetailPage() {
                       <div>
                         <p className="text-sm text-red-600 font-medium mb-1">Ngân sách mong muốn</p>
                         <div className="text-2xl font-bold text-red-600">
-                          {formatCurrency(Number(currentPost.minBudget))} - {formatCurrency(Number(currentPost.maxBudget))} VNĐ/tháng
+                          {formatCurrency(decimalToNumber(currentPost.minBudget))} - {formatCurrency(decimalToNumber(currentPost.maxBudget))} VNĐ/tháng
                         </div>
                       </div>
                     </div>

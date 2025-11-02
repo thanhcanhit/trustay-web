@@ -206,7 +206,7 @@ export function RoomSeekingForm({ onBack, postId, initialData, mode = 'create' }
 		try {
 			const submitData: CreateRoomSeekingPostRequest = {
 				title: formData.title.trim(),
-				description: formData.description.trim(),
+				description: formData.description,
 				preferredProvinceId: Number(formData.preferredProvinceId),
 				preferredDistrictId: Number(formData.preferredDistrictId),
 				preferredWardId: Number(formData.preferredWardId),

@@ -7,6 +7,17 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import {
 	Search,
 	Users,
 	Home,
@@ -17,7 +28,7 @@ import {
 	Calendar,
 	MapPin,
 	DollarSign,
-	//User,
+	User,
 	Plus,
 	MoreVertical
 } from 'lucide-react'
@@ -36,6 +47,7 @@ import { vi } from 'date-fns/locale'
 import { RoomSeekingPost, RentalPost } from '@/types'
 import { RoommateSeekingPost } from '@/actions/roommate-seeking-posts.action'
 import { getRoomTypeDisplayName } from '@/utils/room-types'
+import { stripHtmlTags } from '@/utils/textProcessing'
 
 interface PostListProps {
 	roomSeekingPosts?: RoomSeekingPost[]
@@ -94,11 +106,16 @@ export function PostList({
 
 	const visibleTabsCount = [showRoomSeeking, showRoommate, showRental].filter(Boolean).length
 
-	const formatPrice = (price: number) => {
+	const formatPrice = (price: number | { s: number; e: number; d: number[] }) => {
+		// Handle Decimal type from Prisma
+		const numericPrice = typeof price === 'number' 
+			? price 
+			: price.d[0] * Math.pow(10, price.e);
+		
 		return new Intl.NumberFormat('vi-VN', {
 			style: 'currency',
 			currency: 'VND',
-		}).format(price)
+		}).format(numericPrice)
 	}
 
 	const formatDate = (dateString: string) => {
@@ -144,19 +161,63 @@ export function PostList({
 						{getStatusBadge(post.status)}
 						<div className="flex items-center gap-1 text-sm text-muted-foreground">
 							<Eye className="h-4 w-4" />
-							{post.contactCount}
+							{post.viewCount || 0}
 						</div>
 					</div>
 				</div>
 			</CardHeader>
 			<CardContent>
 				<p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-					{post.description}
+					{stripHtmlTags(post.description)}
 				</p>
+
+				{/* Requester info */}
+				{post.requester && (
+					<div className="flex items-center gap-3 mb-4 pb-4 border-b">
+						<Avatar className="h-8 w-8">
+							{post.requester.avatarUrl ? (
+								<AvatarImage src={post.requester.avatarUrl} alt={`${post.requester.firstName} ${post.requester.lastName}`} />
+							) : (
+								<AvatarFallback>
+									<User className="h-4 w-4" />
+								</AvatarFallback>
+							)}
+						</Avatar>
+						<div className="flex-1">
+							<p className="text-sm font-medium">
+								{post.requester.firstName} {post.requester.lastName}
+							</p>
+							<div className="flex items-center gap-2 text-xs text-muted-foreground">
+								{post.requester.email && <span>{post.requester.email}</span>}
+								{post.requester.phone && <span>• {post.requester.phone}</span>}
+							</div>
+						</div>
+					</div>
+				)}
+				
+				{/* Amenities section */}
+				{post.amenities && post.amenities.length > 0 && (
+					<div className="mb-4">
+						<p className="text-xs font-medium text-muted-foreground mb-2">Tiện nghi mong muốn:</p>
+						<div className="flex flex-wrap gap-2">
+							{post.amenities.map((amenity) => (
+								<Badge key={amenity.id} variant="secondary" className="text-xs">
+									{amenity.name}
+								</Badge>
+							))}
+						</div>
+					</div>
+				)}
+
 				<div className="flex justify-between items-center">
-					<div className="flex items-center gap-2">
+					<div className="flex items-center gap-2 flex-wrap">
 						<Badge variant="outline">{getRoomTypeDisplayName(post.preferredRoomType)}</Badge>
 						<Badge variant="outline">{post.occupancy} người</Badge>
+						{post.moveInDate && (
+							<Badge variant="outline" className="text-xs">
+								Dọn vào: {formatDate(post.moveInDate)}
+							</Badge>
+						)}
 					</div>
 					<div className="flex items-center gap-2">
 						<Link href={`/room-seekings/${post.id}`}>
@@ -198,10 +259,31 @@ export function PostList({
 							</DropdownMenu>
 						)}
 						{onDelete && (
-							<Button variant="destructive" size="sm" onClick={() => onDelete(post.id, 'room-seeking')}>
-								<Trash2 className="h-4 w-4 mr-1" />
-								Xóa
-							</Button>
+							<AlertDialog>
+								<AlertDialogTrigger asChild>
+									<Button variant="destructive" size="sm">
+										<Trash2 className="h-4 w-4 mr-1" />
+										Xóa
+									</Button>
+								</AlertDialogTrigger>
+								<AlertDialogContent>
+									<AlertDialogHeader>
+										<AlertDialogTitle>Xác nhận xóa bài đăng</AlertDialogTitle>
+										<AlertDialogDescription>
+											Bạn có chắc chắn muốn xóa bài đăng này? Hành động này không thể hoàn tác.
+										</AlertDialogDescription>
+									</AlertDialogHeader>
+									<AlertDialogFooter>
+										<AlertDialogCancel>Hủy</AlertDialogCancel>
+										<AlertDialogAction
+											onClick={() => onDelete(post.id, 'room-seeking')}
+											className="bg-red-600 hover:bg-red-700"
+										>
+											Xóa
+										</AlertDialogAction>
+									</AlertDialogFooter>
+								</AlertDialogContent>
+							</AlertDialog>
 						)}
 					</div>
 				</div>
@@ -268,7 +350,7 @@ export function PostList({
 						</div>
 					</div>
 					<p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-						{post.description}
+						{stripHtmlTags(post.description)}
 					</p>
 					<div className="flex justify-between items-center">
 						<div className="flex items-center gap-2">
@@ -321,10 +403,31 @@ export function PostList({
 								</DropdownMenu>
 							)}
 							{onDelete && (
-								<Button variant="destructive" size="sm" onClick={() => onDelete(post.id, 'roommate')}>
-									<Trash2 className="h-4 w-4 mr-1" />
-									Xóa
-								</Button>
+								<AlertDialog>
+									<AlertDialogTrigger asChild>
+										<Button variant="destructive" size="sm">
+											<Trash2 className="h-4 w-4 mr-1" />
+											Xóa
+										</Button>
+									</AlertDialogTrigger>
+									<AlertDialogContent>
+										<AlertDialogHeader>
+											<AlertDialogTitle>Xác nhận xóa bài đăng</AlertDialogTitle>
+											<AlertDialogDescription>
+												Bạn có chắc chắn muốn xóa bài đăng này? Hành động này không thể hoàn tác.
+											</AlertDialogDescription>
+										</AlertDialogHeader>
+										<AlertDialogFooter>
+											<AlertDialogCancel>Hủy</AlertDialogCancel>
+											<AlertDialogAction
+												onClick={() => onDelete(post.id, 'roommate')}
+												className="bg-red-600 hover:bg-red-700"
+											>
+												Xóa
+											</AlertDialogAction>
+										</AlertDialogFooter>
+									</AlertDialogContent>
+								</AlertDialog>
 							)}
 						</div>
 					</div>
@@ -365,7 +468,7 @@ export function PostList({
 			</CardHeader>
 			<CardContent>
 				<p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-					{post.description}
+					{stripHtmlTags(post.description)}
 				</p>
 				<div className="flex justify-between items-center">
 					<div className="flex items-center gap-2">
@@ -404,10 +507,31 @@ export function PostList({
 							</DropdownMenu>
 						)}
 						{onDelete && (
-							<Button variant="destructive" size="sm" onClick={() => onDelete(post.id, 'roommate')}>
-								<Trash2 className="h-4 w-4 mr-1" />
-								Xóa
-							</Button>
+							<AlertDialog>
+								<AlertDialogTrigger asChild>
+									<Button variant="destructive" size="sm">
+										<Trash2 className="h-4 w-4 mr-1" />
+										Xóa
+									</Button>
+								</AlertDialogTrigger>
+								<AlertDialogContent>
+									<AlertDialogHeader>
+										<AlertDialogTitle>Xác nhận xóa bài đăng</AlertDialogTitle>
+										<AlertDialogDescription>
+											Bạn có chắc chắn muốn xóa bài đăng này? Hành động này không thể hoàn tác.
+										</AlertDialogDescription>
+									</AlertDialogHeader>
+									<AlertDialogFooter>
+										<AlertDialogCancel>Hủy</AlertDialogCancel>
+										<AlertDialogAction
+											onClick={() => onDelete(post.id, 'roommate')}
+											className="bg-red-600 hover:bg-red-700"
+										>
+											Xóa
+										</AlertDialogAction>
+									</AlertDialogFooter>
+								</AlertDialogContent>
+							</AlertDialog>
 						)}
 					</div>
 				</div>
@@ -451,12 +575,12 @@ export function PostList({
 							Tìm bạn cùng trọ ({roommatePosts.length})
 						</TabsTrigger>
 					)}
-					{showRental && (
+					{/* {showRental && (
 						<TabsTrigger value="rental" className="flex items-center gap-2">
 							<Home className="h-4 w-4" />
 							Cho thuê ({rentalPosts.length})
 						</TabsTrigger>
-					)}
+					)} */}
 				</TabsList>
 
 				{showRoomSeeking && (

@@ -158,8 +158,8 @@ export default function RentalsPage() {
     window.open(`/dashboard/landlord/rentals/${rentalId}`, '_blank')
   }
 
-  const handleViewRoomPost = (roomSlug: string) => {
-    window.open(`/rooms/${roomSlug}`, '_blank')
+  const handleViewRoomPost = (roomId: string) => {
+    window.open(`/rooms/${roomId}`, '_blank')
   }
 
   const handleOpenUpdateDialog = (rental: Rental) => {
@@ -311,11 +311,11 @@ export default function RentalsPage() {
                         <div className="flex items-center gap-2 mb-1">
                           <Home className="h-4 w-4 text-gray-500" />
                           <h3 className="font-semibold text-lg">{roomName}</h3>
-                          {rental.roomInstance?.room?.slug && (
+                          {rental.roomInstance?.room?.id && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleViewRoomPost(rental.roomInstance!.room!.slug)}
+                              onClick={() => handleViewRoomPost(rental.roomInstance!.room!.id)}
                               className="h-6 w-6 p-0"
                               title="Xem bài đăng"
                             >

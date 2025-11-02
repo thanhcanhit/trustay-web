@@ -36,7 +36,7 @@ import { HTMLContent } from '@/components/ui/html-content'
 export default function PropertyDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const roomSlug = params.slug as string
+  const roomId = params.id as string
   const [hasLoaded, setHasLoaded] = useState(false)
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
   const [isBookingOpen, setIsBookingOpen] = useState(false)
@@ -67,18 +67,18 @@ export default function PropertyDetailPage() {
 
   //const isSaved = roomDetail ? savedRooms.includes(roomDetail.id) : false
 
-  // Clear search results when component mounts or room slug changes
+  // Clear search results when component mounts or room id changes
   useEffect(() => {
     clearSearchResults()
-  }, [roomSlug, clearSearchResults])
+  }, [roomId, clearSearchResults])
 
   // Load room detail from API using store - only once
   useEffect(() => {
-    if (roomSlug && !hasLoaded) {
-      loadRoomDetail(roomSlug);
+    if (roomId && !hasLoaded) {
+      loadRoomDetail(roomId);
       setHasLoaded(true);
     }
-  }, [roomSlug, hasLoaded, loadRoomDetail])
+  }, [roomId, hasLoaded, loadRoomDetail])
 
   // Load featured rooms for similar posts if not already loaded
   useEffect(() => {
@@ -184,9 +184,9 @@ export default function PropertyDetailPage() {
     return uniqueRooms.slice(0, 8) // Limit to 8 similar posts
   }
 
-  const handleRoomClick = (slug: string) => {
-    // Navigate to room detail page using slug
-    router.push(`/rooms/${slug}`)
+  const handleRoomClick = (id: string) => {
+    // Navigate to room detail page using id
+    router.push(`/rooms/${id}`)
   }
 
   const handleRentalRequestClick = () => {
@@ -289,7 +289,7 @@ export default function PropertyDetailPage() {
     if (roomDetail?.breadcrumb?.items) {
       return roomDetail.breadcrumb.items.map(item => ({
         title: item.title,
-        href: item.path === `/rooms/${roomDetail.slug}` ? undefined : item.path
+        href: item.path === `/rooms/${roomDetail.id}` ? undefined : item.path
       }))
     }
 
@@ -358,7 +358,7 @@ export default function PropertyDetailPage() {
                   {/* Header Section */}
                   <div className="mb-6">
                     <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                           <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                             {getRoomTypeDisplayName(roomDetail.roomType)}
@@ -373,7 +373,7 @@ export default function PropertyDetailPage() {
                             Tầng {roomDetail.floorNumber}
                           </Badge>
                         </div>
-                        <h1 className="text-3xl font-bold text-gray-900 mb-3 leading-tight">
+                        <h1 className="text-3xl font-bold text-gray-900 mb-3 leading-tight break-words">
                           {roomDetail.name}
                         </h1>
                         <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
@@ -448,13 +448,13 @@ export default function PropertyDetailPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                        <div className="p-2 bg-gray-500 rounded-lg">
+                        <div className="p-2 bg-gray-500 rounded-lg flex-shrink-0">
                           <Home className="h-5 w-5 text-white" />
                         </div>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm text-gray-600 font-medium">Chi tiết dãy trọ</p>
-                          <p className="text-sm text-gray-900">
-                            {getRoomTypeDisplayName(roomDetail.buildingDescription)}
+                          <p className="text-sm text-gray-900 line-clamp-2 break-words overflow-hidden">
+                            {roomDetail.buildingDescription || 'Không có thông tin'}
                           </p>
                         </div>
                       </div>

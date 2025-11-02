@@ -4,8 +4,10 @@
 import { serverApiCall } from '../lib/api-client';
 import {
 	ChangePasswordRequest,
+	ConfirmChangeEmailRequest,
 	CreateAddressRequest,
 	PublicUserProfile,
+	RequestChangeEmailRequest,
 	UpdateAddressRequest,
 	UpdateProfileRequest,
 	UserProfile,
@@ -198,6 +200,42 @@ export const verifyIdentity = async (
 		{
 			method: 'POST',
 			data: identityData,
+		},
+		token,
+	);
+};
+
+// Request change email - Step 1: Send OTP to new email
+export const requestChangeEmail = async (
+	emailData: RequestChangeEmailRequest,
+	token?: string,
+): Promise<{ message: string }> => {
+	if (!token) {
+		throw new Error('No access token found');
+	}
+	return await serverApiCall<{ message: string }>(
+		'/api/users/request-change-email',
+		{
+			method: 'POST',
+			data: emailData,
+		},
+		token,
+	);
+};
+
+// Confirm change email - Step 2: Verify OTP and update email
+export const confirmChangeEmail = async (
+	emailData: ConfirmChangeEmailRequest,
+	token?: string,
+): Promise<{ message: string }> => {
+	if (!token) {
+		throw new Error('No access token found');
+	}
+	return await serverApiCall<{ message: string }>(
+		'/api/users/confirm-change-email',
+		{
+			method: 'POST',
+			data: emailData,
 		},
 		token,
 	);

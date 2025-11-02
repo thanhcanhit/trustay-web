@@ -38,7 +38,7 @@ const formatCurrency = (amount: string | number) => {
   }).format(Number(amount))
 }
 
-function AccommodationContent() {
+function RentalContent() {
   const router = useRouter()
   const { tenantRentals, loadingTenant, errorTenant, submitting, loadTenantRentals, renew } = useRentalStore()
   const [selectedStatus, setSelectedStatus] = useState<RentalStatus | 'all'>('all')
@@ -57,8 +57,8 @@ function AccommodationContent() {
   const activeRental = rentals.find(r => r.status === 'active')
   const otherRentals = filteredRentals.filter(r => r.id !== activeRental?.id)
 
-  const handleViewRoomPost = (roomSlug: string) => {
-    window.open(`/rooms/${roomSlug}`, '_blank')
+  const handleViewRoomPost = (roomId: string) => {
+    window.open(`/rooms/${roomId}`, '_blank')
   }
 
   const handleOpenRenewDialog = (rental: Rental) => {
@@ -179,7 +179,7 @@ function AccommodationContent() {
               {/* Room & Building Info */}
               <div
                 className="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
-                onClick={() => router.push(`/dashboard/tenant/accommodation/${activeRental.id}`)}
+                onClick={() => router.push(`/dashboard/tenant/rentals/${activeRental.id}`)}
               >
                 <div className="p-3 bg-blue-200 rounded-lg">
                   <MapPin className="h-6 w-6 text-blue-700" />
@@ -294,14 +294,14 @@ function AccommodationContent() {
               <div className="flex gap-2">
                 <Button
                   className="flex-1"
-                  onClick={() => router.push(`/dashboard/tenant/accommodation/${activeRental.id}`)}
+                  onClick={() => router.push(`/dashboard/tenant/rentals/${activeRental.id}`)}
                 >
                   Xem chi tiết
                 </Button>
-                {activeRental.roomInstance?.room?.slug && (
+                {activeRental.roomInstance?.room?.id && (
                   <Button
                     variant="outline"
-                    onClick={() => handleViewRoomPost(activeRental.roomInstance!.room!.slug!)}
+                    onClick={() => handleViewRoomPost(activeRental.roomInstance!.room!.id!)}
                     title="Xem bài đăng phòng trọ"
                   >
                     <ExternalLink className="h-4 w-4" />
@@ -340,7 +340,7 @@ function AccommodationContent() {
                 <div
                   key={rental.id}
                   className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/dashboard/tenant/accommodation/${rental.id}`)}
+                  onClick={() => router.push(`/dashboard/tenant/rentals/${rental.id}`)}
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -348,13 +348,13 @@ function AccommodationContent() {
                       <Badge className={RENTAL_STATUS_CONFIG[rental.status as RentalStatus].className}>
                         {RENTAL_STATUS_CONFIG[rental.status as RentalStatus].label}
                       </Badge>
-                      {rental.roomInstance?.room?.slug && (
+                      {rental.roomInstance?.room?.id && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleViewRoomPost(rental.roomInstance!.room!.slug)
+                            handleViewRoomPost(rental.roomInstance!.room!.id)
                           }}
                           className="h-6 w-6 p-0"
                           title="Xem bài đăng"
@@ -394,7 +394,7 @@ function AccommodationContent() {
   )
 }
 
-function AccommodationPageContent() {
+function RentalPageContent() {
   return (
     <DashboardLayout userType="tenant">
       <div className="space-y-6">
@@ -402,13 +402,13 @@ function AccommodationPageContent() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Trọ của tôi</h1>
           <p className="text-gray-600">Thông tin về nơi ở hiện tại và lịch sử thuê trọ</p>
         </div>
-        <AccommodationContent />
+        <RentalContent />
       </div>
     </DashboardLayout>
   )
 }
 
-export default function AccommodationPage() {
+export default function RentalPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
@@ -418,7 +418,7 @@ export default function AccommodationPage() {
         </div>
       </div>
     }>
-      <AccommodationPageContent />
+      <RentalPageContent />
     </Suspense>
   )
 }

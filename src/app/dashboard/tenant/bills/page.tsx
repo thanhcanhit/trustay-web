@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CreditCard, Download, AlertCircle, Receipt, Loader2 } from "lucide-react"
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
+import { toast } from "sonner"
 
 interface BillItem {
   id: string
@@ -69,13 +70,14 @@ export default function TenantBillsPage() {
       })
 
       if (response.ok) {
+        toast.success('Thanh toán thành công!')
         fetchBills() // Refresh list
       } else {
-        alert('Có lỗi xảy ra khi thanh toán')
+        toast.error('Có lỗi xảy ra khi thanh toán')
       }
     } catch (error) {
       console.error('Error paying bill:', error)
-      alert('Có lỗi xảy ra khi thanh toán')
+      toast.error('Có lỗi xảy ra khi thanh toán')
     } finally {
       setProcessingPayment(null)
     }

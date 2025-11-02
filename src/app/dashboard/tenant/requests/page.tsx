@@ -121,9 +121,11 @@ function RequestsContent() {
                     </div>
                     <div>
                       <CardTitle className="text-lg">
-                        {req.room?.name}
+                        {req.room?.name || 'Phòng không xác định'}
                       </CardTitle>
-                      <p className="text-xs text-gray-500">{req.room?.building?.name}</p>
+                      {req.room?.building?.name && (
+                        <p className="text-xs text-gray-500">{req.room.building.name}</p>
+                      )}
                       <BookingStatusBadge status={req.status} />
                     </div>
                   </div>
@@ -151,12 +153,14 @@ function RequestsContent() {
                     </div>
                   )}
 
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Square className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">
-                      Diện tích: {String(req.room?.areaSqm)}m² • Tối đa {req.room?.maxOccupancy} người
-                    </span>
-                  </div>
+                  {req.room && (
+                    <div className="flex items-center space-x-2 text-sm">
+                      <Square className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-600">
+                        Diện tích: {req.room.areaSqm}m² • Tối đa {req.room.maxOccupancy} người
+                      </span>
+                    </div>
+                  )}
 
                   <div className="flex items-center space-x-2 text-sm">
                     <Calendar className="h-4 w-4 text-gray-400" />
@@ -411,9 +415,11 @@ function InvitationsContent() {
                     </div>
                     <div>
                       <CardTitle className="text-lg line-clamp-1">
-                        {invitation.room?.name}
+                        {invitation.room?.name || 'Phòng không xác định'}
                       </CardTitle>
-                      <p className="text-xs text-gray-500">{invitation.room?.building?.name}</p>
+                      {invitation.room?.building?.name && (
+                        <p className="text-xs text-gray-500">{invitation.room.building.name}</p>
+                      )}
                       <InvitationStatusBadge status={invitation.status} />
                     </div>
                   </div>

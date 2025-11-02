@@ -39,6 +39,16 @@ export interface ChangePasswordRequest {
 	newPassword: string;
 }
 
+export interface RequestChangeEmailRequest {
+	newEmail: string;
+	password: string;
+}
+
+export interface ConfirmChangeEmailRequest {
+	newEmail: string;
+	verificationCode: string;
+}
+
 export interface CheckPassword {
 	isValid: boolean;
 	errors: Array<string>;
@@ -281,7 +291,7 @@ export interface RoomCost {
 	id: string;
 	roomId: string;
 	systemCostTypeId: string;
-	costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
+	costType: 'fixed' | 'per_person' | 'metered';
 	// baseRate?: number | null;
 	unitPrice?: number | null;
 	fixedAmount?: string;
@@ -364,7 +374,7 @@ export interface RoomAmenityCreate {
 export interface RoomCostCreate {
 	systemCostTypeId: string;
 	value: number;
-	costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
+	costType: 'fixed' | 'per_person' | 'metered';
 	unit?: string;
 	billingCycle?: 'monthly' | 'quarterly' | 'yearly';
 	includedInRent?: boolean;
@@ -490,7 +500,7 @@ export interface UpdateRoomRequest {
 	costs?: Array<{
 		systemCostTypeId: string;
 		value: number;
-		costType: 'fixed' | 'per_unit' | 'percentage' | 'metered' | 'tiered';
+		costType: 'fixed' | 'per_person' | 'metered';
 		unit?: string;
 		isMandatory?: boolean;
 		isIncludedInRent?: boolean;
@@ -813,10 +823,12 @@ export interface RoomDetail {
 	areaSqm: string;
 	maxOccupancy: number;
 	isVerified: boolean;
+	buildingId: string;
 	buildingName: string;
 	buildingVerified: boolean;
 	buildingDescription: string;
 	address: string;
+	addressLine2: string;
 	availableRooms: number;
 	totalRooms: number;
 	isActive: boolean;

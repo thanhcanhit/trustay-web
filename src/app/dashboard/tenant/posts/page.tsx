@@ -39,10 +39,6 @@ function ProfilePostsContent() {
 	};
 
 	const handleDelete = async (postId: string, type: 'room-seeking' | 'roommate' | 'rental') => {
-		if (!confirm('Bạn có chắc chắn muốn xóa bài đăng này?')) {
-			return;
-		}
-
 		try {
 			let success = false;
 			if (type === 'room-seeking') {

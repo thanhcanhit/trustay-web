@@ -6,8 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, MessageSquare, Check, X } from "lucide-react"
+import { Search, MessageSquare, Check, X, Calendar, Clock, User, Briefcase, Phone } from "lucide-react"
 import { useRoommateApplicationsStore } from "@/stores/roommate-applications.store"
 import { useChatStore } from "@/stores/chat.store"
 import { useUserStore } from "@/stores/userStore"
@@ -17,12 +16,6 @@ import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import {
   Dialog,
   DialogContent,
@@ -36,6 +29,9 @@ import { toast } from "sonner"
 
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800',
+  accepted: 'bg-green-100 text-green-800',
+  rejected: 'bg-red-100 text-red-800',
+  awaiting_confirmation: 'bg-blue-100 text-blue-800',
   approved_by_tenant: 'bg-blue-100 text-blue-800',
   rejected_by_tenant: 'bg-red-100 text-red-800',
   approved_by_landlord: 'bg-green-100 text-green-800',
@@ -46,8 +42,11 @@ const STATUS_COLORS = {
 
 const STATUS_LABELS = {
   pending: 'Chờ phản hồi',
-  approved_by_tenant: 'Bạn đã chấp nhận',
-  rejected_by_tenant: 'Bạn đã từ chối',
+  accepted: 'Đã chấp nhận',
+  rejected: 'Đã từ chối',
+  awaiting_confirmation: 'Chờ xác nhận',
+  approved_by_tenant: 'Đã chấp nhận',
+  rejected_by_tenant: 'Đã từ chối',
   approved_by_landlord: 'Chủ trọ đã chấp nhận',
   rejected_by_landlord: 'Chủ trọ đã từ chối',
   cancelled: 'Đã hủy',
@@ -56,6 +55,9 @@ const STATUS_LABELS = {
 
 const STATUS_LABELS_SENT = {
   pending: 'Chờ phản hồi',
+  accepted: 'Đã chấp nhận',
+  rejected: 'Đã từ chối',
+  awaiting_confirmation: 'Chờ xác nhận',
   approved_by_tenant: 'Tenant đã chấp nhận',
   rejected_by_tenant: 'Tenant đã từ chối',
   approved_by_landlord: 'Chủ trọ đã chấp nhận',
@@ -74,8 +76,8 @@ export default function RoommateApplicationsPage() {
     fetchApplicationsForMyPosts,
     fetchMyApplications,
     respondToApplication,
-    confirmApplication,
-    cancelApplication
+    cancelApplication,
+    confirmApplication
   } = useRoommateApplicationsStore()
   const { sendMessage: sendChatMessage, setCurrentUserId } = useChatStore()
   const { user } = useUserStore()
@@ -89,10 +91,6 @@ export default function RoommateApplicationsPage() {
     approve: false
   })
   const [responseMessage, setResponseMessage] = useState('')
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; applicationId: string | null }>({
-    open: false,
-    applicationId: null
-  })
 
   // States for sent tab
   const [sentSearchTerm, setSentSearchTerm] = useState('')
@@ -117,7 +115,7 @@ export default function RoommateApplicationsPage() {
       fetchMyApplications({
         page: sentPage,
         limit: 12,
-        status: statusFilter === 'all' ? undefined : (statusFilter as 'pending' | 'approved_by_tenant' | 'rejected_by_tenant' | 'approved_by_landlord' | 'rejected_by_landlord' | 'cancelled' | 'expired')
+        status: statusFilter === 'all' ? undefined : (statusFilter as 'pending' | 'accepted' | 'rejected' | 'awaiting_confirmation' | 'cancelled' | 'expired')
       })
     }
   }, [activeTab, receivedPage, sentPage, statusFilter, fetchApplicationsForMyPosts, fetchMyApplications])
@@ -133,7 +131,7 @@ export default function RoommateApplicationsPage() {
     if (!term) return applicationsForMyPosts
     return applicationsForMyPosts.filter(app => {
       return app.fullName.toLowerCase().includes(term) ||
-             app.phoneNumber.toLowerCase().includes(term) ||
+             (app.phoneNumber && app.phoneNumber.toLowerCase().includes(term)) ||
              app.occupation.toLowerCase().includes(term)
     })
   }, [applicationsForMyPosts, receivedSearchTerm])
@@ -152,8 +150,13 @@ export default function RoommateApplicationsPage() {
 
     const application = applicationsForMyPosts.find(app => app.id === respondDialog.applicationId)
 
+    const defaultMessage = respondDialog.approve
+      ? 'Đơn ứng tuyển của bạn đã được chấp nhận!'
+      : 'Rất tiếc, đơn ứng tuyển của bạn không được chấp nhận.'
+
     const success = await respondToApplication(respondDialog.applicationId, {
-      status: respondDialog.approve ? 'approved_by_tenant' : 'rejected_by_tenant'
+      status: respondDialog.approve ? 'accepted' : 'rejected',
+      response: responseMessage || defaultMessage
     })
 
     if (success) {
@@ -201,46 +204,6 @@ export default function RoommateApplicationsPage() {
     setResponseMessage('')
   }
 
-  const handleConfirm = async () => {
-    if (!confirmDialog.applicationId) return
-
-    const application = applicationsForMyPosts.find(app => app.id === confirmDialog.applicationId)
-
-    const success = await confirmApplication(confirmDialog.applicationId)
-
-    if (success) {
-      toast.success('Đã xác nhận đơn ứng tuyển')
-      setConfirmDialog({ open: false, applicationId: null })
-
-      if (application?.applicantId) {
-        try {
-          const encodedContent = encodeStructuredMessage({
-            type: 'roommate_application_approved',
-            roommateSeeking: {
-              roommateSeekingPostId: application.roommateSeekingPostId,
-              roommateSeekingPostTitle: '',
-              roommateSeekingPostBudget: undefined,
-              roommateSeekingPostLocation: undefined
-            },
-            message: 'Tenant đã xác nhận đơn ứng tuyển của bạn!'
-          })
-
-          await sendChatMessage({
-            recipientId: application.applicantId,
-            content: encodedContent,
-            type: MESSAGE_TYPES.TEXT
-          })
-        } catch (error) {
-          console.error('Failed to send confirmation notification:', error)
-        }
-      }
-
-      fetchApplicationsForMyPosts({ page: receivedPage, limit: 12 })
-    } else {
-      toast.error('Không thể xác nhận đơn ứng tuyển')
-    }
-  }
-
   const handleCancel = async (id: string) => {
     const success = await cancelApplication(id)
     if (success) {
@@ -248,10 +211,29 @@ export default function RoommateApplicationsPage() {
       fetchMyApplications({
         page: sentPage,
         limit: 12,
-        status: statusFilter === 'all' ? undefined : (statusFilter as 'pending' | 'approved_by_tenant' | 'rejected_by_tenant' | 'approved_by_landlord' | 'rejected_by_landlord' | 'cancelled' | 'expired')
+        status: statusFilter === 'all' ? undefined : (statusFilter as 'pending' | 'accepted' | 'rejected' | 'awaiting_confirmation' | 'cancelled' | 'expired')
       })
     } else {
       toast.error('Không thể hủy đơn ứng tuyển')
+    }
+  }
+
+  const handleConfirmApplication = async (id: string) => {
+    try {
+      const success = await confirmApplication(id)
+      if (success) {
+        toast.success('Đã xác nhận đơn ứng tuyển thành công!')
+        // Refresh list
+        fetchMyApplications({
+          page: sentPage,
+          limit: 12,
+        })
+      } else {
+        toast.error(error || 'Không thể xác nhận đơn ứng tuyển')
+      }
+    } catch (error) {
+      console.error('Confirm application error:', error)
+      toast.error('Có lỗi xảy ra khi xác nhận đơn ứng tuyển')
     }
   }
 
@@ -300,128 +282,98 @@ export default function RoommateApplicationsPage() {
               <div className="bg-red-50 text-red-700 border border-red-200 rounded p-3 mb-4 text-sm">{error}</div>
             )}
 
-            <Card>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[180px]">Ứng viên</TableHead>
-                      <TableHead className="w-[150px]">Liên hệ</TableHead>
-                      <TableHead className="w-[120px]">Nghề nghiệp</TableHead>
-                      <TableHead className="w-[100px]">Loại phòng</TableHead>
-                      <TableHead className="w-[120px]">Ngày chuyển vào</TableHead>
-                      <TableHead className="w-[100px]">Thời gian ở</TableHead>
-                      <TableHead className="w-[120px]">Trạng thái</TableHead>
-                      <TableHead className="w-[120px]">Ngày gửi</TableHead>
-                      <TableHead className="w-[250px]">Lời nhắn</TableHead>
-                      <TableHead className="w-[150px] text-right">Thao tác</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      <TableRow key="loading">
-                        <TableCell colSpan={10} className="text-center py-8 text-gray-500">
-                          Đang tải...
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredReceived.length === 0 ? (
-                      <TableRow key="empty">
-                        <TableCell colSpan={10} className="text-center py-12 text-gray-500">
-                          Chưa có đơn ứng tuyển nào
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredReceived.map((application) => (
-                      <TableRow key={application.id} className="hover:bg-gray-50">
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="font-medium text-gray-900">{application.fullName}</div>
-                            {application.isUrgent && (
-                              <Badge variant="destructive" className="text-xs">Cần gấp</Badge>
-                            )}
+            {isLoading ? (
+              <div className="text-center py-12 text-gray-500">
+                Đang tải...
+              </div>
+            ) : filteredReceived.length === 0 ? (
+              <div className="text-center py-12">
+                <Card className="border-dashed">
+                  <CardContent className="pt-6">
+                    <MessageSquare className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-500">Chưa có đơn ứng tuyển nào</p>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {filteredReceived.map((application) => (
+                  <Card key={application.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        {/* Header: Name and Status */}
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg text-gray-900">{application.fullName}</h3>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge className={STATUS_COLORS[application.status as keyof typeof STATUS_COLORS]}>
+                                {STATUS_LABELS[application.status as keyof typeof STATUS_LABELS]}
+                              </Badge>
+                              {application.isUrgent && (
+                                <Badge variant="destructive" className="text-xs">Cần gấp</Badge>
+                              )}
+                              {application.roommateSeekingPost?.roomInstanceId != null ? (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 text-xs">
+                                  Trên nền tảng
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="bg-gray-100 text-gray-600 text-xs">
+                                  Ngoài hệ thống
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                        </TableCell>
+                        </div>
 
-                        <TableCell>
-                          <div className="space-y-1 text-sm">
-                            <div className="text-gray-600">{application.phoneNumber}</div>
+                        {/* Contact and Details */}
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Phone className="h-4 w-4 flex-shrink-0" />
+                            <span>{application.phoneNumber}</span>
                           </div>
-                        </TableCell>
-
-                        <TableCell>
-                          <div className="text-sm text-gray-600">{application.occupation}</div>
-                        </TableCell>
-
-                        <TableCell>
-                          {application.roommateSeekingPost?.roomInstanceId != null ? (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 text-xs">
-                              Trên nền tảng
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-gray-100 text-gray-600 text-xs">
-                              Ngoài hệ thống
-                            </Badge>
-                          )}
-                        </TableCell>
-
-                        <TableCell>
-                          <div className="text-sm text-gray-600">
-                            {application.moveInDate ? format(new Date(application.moveInDate), 'dd/MM/yyyy', { locale: vi }) : '-'}
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Briefcase className="h-4 w-4 flex-shrink-0" />
+                            <span>{application.occupation}</span>
                           </div>
-                        </TableCell>
-
-                        <TableCell>
-                          <div className="text-sm text-gray-600">
-                            {application.intendedStayMonths} tháng
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Calendar className="h-4 w-4 flex-shrink-0" />
+                            <span>
+                              {application.moveInDate ? format(new Date(application.moveInDate), 'dd/MM/yyyy', { locale: vi }) : '-'}
+                            </span>
                           </div>
-                        </TableCell>
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Clock className="h-4 w-4 flex-shrink-0" />
+                            <span>{application.intendedStayMonths} tháng</span>
+                          </div>
+                        </div>
 
-                        <TableCell>
-                          <Badge className={STATUS_COLORS[application.status as keyof typeof STATUS_COLORS]}>
-                            {STATUS_LABELS[application.status as keyof typeof STATUS_LABELS]}
-                          </Badge>
-                        </TableCell>
-
-                        <TableCell>
-                          {application.createdAt ? (
+                        {/* Submission Date */}
+                        <div className="text-xs text-gray-500">
+                          Gửi lúc: {application.createdAt ? (
                             <>
-                              <div className="text-sm text-gray-500">
-                                {format(new Date(application.createdAt), 'dd/MM/yyyy', { locale: vi })}
-                              </div>
-                              <div className="text-xs text-gray-400">
-                                {format(new Date(application.createdAt), 'HH:mm', { locale: vi })}
-                              </div>
+                              {format(new Date(application.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
                             </>
-                          ) : (
-                            <div className="text-sm text-gray-500">-</div>
-                          )}
-                        </TableCell>
+                          ) : '-'}
+                        </div>
 
-                        <TableCell>
-                          {application.applicationMessage && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center text-xs text-blue-600 cursor-help">
-                                    <MessageSquare className="h-3 w-3 mr-1" />
-                                    <span className="truncate max-w-[200px]">{application.applicationMessage}</span>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p className="text-sm whitespace-pre-wrap">{application.applicationMessage}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </TableCell>
+                        {/* Message */}
+                        {application.applicationMessage && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div className="flex items-start gap-2">
+                              <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                              <p className="text-sm text-gray-700 line-clamp-3">{application.applicationMessage}</p>
+                            </div>
+                          </div>
+                        )}
 
-                        <TableCell className="text-right">
+                        {/* Actions */}
+                        <div className="flex gap-2 pt-2">
                           {application.status === 'pending' && (
-                            <div className="flex gap-1 justify-end">
+                            <>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-green-600 border-green-300 hover:bg-green-50"
+                                className="flex-1 text-green-600 border-green-300 hover:bg-green-50"
                                 onClick={() => openRespondDialog(application.id, true)}
                               >
                                 <Check className="h-4 w-4 mr-1" />
@@ -430,53 +382,21 @@ export default function RoommateApplicationsPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-red-600 border-red-300 hover:bg-red-50"
+                                className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
                                 onClick={() => openRespondDialog(application.id, false)}
                               >
                                 <X className="h-4 w-4 mr-1" />
                                 Từ chối
                               </Button>
-                            </div>
+                            </>
                           )}
-                          {application.roommateSeekingPost?.roomInstanceId == null &&
-                           application.status === 'approved_by_tenant' &&
-                           !application.isConfirmedByTenant && (
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => setConfirmDialog({ open: true, applicationId: application.id })}
-                            >
-                              Xác nhận
-                            </Button>
-                          )}
-                          {application.roommateSeekingPost?.roomInstanceId != null &&
-                           application.status === 'approved_by_landlord' &&
-                           !application.isConfirmedByTenant && (
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => setConfirmDialog({ open: true, applicationId: application.id })}
-                            >
-                              Xác nhận
-                            </Button>
-                          )}
-                          {application.isConfirmedByTenant && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700">
-                              {application.roommateSeekingPost?.roomInstanceId == null
-                                ? 'Đã xác nhận'
-                                : application.isConfirmedByLandlord
-                                  ? 'Đã xác nhận - Rental đã tạo'
-                                  : 'Đã xác nhận - Chờ landlord'}
-                            </Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
 
             <div className="flex items-center justify-between mt-6">
               <div className="text-sm text-gray-600">
@@ -537,7 +457,7 @@ export default function RoommateApplicationsPage() {
                 onClick={() => fetchMyApplications({
                   page: sentPage,
                   limit: 12,
-                  status: statusFilter === 'all' ? undefined : (statusFilter as 'pending' | 'approved_by_tenant' | 'rejected_by_tenant' | 'approved_by_landlord' | 'rejected_by_landlord' | 'cancelled' | 'expired')
+                  status: statusFilter === 'all' ? undefined : (statusFilter as 'pending' | 'accepted' | 'rejected' | 'awaiting_confirmation' | 'cancelled' | 'expired')
                 })}
               >
                 Làm mới
@@ -548,124 +468,138 @@ export default function RoommateApplicationsPage() {
               <div className="bg-red-50 text-red-700 border border-red-200 rounded p-3 mb-4 text-sm">{error}</div>
             )}
 
-            <Card>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[200px]">Bài đăng</TableHead>
-                      <TableHead className="w-[150px]">Thông tin ứng viên</TableHead>
-                      <TableHead className="w-[120px]">Ngày chuyển vào</TableHead>
-                      <TableHead className="w-[100px]">Thời gian ở</TableHead>
-                      <TableHead className="w-[120px]">Trạng thái</TableHead>
-                      <TableHead className="w-[120px]">Ngày gửi</TableHead>
-                      <TableHead className="w-[300px]">Lời nhắn</TableHead>
-                      <TableHead className="w-[100px] text-right">Thao tác</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      <TableRow key="loading">
-                        <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                          Đang tải...
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredSent.length === 0 ? (
-                      <TableRow key="empty">
-                        <TableCell colSpan={8} className="text-center py-12 text-gray-500">
-                          Chưa gửi đơn ứng tuyển nào
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredSent.map((application) => (
-                      <TableRow key={application.id} className="hover:bg-gray-50">
-                        <TableCell>
-                          <div className="font-medium text-gray-900 truncate">
-                            {application.roommateSeekingPostId}
+            {isLoading ? (
+              <div className="text-center py-12 text-gray-500">
+                Đang tải...
+              </div>
+            ) : filteredSent.length === 0 ? (
+              <div className="text-center py-12">
+                <Card className="border-dashed">
+                  <CardContent className="pt-6">
+                    <MessageSquare className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-500">Chưa gửi đơn ứng tuyển nào</p>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {filteredSent.map((application) => (
+                  <Card key={application.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        {/* Header: Post Title and Status */}
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg text-gray-900 line-clamp-2">
+                              {application.roommateSeekingPostId}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                              <Badge className={STATUS_COLORS[application.status as keyof typeof STATUS_COLORS]}>
+                                {STATUS_LABELS_SENT[application.status as keyof typeof STATUS_LABELS_SENT]}
+                              </Badge>
+                              {application.isUrgent && (
+                                <Badge variant="destructive">Gấp</Badge>
+                              )}
+                            </div>
                           </div>
-                        </TableCell>
+                        </div>
 
-                        <TableCell>
-                          <div className="space-y-1 text-sm">
-                            <div className="font-medium text-gray-900">{application.fullName}</div>
-                            <div className="text-gray-500">{application.occupation}</div>
-                            <div className="text-gray-500 text-xs">{application.phoneNumber}</div>
+                        {/* Applicant Info */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                            <span className="font-medium text-gray-900">{application.fullName}</span>
                           </div>
-                        </TableCell>
-
-                        <TableCell>
-                          <div className="text-sm text-gray-600">
-                            {application.moveInDate ? format(new Date(application.moveInDate), 'dd/MM/yyyy', { locale: vi }) : '-'}
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Briefcase className="h-4 w-4 flex-shrink-0" />
+                            <span>{application.occupation}</span>
                           </div>
-                        </TableCell>
-
-                        <TableCell>
-                          <div className="text-sm text-gray-600">
-                            {application.intendedStayMonths} tháng
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Phone className="h-4 w-4 flex-shrink-0" />
+                            <span>{application.phoneNumber}</span>
                           </div>
-                        </TableCell>
+                        </div>
 
-                        <TableCell>
-                          <Badge className={STATUS_COLORS[application.status as keyof typeof STATUS_COLORS]}>
-                            {STATUS_LABELS_SENT[application.status as keyof typeof STATUS_LABELS_SENT]}
-                          </Badge>
-                          {application.isUrgent && (
-                            <Badge variant="destructive" className="ml-1">Gấp</Badge>
-                          )}
-                        </TableCell>
+                        {/* Dates Info */}
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Calendar className="h-4 w-4 flex-shrink-0" />
+                            <div>
+                              <div className="text-xs text-gray-500">Ngày chuyển vào</div>
+                              <div>
+                                {application.moveInDate ? format(new Date(application.moveInDate), 'dd/MM/yyyy', { locale: vi }) : '-'}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Clock className="h-4 w-4 flex-shrink-0" />
+                            <div>
+                              <div className="text-xs text-gray-500">Thời gian ở</div>
+                              <div>{application.intendedStayMonths} tháng</div>
+                            </div>
+                          </div>
+                        </div>
 
-                        <TableCell>
-                          {application.createdAt ? (
+                        {/* Submission Date */}
+                        <div className="text-xs text-gray-500">
+                          Gửi lúc: {application.createdAt ? (
                             <>
-                              <div className="text-sm text-gray-500">
-                                {format(new Date(application.createdAt), 'dd/MM/yyyy', { locale: vi })}
-                              </div>
-                              <div className="text-xs text-gray-400">
-                                {format(new Date(application.createdAt), 'HH:mm', { locale: vi })}
-                              </div>
+                              {format(new Date(application.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
                             </>
-                          ) : (
-                            <div className="text-sm text-gray-500">-</div>
-                          )}
-                        </TableCell>
+                          ) : '-'}
+                        </div>
 
-                        <TableCell>
-                          {application.applicationMessage && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center text-xs text-blue-600 cursor-help">
-                                    <MessageSquare className="h-3 w-3 mr-1" />
-                                    <span className="truncate max-w-[250px]">{application.applicationMessage}</span>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p className="text-sm whitespace-pre-wrap">{application.applicationMessage}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </TableCell>
+                        {/* Message */}
+                        {application.applicationMessage && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div className="flex items-start gap-2">
+                              <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                              <p className="text-sm text-gray-700 line-clamp-3">{application.applicationMessage}</p>
+                            </div>
+                          </div>
+                        )}
 
-                        <TableCell className="text-right">
+                        {/* Actions */}
+                        <div className="flex flex-col gap-2 pt-2">
+                          {application.status === 'awaiting_confirmation' && (
+                            <>
+                              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-2">
+                                <p className="text-sm font-medium text-green-800">
+                                  ✅ Cả Tenant và Landlord đã chấp nhận đơn của bạn!
+                                </p>
+                                <p className="text-xs text-green-600 mt-1">
+                                  Vui lòng xác nhận để hoàn tất quy trình và chính thức trở thành người thuê.
+                                </p>
+                              </div>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="w-full bg-green-600 hover:bg-green-700"
+                                onClick={() => handleConfirmApplication(application.id)}
+                              >
+                                <Check className="h-4 w-4 mr-2" />
+                                Xác nhận thuê phòng
+                              </Button>
+                            </>
+                          )}
+                          
                           {application.status === 'pending' && (
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-red-600 border-red-300 hover:bg-red-50"
+                              className="w-full text-red-600 border-red-300 hover:bg-red-50"
                               onClick={() => handleCancel(application.id)}
                             >
-                              Hủy
+                              Hủy đơn
                             </Button>
                           )}
-                        </TableCell>
-                      </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
 
             <div className="flex items-center justify-between mt-6">
               <div className="text-sm text-gray-600">
@@ -735,42 +669,6 @@ export default function RoommateApplicationsPage() {
               onClick={handleRespond}
             >
               {respondDialog.approve ? 'Chấp nhận' : 'Từ chối'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirm Dialog */}
-      <Dialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận đơn ứng tuyển</DialogTitle>
-            <DialogDescription>
-              {(() => {
-                const application = applicationsForMyPosts.find(app => app.id === confirmDialog.applicationId)
-                const isExternalRoom = application?.roommateSeekingPost?.roomInstanceId == null
-
-                if (isExternalRoom) {
-                  return 'Bạn có chắc chắn muốn xác nhận đơn ứng tuyển này? Sau khi xác nhận, bạn có thể liên hệ trực tiếp với ứng viên để sắp xếp.'
-                } else {
-                  return 'Bạn có chắc chắn muốn xác nhận đơn ứng tuyển này? Sau khi xác nhận, chủ trọ sẽ cần xác nhận và hợp đồng sẽ được tạo tự động trong hệ thống.'
-                }
-              })()}
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmDialog({ open: false, applicationId: null })}
-            >
-              Hủy
-            </Button>
-            <Button
-              variant="default"
-              onClick={handleConfirm}
-            >
-              Xác nhận
             </Button>
           </DialogFooter>
         </DialogContent>
