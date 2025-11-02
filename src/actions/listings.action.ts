@@ -1,4 +1,4 @@
-'use server';
+//'use server';
 
 import { createServerApiCall, TokenManager } from '@/lib/api-client';
 import type { RoomSeekingPostListResponse } from '@/types/room-seeking';

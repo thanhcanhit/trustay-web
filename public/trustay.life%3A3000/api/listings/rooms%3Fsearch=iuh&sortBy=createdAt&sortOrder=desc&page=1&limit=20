@@ -1,0 +1,2911 @@
+{
+    "data": [
+        {
+            "id": "chau-hoang-anquan-go-vap-phong-ap4148",
+            "slug": "chau-hoang-anquan-go-vap-phong-ap4148",
+            "name": "Căn hộ dịch vụ mới 100% sát trường đại học công nghiệp IUH",
+            "roomType": "apartment",
+            "areaSqm": "20",
+            "maxOccupancy": 9999,
+            "isVerified": false,
+            "buildingName": "Nhà trọ Châu Hoàng An",
+            "buildingVerified": false,
+            "address": "Đường Lê Lợi",
+            "availableRooms": 1,
+            "owner": {
+                "id": "c534b3ad-9c49-494b-ac5c-2b077a89e58b",
+                "name": "Tâm Hồ",
+                "gender": "female",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": false,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp",
+                "wardId": 58837,
+                "wardName": "Phường 16"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/24/z6816527900697-b26c30c42819a301aa1338a7ee77e590_1753349789.jpg",
+                    "alt": "Căn hộ dịch vụ mới 100% sát trường đại học công nghiệp IUH",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/24/z6816527907292-bb5d8f0f32637cbe2e931cc9e62a45cc_1753349789.jpg",
+                    "alt": "Căn hộ dịch vụ mới 100% sát trường đại học công nghiệp IUH",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/24/z6816527915078-cfc87757de887cec5cd008806b3aafed_1753349790.jpg",
+                    "alt": "Căn hộ dịch vụ mới 100% sát trường đại học công nghiệp IUH",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/24/z6816527923648-668aa4751e5c33b0144e755bd102a2ae_1753349790.jpg",
+                    "alt": "Căn hộ dịch vụ mới 100% sát trường đại học công nghiệp IUH",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "0f54046e-3343-4aac-8eb1-1f2e4b9911cf",
+                    "name": "Có gác",
+                    "category": "basic"
+                },
+                {
+                    "id": "4fc76a8b-8aa4-46b8-afc8-c42d756d732a",
+                    "name": "Có máy lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "8a05d55a-06e6-490e-956d-1b1fb6b8e02e",
+                    "name": "Có tủ lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "4b9eaa63-fbf0-428c-8400-61071eee5e10",
+                    "name": "Có nước nóng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "ea9a7c9d-c0b8-44ed-8634-6609d283e6e3",
+                    "name": "Có WiFi",
+                    "category": "connectivity"
+                },
+                {
+                    "id": "0edb1852-65e3-49f2-a14a-8601fc13f479",
+                    "name": "Có bảo vệ 24/24",
+                    "category": "safety"
+                },
+                {
+                    "id": "62ef8b58-6611-44da-baa2-e2215419ff94",
+                    "name": "Không chung chủ",
+                    "category": "basic"
+                },
+                {
+                    "id": "a8c65cdf-22c7-4322-8071-6dd7f120e2f8",
+                    "name": "Giờ giấc tự do",
+                    "category": "basic"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                },
+                {
+                    "id": "58e39fa3-bd81-4e93-8989-a1791b6e44a6",
+                    "name": "Ban công",
+                    "category": "building"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "3500",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "5000000",
+                "depositAmount": "5000000",
+                "utilityIncluded": false
+            },
+            "rules": []
+        },
+        {
+            "id": "jassie-co-phong-xinhquan-binh-thanh-phong-nh2459",
+            "slug": "jassie-co-phong-xinhquan-binh-thanh-phong-nh2459",
+            "name": "Chào đón TSV 2K7 Khai Trương Phòng mới, Ban Công, Full Nội Thất. Bình Thạnh gần ngay Văn Lang, IUH",
+            "roomType": "apartment",
+            "areaSqm": "22",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ Jassie Có Phòng Xinh",
+            "buildingVerified": false,
+            "address": "Đường Xô Viết Nghệ Tĩnh",
+            "availableRooms": 1,
+            "owner": {
+                "id": "7280cee5-b2c0-4050-beca-31879ddde5a6",
+                "name": "Nguyễn Văn Minh",
+                "gender": "male",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": true,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3994,
+                "districtName": "Quận Bình Thạnh",
+                "wardId": 58851,
+                "wardName": "Phường 25"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/22/14dc5ebd-977f-45b2-a3b7-3ef67db901d1_1753178965.jpg",
+                    "alt": "Chào đón TSV 2K7 Khai Trương Phòng mới, Ban Công, Full Nội Thất. Bình Thạnh gần ngay Văn Lang, IUH",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/22/eb757e21-46fc-47b6-a0ca-a05a39465bae_1753178965.jpg",
+                    "alt": "Chào đón TSV 2K7 Khai Trương Phòng mới, Ban Công, Full Nội Thất. Bình Thạnh gần ngay Văn Lang, IUH",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/22/7b607dc8-af33-483c-a9ba-33d5e8bcb8ff_1753178968.jpg",
+                    "alt": "Chào đón TSV 2K7 Khai Trương Phòng mới, Ban Công, Full Nội Thất. Bình Thạnh gần ngay Văn Lang, IUH",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/22/614d100d-066d-4d95-9ba5-90e3dba6eba7_1753178968.jpg",
+                    "alt": "Chào đón TSV 2K7 Khai Trương Phòng mới, Ban Công, Full Nội Thất. Bình Thạnh gần ngay Văn Lang, IUH",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "4fc76a8b-8aa4-46b8-afc8-c42d756d732a",
+                    "name": "Có máy lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "8a05d55a-06e6-490e-956d-1b1fb6b8e02e",
+                    "name": "Có tủ lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "62ef8b58-6611-44da-baa2-e2215419ff94",
+                    "name": "Không chung chủ",
+                    "category": "basic"
+                },
+                {
+                    "id": "a8c65cdf-22c7-4322-8071-6dd7f120e2f8",
+                    "name": "Giờ giấc tự do",
+                    "category": "basic"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                },
+                {
+                    "id": "58e39fa3-bd81-4e93-8989-a1791b6e44a6",
+                    "name": "Ban công",
+                    "category": "building"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "5400000",
+                "depositAmount": "5400000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "875db0c1-bbcf-49c5-9266-dbafefb89edc",
+                    "name": "Không gây ồn sau 22h",
+                    "type": "forbidden"
+                }
+            ]
+        },
+        {
+            "id": "cuongquan-go-vap-phong-ap9565",
+            "slug": "cuongquan-go-vap-phong-ap9565",
+            "name": "PHÒNG MỚI XÂY - TRUNG TÂM GÒ VẤPCỬA SỔ BAN CÔNG THOÁNG MÁT",
+            "roomType": "apartment",
+            "areaSqm": "20",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ Cường",
+            "buildingVerified": false,
+            "address": "6/50E Đường Quang Trung",
+            "availableRooms": 1,
+            "owner": {
+                "id": "399e22c1-351f-4ac5-bf42-f2ec5ec09c36",
+                "name": "Dương Thị Vân",
+                "gender": "female",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": true,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp",
+                "wardId": 58840,
+                "wardName": "Phường 10"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/06/08/img-4923_1749346862.jpg",
+                    "alt": "PHÒNG MỚI XÂY - TRUNG TÂM GÒ VẤPCỬA SỔ BAN CÔNG THOÁNG MÁT",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/06/08/img-4925_1749346864.jpg",
+                    "alt": "PHÒNG MỚI XÂY - TRUNG TÂM GÒ VẤPCỬA SỔ BAN CÔNG THOÁNG MÁT",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/26/img-4931_1753505577.jpg",
+                    "alt": "PHÒNG MỚI XÂY - TRUNG TÂM GÒ VẤPCỬA SỔ BAN CÔNG THOÁNG MÁT",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/26/img-4937_1753505578.jpg",
+                    "alt": "PHÒNG MỚI XÂY - TRUNG TÂM GÒ VẤPCỬA SỔ BAN CÔNG THOÁNG MÁT",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "4fc76a8b-8aa4-46b8-afc8-c42d756d732a",
+                    "name": "Có máy lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "8a05d55a-06e6-490e-956d-1b1fb6b8e02e",
+                    "name": "Có tủ lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "ea9a7c9d-c0b8-44ed-8634-6609d283e6e3",
+                    "name": "Có WiFi",
+                    "category": "connectivity"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "3500000",
+                "depositAmount": "3500000",
+                "utilityIncluded": false
+            },
+            "rules": []
+        },
+        {
+            "id": "hien-nhiquan-go-vap-phong-ap4425",
+            "slug": "hien-nhiquan-go-vap-phong-ap4425",
+            "name": "PHÒNG TÒA MỚI 3TR TONE TRẮNG GÁC CAO M7 Ở 2-4 NG DQH GÒ VẤP",
+            "roomType": "boarding_house",
+            "areaSqm": "20",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ Hiền Nhi",
+            "buildingVerified": false,
+            "address": "Đường Lê Đức Thọ",
+            "availableRooms": 1,
+            "owner": {
+                "id": "b104df61-6a4e-43f7-a89a-ae60ea760fc8",
+                "name": "Bùi Văn Quang",
+                "gender": "male",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": true,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/05/07/491419190-699363059314630-6927586076711605012-n_1746605320.jpg",
+                    "alt": "PHÒNG TÒA MỚI 3TR TONE TRẮNG GÁC CAO M7 Ở 2-4 NG DQH GÒ VẤP",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/05/07/3_1746605327.jpg",
+                    "alt": "PHÒNG TÒA MỚI 3TR TONE TRẮNG GÁC CAO M7 Ở 2-4 NG DQH GÒ VẤP",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/05/07/z6210806122083-f741c7c758ac3a44269fecea1eff78b8-copy_1746605333.jpg",
+                    "alt": "PHÒNG TÒA MỚI 3TR TONE TRẮNG GÁC CAO M7 Ở 2-4 NG DQH GÒ VẤP",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/05/07/z6188611842338-82951b113764998c2f47595440488810_1746605347.jpg",
+                    "alt": "PHÒNG TÒA MỚI 3TR TONE TRẮNG GÁC CAO M7 Ở 2-4 NG DQH GÒ VẤP",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "0f54046e-3343-4aac-8eb1-1f2e4b9911cf",
+                    "name": "Có gác",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "4b9eaa63-fbf0-428c-8400-61071eee5e10",
+                    "name": "Có nước nóng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "ea9a7c9d-c0b8-44ed-8634-6609d283e6e3",
+                    "name": "Có WiFi",
+                    "category": "connectivity"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "3000000",
+                "depositAmount": "3000000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "875db0c1-bbcf-49c5-9266-dbafefb89edc",
+                    "name": "Không gây ồn sau 22h",
+                    "type": "forbidden"
+                }
+            ]
+        },
+        {
+            "id": "nhu-quynhquan-go-vap-phong-ap3749",
+            "slug": "nhu-quynhquan-go-vap-phong-ap3749",
+            "name": "KHAI TRƯƠNG TOÀ NHÀ MỚI GẦN IUH, VLU, NTT GIÁ CHỈ 4 TRIỆU",
+            "roomType": "boarding_house",
+            "areaSqm": "27",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ Như Quỳnh",
+            "buildingVerified": false,
+            "address": "12/20 Đường Lê Đức Thọ",
+            "availableRooms": 1,
+            "owner": {
+                "id": "fe9ba56f-f3b1-409f-9531-988b6f299ab0",
+                "name": "Hoàng Văn Đức",
+                "gender": "male",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": true,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp",
+                "wardId": 58834,
+                "wardName": "Phường 15"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/04/z6744321192208-ae695e4184e6d9c5105fc7de61097f07_1751597678.jpg",
+                    "alt": "KHAI TRƯƠNG TOÀ NHÀ MỚI GẦN IUH, VLU, NTT GIÁ CHỈ 4 TRIỆU",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/04/z6768628494893-6232033273013b2c8117cacfc20278b1_1751597681.jpg",
+                    "alt": "KHAI TRƯƠNG TOÀ NHÀ MỚI GẦN IUH, VLU, NTT GIÁ CHỈ 4 TRIỆU",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/04/z6768628493326-3bfbef26d534671c4be1cda300273847_1751597680.jpg",
+                    "alt": "KHAI TRƯƠNG TOÀ NHÀ MỚI GẦN IUH, VLU, NTT GIÁ CHỈ 4 TRIỆU",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/04/z6768628480197-a06ce962e7be6c12503c6e7c141871e4_1751597678.jpg",
+                    "alt": "KHAI TRƯƠNG TOÀ NHÀ MỚI GẦN IUH, VLU, NTT GIÁ CHỈ 4 TRIỆU",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "0f54046e-3343-4aac-8eb1-1f2e4b9911cf",
+                    "name": "Có gác",
+                    "category": "basic"
+                },
+                {
+                    "id": "4fc76a8b-8aa4-46b8-afc8-c42d756d732a",
+                    "name": "Có máy lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "8a05d55a-06e6-490e-956d-1b1fb6b8e02e",
+                    "name": "Có tủ lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "4b9eaa63-fbf0-428c-8400-61071eee5e10",
+                    "name": "Có nước nóng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "ea9a7c9d-c0b8-44ed-8634-6609d283e6e3",
+                    "name": "Có WiFi",
+                    "category": "connectivity"
+                },
+                {
+                    "id": "0edb1852-65e3-49f2-a14a-8601fc13f479",
+                    "name": "Có bảo vệ 24/24",
+                    "category": "safety"
+                },
+                {
+                    "id": "62ef8b58-6611-44da-baa2-e2215419ff94",
+                    "name": "Không chung chủ",
+                    "category": "basic"
+                },
+                {
+                    "id": "a8c65cdf-22c7-4322-8071-6dd7f120e2f8",
+                    "name": "Giờ giấc tự do",
+                    "category": "basic"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "4000000",
+                "depositAmount": "4000000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "875db0c1-bbcf-49c5-9266-dbafefb89edc",
+                    "name": "Không gây ồn sau 22h",
+                    "type": "forbidden"
+                }
+            ]
+        },
+        {
+            "id": "thanh-traquan-tan-binh-phong-nh7232",
+            "slug": "thanh-traquan-tan-binh-phong-nh7232",
+            "name": "STUDIO BAN CÔNG SIÊU THOÁNG – FULL NỘI THẤT, GẦN ETOWN, ĐH UFM, ĐH IUH, HỌC VIỆN HÀNG KHÔNG, SÂN BAY",
+            "roomType": "apartment",
+            "areaSqm": "24",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ Thanh Trà",
+            "buildingVerified": false,
+            "address": "Đường C18",
+            "availableRooms": 1,
+            "owner": {
+                "id": "c534b3ad-9c49-494b-ac5c-2b077a89e58b",
+                "name": "Tâm Hồ",
+                "gender": "female",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": false,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3995,
+                "districtName": "Quận Tân Bình",
+                "wardId": 58863,
+                "wardName": "Phường 12"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/26/z6840784316628-1571dbfa1bdcbcdb7049a88b6ac49a8e_1753512873.jpg",
+                    "alt": "STUDIO BAN CÔNG SIÊU THOÁNG – FULL NỘI THẤT, GẦN ETOWN, ĐH UFM, ĐH IUH, HỌC VIỆN HÀNG KHÔNG, SÂN BAY",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/26/z6840784316631-ad3adea1bb0babfd38a2fd30cdb9c427_1753512873.jpg",
+                    "alt": "STUDIO BAN CÔNG SIÊU THOÁNG – FULL NỘI THẤT, GẦN ETOWN, ĐH UFM, ĐH IUH, HỌC VIỆN HÀNG KHÔNG, SÂN BAY",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/26/z6840784316632-9cabca8a85f937b73eb6f6450e1ab151_1753512875.jpg",
+                    "alt": "STUDIO BAN CÔNG SIÊU THOÁNG – FULL NỘI THẤT, GẦN ETOWN, ĐH UFM, ĐH IUH, HỌC VIỆN HÀNG KHÔNG, SÂN BAY",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/26/z6840784316633-8a0eaaf77283034adcb875ea6d252589_1753512875.jpg",
+                    "alt": "STUDIO BAN CÔNG SIÊU THOÁNG – FULL NỘI THẤT, GẦN ETOWN, ĐH UFM, ĐH IUH, HỌC VIỆN HÀNG KHÔNG, SÂN BAY",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "4fc76a8b-8aa4-46b8-afc8-c42d756d732a",
+                    "name": "Có máy lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "8a05d55a-06e6-490e-956d-1b1fb6b8e02e",
+                    "name": "Có tủ lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "0edb1852-65e3-49f2-a14a-8601fc13f479",
+                    "name": "Có bảo vệ 24/24",
+                    "category": "safety"
+                },
+                {
+                    "id": "9d14cc8e-0eca-4e83-897a-8796de3935f6",
+                    "name": "Camera an ninh",
+                    "category": "safety"
+                },
+                {
+                    "id": "62ef8b58-6611-44da-baa2-e2215419ff94",
+                    "name": "Không chung chủ",
+                    "category": "basic"
+                },
+                {
+                    "id": "a8c65cdf-22c7-4322-8071-6dd7f120e2f8",
+                    "name": "Giờ giấc tự do",
+                    "category": "basic"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                },
+                {
+                    "id": "1f64d2f1-3326-4b22-812e-1e368eb2a65c",
+                    "name": "Gần khu công nghiệp",
+                    "category": "basic"
+                },
+                {
+                    "id": "58e39fa3-bd81-4e93-8989-a1791b6e44a6",
+                    "name": "Ban công",
+                    "category": "building"
+                },
+                {
+                    "id": "2850c57a-a219-48a2-9171-f5317155c447",
+                    "name": "Sân phơi",
+                    "category": "building"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "6000000",
+                "depositAmount": "6000000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "875db0c1-bbcf-49c5-9266-dbafefb89edc",
+                    "name": "Không gây ồn sau 22h",
+                    "type": "forbidden"
+                }
+            ]
+        },
+        {
+            "id": "nguyen-tuong-vyquan-go-vap-phong-ap4595",
+            "slug": "nguyen-tuong-vyquan-go-vap-phong-ap4595",
+            "name": "Pass gấp phòng Gò Vấp đi bộ IUH",
+            "roomType": "boarding_house",
+            "areaSqm": "30",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ Nguyen Tuong Vy",
+            "buildingVerified": false,
+            "address": "Đường số 6",
+            "availableRooms": 1,
+            "owner": {
+                "id": "fe9ba56f-f3b1-409f-9531-988b6f299ab0",
+                "name": "Hoàng Văn Đức",
+                "gender": "male",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": true,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp",
+                "wardId": 58837,
+                "wardName": "Phường 16"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/28/screenshot-2025-07-28-213725_1753717856.png",
+                    "alt": "Pass gấp phòng Gò Vấp đi bộ IUH",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/1200x900/fit/2025/07/28/screenshot-2025-07-28-213725_1753717856.png",
+                    "alt": "Pass gấp phòng Gò Vấp đi bộ IUH",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "3500000",
+                "depositAmount": "3500000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "875db0c1-bbcf-49c5-9266-dbafefb89edc",
+                    "name": "Không gây ồn sau 22h",
+                    "type": "forbidden"
+                }
+            ]
+        },
+        {
+            "id": "tony-dzungquan-go-vap-phong-ap0763",
+            "slug": "tony-dzungquan-go-vap-phong-ap0763",
+            "name": "Phòng Gác, Lầu 2, Cửa Sổ, Ban công nhỏ, Sạch sẽ, Cách ĐH GIA ĐỊNH 500M",
+            "roomType": "boarding_house",
+            "areaSqm": "16",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ TONY DZUNG",
+            "buildingVerified": false,
+            "address": "12 Đường Nguyễn Kiệm",
+            "availableRooms": 1,
+            "owner": {
+                "id": "1af138fe-5645-41c0-bee8-727169314df8",
+                "name": "Trần Thị Lan",
+                "gender": "female",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": true,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp",
+                "wardId": 58845,
+                "wardName": "Phường 3"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/23/1_1753246283.jpg",
+                    "alt": "Phòng Gác, Lầu 2, Cửa Sổ, Ban công nhỏ, Sạch sẽ, Cách ĐH GIA ĐỊNH 500M",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/23/2_1753246283.jpg",
+                    "alt": "Phòng Gác, Lầu 2, Cửa Sổ, Ban công nhỏ, Sạch sẽ, Cách ĐH GIA ĐỊNH 500M",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/23/3_1753246284.jpg",
+                    "alt": "Phòng Gác, Lầu 2, Cửa Sổ, Ban công nhỏ, Sạch sẽ, Cách ĐH GIA ĐỊNH 500M",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/23/4_1753246284.jpg",
+                    "alt": "Phòng Gác, Lầu 2, Cửa Sổ, Ban công nhỏ, Sạch sẽ, Cách ĐH GIA ĐỊNH 500M",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "0f54046e-3343-4aac-8eb1-1f2e4b9911cf",
+                    "name": "Có gác",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "4b9eaa63-fbf0-428c-8400-61071eee5e10",
+                    "name": "Có nước nóng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "ea9a7c9d-c0b8-44ed-8634-6609d283e6e3",
+                    "name": "Có WiFi",
+                    "category": "connectivity"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "2400000",
+                "depositAmount": "2400000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "875db0c1-bbcf-49c5-9266-dbafefb89edc",
+                    "name": "Không gây ồn sau 22h",
+                    "type": "forbidden"
+                }
+            ]
+        },
+        {
+            "id": "thao-buiquan-go-vap-phong-ap4727",
+            "slug": "thao-buiquan-go-vap-phong-ap4727",
+            "name": "Giam 2tr720/2 tháng đầu phòng gần Quang trung Gò vấp",
+            "roomType": "boarding_house",
+            "areaSqm": "18",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ thảo bùi",
+            "buildingVerified": false,
+            "address": "Đường Tô Ngọc Vân",
+            "availableRooms": 1,
+            "owner": {
+                "id": "c534b3ad-9c49-494b-ac5c-2b077a89e58b",
+                "name": "Tâm Hồ",
+                "gender": "female",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": false,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp",
+                "wardId": 58834,
+                "wardName": "Phường 15"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/28/img-6203_1753712269.jpg",
+                    "alt": "Giam 2tr720/2 tháng đầu phòng gần Quang trung Gò vấp",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/28/img-6204_1753712265.jpg",
+                    "alt": "Giam 2tr720/2 tháng đầu phòng gần Quang trung Gò vấp",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/28/img-6205_1753712269.jpg",
+                    "alt": "Giam 2tr720/2 tháng đầu phòng gần Quang trung Gò vấp",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/28/img-6539_1753712269.jpg",
+                    "alt": "Giam 2tr720/2 tháng đầu phòng gần Quang trung Gò vấp",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "0f54046e-3343-4aac-8eb1-1f2e4b9911cf",
+                    "name": "Có gác",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "2720000",
+                "depositAmount": "2720000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "875db0c1-bbcf-49c5-9266-dbafefb89edc",
+                    "name": "Không gây ồn sau 22h",
+                    "type": "forbidden"
+                }
+            ]
+        },
+        {
+            "id": "tran-ngoc-hoang-anquan-tan-binh-phong-nh4311",
+            "slug": "tran-ngoc-hoang-anquan-tan-binh-phong-nh4311",
+            "name": "PHÒNG TRỌ MÁY LẠNH BAN CÔNG THOÁNG, SẠCH SẼ, TIỆN NGHI - NGUYỄN SỸ SÁCH TÂN BÌNH, GẦN ĐH CÔNG THƯƠNG",
+            "roomType": "boarding_house",
+            "areaSqm": "23",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ Trần Ngọc Hoàng An",
+            "buildingVerified": false,
+            "address": "Mai Lão Bạng Đường Hoàng Hoa Thám",
+            "availableRooms": 1,
+            "owner": {
+                "id": "75a1e01e-984c-413a-a20a-57389ed4027e",
+                "name": "Phạm Thị Hường",
+                "gender": "female",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": true,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3995,
+                "districtName": "Quận Tân Bình"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/06/06/img-4404_1749225278.jpg",
+                    "alt": "PHÒNG TRỌ MÁY LẠNH BAN CÔNG THOÁNG, SẠCH SẼ, TIỆN NGHI - NGUYỄN SỸ SÁCH TÂN BÌNH, GẦN ĐH CÔNG THƯƠNG",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/06/06/img-4405_1749225278.jpg",
+                    "alt": "PHÒNG TRỌ MÁY LẠNH BAN CÔNG THOÁNG, SẠCH SẼ, TIỆN NGHI - NGUYỄN SỸ SÁCH TÂN BÌNH, GẦN ĐH CÔNG THƯƠNG",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/06/06/img-4406_1749225279.jpg",
+                    "alt": "PHÒNG TRỌ MÁY LẠNH BAN CÔNG THOÁNG, SẠCH SẼ, TIỆN NGHI - NGUYỄN SỸ SÁCH TÂN BÌNH, GẦN ĐH CÔNG THƯƠNG",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/06/06/img-4170_1749225279.jpg",
+                    "alt": "PHÒNG TRỌ MÁY LẠNH BAN CÔNG THOÁNG, SẠCH SẼ, TIỆN NGHI - NGUYỄN SỸ SÁCH TÂN BÌNH, GẦN ĐH CÔNG THƯƠNG",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "0f54046e-3343-4aac-8eb1-1f2e4b9911cf",
+                    "name": "Có gác",
+                    "category": "basic"
+                },
+                {
+                    "id": "4fc76a8b-8aa4-46b8-afc8-c42d756d732a",
+                    "name": "Có máy lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "8a05d55a-06e6-490e-956d-1b1fb6b8e02e",
+                    "name": "Có tủ lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "4b9eaa63-fbf0-428c-8400-61071eee5e10",
+                    "name": "Có nước nóng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "3500000",
+                "depositAmount": "3500000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "875db0c1-bbcf-49c5-9266-dbafefb89edc",
+                    "name": "Không gây ồn sau 22h",
+                    "type": "forbidden"
+                }
+            ]
+        },
+        {
+            "id": "tran-dinh-namquan-go-vap-phong-ap9129",
+            "slug": "tran-dinh-namquan-go-vap-phong-ap9129",
+            "name": "Sleepbox KTX ngay Phan Văn Trị - TT Gò vấp full nội thất",
+            "roomType": "sleepbox",
+            "areaSqm": "15",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ trần đình nam",
+            "buildingVerified": false,
+            "address": "Đường Phan Văn Trị",
+            "availableRooms": 1,
+            "owner": {
+                "id": "f55ff0b4-a846-416c-90b7-03e5ad207b6a",
+                "name": "Đặng Văn Hùng",
+                "gender": "male",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": true,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/29/1_1753795337.png",
+                    "alt": "Sleepbox KTX ngay Phan Văn Trị - TT Gò vấp full nội thất",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/29/3_1753795338.png",
+                    "alt": "Sleepbox KTX ngay Phan Văn Trị - TT Gò vấp full nội thất",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/29/6_1753795342.png",
+                    "alt": "Sleepbox KTX ngay Phan Văn Trị - TT Gò vấp full nội thất",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/29/5_1753795340.png",
+                    "alt": "Sleepbox KTX ngay Phan Văn Trị - TT Gò vấp full nội thất",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "4fc76a8b-8aa4-46b8-afc8-c42d756d732a",
+                    "name": "Có máy lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "8a05d55a-06e6-490e-956d-1b1fb6b8e02e",
+                    "name": "Có tủ lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "4b9eaa63-fbf0-428c-8400-61071eee5e10",
+                    "name": "Có nước nóng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "ea9a7c9d-c0b8-44ed-8634-6609d283e6e3",
+                    "name": "Có WiFi",
+                    "category": "connectivity"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "1500000",
+                "depositAmount": "1500000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "c65a9fb6-d59c-4ea5-b933-f015f986685c",
+                    "name": "Không nuôi thú cưng",
+                    "type": "forbidden"
+                },
+                {
+                    "id": "80628f67-9457-40d7-8426-010af8393d8c",
+                    "name": "Không hút thuốc trong phòng",
+                    "type": "forbidden"
+                },
+                {
+                    "id": "22574ed4-c8e6-4608-92c5-2f2ee17c53f7",
+                    "name": "Không cho khách qua đêm",
+                    "type": "forbidden"
+                }
+            ]
+        },
+        {
+            "id": "pham-thanh-thuquan-go-vap-phong-ap4555",
+            "slug": "pham-thanh-thuquan-go-vap-phong-ap4555",
+            "name": "CHO THUÊ PHÒNG SẴN NỘI THẤT - RỘNG 30M2 NGAY PHAN VĂN TRỊ - LÊ ĐỨC THỌ - ĐH VĂN LANG - IUH",
+            "roomType": "apartment",
+            "areaSqm": "20",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ Phạm Thanh Thư",
+            "buildingVerified": false,
+            "address": "Đường Dương Quảng Hàm",
+            "availableRooms": 1,
+            "owner": {
+                "id": "7280cee5-b2c0-4050-beca-31879ddde5a6",
+                "name": "Nguyễn Văn Minh",
+                "gender": "male",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": true,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/02/z6865735210943-c896e6a163ebb79a8342d60dab45a893_1754110107.jpg",
+                    "alt": "CHO THUÊ PHÒNG SẴN NỘI THẤT - RỘNG 30M2 NGAY PHAN VĂN TRỊ - LÊ ĐỨC THỌ - ĐH VĂN LANG - IUH",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/02/z6865735200744-cdb00bd0058e0e4acfe79bc3543a8bd8_1754110107.jpg",
+                    "alt": "CHO THUÊ PHÒNG SẴN NỘI THẤT - RỘNG 30M2 NGAY PHAN VĂN TRỊ - LÊ ĐỨC THỌ - ĐH VĂN LANG - IUH",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/02/z6865735212098-7346f498f7442e16756d97f64e39010e_1754110108.jpg",
+                    "alt": "CHO THUÊ PHÒNG SẴN NỘI THẤT - RỘNG 30M2 NGAY PHAN VĂN TRỊ - LÊ ĐỨC THỌ - ĐH VĂN LANG - IUH",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/02/z6865735196458-aa1adfefcb76a0eca1280bb52f9fd8b9_1754110110.jpg",
+                    "alt": "CHO THUÊ PHÒNG SẴN NỘI THẤT - RỘNG 30M2 NGAY PHAN VĂN TRỊ - LÊ ĐỨC THỌ - ĐH VĂN LANG - IUH",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "0f54046e-3343-4aac-8eb1-1f2e4b9911cf",
+                    "name": "Có gác",
+                    "category": "basic"
+                },
+                {
+                    "id": "4fc76a8b-8aa4-46b8-afc8-c42d756d732a",
+                    "name": "Có máy lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "8a05d55a-06e6-490e-956d-1b1fb6b8e02e",
+                    "name": "Có tủ lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "0edb1852-65e3-49f2-a14a-8601fc13f479",
+                    "name": "Có bảo vệ 24/24",
+                    "category": "safety"
+                },
+                {
+                    "id": "62ef8b58-6611-44da-baa2-e2215419ff94",
+                    "name": "Không chung chủ",
+                    "category": "basic"
+                },
+                {
+                    "id": "a8c65cdf-22c7-4322-8071-6dd7f120e2f8",
+                    "name": "Giờ giấc tự do",
+                    "category": "basic"
+                },
+                {
+                    "id": "58e39fa3-bd81-4e93-8989-a1791b6e44a6",
+                    "name": "Ban công",
+                    "category": "building"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "4500000",
+                "depositAmount": "4500000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "875db0c1-bbcf-49c5-9266-dbafefb89edc",
+                    "name": "Không gây ồn sau 22h",
+                    "type": "forbidden"
+                }
+            ]
+        },
+        {
+            "id": "jassie-co-phong-xinhquan-go-vap-phong-ap2435",
+            "slug": "jassie-co-phong-xinhquan-go-vap-phong-ap2435",
+            "name": "Cho thuê phòng ban công, full nội thất, máy giặt riêng gần Văn Lang, IUH, ở được 4 người thoải mái",
+            "roomType": "boarding_house",
+            "areaSqm": "35",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ Jassie Có Phòng Xinh",
+            "buildingVerified": false,
+            "address": "Đường Dương Quảng Hàm",
+            "availableRooms": 1,
+            "owner": {
+                "id": "e098e82b-1939-4671-ba7a-b32f7a5109fc",
+                "name": "Lê Văn Tuấn",
+                "gender": "male",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": true,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp",
+                "wardId": 58841,
+                "wardName": "Phường 5"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/27/094edd6d-bb0b-4ea3-99b4-192635e386e1_1753596890.jpg",
+                    "alt": "Cho thuê phòng ban công, full nội thất, máy giặt riêng gần Văn Lang, IUH, ở được 4 người thoải mái",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/27/9f385782-60b9-43c5-b46a-5c17231c58bd_1753596890.jpg",
+                    "alt": "Cho thuê phòng ban công, full nội thất, máy giặt riêng gần Văn Lang, IUH, ở được 4 người thoải mái",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/27/8162aecf-f1ce-4357-81e6-6700a61441f1_1753596891.jpg",
+                    "alt": "Cho thuê phòng ban công, full nội thất, máy giặt riêng gần Văn Lang, IUH, ở được 4 người thoải mái",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/07/27/b3223a31-80f9-4497-8111-1797aff99f84_1753596891.jpg",
+                    "alt": "Cho thuê phòng ban công, full nội thất, máy giặt riêng gần Văn Lang, IUH, ở được 4 người thoải mái",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "4fc76a8b-8aa4-46b8-afc8-c42d756d732a",
+                    "name": "Có máy lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "8a05d55a-06e6-490e-956d-1b1fb6b8e02e",
+                    "name": "Có tủ lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "4b9eaa63-fbf0-428c-8400-61071eee5e10",
+                    "name": "Có nước nóng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "0edb1852-65e3-49f2-a14a-8601fc13f479",
+                    "name": "Có bảo vệ 24/24",
+                    "category": "safety"
+                },
+                {
+                    "id": "62ef8b58-6611-44da-baa2-e2215419ff94",
+                    "name": "Không chung chủ",
+                    "category": "basic"
+                },
+                {
+                    "id": "a8c65cdf-22c7-4322-8071-6dd7f120e2f8",
+                    "name": "Giờ giấc tự do",
+                    "category": "basic"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                },
+                {
+                    "id": "58e39fa3-bd81-4e93-8989-a1791b6e44a6",
+                    "name": "Ban công",
+                    "category": "building"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "5600000",
+                "depositAmount": "5600000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "875db0c1-bbcf-49c5-9266-dbafefb89edc",
+                    "name": "Không gây ồn sau 22h",
+                    "type": "forbidden"
+                }
+            ]
+        },
+        {
+            "id": "thao-buiquan-go-vap-phong-ap0495",
+            "slug": "thao-buiquan-go-vap-phong-ap0495",
+            "name": "Tặng 1 triệu thuê sớm, siêu rộng, gần IUH, đh nguyễn tất thành",
+            "roomType": "boarding_house",
+            "areaSqm": "25",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ thảo bùi",
+            "buildingVerified": false,
+            "address": "Đường Tô Ngọc Vân",
+            "availableRooms": 1,
+            "owner": {
+                "id": "c534b3ad-9c49-494b-ac5c-2b077a89e58b",
+                "name": "Tâm Hồ",
+                "gender": "female",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": false,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp",
+                "wardId": 58834,
+                "wardName": "Phường 15"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/img-4456_1754018635.jpg",
+                    "alt": "Tặng 1 triệu thuê sớm, siêu rộng, gần IUH, đh nguyễn tất thành",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/img-4455_1754018635.jpg",
+                    "alt": "Tặng 1 triệu thuê sớm, siêu rộng, gần IUH, đh nguyễn tất thành",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/img-4457_1754018638.jpg",
+                    "alt": "Tặng 1 triệu thuê sớm, siêu rộng, gần IUH, đh nguyễn tất thành",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/img-4458_1754018638.jpg",
+                    "alt": "Tặng 1 triệu thuê sớm, siêu rộng, gần IUH, đh nguyễn tất thành",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4fc76a8b-8aa4-46b8-afc8-c42d756d732a",
+                    "name": "Có máy lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "8a05d55a-06e6-490e-956d-1b1fb6b8e02e",
+                    "name": "Có tủ lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "4b9eaa63-fbf0-428c-8400-61071eee5e10",
+                    "name": "Có nước nóng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "3700000",
+                "depositAmount": "3700000",
+                "utilityIncluded": false
+            },
+            "rules": []
+        },
+        {
+            "id": "thanh-traquan-phu-nhuan-phong-an7134",
+            "slug": "thanh-traquan-phu-nhuan-phong-an7134",
+            "name": "NHƯỢNG PHÒNG CỰC XINH – KHÁCH CŨ ĐI NƯỚC NGOÀI, GẦN SÂN BAY, ĐH VĂN LANG, ĐH IUH ,GIỜ GIẤC TỰ DO",
+            "roomType": "boarding_house",
+            "areaSqm": "35",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ Thanh Trà",
+            "buildingVerified": false,
+            "address": "Đường Đào Duy Anh",
+            "availableRooms": 1,
+            "owner": {
+                "id": "c534b3ad-9c49-494b-ac5c-2b077a89e58b",
+                "name": "Tâm Hồ",
+                "gender": "female",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": false,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3997,
+                "districtName": "Quận Phú Nhuận",
+                "wardId": 58889,
+                "wardName": "Phường 9"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/z6863913006284-13194019de24cb71bd5e21fc362466b6_1754061108.jpg",
+                    "alt": "NHƯỢNG PHÒNG CỰC XINH – KHÁCH CŨ ĐI NƯỚC NGOÀI, GẦN SÂN BAY, ĐH VĂN LANG, ĐH IUH ,GIỜ GIẤC TỰ DO",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/z6863912986776-26995c9c35cbcca55c718df586ab633e_1754061107.jpg",
+                    "alt": "NHƯỢNG PHÒNG CỰC XINH – KHÁCH CŨ ĐI NƯỚC NGOÀI, GẦN SÂN BAY, ĐH VĂN LANG, ĐH IUH ,GIỜ GIẤC TỰ DO",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/z6863913014633-37068d9d51b48349f6017b2f459be6bb_1754061109.jpg",
+                    "alt": "NHƯỢNG PHÒNG CỰC XINH – KHÁCH CŨ ĐI NƯỚC NGOÀI, GẦN SÂN BAY, ĐH VĂN LANG, ĐH IUH ,GIỜ GIẤC TỰ DO",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/z6863913017769-22b580459465da7258aa63f3eab8c55e_1754061109.jpg",
+                    "alt": "NHƯỢNG PHÒNG CỰC XINH – KHÁCH CŨ ĐI NƯỚC NGOÀI, GẦN SÂN BAY, ĐH VĂN LANG, ĐH IUH ,GIỜ GIẤC TỰ DO",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "4fc76a8b-8aa4-46b8-afc8-c42d756d732a",
+                    "name": "Có máy lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "8a05d55a-06e6-490e-956d-1b1fb6b8e02e",
+                    "name": "Có tủ lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "4b9eaa63-fbf0-428c-8400-61071eee5e10",
+                    "name": "Có nước nóng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "0edb1852-65e3-49f2-a14a-8601fc13f479",
+                    "name": "Có bảo vệ 24/24",
+                    "category": "safety"
+                },
+                {
+                    "id": "9d14cc8e-0eca-4e83-897a-8796de3935f6",
+                    "name": "Camera an ninh",
+                    "category": "safety"
+                },
+                {
+                    "id": "62ef8b58-6611-44da-baa2-e2215419ff94",
+                    "name": "Không chung chủ",
+                    "category": "basic"
+                },
+                {
+                    "id": "a8c65cdf-22c7-4322-8071-6dd7f120e2f8",
+                    "name": "Giờ giấc tự do",
+                    "category": "basic"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                },
+                {
+                    "id": "1f64d2f1-3326-4b22-812e-1e368eb2a65c",
+                    "name": "Gần khu công nghiệp",
+                    "category": "basic"
+                },
+                {
+                    "id": "58e39fa3-bd81-4e93-8989-a1791b6e44a6",
+                    "name": "Ban công",
+                    "category": "building"
+                },
+                {
+                    "id": "2850c57a-a219-48a2-9171-f5317155c447",
+                    "name": "Sân phơi",
+                    "category": "building"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "6000000",
+                "depositAmount": "6000000",
+                "utilityIncluded": false
+            },
+            "rules": []
+        },
+        {
+            "id": "pham-thanh-thuquan-go-vap-phong-ap0648",
+            "slug": "pham-thanh-thuquan-go-vap-phong-ap0648",
+            "name": "PHÒNG TRỌ GÒ VẤP - TIỆN NGHI - MỚI XÂY NGAY ĐH VLU - IUH - DƯƠNG QUẢNG HÀM - NGUYỄN THÁI SƠN",
+            "roomType": "boarding_house",
+            "areaSqm": "28",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ Phạm Thanh Thư",
+            "buildingVerified": false,
+            "address": "Đường Dương Quảng Hàm",
+            "availableRooms": 1,
+            "owner": {
+                "id": "7280cee5-b2c0-4050-beca-31879ddde5a6",
+                "name": "Nguyễn Văn Minh",
+                "gender": "male",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": true,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2024/08/05/z5673109688952-f2ca3f863e920d3e7495052fa8bb462d_1722833416.jpg",
+                    "alt": "PHÒNG TRỌ GÒ VẤP - TIỆN NGHI - MỚI XÂY NGAY ĐH VLU - IUH - DƯƠNG QUẢNG HÀM - NGUYỄN THÁI SƠN",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2024/08/05/z5673109701593-f7bf63b73263c9a1620d1180411f7c81_1722833416.jpg",
+                    "alt": "PHÒNG TRỌ GÒ VẤP - TIỆN NGHI - MỚI XÂY NGAY ĐH VLU - IUH - DƯƠNG QUẢNG HÀM - NGUYỄN THÁI SƠN",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2024/08/05/z5673109702464-be838a772c7442b4bbefcbb352febee0_1722833417.jpg",
+                    "alt": "PHÒNG TRỌ GÒ VẤP - TIỆN NGHI - MỚI XÂY NGAY ĐH VLU - IUH - DƯƠNG QUẢNG HÀM - NGUYỄN THÁI SƠN",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2024/08/05/z5673109706329-247aad4da4122e86e91e82f8d746bbf7_1722833417.jpg",
+                    "alt": "PHÒNG TRỌ GÒ VẤP - TIỆN NGHI - MỚI XÂY NGAY ĐH VLU - IUH - DƯƠNG QUẢNG HÀM - NGUYỄN THÁI SƠN",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "ea9a7c9d-c0b8-44ed-8634-6609d283e6e3",
+                    "name": "Có WiFi",
+                    "category": "connectivity"
+                },
+                {
+                    "id": "62ef8b58-6611-44da-baa2-e2215419ff94",
+                    "name": "Không chung chủ",
+                    "category": "basic"
+                },
+                {
+                    "id": "a8c65cdf-22c7-4322-8071-6dd7f120e2f8",
+                    "name": "Giờ giấc tự do",
+                    "category": "basic"
+                },
+                {
+                    "id": "58e39fa3-bd81-4e93-8989-a1791b6e44a6",
+                    "name": "Ban công",
+                    "category": "building"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "4200000",
+                "depositAmount": "4200000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "875db0c1-bbcf-49c5-9266-dbafefb89edc",
+                    "name": "Không gây ồn sau 22h",
+                    "type": "forbidden"
+                }
+            ]
+        },
+        {
+            "id": "thao-buiquan-go-vap-phong-ap4252",
+            "slug": "thao-buiquan-go-vap-phong-ap4252",
+            "name": "Tặng 2 triệu thuê sớm - phòng rộng gần iuh Gò vấp",
+            "roomType": "boarding_house",
+            "areaSqm": "27",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ thảo bùi",
+            "buildingVerified": false,
+            "address": "Đường Tô Ngọc Vân",
+            "availableRooms": 1,
+            "owner": {
+                "id": "c534b3ad-9c49-494b-ac5c-2b077a89e58b",
+                "name": "Tâm Hồ",
+                "gender": "female",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": false,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp",
+                "wardId": 58834,
+                "wardName": "Phường 15"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/img-4428_1754021537.jpg",
+                    "alt": "Tặng 2 triệu thuê sớm - phòng rộng gần iuh Gò vấp",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/img-4429_1754021537.jpg",
+                    "alt": "Tặng 2 triệu thuê sớm - phòng rộng gần iuh Gò vấp",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/img-4430_1754021538.jpg",
+                    "alt": "Tặng 2 triệu thuê sớm - phòng rộng gần iuh Gò vấp",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/img-4431_1754021538.jpg",
+                    "alt": "Tặng 2 triệu thuê sớm - phòng rộng gần iuh Gò vấp",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "0f54046e-3343-4aac-8eb1-1f2e4b9911cf",
+                    "name": "Có gác",
+                    "category": "basic"
+                },
+                {
+                    "id": "4fc76a8b-8aa4-46b8-afc8-c42d756d732a",
+                    "name": "Có máy lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "8a05d55a-06e6-490e-956d-1b1fb6b8e02e",
+                    "name": "Có tủ lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "4b9eaa63-fbf0-428c-8400-61071eee5e10",
+                    "name": "Có nước nóng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "ea9a7c9d-c0b8-44ed-8634-6609d283e6e3",
+                    "name": "Có WiFi",
+                    "category": "connectivity"
+                },
+                {
+                    "id": "62ef8b58-6611-44da-baa2-e2215419ff94",
+                    "name": "Không chung chủ",
+                    "category": "basic"
+                },
+                {
+                    "id": "a8c65cdf-22c7-4322-8071-6dd7f120e2f8",
+                    "name": "Giờ giấc tự do",
+                    "category": "basic"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "4000000",
+                "depositAmount": "4000000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "875db0c1-bbcf-49c5-9266-dbafefb89edc",
+                    "name": "Không gây ồn sau 22h",
+                    "type": "forbidden"
+                }
+            ]
+        },
+        {
+            "id": "thao-buiquan-go-vap-phong-ap4130",
+            "slug": "thao-buiquan-go-vap-phong-ap4130",
+            "name": "Trọ full đồ tại Gò vấp gần đh Nguyễn Tất Thành",
+            "roomType": "boarding_house",
+            "areaSqm": "23",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ thảo bùi",
+            "buildingVerified": false,
+            "address": "Đường Tô Ngọc Vân",
+            "availableRooms": 1,
+            "owner": {
+                "id": "c534b3ad-9c49-494b-ac5c-2b077a89e58b",
+                "name": "Tâm Hồ",
+                "gender": "female",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": false,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp",
+                "wardId": 58834,
+                "wardName": "Phường 15"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/9673297602d3cef3a3d0fbb916697e46_1754021816.jpg",
+                    "alt": "Trọ full đồ tại Gò vấp gần đh Nguyễn Tất Thành",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/e33b580c4e497cbdcb5852c7d87eed39_1754021816.jpg",
+                    "alt": "Trọ full đồ tại Gò vấp gần đh Nguyễn Tất Thành",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/7f9b9ce2d2029a2933642990994ec902_1754021817.jpg",
+                    "alt": "Trọ full đồ tại Gò vấp gần đh Nguyễn Tất Thành",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/08/01/085f1eb2f43e0779abb6a399324767a3_1754021817.jpg",
+                    "alt": "Trọ full đồ tại Gò vấp gần đh Nguyễn Tất Thành",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "4fc76a8b-8aa4-46b8-afc8-c42d756d732a",
+                    "name": "Có máy lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "8a05d55a-06e6-490e-956d-1b1fb6b8e02e",
+                    "name": "Có tủ lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "4b9eaa63-fbf0-428c-8400-61071eee5e10",
+                    "name": "Có nước nóng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "3400000",
+                "depositAmount": "3400000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "875db0c1-bbcf-49c5-9266-dbafefb89edc",
+                    "name": "Không gây ồn sau 22h",
+                    "type": "forbidden"
+                }
+            ]
+        },
+        {
+            "id": "pham-ngoc-phiquan-go-vap-phong-ap5507",
+            "slug": "pham-ngoc-phiquan-go-vap-phong-ap5507",
+            "name": "PHÒNG TÒA MỚI 3TR Kh GÁC GIỜ GIẤC TỰ DO,Ở 2-3 NGƯỜI DƯƠNG QUẢNG HÀM GÒ VẤP",
+            "roomType": "boarding_house",
+            "areaSqm": "20",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ Phạm Ngọc Phi",
+            "buildingVerified": false,
+            "address": "Đường Dương Quảng Hàm",
+            "availableRooms": 1,
+            "owner": {
+                "id": "e098e82b-1939-4671-ba7a-b32f7a5109fc",
+                "name": "Lê Văn Tuấn",
+                "gender": "male",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": true,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3993,
+                "districtName": "Quận Gò Vấp",
+                "wardId": 58836,
+                "wardName": "Phường 6"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/05/15/z6602979024980-989dbd4c4ee60bf75f712f4a30a044ab_1747282450.jpg",
+                    "alt": "PHÒNG TÒA MỚI 3TR Kh GÁC GIỜ GIẤC TỰ DO,Ở 2-3 NGƯỜI DƯƠNG QUẢNG HÀM GÒ VẤP",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/05/15/z6602979148770-49594e7bc5f78d10afb8335ab3ec5397_1747282462.jpg",
+                    "alt": "PHÒNG TÒA MỚI 3TR Kh GÁC GIỜ GIẤC TỰ DO,Ở 2-3 NGƯỜI DƯƠNG QUẢNG HÀM GÒ VẤP",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/05/15/z6602979101511-b75174a7de482ff297fb20a92ec42f44_1747282468.jpg",
+                    "alt": "PHÒNG TÒA MỚI 3TR Kh GÁC GIỜ GIẤC TỰ DO,Ở 2-3 NGƯỜI DƯƠNG QUẢNG HÀM GÒ VẤP",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/05/15/z6602979199925-ec0f355feca6f93da3263655d47c44b9_1747282471.jpg",
+                    "alt": "PHÒNG TÒA MỚI 3TR Kh GÁC GIỜ GIẤC TỰ DO,Ở 2-3 NGƯỜI DƯƠNG QUẢNG HÀM GÒ VẤP",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "0f54046e-3343-4aac-8eb1-1f2e4b9911cf",
+                    "name": "Có gác",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "4b9eaa63-fbf0-428c-8400-61071eee5e10",
+                    "name": "Có nước nóng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "ea9a7c9d-c0b8-44ed-8634-6609d283e6e3",
+                    "name": "Có WiFi",
+                    "category": "connectivity"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "3000000",
+                "depositAmount": "3000000",
+                "utilityIncluded": false
+            },
+            "rules": []
+        },
+        {
+            "id": "kieu-sheepiequan-phu-nhuan-phong-30",
+            "slug": "kieu-sheepiequan-phu-nhuan-phong-30",
+            "name": "Cho thuê phòng 30m2 full nội thất, ban công, máy giặt riêng - ngay Phan Xích Long, Phú Nhuận",
+            "roomType": "boarding_house",
+            "areaSqm": "35",
+            "maxOccupancy": 2,
+            "isVerified": false,
+            "buildingName": "Nhà trọ Kiều Sheepie",
+            "buildingVerified": false,
+            "address": "Đường Thích Quảng Đức",
+            "availableRooms": 1,
+            "owner": {
+                "id": "7280cee5-b2c0-4050-beca-31879ddde5a6",
+                "name": "Nguyễn Văn Minh",
+                "gender": "male",
+                "email": "",
+                "phone": "",
+                "verifiedPhone": true,
+                "verifiedEmail": true,
+                "verifiedIdentity": false,
+                "totalBuildings": 0,
+                "totalRoomInstances": 0
+            },
+            "location": {
+                "provinceId": 365,
+                "provinceName": "Thành phố Hồ Chí Minh",
+                "districtId": 3997,
+                "districtName": "Quận Phú Nhuận",
+                "wardId": 58887,
+                "wardName": "Phường 4"
+            },
+            "images": [
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/05/30/img-1738_1748590669.jpg",
+                    "alt": "Cho thuê phòng 30m2 full nội thất, ban công, máy giặt riêng - ngay Phan Xích Long, Phú Nhuận",
+                    "isPrimary": true,
+                    "sortOrder": 0
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/05/30/img-1737_1748590669.jpg",
+                    "alt": "Cho thuê phòng 30m2 full nội thất, ban công, máy giặt riêng - ngay Phan Xích Long, Phú Nhuận",
+                    "isPrimary": false,
+                    "sortOrder": 1
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/05/30/img-1736_1748590670.jpg",
+                    "alt": "Cho thuê phòng 30m2 full nội thất, ban công, máy giặt riêng - ngay Phan Xích Long, Phú Nhuận",
+                    "isPrimary": false,
+                    "sortOrder": 2
+                },
+                {
+                    "url": "https://pt123.cdn.static123.com/images/thumbs/900x600/fit/2025/05/30/img-1735_1748590670.jpg",
+                    "alt": "Cho thuê phòng 30m2 full nội thất, ban công, máy giặt riêng - ngay Phan Xích Long, Phú Nhuận",
+                    "isPrimary": false,
+                    "sortOrder": 3
+                }
+            ],
+            "amenities": [
+                {
+                    "id": "4d39abb9-305d-4484-814a-8308177897f0",
+                    "name": "Đầy đủ nội thất",
+                    "category": "basic"
+                },
+                {
+                    "id": "4fc76a8b-8aa4-46b8-afc8-c42d756d732a",
+                    "name": "Có máy lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "8a05d55a-06e6-490e-956d-1b1fb6b8e02e",
+                    "name": "Có tủ lạnh",
+                    "category": "basic"
+                },
+                {
+                    "id": "3e7c7e41-ec45-43f0-8b9f-27736f9f067c",
+                    "name": "Có kệ bếp",
+                    "category": "kitchen"
+                },
+                {
+                    "id": "773b5075-370f-4a59-976b-3c6f0e9af1a3",
+                    "name": "Vệ sinh riêng",
+                    "category": "bathroom"
+                },
+                {
+                    "id": "fe4a62b8-adc3-4991-a058-6680712cf4ab",
+                    "name": "Có máy giặt",
+                    "category": "building"
+                },
+                {
+                    "id": "5128d8df-cd8d-4c5f-bf80-5feac199a671",
+                    "name": "Có thang máy",
+                    "category": "building"
+                },
+                {
+                    "id": "050d6b15-6133-43c6-af15-849f08848acc",
+                    "name": "Có hầm để xe",
+                    "category": "building"
+                },
+                {
+                    "id": "0edb1852-65e3-49f2-a14a-8601fc13f479",
+                    "name": "Có bảo vệ 24/24",
+                    "category": "safety"
+                },
+                {
+                    "id": "62ef8b58-6611-44da-baa2-e2215419ff94",
+                    "name": "Không chung chủ",
+                    "category": "basic"
+                },
+                {
+                    "id": "a8c65cdf-22c7-4322-8071-6dd7f120e2f8",
+                    "name": "Giờ giấc tự do",
+                    "category": "basic"
+                },
+                {
+                    "id": "b2af4ff3-6528-4e85-a277-a13d2e993f7e",
+                    "name": "Gần trường học",
+                    "category": "basic"
+                },
+                {
+                    "id": "5b6f9b44-a1b2-4ca8-98b6-a105259056ff",
+                    "name": "Gần chợ/siêu thị",
+                    "category": "basic"
+                },
+                {
+                    "id": "58e39fa3-bd81-4e93-8989-a1791b6e44a6",
+                    "name": "Ban công",
+                    "category": "building"
+                }
+            ],
+            "costs": [
+                {
+                    "id": "a9a14465-6033-4465-8d78-ce9bf6cd9669",
+                    "name": "Internet",
+                    "value": "0",
+                    "category": "utility"
+                },
+                {
+                    "id": "dc08edbb-4407-4441-961c-cf1445713d6d",
+                    "name": "Gửi xe máy",
+                    "value": "0",
+                    "category": "parking"
+                }
+            ],
+            "pricing": {
+                "basePriceMonthly": "5500000",
+                "depositAmount": "5500000",
+                "utilityIncluded": false
+            },
+            "rules": [
+                {
+                    "id": "875db0c1-bbcf-49c5-9266-dbafefb89edc",
+                    "name": "Không gây ồn sau 22h",
+                    "type": "forbidden"
+                }
+            ]
+        }
+    ],
+    "meta": {
+        "page": 1,
+        "limit": 20,
+        "total": 77,
+        "totalPages": 4,
+        "hasNext": true,
+        "hasPrev": false,
+        "itemCount": 20
+    },
+    "seo": {
+        "title": "Tìm phòng trọ \"iuh\" | Trustay",
+        "description": "Tìm phòng trọ chất lượng cao. Hàng ngàn phòng trọ đầy đủ tiện nghi, giá tốt nhất. Đặt phòng ngay!",
+        "keywords": "phòng trọ, phòng trọ, nhà trọ, thuê phòng, đầy đủ tiện nghi, chất lượng cao"
+    },
+    "breadcrumb": {
+        "items": [
+            {
+                "title": "Trang chủ",
+                "path": "/"
+            },
+            {
+                "title": "Tìm phòng trọ",
+                "path": "/rooms"
+            },
+            {
+                "title": "\"iuh\"",
+                "path": "/rooms?search=iuh"
+            }
+        ]
+    }
+}

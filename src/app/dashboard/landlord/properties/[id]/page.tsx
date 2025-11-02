@@ -36,6 +36,18 @@ export default function BuildingDetailPage() {
   const [building, setBuilding] = useState<BuildingType | null>(null)
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Helper function to convert Decimal to number
+  const decimalToNumber = (value: number | string | { s: number; e: number; d: number[] } | undefined): number => {
+    if (!value) return 0;
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') return Number.parseFloat(value) || 0;
+    // Convert Decimal object to number
+    const sign = value.s === 1 ? 1 : -1;
+    const digits = value.d.join('');
+    const num = Number.parseFloat(`${digits}e${value.e - digits.length + 1}`);
+    return sign * num;
+  }
   const [roomsLoading, setRoomsLoading] = useState(false)
   const [roomsLoaded, setRoomsLoaded] = useState(false) // Track if rooms have been loaded
   const [currentPage, setCurrentPage] = useState(1)
@@ -102,6 +114,10 @@ export default function BuildingDetailPage() {
             availableCount += room.statusCounts.available
             occupiedCount += room.statusCounts.occupied
             maintenanceCount += room.statusCounts.maintenance
+          } else if (room.availableRooms !== undefined && room.totalRooms) {
+            // Calculate from availableRooms if statusCounts is not available
+            availableCount += room.availableRooms
+            occupiedCount += room.totalRooms - room.availableRooms
           }
         }
 
@@ -447,13 +463,18 @@ export default function BuildingDetailPage() {
                             {ROOM_TYPE_LABELS[room.roomType.toUpperCase() as keyof typeof ROOM_TYPE_LABELS] || room.roomType}
                           </Badge>
                         </TableCell>
-                        <TableCell>{room.areaSqm}m²</TableCell>
+                        <TableCell>{decimalToNumber(room.areaSqm)}m²</TableCell>
                         <TableCell>{room.maxOccupancy} người</TableCell>
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-semibold">{room.totalRooms}</span>
                             <span className="text-xs text-gray-500">
-                              {room.statusCounts?.available || 0} trống / {room.statusCounts?.occupied || 0} đã thuê
+                              {room.statusCounts 
+                                ? `${room.statusCounts.available || 0} trống / ${room.statusCounts.occupied || 0} đã thuê`
+                                : room.availableRooms !== undefined
+                                ? `${room.availableRooms} trống / ${room.totalRooms - room.availableRooms} đã thuê`
+                                : 'N/A'
+                              }
                             </span>
                           </div>
                         </TableCell>

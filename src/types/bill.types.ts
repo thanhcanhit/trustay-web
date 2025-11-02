@@ -36,6 +36,13 @@ export interface MeteredCostToInput {
 	roomCostId: string;
 	name: string;
 	unit: string;
+	unitPrice: number;
+	currency: string;
+	currentReading: number;
+	lastReading: number;
+	lastMonthReading: number;
+	requiresInput: boolean;
+	notes?: string;
 }
 
 export interface Bill {
