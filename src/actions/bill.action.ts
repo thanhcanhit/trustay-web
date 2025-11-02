@@ -1,4 +1,4 @@
-'use server';
+//'use server';
 
 import { createServerApiCall } from '@/lib/api-client';
 import type {
@@ -12,7 +12,6 @@ import type {
 	PreviewBillForBuildingRequest,
 	UpdateBillRequest,
 	UpdateBillWithMeterDataRequest,
-	UpdateMeterDataRequest,
 } from '@/types/bill.types';
 import { extractErrorMessage } from '@/utils/api-error-handler';
 
@@ -223,30 +222,6 @@ export const markBillAsPaid = async (
 	}
 };
 
-// Update meter data (Landlord only)
-export const updateMeterData = async (
-	id: string,
-	data: UpdateMeterDataRequest,
-	token?: string,
-): Promise<ApiResult<{ data: Bill }>> => {
-	try {
-		const response = await apiCall<{ data: Bill }>(
-			`/api/bills/${id}/meter-data`,
-			{
-				method: 'POST',
-				data,
-			},
-			token,
-		);
-		return { success: true, data: normalizeEntityResponse<Bill>(response) };
-	} catch (error) {
-		return {
-			success: false,
-			error: extractErrorMessage(error, 'Không thể cập nhật dữ liệu đồng hồ'),
-		};
-	}
-};
-
 // Generate monthly bills for building (Landlord only)
 export const generateMonthlyBillsForBuilding = async (
 	data: GenerateMonthlyBillsRequest,
@@ -310,7 +285,7 @@ export const updateBillWithMeterData = async (
 		const response = await apiCall<{ data: Bill }>(
 			'/api/bills/update-with-meter-data',
 			{
-				method: 'POST',
+				method: 'PATCH',
 				data,
 			},
 			token,

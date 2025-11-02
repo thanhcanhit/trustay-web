@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronRight,
   Shield,
+  CreditCard,
 } from "lucide-react"
 import { useUserStore } from "@/stores/userStore"
 
@@ -62,6 +63,12 @@ const profileItems: ProfileSidebarItem[] = [
     href: "/profile/saved",
     icon: Heart,
     disabled: true
+  },
+  {
+    title: "Thanh toán",
+    href: "/profile/payment",
+    icon: CreditCard,
+    disabled: false
   },
   {
     title: "Thông báo",

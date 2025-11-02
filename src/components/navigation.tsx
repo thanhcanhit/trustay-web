@@ -17,6 +17,7 @@ import { getRoomTypeOptions } from "@/utils/room-types"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { SizingImage } from "@/components/sizing-image"
 import { NotificationBell } from "@/components/ui/notification-bell"
+import Image from "next/image"
 // navigation-menu components are not used here
 
 import {
@@ -27,7 +28,6 @@ import {
   Search,
   Home
 } from "lucide-react"
-import Image from "next/image"
 import { Input } from "./ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuPortal, DropdownMenuTrigger } from "./ui/dropdown-menu"
 

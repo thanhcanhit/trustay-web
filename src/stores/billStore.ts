@@ -11,7 +11,6 @@ import {
 	previewBillsForBuilding,
 	updateBill,
 	updateBillWithMeterData,
-	updateMeterData,
 } from '@/actions/bill.action';
 import { TokenManager } from '@/lib/api-client';
 import type {
@@ -25,7 +24,6 @@ import type {
 	PreviewBillForBuildingRequest,
 	UpdateBillRequest,
 	UpdateBillWithMeterDataRequest,
-	UpdateMeterDataRequest,
 } from '@/types/bill.types';
 
 interface BillState {
@@ -69,7 +67,6 @@ interface BillState {
 	update: (id: string, data: UpdateBillRequest) => Promise<boolean>;
 	remove: (id: string) => Promise<boolean>;
 	markPaid: (id: string) => Promise<boolean>;
-	updateMeter: (id: string, data: UpdateMeterDataRequest) => Promise<boolean>;
 	updateWithMeterData: (data: UpdateBillWithMeterDataRequest) => Promise<boolean>;
 	preview: (data: PreviewBillForBuildingRequest) => Promise<boolean>;
 	generateMonthlyBills: (
@@ -304,36 +301,6 @@ export const useBillStore = create<BillState>((set, get) => ({
 		}
 	},
 
-	// Update meter data
-	updateMeter: async (id, data) => {
-		set({ updatingMeter: true, meterError: null });
-		try {
-			const token = TokenManager.getAccessToken();
-			const result = await updateMeterData(id, data, token);
-			if (result.success) {
-				set({
-					current: result.data.data,
-					updatingMeter: false,
-				});
-				// Reload bills list
-				await get().loadBills();
-				return true;
-			} else {
-				set({
-					meterError: result.error,
-					updatingMeter: false,
-				});
-				return false;
-			}
-		} catch (error) {
-			set({
-				meterError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
-				updatingMeter: false,
-			});
-			return false;
-		}
-	},
-
 	// Preview bills for building
 	preview: async (data) => {
 		set({ previewing: true, previewError: null });
@@ -434,8 +401,7 @@ export const useBillStore = create<BillState>((set, get) => ({
 					current: result.data.data,
 					updatingMeter: false,
 				});
-				// Reload bills list
-				await get().loadBills();
+				// Note: Bills will be reloaded by the component
 				return true;
 			} else {
 				set({

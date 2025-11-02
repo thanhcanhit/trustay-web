@@ -188,9 +188,9 @@ export default function ContractPreviewPage() {
         </div>
 
         {/* Content Area - Two Column Layout */}
-        <div className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="flex-1 bg-gray-50">
           <div className="px-6 py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
               {/* Left Column - Preview (2/3 width) */}
               <div className="lg:col-span-2">
                 {/* Loading State */}
@@ -215,10 +215,10 @@ export default function ContractPreviewPage() {
 
                 {/* Preview Image */}
                 {previewUrl && !loading && !error && (
-                  <div className="bg-white rounded-lg shadow-sm border p-6">
+                  <div className="bg-white rounded-lg p-6">
                     <div className="flex items-start justify-center">
                       <div
-                        className="bg-white shadow-lg rounded-md overflow-hidden transition-all duration-200 border"
+                        className="bg-white overflow-hidden transition-all duration-200"
                         style={{
                           width: `${zoom}%`,
                           maxWidth: '100%',
@@ -240,21 +240,11 @@ export default function ContractPreviewPage() {
                     </div>
                   </div>
                 )}
-
-                {/* Debug Info */}
-                {process.env.NODE_ENV === 'development' && previewUrl && (
-                  <div className="text-xs text-gray-500 mt-4 text-center space-y-1">
-                    <div>Loading: {loading ? 'Yes' : 'No'}</div>
-                    <div>Has URL: {previewUrl ? 'Yes' : 'No'}</div>
-                    <div>Zoom: {zoom}%</div>
-                    <div>Error: {error || 'None'}</div>
-                  </div>
-                )}
               </div>
 
               {/* Right Column - Signing Section (1/3 width) */}
               <div className="lg:col-span-1">
-                <div className="sticky top-24">
+                <div className="sticky top-10">
                   {contract && (
                     <ContractSigningWorkflow
                       contract={contract}

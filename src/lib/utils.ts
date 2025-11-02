@@ -63,21 +63,3 @@ export function getImageUrl(imagePath: string, options: ImageUrlOptions = {}): s
 	// Fallback: return original path with base URL
 	return `${baseUrl}/${cleanPath}`;
 }
-
-export function getOptimizedImageUrl(
-	imagePath: string,
-	context: 'listing' | 'detail' | 'thumbnail' | 'gallery' = 'listing',
-): string {
-	const sizeMap: Record<typeof context, ImageSize> = {
-		thumbnail: '128x128',
-		listing: '256x256',
-		detail: '512x512',
-		gallery: '1024x1024',
-	};
-
-	return getImageUrl(imagePath, {
-		size: sizeMap[context],
-		format: 'webp',
-		quality: context === 'thumbnail' ? 80 : 90,
-	});
-}
