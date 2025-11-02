@@ -22,7 +22,10 @@ export function getImageUrl(imagePath: string, options: ImageUrlOptions = {}): s
 	}
 
 	const { size = 'original', quality, format } = options;
-	const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.trustay.life';
+	const baseUrl =
+		process.env.NEXT_PUBLIC_IMAGE_BASE_PATH ||
+		process.env.NEXT_PUBLIC_API_URL ||
+		'https://api.trustay.life';
 
 	// Clean the image path (remove leading slash if present)
 	const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;

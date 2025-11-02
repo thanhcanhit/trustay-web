@@ -1,4 +1,4 @@
-'use server';
+//'use server';
 
 import { createServerApiCall } from '@/lib/api-client';
 import type {
@@ -274,6 +274,28 @@ export const renewRental = async (
 		return {
 			success: false,
 			error: extractErrorMessage(error, 'Không thể gia hạn hợp đồng thuê'),
+		};
+	}
+};
+
+// Delete rental (remove member from rental)
+export const deleteRental = async (
+	id: string,
+	token?: string,
+): Promise<ApiResult<{ message: string }>> => {
+	try {
+		const response = await apiCall<{ message: string }>(
+			`/api/rentals/${id}`,
+			{
+				method: 'DELETE',
+			},
+			token,
+		);
+		return { success: true, data: response };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể xóa thành viên khỏi hợp đồng'),
 		};
 	}
 };

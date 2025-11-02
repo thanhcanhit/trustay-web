@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,9 +19,23 @@ import {
   Phone,
   User,
   AlertCircle,
+  Users,
+  Trash2,
 } from "lucide-react"
 import { useRentalStore } from "@/stores/rentalStore"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { deleteRental } from "@/actions/rental.action"
+import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const STATUS_COLORS = {
   active: 'bg-green-100 text-green-800',
@@ -49,11 +63,40 @@ export default function RentalDetailPage() {
     loadById,
   } = useRentalStore()
 
+  const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null)
+  const [memberToDelete, setMemberToDelete] = useState<{ rentalId: string; name: string } | null>(null)
+
   useEffect(() => {
     if (rentalId) {
       loadById(rentalId)
     }
   }, [rentalId, loadById])
+
+  const handleDeleteMember = async (memberRentalId: string, memberName: string) => {
+    setMemberToDelete({ rentalId: memberRentalId, name: memberName })
+  }
+
+  const confirmDeleteMember = async () => {
+    if (!memberToDelete) return
+
+    setDeletingMemberId(memberToDelete.rentalId)
+    try {
+      const result = await deleteRental(memberToDelete.rentalId)
+      
+      if (result.success) {
+        toast.success(`Đã xóa thành viên ${memberToDelete.name} khỏi hợp đồng`)
+        // Reload rental data
+        loadById(rentalId)
+      } else {
+        toast.error(result.error || 'Không thể xóa thành viên')
+      }
+    } catch {
+      toast.error('Có lỗi xảy ra khi xóa thành viên')
+    } finally {
+      setDeletingMemberId(null)
+      setMemberToDelete(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -418,7 +461,87 @@ export default function RentalDetailPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Members List */}
+          {rental.members && rental.members.length > 0 && (
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Danh sách thành viên ({rental.members.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {rental.members.map((member) => (
+                    <div
+                      key={member.rentalId}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <User className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {member.firstName} {member.lastName}
+                          </p>
+                          <div className="flex items-center gap-1 text-sm text-gray-500">
+                            <Mail className="h-3 w-3" />
+                            {member.email}
+                          </div>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Rental ID: {member.rentalId.slice(-8)}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteMember(member.rentalId, `${member.firstName} ${member.lastName}`)}
+                        disabled={deletingMemberId === member.rentalId}
+                      >
+                        {deletingMemberId === member.rentalId ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Đang xóa...
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Xóa
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!memberToDelete} onOpenChange={() => setMemberToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận xóa thành viên</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc chắn muốn xóa <strong>{memberToDelete?.name}</strong> khỏi hợp đồng này không? 
+                Hành động này không thể hoàn tác.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Hủy</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDeleteMember}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Xóa thành viên
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   )
