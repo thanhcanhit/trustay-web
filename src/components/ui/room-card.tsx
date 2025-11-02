@@ -11,7 +11,7 @@ import {
   Zap} from 'lucide-react';
 import type { RoomListing } from '@/types/types';
 import { Badge } from './badge';
-import { getOptimizedImageUrl } from '@/lib/utils';
+// import { getOptimizedImageUrl } from '@/lib/utils';
 import { getRoomTypeDisplayName } from '@/utils/room-types';
 
 interface RoomCardProps {
@@ -87,7 +87,7 @@ export function RoomCard({
       {/* Image Container */}
       <div className="relative h-40">
         <Image
-          src={imageError ? "/images/error-image.jpg" : getOptimizedImageUrl(room.images?.[0]?.url || '', 'listing')}
+          src={imageError ? "/images/error-image.jpg" : room.images?.[0]?.url}
           alt={room.name || "Room image"}
           fill
           className="object-cover"

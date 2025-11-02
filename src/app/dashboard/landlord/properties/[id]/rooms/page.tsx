@@ -198,7 +198,12 @@ export default function BuildingRoomsPage() {
                           <div className="flex flex-col">
                             <span className="font-semibold">{room.totalRooms}</span>
                             <span className="text-xs text-gray-500">
-                              {room.statusCounts?.available || 0} trống / {room.statusCounts?.occupied || 0} đã thuê
+                              {room.statusCounts 
+                                ? `${room.statusCounts.available || 0} trống / ${room.statusCounts.occupied || 0} đã thuê`
+                                : room.availableRooms !== undefined
+                                ? `${room.availableRooms} trống / ${room.totalRooms - room.availableRooms} đã thuê`
+                                : 'N/A'
+                              }
                             </span>
                           </div>
                         </TableCell>

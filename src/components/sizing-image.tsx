@@ -20,7 +20,7 @@ interface SizingImageProps extends Omit<ImageProps, 'src' | 'width' | 'height'> 
   fill?: boolean
 }
 
-const parseImagePath = (src: string, size: SrcSize): string => {
+const parseImagePath = (src: string): string => {
   // Nếu là full URL thì giữ nguyên
   if (/^https?:\/\//i.test(src)) {
     return src
@@ -65,17 +65,17 @@ const parseImagePath = (src: string, size: SrcSize): string => {
   // Tạo URL cuối cùng - luôn sử dụng basePath và chỉ thêm size + fileName
   if (basePath) {
     // Luôn tạo URL với format: basePath/size/fileName
-    return `${basePath}/${size}/${fileName}`
+    return `${basePath}/images/${fileName}`
   } else {
     // Fallback nếu không có basePath
-    return `${size}/${fileName}`
+    return `/images/${fileName}`
   }
 }
 
 // Function để tạo fallback URLs
 const createFallbackUrls = (src: string, size: SrcSize): string[] => {
   const fallbackSizes = FALLBACK_SIZES[size] || []
-  return fallbackSizes.map(fallbackSize => parseImagePath(src, fallbackSize))
+  return fallbackSizes.map(fallbackSize => parseImagePath(src))
 }
 
 const getDimensions = (size: SrcSize): { width: number; height: number } => {
@@ -93,7 +93,7 @@ export const SizingImage: React.FC<SizingImageProps> = ({
   ...restProps
 }) => {
   const { parsedSrc, dimensions, fallbackUrls } = useMemo(() => {
-    const parsedSrc = parseImagePath(src, srcSize)
+    const parsedSrc = parseImagePath(src)
     const fallbackUrls = createFallbackUrls(src, srcSize)
     const dimensions = width && height 
       ? { width, height }
