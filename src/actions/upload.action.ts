@@ -100,7 +100,10 @@ export const uploadBulkImages = async (
  * @returns Full URL to the image
  */
 export const getImageUrl = async (imagePath: string): Promise<string> => {
-	const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+	const baseUrl =
+		process.env.NEXT_PUBLIC_IMAGE_BASE_PATH ||
+		process.env.NEXT_PUBLIC_API_URL ||
+		'http://localhost:3000';
 	// Remove leading slash if present to avoid double slashes
 	const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
 	return `${baseUrl}/${cleanPath}`;

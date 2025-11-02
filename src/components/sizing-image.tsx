@@ -75,7 +75,7 @@ const parseImagePath = (src: string): string => {
 // Function để tạo fallback URLs
 const createFallbackUrls = (src: string, size: SrcSize): string[] => {
   const fallbackSizes = FALLBACK_SIZES[size] || []
-  return fallbackSizes.map(fallbackSize => parseImagePath(src))
+  return fallbackSizes.map(() => parseImagePath(src))
 }
 
 const getDimensions = (size: SrcSize): { width: number; height: number } => {
