@@ -5,6 +5,14 @@ export type { RentalStatus };
 
 // ============= RENTAL TYPES =============
 
+export interface RentalMember {
+	tenantId: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	rentalId: string;
+}
+
 export interface Rental {
 	id: string;
 	roomBookingId?: string;
@@ -36,6 +44,7 @@ export interface Rental {
 		moveInDate: string;
 		moveOutDate?: string | null;
 	};
+	members?: RentalMember[];
 
 	// Deprecated/backward compatibility fields
 	contract?: unknown;

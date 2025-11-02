@@ -677,3 +677,125 @@ export const landlordRejectApplication = async (
 		};
 	}
 };
+
+// ============================================================================
+// ROOMMATE INVITATION FLOW
+// ============================================================================
+
+// Types for Invitation
+export interface AddRoommateDirectlyRequest {
+	email?: string;
+	phone?: string;
+	userId?: string;
+	moveInDate?: string; // YYYY-MM-DD format
+	intendedStayMonths?: number;
+}
+
+export interface GenerateInviteLinkResponse {
+	inviteLink: string;
+	token: string;
+	rentalId: string;
+	roommateSeekingPostId?: string;
+	expiresAt: string;
+}
+
+export interface AcceptInviteRequest {
+	token: string;
+	moveInDate: string; // YYYY-MM-DD format
+	intendedStayMonths?: number;
+}
+
+// Flow 1: Add Roommate Directly
+// Thêm người vào phòng trực tiếp bằng email/phone → Tạo rental ngay
+export const addRoommateDirectly = async (
+	postId: string,
+	data: AddRoommateDirectlyRequest,
+	token?: string,
+): Promise<ApiResult<void>> => {
+	try {
+		await apiCall<void>(
+			`/api/roommate-applications/add-roommate`,
+			{
+				method: 'POST',
+				data,
+			},
+			token,
+		);
+
+		return {
+			success: true,
+			data: undefined,
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(
+				error,
+				'Không thể thêm người ở ghép. Vui lòng kiểm tra lại thông tin.',
+			),
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
+	}
+};
+
+// Flow 2: Generate Invite Link
+// Tenant tạo invite link để chia sẻ với người khác
+export const generateInviteLink = async (
+	token?: string,
+): Promise<ApiResult<GenerateInviteLinkResponse>> => {
+	try {
+		const response = await apiCall<GenerateInviteLinkResponse>(
+			'/api/roommate-applications/generate-invite-link',
+			{
+				method: 'POST',
+			},
+			token,
+		);
+
+		return {
+			success: true,
+			data: response,
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(
+				error,
+				'Không thể tạo liên kết mời. Bạn cần có rental active để tạo link mời.',
+			),
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
+	}
+};
+
+// Flow 2: Accept Invite
+// Người nhận link accept invite và tạo application
+export const acceptInvite = async (
+	data: AcceptInviteRequest,
+	token?: string,
+): Promise<ApiResult<RoommateApplication>> => {
+	try {
+		const response = await apiCall<RoommateApplication>(
+			'/api/roommate-applications/accept-invite',
+			{
+				method: 'POST',
+				data,
+			},
+			token,
+		);
+
+		return {
+			success: true,
+			data: response,
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(
+				error,
+				'Không thể chấp nhận lời mời. Link có thể đã hết hạn hoặc không hợp lệ.',
+			),
+			status: error instanceof AxiosError ? error.response?.status : undefined,
+		};
+	}
+};

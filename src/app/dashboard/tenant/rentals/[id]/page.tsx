@@ -24,7 +24,8 @@ import {
   XCircle,
   Wrench,
   ExternalLink,
-  ImageIcon
+  ImageIcon,
+  Users
 } from "lucide-react"
 import { useRentalStore } from "@/stores/rentalStore"
 import { useRoomStore } from "@/stores/roomStore"
@@ -458,6 +459,45 @@ function RentalDetailContent() {
                       </a>
                     </div>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Roommates/Members Information */}
+          {rental.members && rental.members.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Người ở cùng ({rental.members.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {rental.members.map((member, index) => (
+                    <div key={member.tenantId} className="p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">
+                          {member.lastName} {member.firstName}
+                        </span>
+                        <Badge variant="secondary" className="text-xs">
+                          Thành viên {index + 1}
+                        </Badge>
+                      </div>
+                      {member.email && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Mail className="h-3 w-3" />
+                          <a
+                            href={`mailto:${member.email}`}
+                            className="text-blue-600 hover:underline"
+                          >
+                            {member.email}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>

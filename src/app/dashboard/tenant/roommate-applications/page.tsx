@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, MessageSquare, Check, X, Calendar, Clock, User, Briefcase, Phone } from "lucide-react"
+import { Search, MessageSquare, Check, X, Calendar, Clock, User, Briefcase, Phone, UserPlus } from "lucide-react"
 import { useRoommateApplicationsStore } from "@/stores/roommate-applications.store"
 import { useChatStore } from "@/stores/chat.store"
 import { useUserStore } from "@/stores/userStore"
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
+import { AddRoommateDialog } from "@/components/roommate/AddRoommateDialog"
 
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -99,6 +100,9 @@ export default function RoommateApplicationsPage() {
 
   // Active tab
   const [activeTab, setActiveTab] = useState('received')
+
+  // Add roommate dialog
+  const [addRoommateDialogOpen, setAddRoommateDialogOpen] = useState(false)
 
   // Set current user ID for chat
   useEffect(() => {
@@ -270,12 +274,24 @@ export default function RoommateApplicationsPage() {
                 />
               </div>
 
-              <Button
-                variant="outline"
-                onClick={() => fetchApplicationsForMyPosts({ page: receivedPage, limit: 12 })}
-              >
-                Làm mới
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="default"
+                  onClick={() => {
+                      setAddRoommateDialogOpen(true)
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Mời bạn trực tiếp
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => fetchApplicationsForMyPosts({ page: receivedPage, limit: 12 })}
+                >
+                  Làm mới
+                </Button>
+              </div>
             </div>
 
             {error && (
@@ -673,6 +689,15 @@ export default function RoommateApplicationsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Roommate Dialog */}
+      <AddRoommateDialog
+        open={addRoommateDialogOpen}
+        onOpenChange={setAddRoommateDialogOpen}
+        onSuccess={() => {
+          fetchApplicationsForMyPosts({ page: receivedPage, limit: 12 })
+        }}
+      />
     </DashboardLayout>
   )
 }

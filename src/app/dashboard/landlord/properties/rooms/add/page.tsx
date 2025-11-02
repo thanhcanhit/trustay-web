@@ -864,7 +864,7 @@ function AddRoomPageContent() {
 
                 <Separator />
 
-                                 {/* Amenities */}
+                  {/* Amenities */}
                  <div>
                    <h4 className="font-medium mb-4">Tiện nghi</h4>
                    <AmenityGrid
@@ -908,20 +908,6 @@ function AddRoomPageContent() {
                 </div>
 
                 <Separator />
-
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-start space-x-2">
-                    <div className="text-yellow-600 mt-0.5">ℹ️</div>
-                    <div>
-                      <h5 className="font-medium text-yellow-800 mb-1">Tùy chọn</h5>
-                      <p className="text-sm text-yellow-700">
-                        Bạn có thể thêm hình ảnh để minh họa cho loại phòng này. 
-                        Tuy nhiên, hình ảnh sẽ không được lưu vào hệ thống vì endpoint chưa xử lý dữ liệu này.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
                 <ImageUploadWithApi
                   value={formData.images || []}
                   onChange={(images) => updateFormData('images', images)}

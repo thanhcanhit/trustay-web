@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Home, Calendar, DollarSign, MapPin, Loader2, AlertCircle, ChevronRight, Building2, Phone, Mail, ExternalLink, CalendarCheck } from "lucide-react"
+import { Home, Calendar, DollarSign, MapPin, Loader2, AlertCircle, ChevronRight, Building2, Phone, Mail, ExternalLink, CalendarCheck, Link2 } from "lucide-react"
 import { useRentalStore } from "@/stores/rentalStore"
 import { RentalStatus, Rental } from "@/types/types"
 import { format } from "date-fns"
@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation"
 import { RenewRentalDialog } from "@/components/rental/RenewRentalDialog"
 import { RenewRentalRequest } from "@/types/rental.types"
 import { toast } from "sonner"
+import { InviteLinkDialog } from "@/components/roommate/InviteLinkDialog"
 
 const RENTAL_STATUS_CONFIG: Record<RentalStatus, { label: string; className: string }> = {
   active: { label: 'Đang thuê', className: 'bg-green-100 text-green-800' },
@@ -44,6 +45,7 @@ function RentalContent() {
   const [selectedStatus, setSelectedStatus] = useState<RentalStatus | 'all'>('all')
   const [showRenewDialog, setShowRenewDialog] = useState(false)
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null)
+  const [showInviteLinkDialog, setShowInviteLinkDialog] = useState(false)
 
   useEffect(() => {
     loadTenantRentals()
@@ -308,14 +310,24 @@ function RentalContent() {
                   </Button>
                 )}
                 {activeRental.status === 'active' && (
-                  <Button
-                    variant="outline"
-                    onClick={() => handleOpenRenewDialog(activeRental)}
-                    title="Yêu cầu gia hạn"
-                  >
-                    <CalendarCheck className="h-4 w-4 mr-2" />
-                    Gia hạn
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowInviteLinkDialog(true)}
+                      title="Tạo link mời roommate"
+                    >
+                      <Link2 className="h-4 w-4 mr-2" />
+                      Mời roommate
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleOpenRenewDialog(activeRental)}
+                      title="Yêu cầu gia hạn"
+                    >
+                      <CalendarCheck className="h-4 w-4 mr-2" />
+                      Gia hạn
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
@@ -389,6 +401,12 @@ function RentalContent() {
         onOpenChange={setShowRenewDialog}
         onSubmit={handleRenewRental}
         isSubmitting={submitting}
+      />
+
+      {/* Invite Link Dialog */}
+      <InviteLinkDialog
+        open={showInviteLinkDialog}
+        onOpenChange={setShowInviteLinkDialog}
       />
     </div>
   )

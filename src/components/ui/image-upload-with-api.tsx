@@ -6,7 +6,13 @@ import { cn } from '@/lib/utils'
 import { Button } from './button'
 import Image from 'next/image'
 import { uploadSingleImage, uploadBulkImages } from '@/actions/upload.action'
-// import { getOptimizedImageUrl } from '@/lib/utils'
+
+// Helper to convert relative path to full URL
+const getFullImageUrl = (imagePath: string): string => {
+  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_BASE_PATH || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+  const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath
+  return `${baseUrl}/${cleanPath}`
+}
 
 export interface UploadedImage {
   id: string
@@ -60,7 +66,7 @@ export function ImageUploadWithApi({
           if (imageIndex !== -1 && response.results[imageIndex]) {
             return {
               ...img,
-              url: response.results[imageIndex].imagePath,
+              url: getFullImageUrl(response.results[imageIndex].imagePath),
               isUploading: false,
             }
           }
@@ -84,7 +90,7 @@ export function ImageUploadWithApi({
             if (imageIndex !== -1) {
               updatedImages[imageIndex] = {
                 ...updatedImages[imageIndex],
-                url: response.imagePath,
+                url: getFullImageUrl(response.imagePath),
                 isUploading: false,
               }
             }
