@@ -73,7 +73,7 @@ export async function searchRoomListings(params: RoomSearchParams): Promise<Room
  */
 export async function getRoomById(id: string): Promise<RoomDetail> {
 	try {
-		const response = await serverApiCall<RoomDetail>(`/api/rooms/public/${id}`, {
+		const response = await serverApiCall<RoomDetail>(`/api/rooms/public/id/${id}`, {
 			method: 'GET',
 		});
 

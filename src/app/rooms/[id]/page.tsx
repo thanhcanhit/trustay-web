@@ -448,13 +448,13 @@ export default function PropertyDetailPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                        <div className="p-2 bg-gray-500 rounded-lg">
+                        <div className="p-2 bg-gray-500 rounded-lg flex-shrink-0">
                           <Home className="h-5 w-5 text-white" />
                         </div>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm text-gray-600 font-medium">Chi tiết dãy trọ</p>
-                          <p className="text-sm text-gray-900">
-                            {getRoomTypeDisplayName(roomDetail.buildingDescription)}
+                          <p className="text-sm text-gray-900 line-clamp-2 break-words overflow-hidden">
+                            {roomDetail.buildingDescription || 'Không có thông tin'}
                           </p>
                         </div>
                       </div>

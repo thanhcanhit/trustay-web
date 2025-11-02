@@ -823,10 +823,12 @@ export interface RoomDetail {
 	areaSqm: string;
 	maxOccupancy: number;
 	isVerified: boolean;
+	buildingId: string;
 	buildingName: string;
 	buildingVerified: boolean;
 	buildingDescription: string;
 	address: string;
+	addressLine2: string;
 	availableRooms: number;
 	totalRooms: number;
 	isActive: boolean;

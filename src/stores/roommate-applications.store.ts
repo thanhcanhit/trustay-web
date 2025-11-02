@@ -8,9 +8,12 @@ import {
 	createRoommateApplication,
 	getApplicationStatisticsForMyPosts,
 	getApplicationsForMyPosts,
+	getLandlordPendingApplications,
 	getMyApplicationStatistics,
 	getMyRoommateApplications,
 	getRoommateApplicationById,
+	landlordApproveApplication,
+	landlordRejectApplication,
 	RespondToApplicationRequest,
 	RoommateApplication,
 	respondToRoommateApplication,
@@ -24,6 +27,7 @@ interface RoommateApplicationsState {
 	applications: Record<string, RoommateApplication>;
 	myApplications: RoommateApplication[];
 	applicationsForMyPosts: RoommateApplication[];
+	landlordPendingApplications: RoommateApplication[];
 	currentApplication: RoommateApplication | null;
 	myStatistics: ApplicationStatistics | null;
 	myPostsStatistics: ApplicationStatistics | null;
@@ -49,15 +53,20 @@ interface RoommateApplicationsState {
 		limit?: number;
 		status?:
 			| 'pending'
-			| 'approved_by_tenant'
-			| 'rejected_by_tenant'
-			| 'approved_by_landlord'
-			| 'rejected_by_landlord'
+			| 'accepted'
+			| 'rejected'
+			| 'awaiting_confirmation'
 			| 'cancelled'
 			| 'expired';
 	}) => Promise<void>;
 
 	fetchApplicationsForMyPosts: (params?: { page?: number; limit?: number }) => Promise<void>;
+
+	fetchLandlordPendingApplications: (params?: {
+		page?: number;
+		limit?: number;
+		status?: 'accepted' | 'rejected' | 'awaiting_confirmation';
+	}) => Promise<void>;
 
 	createApplication: (data: CreateRoommateApplicationRequest) => Promise<boolean>;
 
@@ -75,6 +84,11 @@ interface RoommateApplicationsState {
 		message?: string;
 	}) => Promise<boolean>;
 
+	// Landlord methods
+	landlordApprove: (id: string, response: string) => Promise<boolean>;
+
+	landlordReject: (id: string, response: string) => Promise<boolean>;
+
 	fetchMyStatistics: () => Promise<void>;
 
 	fetchMyPostsStatistics: () => Promise<void>;
@@ -90,6 +104,7 @@ export const useRoommateApplicationsStore = create<RoommateApplicationsState>((s
 	applications: {},
 	myApplications: [],
 	applicationsForMyPosts: [],
+	landlordPendingApplications: [],
 	currentApplication: null,
 	myStatistics: null,
 	myPostsStatistics: null,
@@ -144,10 +159,10 @@ export const useRoommateApplicationsStore = create<RoommateApplicationsState>((s
 					applications: { ...get().applications, ...applicationsObj },
 					myApplications: result.data.data,
 					pagination: {
-						page: result.data.page,
-						limit: result.data.limit,
-						total: result.data.total,
-						totalPages: result.data.totalPages,
+						page: result.data.meta.page,
+						limit: result.data.meta.limit,
+						total: result.data.meta.total,
+						totalPages: result.data.meta.totalPages,
 					},
 					isLoading: false,
 				});
@@ -180,10 +195,10 @@ export const useRoommateApplicationsStore = create<RoommateApplicationsState>((s
 					applications: { ...get().applications, ...applicationsObj },
 					applicationsForMyPosts: result.data.data,
 					pagination: {
-						page: result.data.page,
-						limit: result.data.limit,
-						total: result.data.total,
-						totalPages: result.data.totalPages,
+						page: result.data.meta.page,
+						limit: result.data.meta.limit,
+						total: result.data.meta.total,
+						totalPages: result.data.meta.totalPages,
 					},
 					isLoading: false,
 				});
@@ -194,6 +209,45 @@ export const useRoommateApplicationsStore = create<RoommateApplicationsState>((s
 			console.error('Failed to fetch applications for my posts:', error);
 			set({
 				error: 'Không thể tải danh sách đơn ứng tuyển cho bài đăng của bạn',
+				isLoading: false,
+			});
+		}
+	},
+
+	// Fetch landlord pending applications
+	fetchLandlordPendingApplications: async (params) => {
+		set({ isLoading: true, error: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await getLandlordPendingApplications(params, token);
+
+			if (result.success) {
+				const applicationsObj = result.data.data.reduce(
+					(acc, app) => {
+						acc[app.id] = app;
+						return acc;
+					},
+					{} as Record<string, RoommateApplication>,
+				);
+
+				set({
+					applications: { ...get().applications, ...applicationsObj },
+					landlordPendingApplications: result.data.data,
+					pagination: {
+						page: result.data.meta.page,
+						limit: result.data.meta.limit,
+						total: result.data.meta.total,
+						totalPages: result.data.meta.totalPages,
+					},
+					isLoading: false,
+				});
+			} else {
+				set({ error: result.error, isLoading: false });
+			}
+		} catch (error) {
+			console.error('Failed to fetch landlord pending applications:', error);
+			set({
+				error: 'Không thể tải danh sách đơn ứng tuyển cần duyệt',
 				isLoading: false,
 			});
 		}
@@ -446,4 +500,77 @@ export const useRoommateApplicationsStore = create<RoommateApplicationsState>((s
 	},
 
 	clearError: () => set({ error: null }),
+
+	// Landlord methods
+	landlordApprove: async (id, response) => {
+		set({ isLoading: true, error: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await landlordApproveApplication(id, response, token);
+
+			if (result.success) {
+				set((state) => {
+					const updatedApplications = {
+						...state.applications,
+						[result.data.id]: result.data,
+					};
+					const updatedLandlordPendingApplications = state.landlordPendingApplications.map((app) =>
+						app.id === id ? result.data : app,
+					);
+
+					return {
+						applications: updatedApplications,
+						landlordPendingApplications: updatedLandlordPendingApplications,
+						currentApplication:
+							state.currentApplication?.id === id ? result.data : state.currentApplication,
+						isLoading: false,
+					};
+				});
+				return true;
+			} else {
+				set({ error: result.error, isLoading: false });
+				return false;
+			}
+		} catch (error) {
+			console.error('Failed to approve application as landlord:', error);
+			set({ error: 'Không thể phê duyệt đơn ứng tuyển', isLoading: false });
+			return false;
+		}
+	},
+
+	landlordReject: async (id, response) => {
+		set({ isLoading: true, error: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await landlordRejectApplication(id, response, token);
+
+			if (result.success) {
+				set((state) => {
+					const updatedApplications = {
+						...state.applications,
+						[result.data.id]: result.data,
+					};
+					const updatedLandlordPendingApplications = state.landlordPendingApplications.map((app) =>
+						app.id === id ? result.data : app,
+					);
+
+					return {
+						applications: updatedApplications,
+						landlordPendingApplications: updatedLandlordPendingApplications,
+						currentApplication:
+							state.currentApplication?.id === id ? result.data : state.currentApplication,
+						isLoading: false,
+					};
+				});
+				return true;
+			} else {
+				set({ error: result.error, isLoading: false });
+				return false;
+			}
+		} catch (error) {
+			console.error('Failed to reject application as landlord:', error);
+			set({ error: 'Không thể từ chối đơn ứng tuyển', isLoading: false });
+			return false;
+		}
+	},
 }));

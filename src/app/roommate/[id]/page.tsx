@@ -76,7 +76,8 @@ export default function RoommateDetailPage() {
 
     const success = await createApplication({
       roommateSeekingPostId: postId,
-      ...formData
+      ...formData,
+      phone: formData.phoneNumber,
     })
 
     if (success) {
