@@ -35,26 +35,24 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/
 
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800',
-  approved_by_tenant: 'bg-blue-100 text-blue-800',
-  rejected_by_tenant: 'bg-red-100 text-red-800',
-  approved_by_landlord: 'bg-green-100 text-green-800',
-  rejected_by_landlord: 'bg-red-100 text-red-800',
+  accepted: 'bg-blue-100 text-blue-800',
+  rejected: 'bg-red-100 text-red-800',
+  awaiting_confirmation: 'bg-green-100 text-green-800',
   cancelled: 'bg-gray-100 text-gray-800',
   expired: 'bg-gray-100 text-gray-800'
 } as const
 
 const STATUS_LABELS = {
   pending: 'Chờ tenant phản hồi',
-  approved_by_tenant: 'Tenant đã chấp nhận',
-  rejected_by_tenant: 'Tenant đã từ chối',
-  approved_by_landlord: 'Bạn đã chấp nhận',
-  rejected_by_landlord: 'Bạn đã từ chối',
+  accepted: 'Tenant đã chấp nhận',
+  rejected: 'Đã từ chối',
+  awaiting_confirmation: 'Chờ xác nhận',
   cancelled: 'Đã hủy',
   expired: 'Đã hết hạn'
 } as const
 
 export default function RoommateApplicationsPage() {
-  const { applicationsForMyPosts, pagination, isLoading, error, fetchApplicationsForMyPosts, respondToApplication, confirmApplication } = useRoommateApplicationsStore()
+  const { landlordPendingApplications, pagination, isLoading, error, fetchLandlordPendingApplications, landlordApprove, landlordReject, confirmApplication } = useRoommateApplicationsStore()
   const { sendMessage: sendChatMessage, setCurrentUserId } = useChatStore()
   const { user } = useUserStore()
   const [searchTerm, setSearchTerm] = useState('')
@@ -78,36 +76,32 @@ export default function RoommateApplicationsPage() {
   }, [user?.id, setCurrentUserId])
 
   useEffect(() => {
-    fetchApplicationsForMyPosts({ page, limit: 12 })
-  }, [fetchApplicationsForMyPosts, page])
+    fetchLandlordPendingApplications({ page, limit: 12 })
+  }, [fetchLandlordPendingApplications, page])
 
   const canPrev = useMemo(() => pagination && pagination.page > 1, [pagination])
   const canNext = useMemo(() => pagination && pagination.page < pagination.totalPages, [pagination])
 
   const filtered = useMemo(() => {
     const term = searchTerm.trim().toLowerCase()
-    // Landlord chỉ quan tâm đến Platform Room (có roomInstanceId)
-    const platformRoomApps = applicationsForMyPosts.filter(app =>
-      app.roommateSeekingPost?.roomInstanceId != null
-    )
-
-    if (!term) return platformRoomApps
-    return platformRoomApps.filter(app => {
+    
+    if (!term) return landlordPendingApplications
+    return landlordPendingApplications.filter(app => {
       return app.fullName.toLowerCase().includes(term) ||
              app.phoneNumber.toLowerCase().includes(term) ||
              app.occupation.toLowerCase().includes(term)
     })
-  }, [applicationsForMyPosts, searchTerm])
+  }, [landlordPendingApplications, searchTerm])
 
   const handleRespond = async () => {
     if (!respondDialog.applicationId) return
 
     // Find the application to get applicant info
-    const application = applicationsForMyPosts.find(app => app.id === respondDialog.applicationId)
+    const application = landlordPendingApplications.find(app => app.id === respondDialog.applicationId)
 
-    const success = await respondToApplication(respondDialog.applicationId, {
-      status: respondDialog.approve ? 'approved_by_landlord' : 'rejected_by_landlord'
-    })
+    const success = respondDialog.approve 
+      ? await landlordApprove(respondDialog.applicationId, responseMessage || 'Đã chấp nhận')
+      : await landlordReject(respondDialog.applicationId, responseMessage || 'Đã từ chối')
 
     if (success) {
       // Send notification message to applicant
@@ -117,8 +111,8 @@ export default function RoommateApplicationsPage() {
 
           // Encode structured message with minimal info
           const defaultMessage = respondDialog.approve
-            ? 'Đơn ứng tuyển của bạn đã được chấp nhận!'
-            : 'Rất tiếc, đơn ứng tuyển của bạn không được chấp nhận.'
+            ? 'Đơn ứng tuyển của bạn đã được chủ trọ chấp nhận!'
+            : 'Rất tiếc, đơn ứng tuyển của bạn không được chủ trọ chấp nhận.'
 
           const encodedContent = encodeStructuredMessage({
             type: respondDialog.approve ? 'roommate_application_approved' : 'roommate_application_rejected',
@@ -146,7 +140,7 @@ export default function RoommateApplicationsPage() {
       toast.success(respondDialog.approve ? 'Đã chấp nhận đơn ứng tuyển' : 'Đã từ chối đơn ứng tuyển')
       setRespondDialog({ open: false, applicationId: null, approve: false })
       setResponseMessage('')
-      fetchApplicationsForMyPosts({ page, limit: 12 })
+      fetchLandlordPendingApplications({ page, limit: 12 })
     } else {
       toast.error('Không thể phản hồi đơn ứng tuyển')
     }
@@ -160,7 +154,7 @@ export default function RoommateApplicationsPage() {
   const handleConfirm = async () => {
     if (!confirmDialog.applicationId) return
 
-    const application = applicationsForMyPosts.find(app => app.id === confirmDialog.applicationId)
+    const application = landlordPendingApplications.find(app => app.id === confirmDialog.applicationId)
 
     const success = await confirmApplication(confirmDialog.applicationId)
 
@@ -192,7 +186,7 @@ export default function RoommateApplicationsPage() {
         }
       }
 
-      fetchApplicationsForMyPosts({ page, limit: 12 })
+      fetchLandlordPendingApplications({ page, limit: 12 })
     } else {
       toast.error('Không thể xác nhận đơn ứng tuyển')
     }
@@ -221,7 +215,7 @@ export default function RoommateApplicationsPage() {
 
           <Button
             variant="outline"
-            onClick={() => fetchApplicationsForMyPosts({ page, limit: 12 })}
+            onClick={() => fetchLandlordPendingApplications({ page, limit: 12 })}
           >
             Làm mới
           </Button>
@@ -342,7 +336,7 @@ export default function RoommateApplicationsPage() {
                     </TableCell>
 
                     <TableCell className="text-right">
-                      {application.status === 'approved_by_tenant' && (
+                      {application.status === 'accepted' && (
                         <div className="flex gap-1 justify-end">
                           <Button
                             variant="outline"
@@ -364,18 +358,9 @@ export default function RoommateApplicationsPage() {
                           </Button>
                         </div>
                       )}
-                      {application.status === 'approved_by_landlord' && application.isConfirmedByTenant && !application.isConfirmedByLandlord && (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => setConfirmDialog({ open: true, applicationId: application.id })}
-                        >
-                          Xác nhận
-                        </Button>
-                      )}
-                      {application.isConfirmedByLandlord && (
+                      {application.status === 'awaiting_confirmation' && (
                         <Badge variant="outline" className="bg-green-50 text-green-700">
-                          Đã xác nhận
+                          Chờ applicant xác nhận
                         </Badge>
                       )}
                     </TableCell>

@@ -33,6 +33,9 @@ import { RenewRentalDialog } from "@/components/rental/RenewRentalDialog"
 import { TerminateRentalDialog } from "@/components/rental/TerminateRentalDialog"
 import { RenewRentalRequest, TerminateRentalRequest } from "@/types/rental.types"
 import { toast } from "sonner"
+import { HTMLContent } from "@/components/ui/html-content"
+import { getRoomTypeDisplayName } from "@/utils/room-types"
+import { translateRoomStatus } from "@/utils"
 
 const RENTAL_STATUS_CONFIG: Record<RentalStatus, { label: string; className: string }> = {
   active: { label: 'Đang thuê', className: 'bg-green-100 text-green-800' },
@@ -57,7 +60,7 @@ const resolveDecimal = (v: unknown): number | string | null => {
 }
 
 const formatDate = (dateString: string | Date | null | undefined) => {
-    if (!dateString) return 'N/A'
+    if (!dateString) return 'Không xác định'
     try {
       return new Date(dateString).toLocaleDateString('vi-VN', {
         year: 'numeric',
@@ -67,7 +70,7 @@ const formatDate = (dateString: string | Date | null | undefined) => {
       minute: '2-digit'
     })
   } catch {
-    return 'N/A'
+    return 'Không xác định'
   }
 }
 
@@ -113,7 +116,7 @@ function RentalDetailContent() {
   // Load room detail when rental is loaded
   useEffect(() => {
     if (rental?.roomInstance?.room?.id) {
-      loadRoomDetail(rental.roomInstance.room.slug)
+      loadRoomDetail(rental.roomInstance.room.id)
     }
   }, [rental, loadRoomDetail])
 
@@ -190,8 +193,8 @@ function RentalDetailContent() {
   }
 
   const handleViewRoomPost = () => {
-    if (rental?.roomInstance?.room?.slug) {
-      window.open(`/rooms/${rental.roomInstance.room.slug}`, '_blank')
+    if (rental?.roomInstance?.room?.id) {
+      window.open(`/rooms/${rental.roomInstance.room.id}`, '_blank')
     }
   }
 
@@ -293,16 +296,16 @@ function RentalDetailContent() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg mb-1">
-                    {rental.roomInstance?.room?.name || 'N/A'}
+                    {rental.roomInstance?.room?.name || 'Không xác định'}
                   </h3>
                   <div className="flex items-center gap-2 text-gray-600 mb-2">
                     <Building2 className="h-4 w-4" />
-                    <span>{rental.roomInstance?.room?.building?.name || 'N/A'}</span>
+                    <span>{rental.roomInstance?.room?.building?.name || 'Không xác định'}</span>
                   </div>
                   {rental.roomInstance?.room?.description && (
-                    <p className="text-sm text-gray-600 mt-2">
-                      {rental.roomInstance.room.description}
-                    </p>
+                    <div className="text-sm text-gray-600 mt-2">
+                      <HTMLContent content={rental.roomInstance.room.description} />
+                    </div>
                   )}
                 </div>
               </div>
@@ -387,7 +390,9 @@ function RentalDetailContent() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
                   <div>
                     <p className="text-sm text-gray-600">Loại phòng</p>
-                    <p className="font-medium capitalize">{rental.roomInstance.room.roomType || 'N/A'}</p>
+                    <p className="font-medium">
+                      {getRoomTypeDisplayName(rental.roomInstance?.room?.roomType) || 'Không xác định'}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Diện tích</p>
@@ -473,16 +478,16 @@ function RentalDetailContent() {
               {rental.roomInstance && (
                 <>
                   <div className="p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-medium text-blue-900 mb-2">Room Instance</h4>
+                    <h4 className="font-medium text-blue-900 mb-2">Thông tin phòng</h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Số phòng:</span>
-                        <span className="font-medium">{rental.roomInstance.roomNumber || 'N/A'}</span>
+                        <span className="font-medium">{rental.roomInstance.roomNumber || 'Không xác định'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Trạng thái:</span>
                         <Badge variant={rental.roomInstance.status === 'occupied' ? 'default' : 'secondary'}>
-                          {rental.roomInstance.status === 'occupied' ? 'Đang thuê' : rental.roomInstance.status}
+                          {translateRoomStatus(rental.roomInstance.status)}
                         </Badge>
                       </div>
                     </div>

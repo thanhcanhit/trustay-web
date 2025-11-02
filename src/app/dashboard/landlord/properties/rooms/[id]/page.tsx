@@ -103,10 +103,6 @@ export default function RoomDetailPage() {
   const handleDeleteRoom = async () => {
     if (!room) return
 
-    if (!confirm(`Bạn có chắc chắn muốn xóa loại phòng "${room.name}"? Hành động này không thể hoàn tác.`)) {
-      return
-    }
-
     try {
       const success = await deleteMyRoom(room.id)
       if (!success) {
@@ -184,7 +180,10 @@ export default function RoomDetailPage() {
           actions={
             <>
               <PageHeaderActions.Edit href={`/dashboard/landlord/properties/rooms/${room.id}/edit`} />
-              <PageHeaderActions.Delete onClick={handleDeleteRoom} />
+              <PageHeaderActions.Delete 
+                onClick={handleDeleteRoom}
+                confirmDescription={`Bạn có chắc chắn muốn xóa loại phòng "${room.name}"? Hành động này không thể hoàn tác.`}
+              />
             </>
           }
         />

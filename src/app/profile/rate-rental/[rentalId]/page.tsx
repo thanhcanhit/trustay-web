@@ -379,7 +379,7 @@ function RateRentalContent() {
       {/* Action Buttons */}
       {bothRated && (
         <div className="flex justify-center pt-4">
-          <Button onClick={() => router.push('/profile/accommodation')} size="lg">
+          <Button onClick={() => router.push('/dashboard/tenant/rentals')} size="lg">
             <CheckCircle2 className="h-4 w-4 mr-2" />
             Hoàn tất
           </Button>

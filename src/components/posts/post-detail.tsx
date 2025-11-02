@@ -24,6 +24,7 @@ import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { RoomSeekingPost, RoommatePost, RentalPost } from '@/types'
 import { getRoomTypeDisplayName } from '@/utils/room-types'
+import { Decimal } from '@/types/room-seeking'
 
 interface PostDetailProps {
 	post: RoomSeekingPost | RoommatePost | RentalPost
@@ -45,6 +46,28 @@ const POST_STATUSES = {
 
 export function PostDetail({ post, type, onContact, onLike, onShare }: PostDetailProps) {
 	const [isLiked, setIsLiked] = useState(false)
+
+	// Helper function to convert Decimal to number
+	const toNumber = (value: number | Decimal): number => {
+		if (typeof value === 'number') {
+			return value
+		}
+		// Convert Decimal object to number
+		// Decimal structure: { s: sign, e: exponent, d: digits }
+		const sign = value.s || 1
+		const exp = value.e || 0
+		const digits = value.d || []
+		
+		// Reconstruct the number from Decimal parts
+		let result = 0
+		for (let i = 0; i < digits.length; i++) {
+			result = result * 10 + digits[i]
+		}
+		
+		// Apply exponent and sign
+		result = result * Math.pow(10, exp - digits.length + 1) * sign
+		return result
+	}
 
 	const formatPrice = (price: number) => {
 		return new Intl.NumberFormat('vi-VN', {
@@ -98,7 +121,7 @@ export function PostDetail({ post, type, onContact, onLike, onShare }: PostDetai
 						</div>
 						<div className="flex items-center gap-1">
 							<DollarSign className="h-4 w-4" />
-							{formatPrice(post.minBudget)} - {formatPrice(post.maxBudget)}
+							{formatPrice(toNumber(post.minBudget))} - {formatPrice(toNumber(post.maxBudget))}
 						</div>
 					</div>
 				</div>

@@ -38,7 +38,7 @@ interface ApiCost extends Omit<RoomCost, 'fixedAmount' | 'unitPrice' | 'baseRate
 import { Building as BuildingIcon, Home, DollarSign, ArrowLeft, ImageIcon } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
-import { cleanDescriptionText } from "@/utils/textProcessing"
+import { getCleanTextLength } from "@/utils/textProcessing"
 import { validateReferenceIds } from "@/utils/referenceValidation"
 import { getRoomTypeOptions } from "@/utils/room-types"
 
@@ -194,18 +194,52 @@ function AddRoomPageContent() {
   const convertCostsToObjects = (costs: string[] | RoomCost[]): RoomCost[] => {
     if (!Array.isArray(costs)) return []
     
+    // Helper function to determine cost type based on name
+    const determineCostTypeAndMetered = (costTypeId: string): { 
+      type: 'fixed' | 'per_person' | 'metered', 
+      isMetered: boolean 
+    } => {
+      const costTypeData = useReferenceStore.getState().costTypes.find(c => c.id === costTypeId);
+      
+      // If backend provides costType, use it
+      if (costTypeData?.costType) {
+        return {
+          type: costTypeData.costType,
+          isMetered: costTypeData.costType === 'metered' || costTypeData.isMetered === true
+        };
+      }
+      
+      // Otherwise, determine by name
+      const nameLower = (costTypeData?.name || '').toLowerCase();
+      
+      // Metered costs (electricity, water)
+      if (nameLower.includes('điện') || nameLower.includes('electric') || 
+          nameLower.includes('nước') || nameLower.includes('water')) {
+        return { type: 'metered', isMetered: true };
+      }
+      
+      // Per person costs
+      if (nameLower.includes('người')) {
+        return { type: 'per_person', isMetered: false };
+      }
+      
+      return { type: 'fixed', isMetered: false };
+    };
+    
     return costs.map(cost => {
       if (typeof cost === 'string') {
         const costTypeData = useReferenceStore.getState().costTypes.find(c => c.id === cost)
+        const { type: determinedCostType, isMetered } = determineCostTypeAndMetered(cost);
+        
         return {
           id: '',
           roomId: '',
           systemCostTypeId: cost,
           value: 0,
-          costType: 'fixed' as const,
+          costType: determinedCostType,
           currency: 'VND',
           unit: 'VND',
-          isMetered: false,
+          isMetered: isMetered,
           billingCycle: 'monthly' as const,
           includedInRent: false,
           isOptional: true,
@@ -331,8 +365,8 @@ function AddRoomPageContent() {
         
         // Validate description length (clean HTML tags and entities first)
         if (formData.description) {
-          const cleanText = cleanDescriptionText(formData.description)
-          if (cleanText.length > 1000) {
+          const cleanTextLength = getCleanTextLength(formData.description)
+          if (cleanTextLength > 1000) {
             newErrors.description = 'Mô tả không được vượt quá 1000 ký tự'
           }
         }
@@ -384,10 +418,7 @@ function AddRoomPageContent() {
       // Prepare room data with only allowed fields (see Postman collection)
       const roomData: CreateRoomRequest = {
         name: formData.name!,
-        description: formData.description ? 
-          // Clean description text and limit to 1000 characters
-          cleanDescriptionText(formData.description, 1000) || undefined
-          : undefined,
+        description: formData.description || undefined,
         roomType: formData.roomType!,
         areaSqm: parseFloat(String(formData.areaSqm!)) || 0,
         maxOccupancy: parseInt(String(formData.maxOccupancy!)) || 1,
