@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
 	getApplicationsForMyPosts,
 	respondToRoommateApplication,
@@ -45,7 +45,7 @@ export function TenantApplicationList({ token }: TenantApplicationListProps) {
 	const [page, setPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
 
-	const fetchApplications = async () => {
+	const fetchApplications = useCallback(async () => {
 		setLoading(true);
 		try {
 			const result = await getApplicationsForMyPosts(
@@ -64,16 +64,16 @@ export function TenantApplicationList({ token }: TenantApplicationListProps) {
 			} else {
 				toast.error(result.error);
 			}
-		} catch (error) {
+		} catch {
 			toast.error('Không thể tải danh sách đơn ứng tuyển');
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [page, token]);
 
 	useEffect(() => {
 		fetchApplications();
-	}, [page, token]);
+	}, [fetchApplications]);
 
 	const handleOpenDialog = (
 		application: RoommateApplication,
@@ -116,7 +116,7 @@ export function TenantApplicationList({ token }: TenantApplicationListProps) {
 			} else {
 				toast.error(result.error);
 			}
-		} catch (error) {
+		} catch {
 			toast.error('Có lỗi xảy ra');
 		} finally {
 			setSubmitting(false);

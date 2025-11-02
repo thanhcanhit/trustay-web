@@ -115,7 +115,7 @@ export default function RoommateApplicationsPage() {
       fetchMyApplications({
         page: sentPage,
         limit: 12,
-        status: statusFilter === 'all' ? undefined : (statusFilter as 'pending' | 'approved_by_tenant' | 'rejected_by_tenant' | 'approved_by_landlord' | 'rejected_by_landlord' | 'cancelled' | 'expired')
+        status: statusFilter === 'all' ? undefined : (statusFilter as 'pending' | 'accepted' | 'rejected' | 'awaiting_confirmation' | 'cancelled' | 'expired')
       })
     }
   }, [activeTab, receivedPage, sentPage, statusFilter, fetchApplicationsForMyPosts, fetchMyApplications])
@@ -211,7 +211,7 @@ export default function RoommateApplicationsPage() {
       fetchMyApplications({
         page: sentPage,
         limit: 12,
-        status: statusFilter === 'all' ? undefined : (statusFilter as 'pending' | 'approved_by_tenant' | 'rejected_by_tenant' | 'approved_by_landlord' | 'rejected_by_landlord' | 'cancelled' | 'expired')
+        status: statusFilter === 'all' ? undefined : (statusFilter as 'pending' | 'accepted' | 'rejected' | 'awaiting_confirmation' | 'cancelled' | 'expired')
       })
     } else {
       toast.error('Không thể hủy đơn ứng tuyển')
@@ -457,7 +457,7 @@ export default function RoommateApplicationsPage() {
                 onClick={() => fetchMyApplications({
                   page: sentPage,
                   limit: 12,
-                  status: statusFilter === 'all' ? undefined : (statusFilter as 'pending' | 'approved_by_tenant' | 'rejected_by_tenant' | 'approved_by_landlord' | 'rejected_by_landlord' | 'cancelled' | 'expired')
+                  status: statusFilter === 'all' ? undefined : (statusFilter as 'pending' | 'accepted' | 'rejected' | 'awaiting_confirmation' | 'cancelled' | 'expired')
                 })}
               >
                 Làm mới

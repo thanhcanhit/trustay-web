@@ -434,7 +434,14 @@ export const useRoommateApplicationsStore = create<RoommateApplicationsState>((s
 		set({ isLoading: true, error: null });
 		try {
 			const token = TokenManager.getAccessToken();
-			const result = await bulkRespondToApplications(data, token);
+			const result = await bulkRespondToApplications(
+				{
+					applicationIds: data.applicationIds,
+					status: data.approve ? 'accepted' : 'rejected',
+					response: data.message || (data.approve ? 'Đã chấp nhận' : 'Đã từ chối'),
+				},
+				token,
+			);
 
 			if (result.success) {
 				// Refresh applications after bulk operation

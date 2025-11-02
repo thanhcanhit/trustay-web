@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
 import {
 	getLandlordPendingApplications,
 	landlordApproveApplication,
@@ -36,7 +35,6 @@ interface LandlordApplicationListProps {
 }
 
 export function LandlordApplicationList({ token }: LandlordApplicationListProps) {
-	const router = useRouter();
 	const [applications, setApplications] = useState<RoommateApplication[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [selectedApplication, setSelectedApplication] = useState<RoommateApplication | null>(
@@ -48,7 +46,7 @@ export function LandlordApplicationList({ token }: LandlordApplicationListProps)
 	const [page, setPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
 
-	const fetchApplications = async () => {
+	const fetchApplications = useCallback(async () => {
 		setLoading(true);
 		try {
 			const result = await getLandlordPendingApplications(
@@ -66,16 +64,16 @@ export function LandlordApplicationList({ token }: LandlordApplicationListProps)
 			} else {
 				toast.error(result.error);
 			}
-		} catch (error) {
+		} catch {
 			toast.error('Không thể tải danh sách đơn ứng tuyển');
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [page, token]);
 
 	useEffect(() => {
 		fetchApplications();
-	}, [page, token]);
+	}, [fetchApplications]);
 
 	const handleOpenDialog = (application: RoommateApplication, type: 'approve' | 'reject') => {
 		setSelectedApplication(application);
@@ -113,7 +111,7 @@ export function LandlordApplicationList({ token }: LandlordApplicationListProps)
 			} else {
 				toast.error(result.error);
 			}
-		} catch (error) {
+		} catch {
 			toast.error('Có lỗi xảy ra');
 		} finally {
 			setSubmitting(false);

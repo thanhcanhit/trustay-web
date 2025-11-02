@@ -38,8 +38,10 @@ export default function RoommateDetailPage() {
   // Application form state
   const [formData, setFormData] = useState({
     fullName: '',
+    email: '',
     occupation: '',
     phoneNumber: '',
+    monthlyIncome: 0,
     moveInDate: '',
     intendedStayMonths: 6,
     applicationMessage: '',
@@ -63,21 +65,29 @@ export default function RoommateDetailPage() {
       setFormData(prev => ({
         ...prev,
         fullName: fullName || prev.fullName,
+        email: user.email || prev.email,
         phoneNumber: user.phone || prev.phoneNumber,
       }))
     }
   }, [dialogOpen, user])
 
   const handleSubmitApplication = async () => {
-    if (!formData.fullName || !formData.phoneNumber || !formData.moveInDate) {
+    if (!formData.fullName || !formData.email || !formData.phoneNumber || !formData.moveInDate) {
       toast.error('Vui lòng điền đầy đủ thông tin bắt buộc')
       return
     }
 
     const success = await createApplication({
       roommateSeekingPostId: postId,
-      ...formData,
+      fullName: formData.fullName,
+      email: formData.email,
       phone: formData.phoneNumber,
+      occupation: formData.occupation,
+      monthlyIncome: formData.monthlyIncome,
+      moveInDate: formData.moveInDate,
+      intendedStayMonths: formData.intendedStayMonths,
+      applicationMessage: formData.applicationMessage,
+      isUrgent: formData.isUrgent,
     })
 
     if (success) {
@@ -123,8 +133,10 @@ export default function RoommateDetailPage() {
       // Reset form
       setFormData({
         fullName: '',
+        email: '',
         occupation: '',
         phoneNumber: '',
+        monthlyIncome: 0,
         moveInDate: '',
         intendedStayMonths: 6,
         applicationMessage: '',
@@ -562,12 +574,37 @@ export default function RoommateDetailPage() {
                       </div>
                       
                       <div>
+                        <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="email@example.com"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
                         <Label htmlFor="phoneNumber">Số điện thoại <span className="text-red-500">*</span></Label>
                         <Input
                           id="phoneNumber"
                           value={formData.phoneNumber}
                           onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                           placeholder="0901234567"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="monthlyIncome">Thu nhập/tháng (VNĐ) <span className="text-red-500">*</span></Label>
+                        <Input
+                          id="monthlyIncome"
+                          type="number"
+                          min="0"
+                          value={formData.monthlyIncome}
+                          onChange={(e) => setFormData({ ...formData, monthlyIncome: Number(e.target.value) })}
+                          placeholder="5000000"
                         />
                       </div>
                     </div>
