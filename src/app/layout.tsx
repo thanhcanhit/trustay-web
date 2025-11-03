@@ -10,7 +10,6 @@ import { NotificationProvider } from "@/components/notification-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ChatBubble } from "@/components/chat/chat-bubble";
 import { AISidebar } from "@/components/ai/ai-sidebar";
-import { AIOffset } from "@/components/ai/ai-offset";
 import { QueryProvider } from "@/providers/query-provider";
 
 const geistSans = Geist({
@@ -115,12 +114,10 @@ export default function RootLayout({
                 }>
                   <Navigation />
                 </Suspense>
-                <AIOffset>
-                  <div className="flex-1 flex min-h-0">
-                    <main className="flex-1 page-content min-h-0">{children}</main>
-                  </div>
-                </AIOffset>
-                <AISidebar />
+                <div className="flex-1 flex min-h-0">
+                  <main className="flex-1 page-content min-h-0">{children}
+                    <AISidebar /></main>
+                </div>
                 <FooterGate />
                 <ChatBubble />
                 <Toaster

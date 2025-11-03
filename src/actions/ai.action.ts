@@ -1,4 +1,4 @@
-'use server';
+// 'use server';
 
 import { createServerApiCall } from '../lib/api-client';
 
@@ -44,17 +44,17 @@ function unwrap<T>(resp: any): T {
 }
 
 export async function postAIChat(query: string, token?: string): Promise<AIChatResponse> {
-	const resp = await apiCall<any>(AI_ENDPOINTS.chat(query), { method: 'POST' }, token);
+	const resp = await apiCall<any>(AI_ENDPOINTS.chat(query), { method: 'POST', timeout: 0 }, token);
 	return unwrap<AIChatResponse>(resp);
 }
 
 export async function getAIHistory(token?: string): Promise<AIHistoryResponse> {
-	const resp = await apiCall<any>(AI_ENDPOINTS.history, { method: 'GET' }, token);
+	const resp = await apiCall<any>(AI_ENDPOINTS.history, { method: 'GET', timeout: 0 }, token);
 	return unwrap<AIHistoryResponse>(resp);
 }
 
 export async function clearAIHistory(token?: string): Promise<void> {
-	await apiCall<void>(AI_ENDPOINTS.history, { method: 'DELETE' }, token);
+	await apiCall<void>(AI_ENDPOINTS.history, { method: 'DELETE', timeout: 0 }, token);
 }
 
 export async function textToSQL(
@@ -63,7 +63,7 @@ export async function textToSQL(
 ): Promise<{ sql: string; results?: Array<Record<string, unknown>> }> {
 	const resp = await apiCall<any>(
 		AI_ENDPOINTS.text2sql,
-		{ method: 'POST', data: { query } },
+		{ method: 'POST', data: { query }, timeout: 0 },
 		token,
 	);
 	return unwrap<{ sql: string; results?: Array<Record<string, unknown>> }>(resp);
