@@ -1,5 +1,7 @@
 // Export all types for easy importing
 
+// Export AI types
+export * from './ai';
 // Export bill types
 export * from './bill.types';
 export type { ContractSignature } from './contract.types';

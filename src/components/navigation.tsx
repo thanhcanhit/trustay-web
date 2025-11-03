@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react"
 import { usePathname, useRouter } from "next/navigation"
 // import { motion, AnimatePresence } from "motion/react"
 import { useUserStore } from "@/stores/userStore"
+import { useAIAssistantStore } from "@/stores/aiAssistant.store"
 import { useSearchFilters } from "@/hooks/use-search-filters"
 import { encodeSearchQuery } from "@/utils/search-params"
 import { Button } from "@/components/ui/button"
@@ -26,7 +27,8 @@ import {
   Plus,
   Funnel,
   Search,
-  Home
+  Home,
+  Sparkles
 } from "lucide-react"
 import { Input } from "./ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuPortal, DropdownMenuTrigger } from "./ui/dropdown-menu"
@@ -51,6 +53,7 @@ export function Navigation() {
   const [searchType, setSearchType] = useState<string>('rooms')
   const [isMounted, setIsMounted] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const toggleAISidebar = useAIAssistantStore(s => s.toggleSidebar)
 
   useEffect(() => {
     setIsMounted(true)
@@ -199,6 +202,8 @@ export function Navigation() {
     }
   }, [])
 
+  const isAIOpen = useAIAssistantStore(s => s.isSidebarOpen)
+
   return (
     <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-[9998]" suppressHydrationWarning={true}>
       {/* First Row: Logo, Search, Login/Signup */}
@@ -223,8 +228,8 @@ export function Navigation() {
                         <Button variant="outline" className="h-10 w-40 xl:w-44 px-2 rounded-l-lg rounded-r-none border-r-0 bg-white hover:bg-gray-50 cursor-pointer">
                           <Home className="h-4 w-4 mr-1" />
                           {searchType === 'rooms' ? 'Tìm phòng trọ' :
-                           searchType === 'room-seeking' ? 'Người tìm trọ' :
-                           'Tìm người ở ghép'}
+                            searchType === 'room-seeking' ? 'Người tìm trọ' :
+                              'Tìm người ở ghép'}
                           <ChevronDown className="h-3 w-3 ml-1" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -409,8 +414,8 @@ export function Navigation() {
                           >
                             Hủy
                           </Button>
-                          <Button 
-                            onClick={handleApplyFilters} 
+                          <Button
+                            onClick={handleApplyFilters}
                             className="flex-1 sm:flex-initial bg-green-600 hover:bg-green-700 cursor-pointer"
                           >
                             Áp dụng
@@ -556,118 +561,127 @@ export function Navigation() {
               </div>
             )}
 
-            {/* Right Section - Login/Signup or User Menu */}
+            {/* Right Section - AI Button + Login/Signup or User Menu */}
             <div className="flex items-center space-x-2 md:space-x-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 w-10 cursor-pointer rounded-full"
+                onClick={() => toggleAISidebar(!isAIOpen)}
+                aria-label="Mở Trustay AI"
+              >
+                <Sparkles className="h-4 w-4 text-green-600" />
+              </Button>
               {isAuthenticated && user ? (
                 <>
-                <NotificationBell />
-                <div className="relative" ref={dropdownRef}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowUserDropdown(!showUserDropdown)}
-                  className="flex items-center space-x-2 h-10 text-gray-700 hover:text-gray-900 cursor-pointer"
-                >
-                  <Avatar className="h-8 w-8">
-                    {user.avatarUrl && !isAvatarError ? (
-                      <div className="w-full h-full relative">
-                        <SizingImage
-                          src={user.avatarUrl}
-                          srcSize="256x256"
-                          alt={`${user.firstName} ${user.lastName}`}
-                          className="object-cover rounded-full"
-                          fill
-                          onError={() => setIsAvatarError(true)}
-                        />
-                      </div>
-                    ) : (
-                      <AvatarFallback className="text-sm font-medium bg-green-100 text-green-700">
-                        {user.firstName?.charAt(0)?.toUpperCase()}{user.lastName?.charAt(0)?.toUpperCase()}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  {isMounted && <span className="hidden md:inline-block">{user.firstName} {user.lastName}</span>}
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-
-                {showUserDropdown && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border z-50">
-                    <div className="py-1">
-                      <Link
-                        href={"/profile"}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-                        onClick={() => setShowUserDropdown(false)}
-                      >
-                        Quản lý cá nhân
-                      </Link>
-                      {user?.role === 'landlord' ? (
-                        <Link
-                        href={"/dashboard/landlord"}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-                        onClick={() => setShowUserDropdown(false)}
-                      >
-                        Quản lý trọ
-                      </Link>
-                      ): (
-                        <Link
-                        href={"/dashboard/tenant"}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-                        onClick={() => setShowUserDropdown(false)}
-                      >
-                        Quản lý thuê
-                      </Link>
-                      )}
-
-                      <hr className="border-gray-200" />
-                      <button
-                        onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-                      >
-                        <LogOut className="h-4 w-4 inline mr-2" />
-                        Đăng xuất
-                      </button>
-                    </div>
-                  </div>
-                )}
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-10 text-white bg-green-600 hover:bg-green-700 font-medium cursor-pointer">
-                      <Plus className="h-4 w-4" />
-                      Đăng bài
+                  <NotificationBell />
+                  <div className="relative" ref={dropdownRef}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowUserDropdown(!showUserDropdown)}
+                      className="flex items-center space-x-2 h-10 text-gray-700 hover:text-gray-900 cursor-pointer"
+                    >
+                      <Avatar className="h-8 w-8">
+                        {user.avatarUrl && !isAvatarError ? (
+                          <div className="w-full h-full relative">
+                            <SizingImage
+                              src={user.avatarUrl}
+                              srcSize="256x256"
+                              alt={`${user.firstName} ${user.lastName}`}
+                              className="object-cover rounded-full"
+                              fill
+                              onError={() => setIsAvatarError(true)}
+                            />
+                          </div>
+                        ) : (
+                          <AvatarFallback className="text-sm font-medium bg-green-100 text-green-700">
+                            {user.firstName?.charAt(0)?.toUpperCase()}{user.lastName?.charAt(0)?.toUpperCase()}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      {isMounted && <span className="hidden md:inline-block">{user.firstName} {user.lastName}</span>}
+                      <ChevronDown className="h-3 w-3" />
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuContent className="w-56 z-[10000]" align="end" side="top">
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem>
-                          <Link href="/post?type=room-seeking" className="select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                            <div className="text-sm font-medium leading-none">Đăng tin tìm chỗ thuê</div>
-                            <p className="text-xs leading-tight text-muted-foreground">
-                              Đăng tin tìm kiếm phòng trọ, nhà trọ
-                            </p>
+
+                    {showUserDropdown && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border z-50">
+                        <div className="py-1">
+                          <Link
+                            href={"/profile"}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => setShowUserDropdown(false)}
+                          >
+                            Quản lý cá nhân
                           </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Link href="/post?type=roommate" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                            <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
-                            <p className="text-xs leading-tight text-muted-foreground">
-                              Tìm bạn cùng phòng, người ở ghép
-                            </p>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Link href="/dashboard/landlord/properties/add" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                            <div className="text-sm font-medium leading-none">Đăng tin cho thuê</div>
-                            <p className="text-xs leading-tight text-muted-foreground">
-                              Đăng tin cho thuê phòng trọ, nhà trọ của bạn
-                            </p>
-                          </Link>
-                        </DropdownMenuItem>
-                      </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenuPortal>
-                </DropdownMenu>
+                          {user?.role === 'landlord' ? (
+                            <Link
+                              href={"/dashboard/landlord"}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                              onClick={() => setShowUserDropdown(false)}
+                            >
+                              Quản lý trọ
+                            </Link>
+                          ) : (
+                            <Link
+                              href={"/dashboard/tenant"}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                              onClick={() => setShowUserDropdown(false)}
+                            >
+                              Quản lý thuê
+                            </Link>
+                          )}
+
+                          <hr className="border-gray-200" />
+                          <button
+                            onClick={handleLogout}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                          >
+                            <LogOut className="h-4 w-4 inline mr-2" />
+                            Đăng xuất
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-10 text-white bg-green-600 hover:bg-green-700 font-medium cursor-pointer">
+                        <Plus className="h-4 w-4" />
+                        Đăng bài
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuContent className="w-56 z-[10000]" align="end" side="top">
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem>
+                            <Link href="/post?type=room-seeking" className="select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                              <div className="text-sm font-medium leading-none">Đăng tin tìm chỗ thuê</div>
+                              <p className="text-xs leading-tight text-muted-foreground">
+                                Đăng tin tìm kiếm phòng trọ, nhà trọ
+                              </p>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Link href="/post?type=roommate" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                              <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
+                              <p className="text-xs leading-tight text-muted-foreground">
+                                Tìm bạn cùng phòng, người ở ghép
+                              </p>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Link href="/dashboard/landlord/properties/add" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                              <div className="text-sm font-medium leading-none">Đăng tin cho thuê</div>
+                              <p className="text-xs leading-tight text-muted-foreground">
+                                Đăng tin cho thuê phòng trọ, nhà trọ của bạn
+                              </p>
+                            </Link>
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenu>
                 </>
               ) : (
                 <div className="flex items-center space-x-2">
@@ -681,8 +695,8 @@ export function Navigation() {
                   </Button>
                 </div>
               )}
-                    
-              
+
+
             </div>
           </div>
         </div>
