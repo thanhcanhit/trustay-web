@@ -21,7 +21,7 @@ type AIActions = {
 
 export const useAIAssistantStore = create<AIStateSnapshot & AIActions>()(
 	persist(
-		(set, get) => ({
+		(set) => ({
 			isSidebarOpen: false,
 			isLoading: false,
 			isThinking: false,
@@ -40,9 +40,28 @@ export const useAIAssistantStore = create<AIStateSnapshot & AIActions>()(
 					const token = TokenManager.getAccessToken();
 					const history = await getAIHistory(token);
 					const messages = Array.isArray(history.messages) ? history.messages : [];
+					type AssistantEnrichments = {
+						contentStats?: ReadonlyArray<{ label: string; value: number; unit?: string }>;
+						dataList?: { items: ReadonlyArray<import('@/types').ListItem>; total: number };
+						dataTable?: {
+							columns: ReadonlyArray<import('@/types').TableColumn>;
+							rows: ReadonlyArray<Record<string, import('@/types').TableCell>>;
+							previewLimit?: number;
+						};
+						chart?: { url?: string; width: number; height: number; alt?: string };
+						controlQuestions?: ReadonlyArray<string>;
+						errorCode?: string;
+						errorDetails?: string;
+						sql?: string;
+						results?: Array<Record<string, unknown>>;
+						count?: number;
+					};
+
 					const enriched = messages.map((msg) => {
 						if (!msg.kind || !msg.payload) return msg;
-						const result: any = { ...msg };
+						const result: AIHistoryMessage & Partial<AssistantEnrichments> = {
+							...(msg as AIHistoryMessage),
+						};
 						const p = msg.payload as ContentPayload | DataPayload | ControlPayload;
 						if ('mode' in p) {
 							if (p.mode === 'CONTENT') {
