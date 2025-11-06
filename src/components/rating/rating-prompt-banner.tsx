@@ -31,16 +31,24 @@ export function RatingPromptBanner() {
   const [hasLoaded, setHasLoaded] = useState(false)
 
   const checkRatings = useCallback(async () => {
-    if (!user || hasLoaded) {
+    // Only load for tenants
+    if (!user || hasLoaded || user.role !== 'tenant') {
+      setLoading(false)
       return
     }
 
     setLoading(true)
 
-    // Load tenant's rentals only once
-    await loadTenantRentals()
-
-    setHasLoaded(true)
+    try {
+      // Load tenant's rentals only once
+      await loadTenantRentals()
+    } catch (error) {
+      console.error('Failed to load tenant rentals:', error)
+      // Silent fail - don't show rating banner if we can't load rentals
+    } finally {
+      setHasLoaded(true)
+      setLoading(false)
+    }
   }, [user, hasLoaded, loadTenantRentals])
 
   // Load rentals only once
@@ -110,32 +118,32 @@ export function RatingPromptBanner() {
     <div className="space-y-3">
       {completedRentalsNeedingRating.map(({ rental, needsRoomRating, needsLandlordRating }) => (
         <Card key={rental.id} className="border-yellow-200 bg-yellow-50">
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3 flex-1">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <Star className="h-5 w-5 text-yellow-600" />
+          <CardContent className="p-3 lg:p-4">
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
+              <div className="flex items-start gap-3 flex-1 w-full">
+                <div className="p-2 bg-yellow-100 rounded-lg flex-shrink-0">
+                  <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-yellow-900">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-yellow-900 text-sm sm:text-base">
                     Đánh giá trải nghiệm thuê trọ của bạn
                   </h3>
-                  <p className="text-sm text-yellow-800 mt-1">
+                  <p className="text-xs sm:text-sm text-yellow-800 mt-1">
                     Bạn đã hoàn thành thuê trọ tại{' '}
                     <span className="font-medium">
                       {rental.roomInstance?.room?.name || rental.room?.name || 'phòng'}
                     </span>
                     . Hãy chia sẻ đánh giá để giúp người khác!
                   </p>
-                  <div className="flex items-center gap-2 mt-2 text-xs text-yellow-700">
+                  <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-yellow-700">
                     {needsRoomRating && <span>• Đánh giá phòng trọ</span>}
                     {needsLandlordRating && <span>• Đánh giá chủ trọ</span>}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Link href={`/profile/rate-rental/${rental.id}`}>
-                  <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700">
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <Link href={`/profile/rate-rental/${rental.id}`} className="flex-1 sm:flex-none">
+                  <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700 w-full sm:w-auto text-xs sm:text-sm">
                     <Star className="h-3 w-3 mr-1" />
                     Đánh giá ngay
                   </Button>
@@ -144,7 +152,7 @@ export function RatingPromptBanner() {
                   variant="ghost"
                   size="sm"
                   onClick={() => handleDismiss(rental.id)}
-                  className="text-yellow-800 hover:text-yellow-900 hover:bg-yellow-100"
+                  className="text-yellow-800 hover:text-yellow-900 hover:bg-yellow-100 flex-shrink-0"
                 >
                   <X className="h-4 w-4" />
                 </Button>

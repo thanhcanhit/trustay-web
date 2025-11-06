@@ -181,14 +181,17 @@ const extractErrorMessage = (error: AxiosError): string => {
 // Helper function to log API error details
 const logApiError = (error: AxiosError): void => {
 	console.error('API Error Details:', {
+		message: error.message,
 		status: error.response?.status,
 		statusText: error.response?.statusText,
 		data: error.response?.data,
 		config: {
 			url: error.config?.url,
 			method: error.config?.method,
-			headers: error.config?.headers,
+			baseURL: error.config?.baseURL,
 		},
+		hasResponse: !!error.response,
+		hasRequest: !!error.request,
 	});
 };
 

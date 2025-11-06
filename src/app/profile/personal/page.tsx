@@ -188,25 +188,25 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
 
   if (!isEditing) {
     return (
-      <Card className="p-8 space-y-6">
-        <div className="flex items-center space-x-6">
-          <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 relative">
+      <Card className="p-4 lg:p-8 space-y-6">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:space-x-6">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-gray-200 relative flex-shrink-0">
             {user?.avatarUrl ? (
-              <SizingImage 
-                src={user.avatarUrl.replace(/^\/images\//, '').replace(/^\//, '')} 
-                srcSize="256x256" 
-                alt="Avatar" 
-                className="object-cover" 
+              <SizingImage
+                src={user.avatarUrl.replace(/^\/images\//, '').replace(/^\//, '')}
+                srcSize="256x256"
+                alt="Avatar"
+                className="object-cover"
                 fill
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">Avatar</div>
             )}
           </div>
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900">{user?.firstName} {user?.lastName}</h2>
-            <p className="text-gray-600">{user?.email}</p>
-            <p className="text-gray-600">{user?.phone}</p>
+          <div className="flex-1 text-center sm:text-left w-full">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{user?.firstName} {user?.lastName}</h2>
+            <p className="text-sm sm:text-base text-gray-600 break-all">{user?.email}</p>
+            <p className="text-sm sm:text-base text-gray-600">{user?.phone}</p>
             {profileData.bio && (
               <div className="mt-3">
                 <p className="text-gray-700 text-sm leading-relaxed">{profileData.bio}</p>
@@ -293,13 +293,13 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
   }
 
   return (
-    <Card className="px-8">
+    <Card className="p-4 lg:px-8">
       <div className="space-y-6">
-        <h2>Cập nhật thông tin cá nhân</h2>
+        <h2 className="text-lg lg:text-xl font-semibold">Cập nhật thông tin cá nhân</h2>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Ảnh đại diện</label>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:space-x-4">
             <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 border-2 border-gray-300 relative">
               {pendingAvatarPreview ? (
                 <Image src={pendingAvatarPreview} alt="Avatar preview" fill className="object-cover" unoptimized />
@@ -470,23 +470,29 @@ function ProfileContent({ user }: { user: UserProfile | null }) {
           />
         </div>
 
-        <div className="flex space-x-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:space-x-4">
           <Button
             onClick={handleSave}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
             disabled={!hasChanges() || isLoading}
           >
             {isLoading ? "Đang lưu..." : "Lưu thông tin"}
           </Button>
-          <Button onClick={() => {
-            setProfileData({...originalData})
-            if (pendingAvatarPreview) {
-              URL.revokeObjectURL(pendingAvatarPreview)
-              setPendingAvatarPreview(null)
-            }
-            setPendingAvatarFile(null)
-            setIsEditing(false)
-          }} variant="outline">Hủy</Button>
+          <Button
+            onClick={() => {
+              setProfileData({...originalData})
+              if (pendingAvatarPreview) {
+                URL.revokeObjectURL(pendingAvatarPreview)
+                setPendingAvatarPreview(null)
+              }
+              setPendingAvatarFile(null)
+              setIsEditing(false)
+            }}
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
+            Hủy
+          </Button>
         </div>
       </div>
     </Card>
@@ -498,23 +504,25 @@ function PersonalProfileContent() {
 
   return (
     <ProfileLayout>
-      <div className="px-6">
-        <div className="flex items-center justify-between mb-8">
+      <div className="px-2 lg:px-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Thông tin cá nhân</h1>
-            <p className="text-gray-600">Quản lý thông tin cá nhân của bạn</p>
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Thông tin cá nhân</h1>
+            <p className="text-sm lg:text-base text-gray-600">Quản lý thông tin cá nhân của bạn</p>
           </div>
-          <div className="flex space-x-3">
-            <Link href="/profile/roommate/add">
-              <Button className="bg-green-500 hover:bg-green-600">
+          <div className="flex flex-col sm:flex-row gap-2 sm:space-x-3">
+            <Link href="/profile/roommate/add" className="w-full sm:w-auto">
+              <Button className="bg-green-500 hover:bg-green-600 w-full sm:w-auto text-sm">
                 <Users className="h-4 w-4 mr-2" />
-                Đăng tin tìm bạn cùng phòng
+                <span className="hidden sm:inline">Đăng tin tìm bạn cùng phòng</span>
+                <span className="sm:hidden">Tìm bạn cùng phòng</span>
               </Button>
             </Link>
-            <Link href="/profile/property/add">
-              <Button className="bg-blue-500 hover:bg-blue-600">
+            <Link href="/profile/property/add" className="w-full sm:w-auto">
+              <Button className="bg-blue-500 hover:bg-blue-600 w-full sm:w-auto text-sm">
                 <Building2 className="h-4 w-4 mr-2" />
-                Đăng tin tìm trọ
+                <span className="hidden sm:inline">Đăng tin tìm trọ</span>
+                <span className="sm:hidden">Tìm trọ</span>
               </Button>
             </Link>
           </div>

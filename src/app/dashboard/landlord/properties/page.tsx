@@ -62,14 +62,12 @@ export default function LandlordProperties() {
 
   return (
     <DashboardLayout userType="landlord">
-      <div className="px-6">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Dãy trọ/Tòa nhà</h1>
-            <p className="text-gray-600">Quản lý tất cả các dãy trọ và tòa nhà của bạn</p>
-          </div>
+      <div>
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">Dãy trọ/Tòa nhà</h1>
+          <p className="text-sm md:text-base text-gray-600 mb-4">Quản lý tất cả các dãy trọ và tòa nhà của bạn</p>
           <Link href="/dashboard/landlord/properties/add">
-            <Button className="bg-blue-500 hover:bg-blue-600 cursor-pointer">
+            <Button className="bg-blue-500 hover:bg-blue-600 cursor-pointer w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Thêm dãy trọ mới
             </Button>
@@ -77,8 +75,8 @@ export default function LandlordProperties() {
         </div>
 
         {/* Search and Filter */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4 mb-4 md:mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
@@ -87,10 +85,10 @@ export default function LandlordProperties() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-200"
+                className="w-full pl-10 pr-4 py-2 text-sm md:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-200"
               />
             </div>
-            <Button onClick={handleSearch} variant="outline" className="cursor-pointer">
+            <Button onClick={handleSearch} variant="outline" className="cursor-pointer w-full sm:w-auto">
               <Search className="h-4 w-4 mr-2" />
               Tìm kiếm
             </Button>
@@ -107,10 +105,11 @@ export default function LandlordProperties() {
           </div>
         )}
 
-        {/* Properties Table */}
+        {/* Properties Table - Desktop */}
         {!isLoading && buildings && Array.isArray(buildings) && buildings.length > 0 && (
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -226,6 +225,92 @@ export default function LandlordProperties() {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-gray-200">
+              {buildings.map((building) => (
+                <div
+                  key={building.id}
+                  className="p-4 hover:bg-gray-50 cursor-pointer"
+                  onClick={() => window.location.href = `/dashboard/landlord/properties/${building.id}/rooms`}
+                >
+                  <div className="flex items-start space-x-3 mb-3">
+                    <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
+                      <Building className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-900 truncate text-sm">{building.name}</h3>
+                      <p className="text-xs text-gray-600 line-clamp-2 mt-1">
+                        {building.addressLine1}
+                        {building.ward && `, ${building.ward.name}`}
+                        {building.district && `, ${building.district.name}`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <Badge className={building.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                      {building.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                    </Badge>
+                    <Badge className={building.isVerified ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}>
+                      {building.isVerified ? 'Đã xác thực' : 'Chưa xác thực'}
+                    </Badge>
+                    <span className="text-xs text-gray-500 px-2 py-1 bg-gray-50 rounded">
+                      {building.roomCount || 0} phòng
+                    </span>
+                  </div>
+
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Link href={`/dashboard/landlord/properties/${building.id}`} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full text-xs">
+                        <Building className="h-3 w-3 mr-1" />
+                        Chi tiết
+                      </Button>
+                    </Link>
+                    <Link href={`/dashboard/landlord/properties/${building.id}/edit`} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full text-xs">
+                        <Edit className="h-3 w-3 mr-1" />
+                        Sửa
+                      </Button>
+                    </Link>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="cursor-pointer px-2">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 cursor-pointer">
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Xóa
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Bạn có chắc chắn muốn xóa dãy trọ {building.name}?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Điều này sẽ xóa dãy trọ {building.name} và tất cả các phòng trong dãy trọ này. Hành động này không thể hoàn tác.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="cursor-pointer">Hủy</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+                                onClick={() => handleDeleteBuilding(building.id)}
+                              >
+                                Xóa
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
