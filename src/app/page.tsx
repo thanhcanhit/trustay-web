@@ -1,33 +1,18 @@
 "use client"
 
-import { useState } from "react"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { Search, MapPin, DollarSign, ChevronDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import Link from "next/link"
+import { Search, Home as HomeIcon, Users, FileText, Heart, User, Bell, MapPin, Star, TrendingUp } from "lucide-react"
 import { FeaturedProperties } from "@/components/featured-properties"
 import { FeaturedRoomSeekings } from "@/components/featured-room-seekings"
 import { FeaturedRoommates } from "@/components/featured-roommates"
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("all")
-  const router = useRouter()
-
-  const handleSearch = () => {
-    if (activeTab === "room") {
-      router.push("/rooms")
-    } else if (activeTab === "roommate") {
-      router.push("/room-seekings")
-    } else {
-      router.push("/rooms")
-    }
-  }
 
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-green-900 via-green-800 to-green-600 min-h-[300px] overflow-hidden">
+      <div className="relative bg-gradient-to-br from-green-900 via-green-800 to-green-600 min-h-[200px] overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-20">
           <div className="w-full h-full bg-gradient-to-br from-white/10 to-transparent"></div>
@@ -80,90 +65,114 @@ export default function Home() {
         
       </div>
 
-      {/* Search Section */}
-      <div className="container mx-auto px-9 relative -top-15 z-0">
-          {/* Category Tabs */}
-          <div className="flex flex-wrap gap-1">
-            <button
-              onClick={() => setActiveTab("all")}
-              className={`px-6 py-3 rounded-t-lg font-medium transition-all cursor-pointer ${
-                activeTab === "all"
-                  ? "bg-primary text-white"
-                  : "bg-white text-green-900 hover:bg-green-100"
-              }`}
-            >
-              Tất cả
-            </button>
-            <button
-              onClick={() => setActiveTab("room")}
-              className={`px-6 py-3 rounded-t-lg font-medium transition-all cursor-pointer ${
-                activeTab === "room"
-                  ? "bg-primary text-white"
-                  : "bg-white text-green-900 hover:bg-green-100"
-              }`}
-            >
-              Phòng trọ
-            </button>
-            <button
-              onClick={() => setActiveTab("roommate")}
-              className={`px-6 py-3 rounded-t-lg font-medium transition-all cursor-pointer ${
-                activeTab === "roommate"
-                  ? "bg-primary text-white"
-                  : "bg-white text-green-900 hover:bg-green-100"
-              }`}
-            >
-              Bạn cùng phòng
-            </button>
-          </div>
+      {/* Feature Categories Section */}
+      <div className="bg-white py-6">
+        <div className="container mx-auto px-4">
+          {/* Feature Grid - Centered and Compact */}
+          <div className="w-full">
+            <div className="grid grid-cols-5 gap-4">
+              {/* Tìm phòng trọ */}
+              <Link href="/rooms" className="group">
+                <div className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-all cursor-pointer">
+                  <div className="w-14 h-14 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <HomeIcon className="w-6 h-6 text-green-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 text-center leading-tight">Tìm phòng trọ</span>
+                </div>
+              </Link>
 
-          {/* Search Form */}
-          <div className="bg-primary rounded-b-lg rounded-r-lg p-6 shadow-2xl">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Search Input */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <Input
-                  placeholder="Bạn muốn tìm trọ ở đâu"
-                  className="pl-10 h-12 bg-white border-gray-200 focus:border-green-500"
-                />
-              </div>
+              {/* Người tìm trọ */}
+              <Link href="/room-seekings" className="group">
+                <div className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-all cursor-pointer">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <Search className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 text-center leading-tight">Người tìm trọ</span>
+                </div>
+              </Link>
 
-              {/* Location Select */}
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <select className="w-full h-12 pl-10 pr-8 border border-gray-200 rounded-md focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none appearance-none bg-white">
-                  <option>Địa điểm</option>
-                  <option>Hà Nội</option>
-                  <option>TP. Hồ Chí Minh</option>
-                  <option>Đà Nẵng</option>
-                  <option>Cần Thơ</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 pointer-events-none" />
-              </div>
+              {/* Tìm người ở ghép */}
+              <Link href="/roommate" className="group">
+                <div className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-all cursor-pointer">
+                  <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <Users className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 text-center leading-tight">Tìm người ở ghép</span>
+                </div>
+              </Link>
 
-              {/* Price Select */}
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <select className="w-full h-12 pl-10 pr-8 border border-gray-200 rounded-md focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none appearance-none bg-white">
-                  <option>Mức giá</option>
-                  <option>Dưới 2 triệu</option>
-                  <option>2 - 3 triệu</option>
-                  <option>3 - 5 triệu</option>
-                  <option>Trên 5 triệu</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 pointer-events-none" />
-              </div>
+              {/* Quản lý hợp đồng */}
+              <Link href="/landlord/rentals" className="group">
+                <div className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-all cursor-pointer">
+                  <div className="w-14 h-14 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <FileText className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 text-center leading-tight">Quản lý hợp đồng</span>
+                </div>
+              </Link>
 
-              {/* Search Button */}
-              <Button 
-                onClick={handleSearch}
-                className="h-12 bg-blue-500 hover:bg-blue-600 text-white font-medium text-lg"
-              >
-                <Search className="h-5 w-5 mr-2" />
-                Tìm kiếm
-              </Button>
+              {/* Yêu thích */}
+              <Link href="/profile/saved" className="group">
+                <div className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-all cursor-pointer">
+                  <div className="w-14 h-14 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <Heart className="w-6 h-6 text-red-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 text-center leading-tight">Yêu thích</span>
+                </div>
+              </Link>
+
+              {/* Hồ sơ */}
+              <Link href="/profile" className="group">
+                <div className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-all cursor-pointer">
+                  <div className="w-14 h-14 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <User className="w-6 h-6 text-indigo-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 text-center leading-tight">Hồ sơ</span>
+                </div>
+              </Link>
+
+              {/* Thông báo */}
+              <Link href="/profile/notifications" className="group">
+                <div className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-all cursor-pointer">
+                  <div className="w-14 h-14 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <Bell className="w-6 h-6 text-yellow-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 text-center leading-tight">Thông báo</span>
+                </div>
+              </Link>
+
+              {/* Khu vực */}
+              <Link href="/rooms" className="group">
+                <div className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-all cursor-pointer">
+                  <div className="w-14 h-14 bg-gradient-to-br from-teal-100 to-teal-200 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <MapPin className="w-6 h-6 text-teal-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 text-center leading-tight">Khu vực</span>
+                </div>
+              </Link>
+
+              {/* Đánh giá */}
+              <Link href="/rooms" className="group">
+                <div className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-all cursor-pointer">
+                  <div className="w-14 h-14 bg-gradient-to-br from-pink-100 to-pink-200 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <Star className="w-6 h-6 text-pink-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 text-center leading-tight">Đánh giá</span>
+                </div>
+              </Link>
+
+              {/* Hot */}
+              <Link href="/rooms" className="group">
+                <div className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-all cursor-pointer">
+                  <div className="w-14 h-14 bg-gradient-to-br from-rose-100 to-rose-200 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <TrendingUp className="w-6 h-6 text-rose-600" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 text-center leading-tight">Hot</span>
+                </div>
+              </Link>
             </div>
           </div>
+        </div>
       </div>
 
       {/* Advertisement Banner */}
