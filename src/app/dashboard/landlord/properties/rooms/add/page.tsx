@@ -745,7 +745,7 @@ function AddRoomPageContent() {
 
                 <Separator />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                   <FormField>
                     <FormLabel>Giá thuê hàng tháng (VNĐ) <span className="text-red-500">*</span></FormLabel>
                     <Input
@@ -769,17 +769,18 @@ function AddRoomPageContent() {
                     />
                     {errors.depositAmount && <FormMessage>{errors.depositAmount}</FormMessage>}
                   </FormField>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField>
                     <FormLabel>Số tháng cọc</FormLabel>
                     <Input
-                      type="number"
-                      min="1"
-                      placeholder="2"
-                      value={formData.pricing?.depositMonths || ''}
-                      onChange={(e) => updateNestedFormData('pricing', 'depositMonths', parseInt(e.target.value) || 2)}
+                      type="text"
+                      disabled
+                      value={
+                        formData.pricing?.basePriceMonthly && formData.pricing?.depositAmount && Number(formData.pricing.basePriceMonthly) > 0
+                          ? (Number(formData.pricing.depositAmount) / Number(formData.pricing.basePriceMonthly)).toFixed(1)
+                          : '0'
+                      }
+                      className="bg-gray-50 text-gray-600"
                     />
                   </FormField>
 
@@ -806,41 +807,6 @@ function AddRoomPageContent() {
                   </FormField>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField>
-                    <FormLabel>Chi phí tiện ích hàng tháng (VNĐ)</FormLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="500000"
-                      value={formData.pricing?.utilityCostMonthly || ''}
-                      onChange={(e) => updateNestedFormData('pricing', 'utilityCostMonthly', parseInt(e.target.value) || 0)}
-                    />
-                  </FormField>
-
-                  <FormField>
-                    <FormLabel>Phí vệ sinh (VNĐ)</FormLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="200000"
-                      value={formData.pricing?.cleaningFee || ''}
-                      onChange={(e) => updateNestedFormData('pricing', 'cleaningFee', parseInt(e.target.value) || 0)}
-                    />
-                  </FormField>
-                  <FormField>
-                  <FormLabel>Phí dịch vụ (%)</FormLabel>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    placeholder="5.0"
-                    value={formData.pricing?.serviceFeePercentage || ''}
-                    onChange={(e) => updateNestedFormData('pricing', 'serviceFeePercentage', parseFloat(e.target.value) || 0)}
-                  />
-                </FormField>
-                </div>
 
                 {/* Costs Section */}
                 <div>
