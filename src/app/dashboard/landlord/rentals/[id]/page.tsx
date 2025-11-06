@@ -24,7 +24,6 @@ import {
 } from "lucide-react"
 import { useRentalStore } from "@/stores/rentalStore"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { deleteRental } from "@/actions/rental.action"
 import { toast } from "sonner"
 import {
   AlertDialog,
@@ -61,6 +60,7 @@ export default function RentalDetailPage() {
     loadingCurrent: loading,
     errorCurrent: error,
     loadById,
+    terminate,
   } = useRentalStore()
 
   const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null)
@@ -81,17 +81,20 @@ export default function RentalDetailPage() {
 
     setDeletingMemberId(memberToDelete.rentalId)
     try {
-      const result = await deleteRental(memberToDelete.rentalId)
-      
-      if (result.success) {
-        toast.success(`Đã xóa thành viên ${memberToDelete.name} khỏi hợp đồng`)
+      const success = await terminate(memberToDelete.rentalId, {
+        terminationReason: `Chấm dứt hợp đồng của thành viên ${memberToDelete.name}`,
+        terminationNoticeDate: new Date().toISOString(),
+      })
+
+      if (success) {
+        toast.success(`Đã chấm dứt hợp đồng của thành viên ${memberToDelete.name}`)
         // Reload rental data
         loadById(rentalId)
       } else {
-        toast.error(result.error || 'Không thể xóa thành viên')
+        toast.error('Không thể chấm dứt hợp đồng')
       }
     } catch {
-      toast.error('Có lỗi xảy ra khi xóa thành viên')
+      toast.error('Có lỗi xảy ra khi chấm dứt hợp đồng')
     } finally {
       setDeletingMemberId(null)
       setMemberToDelete(null)
@@ -525,10 +528,10 @@ export default function RentalDetailPage() {
         <AlertDialog open={!!memberToDelete} onOpenChange={() => setMemberToDelete(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Xác nhận xóa thành viên</AlertDialogTitle>
+              <AlertDialogTitle>Xác nhận chấm dứt hợp đồng</AlertDialogTitle>
               <AlertDialogDescription>
-                Bạn có chắc chắn muốn xóa <strong>{memberToDelete?.name}</strong> khỏi hợp đồng này không? 
-                Hành động này không thể hoàn tác.
+                Bạn có chắc chắn muốn chấm dứt hợp đồng của <strong>{memberToDelete?.name}</strong> không?
+                Hành động này sẽ chuyển trạng thái hợp đồng thành &ldquo;Đã chấm dứt&rdquo;.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -537,7 +540,7 @@ export default function RentalDetailPage() {
                 onClick={confirmDeleteMember}
                 className="bg-red-600 hover:bg-red-700"
               >
-                Xóa thành viên
+                Chấm dứt hợp đồng
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
