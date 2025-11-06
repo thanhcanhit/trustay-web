@@ -630,44 +630,38 @@ export function Navigation() {
                   </div>
                 )}
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-10 text-white bg-green-600 hover:bg-green-700 font-medium cursor-pointer">
-                      <Plus className="h-4 w-4" />
-                      Đăng bài
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuContent className="w-56 z-[10000]" align="end" side="top">
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem>
-                          <Link href="/post?type=room-seeking" className="select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                            <div className="text-sm font-medium leading-none">Đăng tin tìm chỗ thuê</div>
-                            <p className="text-xs leading-tight text-muted-foreground">
-                              Đăng tin tìm kiếm phòng trọ, nhà trọ
-                            </p>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Link href="/post?type=roommate" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                            <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
-                            <p className="text-xs leading-tight text-muted-foreground">
-                              Tìm bạn cùng phòng, người ở ghép
-                            </p>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Link href="/dashboard/landlord/properties/add" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
-                            <div className="text-sm font-medium leading-none">Đăng tin cho thuê</div>
-                            <p className="text-xs leading-tight text-muted-foreground">
-                              Đăng tin cho thuê phòng trọ, nhà trọ của bạn
-                            </p>
-                          </Link>
-                        </DropdownMenuItem>
-                      </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenuPortal>
-                </DropdownMenu>
+                {user?.role === 'tenant' && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-10 text-white bg-green-600 hover:bg-green-700 font-medium cursor-pointer">
+                        <Plus className="h-4 w-4" />
+                        Đăng bài
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuContent className="w-56 z-[10000]" align="end" side="top">
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem>
+                            <Link href="/post?type=room-seeking" className="select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                              <div className="text-sm font-medium leading-none">Đăng tin tìm chỗ thuê</div>
+                              <p className="text-xs leading-tight text-muted-foreground">
+                                Đăng tin tìm kiếm phòng trọ, nhà trọ
+                              </p>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Link href="/post?type=roommate" className="block select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                              <div className="text-sm font-medium leading-none">Đăng tin tìm người ở ghép</div>
+                              <p className="text-xs leading-tight text-muted-foreground">
+                                Tìm bạn cùng phòng, người ở ghép
+                              </p>
+                            </Link>
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenu>
+                )}
                 </>
               ) : (
                 <div className="flex items-center space-x-2">

@@ -186,7 +186,7 @@ export function CostCheckboxSelector({
     <div className={`space-y-4 ${className}`}>
       <FormField>
         <FormLabel>Chi phí phát sinh</FormLabel>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filteredCostTypes.map((costType) => {
             const IconComponent = getCostTypeIcon(costType.name);
             const checked = isSelected(costType.id);
@@ -196,7 +196,7 @@ export function CostCheckboxSelector({
             return (
               <div
                 key={costType.id}
-                className="flex flex-col space-y-2 p-4 border rounded-lg"
+                className="flex flex-col space-y-2 p-3 border rounded-md"
               >
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -206,7 +206,7 @@ export function CostCheckboxSelector({
                   />
 
                   <div className="flex items-center space-x-2 flex-1">
-                    <IconComponent className="h-4 w-4 text-gray-600" />
+                    <IconComponent className="h-3.5 w-3.5 text-gray-600" />
                     <Label
                       htmlFor={`cost-${costType.id}`}
                       className="text-sm font-medium cursor-pointer flex-1"
@@ -219,7 +219,7 @@ export function CostCheckboxSelector({
                 {checked && (
                   <>
                     <div className="flex items-center space-x-2">
-                      <Label className="text-xs text-gray-600 min-w-[80px]">Loại chi phí:</Label>
+                      <Label className="text-xs text-gray-600 min-w-[70px]">Loại chi phí:</Label>
                       <Select
                         value={selectedCost?.costType || 'fixed'}
                         onValueChange={(value) => handleCostTypeChange(costType.id, value as 'fixed' | 'per_person' | 'metered')}
@@ -235,16 +235,16 @@ export function CostCheckboxSelector({
                       </Select>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Label className="text-xs text-gray-600 min-w-[80px]">Số tiền:</Label>
+                      <Label className="text-xs text-gray-600 min-w-[70px]">Số tiền:</Label>
                       <Input
                         type="number"
                         value={currentValue}
                         onChange={(e) => handleValueChange(costType.id, parseFloat(e.target.value) || 0)}
-                        className="h-8 text-xs"
+                        className="h-8 text-sm"
                         min="0"
                         step="1000"
                       />
-                      <span className="text-xs text-gray-500 min-w-[50px]">
+                      <span className="text-xs text-gray-500 min-w-[40px]">
                         {costType.unit || 'VND'}
                       </span>
                     </div>
