@@ -1,5 +1,29 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## 🆕 New Feature: Roommate Invitation
+
+Đã implement đầy đủ tính năng mời người ở ghép với 2 flows:
+1. **Add Directly**: Thêm trực tiếp bằng email/phone
+2. **Invite by Link**: Tạo link mời với approval flow
+
+📚 **Documentation**:
+- [Implementation Guide](./ROOMMATE_INVITATION_IMPLEMENTATION.md) - Chi tiết đầy đủ
+- [Quick Summary](./ROOMMATE_INVITATION_SUMMARY.md) - Tóm tắt nhanh
+- [Flow Diagrams](./ROOMMATE_INVITATION_DIAGRAMS.md) - Mermaid diagrams
+- [Integration Checklist](./ROOMMATE_INVITATION_CHECKLIST.md) - Roadmap
+- [Complete Report](./ROOMMATE_INVITATION_COMPLETE.md) - Tổng kết
+
+🎯 **Quick Start**:
+```tsx
+import { RoommateInvitationPanel } from "@/components/roommate";
+
+<RoommateInvitationPanel postId="your-post-id" onSuccess={() => {}} />
+```
+
+🔗 **Demo**: Visit `/dashboard/tenant/roommate-invitation`
+
+---
+
 ## Getting Started
 
 First, run the development server:

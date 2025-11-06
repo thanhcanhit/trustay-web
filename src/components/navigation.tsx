@@ -203,18 +203,38 @@ export function Navigation() {
     <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-[9998]" suppressHydrationWarning={true}>
       {/* First Row: Logo, Search, Login/Signup */}
       <div className={isAuthPage ? "" : "border-b border-gray-200"}>
-        <div className="container mx-auto px-4 relative">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-4">
-              {/* Logo */}
-              <Link href="/" className="flex items-center space-x-2">
-                <Image src="/logo.png" alt="Trustay" width={140} height={140} />
+        <div className="container mx-auto px-2 sm:px-4 relative">
+          <div className="flex h-14 sm:h-16 items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-4">
+              {/* Logo - Hidden on mobile */}
+              <Link href="/" className="hidden sm:flex items-center space-x-2">
+                <Image src="/logo.png" alt="Trustay" width={100} height={100} className="w-20 h-20 sm:w-[140px] sm:h-[140px]" />
               </Link>
             </div>
-            {/* Centered Search + Filter (hidden on auth pages and mobile) */}
+            {/* Search on Mobile - Left aligned */}
+            {!isAuthPage && isMounted && (
+              <div className="flex lg:hidden flex-1 items-center gap-2 ml-0">
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearchKeyDown}
+                  placeholder="Tìm kiếm..."
+                  className="h-9 w-full px-3 rounded-lg text-sm"
+                />
+                <Button
+                  onClick={handleSearch}
+                  size="sm"
+                  className="h-9 px-3 bg-green-600 hover:bg-green-700 text-white rounded-lg flex-shrink-0"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            {/* Centered Search + Filter (hidden on mobile) */}
             {!isAuthPage && isMounted && (
               <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 -mx-8">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 xl:gap-3">
                   {/* Search bar container */}
                   <div className="flex items-center">
                     {/* Search type dropdown */}
@@ -557,7 +577,7 @@ export function Navigation() {
             )}
 
             {/* Right Section - Login/Signup or User Menu */}
-            <div className="flex items-center space-x-2 md:space-x-3">
+            <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-3">
               {isAuthenticated && user ? (
                 <>
                 <NotificationBell />
@@ -566,9 +586,9 @@ export function Navigation() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowUserDropdown(!showUserDropdown)}
-                  className="flex items-center space-x-2 h-10 text-gray-700 hover:text-gray-900 cursor-pointer"
+                  className="flex items-center space-x-1 sm:space-x-2 h-9 sm:h-10 text-gray-700 hover:text-gray-900 cursor-pointer px-1 sm:px-3"
                 >
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                     {user.avatarUrl && !isAvatarError ? (
                       <div className="w-full h-full relative">
                         <SizingImage
@@ -581,13 +601,13 @@ export function Navigation() {
                         />
                       </div>
                     ) : (
-                      <AvatarFallback className="text-sm font-medium bg-green-100 text-green-700">
+                      <AvatarFallback className="text-xs sm:text-sm font-medium bg-green-100 text-green-700">
                         {user.firstName?.charAt(0)?.toUpperCase()}{user.lastName?.charAt(0)?.toUpperCase()}
                       </AvatarFallback>
                     )}
                   </Avatar>
-                  {isMounted && <span className="hidden md:inline-block">{user.firstName} {user.lastName}</span>}
-                  <ChevronDown className="h-3 w-3" />
+                  {isMounted && <span className="hidden md:inline-block text-sm">{user.firstName} {user.lastName}</span>}
+                  <ChevronDown className="h-3 w-3 hidden sm:block" />
                 </Button>
 
                 {showUserDropdown && (
@@ -633,9 +653,9 @@ export function Navigation() {
                 {user?.role === 'tenant' && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-10 text-white bg-green-600 hover:bg-green-700 font-medium cursor-pointer">
+                      <Button variant="outline" size="sm" className="h-9 sm:h-10 text-white bg-green-600 hover:bg-green-700 font-medium cursor-pointer px-2 sm:px-4">
                         <Plus className="h-4 w-4" />
-                        Đăng bài
+                        <span className="hidden sm:inline ml-1">Đăng bài</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuPortal>
@@ -664,13 +684,13 @@ export function Navigation() {
                 )}
                 </>
               ) : (
-                <div className="flex items-center space-x-2">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href="/login" className="text-gray-600 hover:text-gray-700 cursor-pointer">
+                <div className="flex items-center space-x-1 sm:space-x-2">
+                  <Button variant="ghost" size="sm" className="h-9 sm:h-10 px-2 sm:px-4" asChild>
+                    <Link href="/login" className="text-gray-600 hover:text-gray-700 cursor-pointer text-xs sm:text-sm">
                       Đăng nhập
                     </Link>
                   </Button>
-                  <Button size="sm" className="bg-primary hover:bg-green-700 text-white cursor-pointer" asChild>
+                  <Button size="sm" className="bg-primary hover:bg-green-700 text-white cursor-pointer h-9 sm:h-10 px-2 sm:px-4 text-xs sm:text-sm" asChild>
                     <Link href="/register">Đăng ký</Link>
                   </Button>
                 </div>

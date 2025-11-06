@@ -83,10 +83,10 @@ export function FeaturedRoommates() {
 
   if (loading) {
     return (
-      <section className="py-12 bg-white">
+      <section className="py-8 sm:py-12 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <p className="text-gray-600">Đang tải...</p>
+            <p className="text-sm sm:text-base text-gray-600">Đang tải...</p>
           </div>
         </div>
       </section>
@@ -95,13 +95,13 @@ export function FeaturedRoommates() {
 
   if (listings.length === 0) {
     return (
-      <section className="py-12 bg-white">
+      <section className="py-8 sm:py-12 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
               TÌM BẠN CÙNG PHÒNG NỔI BẬT
             </h2>
-            <p className="text-gray-600">
+            <p className="text-sm sm:text-base text-gray-600">
               Những bài đăng tìm bạn cùng phòng được quan tâm nhiều nhất
             </p>
           </div>
@@ -129,18 +129,18 @@ export function FeaturedRoommates() {
   }
 
   return (
-    <section className="py-12 bg-white">
+    <section className="py-8 sm:py-12 bg-white">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             TÌM BẠN CÙNG PHÒNG NỔI BẬT
           </h2>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Những bài đăng tìm bạn cùng phòng được quan tâm nhiều nhất
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           {listings.slice(0, 8).map((listing) => {
             const isSaved = savedPosts.includes(listing.id)
 
@@ -225,9 +225,9 @@ export function FeaturedRoommates() {
         </div>
 
         {/* View More Button */}
-        <div className="text-center mt-8">
+        <div className="text-center mt-6 sm:mt-8">
           <Link href="/roommate">
-            <Button variant="outline" size="lg">
+            <Button variant="outline" size="lg" className="text-sm sm:text-base px-4 sm:px-6">
               Xem thêm bài đăng
             </Button>
           </Link>
