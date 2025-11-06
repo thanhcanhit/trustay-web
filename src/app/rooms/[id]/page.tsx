@@ -324,13 +324,13 @@ export default function PropertyDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-2 md:px-4 py-3 md:py-6">
         {/* Breadcrumb */}
-        <div className="mb-6">
+        <div className="mb-3 md:mb-6">
           <BreadcrumbNavigation items={generateBreadcrumbItems()} />
         </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-1">
             {/* Image Gallery */}
@@ -354,74 +354,74 @@ export default function PropertyDetailPage() {
             {/* Single Comprehensive Card */}
             <div className="relative">
               <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-                <CardContent className="p-6">
+                <CardContent className="p-3 md:p-6">
                   {/* Header Section */}
-                  <div className="mb-6">
-                    <div className="flex items-start justify-between mb-4">
+                  <div className="mb-4 md:mb-6">
+                    <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-3 md:mb-4">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                        <div className="flex flex-wrap items-center gap-1.5 md:gap-2 mb-2">
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs md:text-sm">
                             {getRoomTypeDisplayName(roomDetail.roomType)}
                           </Badge>
-                          <Badge variant="outline" className="text-green-600 border-green-200">
+                          <Badge variant="outline" className="text-green-600 border-green-200 text-xs md:text-sm">
                             {roomDetail.areaSqm}m²
                           </Badge>
-                          <Badge variant="outline" className="text-purple-600 border-purple-200">
+                          <Badge variant="outline" className="text-purple-600 border-purple-200 text-xs md:text-sm">
                             {roomDetail.maxOccupancy} người
                           </Badge>
-                          <Badge variant="outline" className="text-blue-600 border-purple-200">
+                          <Badge variant="outline" className="text-blue-600 border-purple-200 text-xs md:text-sm">
                             Tầng {roomDetail.floorNumber}
                           </Badge>
                         </div>
-                        <h1 className="text-3xl font-bold text-gray-900 mb-3 leading-tight break-words">
+                        <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-2 md:mb-3 leading-tight break-words">
                           {roomDetail.name}
                         </h1>
-                        <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-600 mb-3 md:mb-4">
                           <div className="flex items-center gap-1">
-                            <MapPin className="h-4 w-4 text-gray-500" />
-                            <span>
+                            <MapPin className="h-3 w-3 md:h-4 md:w-4 text-gray-500 flex-shrink-0" />
+                            <span className="line-clamp-2 md:line-clamp-1">
                               {roomDetail.address}, {roomDetail.location.wardName}, {roomDetail.location.districtName}, {roomDetail.location.provinceName}
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4 text-gray-500" />
-                            <span>Đăng lúc: {formatDate(roomDetail.lastUpdated)}</span>
+                            <Calendar className="h-3 w-3 md:h-4 md:w-4 text-gray-500 flex-shrink-0" />
+                            <span className="text-xs md:text-sm">Đăng lúc: {formatDate(roomDetail.lastUpdated)}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" className="text-gray-600">
-                          <Heart className="h-4 w-4 mr-1" />
-                          Lưu
+                      <div className="flex items-center gap-2 mt-2 md:mt-0">
+                        <Button variant="outline" size="sm" className="text-gray-600 text-xs md:text-sm flex-1 md:flex-initial">
+                          <Heart className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                          <span className="hidden md:inline">Lưu</span>
                         </Button>
-                        <Button variant="outline" size="sm" className="text-gray-600">
-                          <Share2 className="h-4 w-4 mr-1" />
-                          Chia sẻ
+                        <Button variant="outline" size="sm" className="text-gray-600 text-xs md:text-sm flex-1 md:flex-initial">
+                          <Share2 className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                          <span className="hidden md:inline">Chia sẻ</span>
                         </Button>
                       </div>
                     </div>
 
                     {/* Price Display */}
-                    <div className="flex items-center justify-between p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border border-red-200">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-red-500 rounded-lg">
-                          <DollarSign className="h-6 w-6 text-white" />
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between p-3 md:p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border border-red-200 gap-3">
+                      <div className="flex items-center gap-3 md:gap-4">
+                        <div className="p-2 md:p-3 bg-red-500 rounded-lg flex-shrink-0">
+                          <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-white" />
                         </div>
                         <div>
-                          <p className="text-sm text-red-600 font-medium mb-1">Giá thuê</p>
-                          <div className="text-2xl font-bold text-red-600">
+                          <p className="text-xs md:text-sm text-red-600 font-medium mb-1">Giá thuê</p>
+                          <div className="text-lg md:text-2xl font-bold text-red-600">
                             {roomDetail.pricing?.basePriceMonthly ? formatPrice(parseInt(roomDetail.pricing.basePriceMonthly)) : 'Liên hệ'} VNĐ/tháng
                           </div>
                           {roomDetail.pricing?.utilityIncluded && (
-                            <Badge className="mt-2 bg-green-100 text-green-800">
+                            <Badge className="mt-1 md:mt-2 bg-green-100 text-green-800 text-xs">
                               Bao gồm tiện ích
                             </Badge>
                           )}
                         </div>
                       </div>
-                      <div className="text-right text-sm text-gray-500">
+                      <div className="text-left md:text-right text-xs md:text-sm text-gray-500">
                         <div className="flex items-center gap-1">
-                          <TrendingUp className="h-4 w-4" />
+                          <TrendingUp className="h-3 w-3 md:h-4 md:w-4" />
                           <span>{roomDetail.viewCount || 0} lượt xem</span>
                         </div>
                       </div>
@@ -429,15 +429,15 @@ export default function PropertyDetailPage() {
                   </div>
 
                   {/* Divider */}
-                  <div className="border-t border-gray-200 my-6"></div>
+                  <div className="border-t border-gray-200 my-3 md:my-6"></div>
 
                   {/* Room Information Section */}
-                  <div className="mb-6">
-                    <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
-                      <Home className="h-5 w-5 text-blue-600" />
+                  <div className="mb-4 md:mb-6">
+                    <h3 className="flex items-center gap-2 text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">
+                      <Home className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
                       Thông tin dãy trọ
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                       <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
                         <div className="p-2 bg-blue-500 rounded-lg">
                           <Building className="h-5 w-5 text-white" />
@@ -462,12 +462,12 @@ export default function PropertyDetailPage() {
                   </div>
 
                   {/* Divider */}
-                  <div className="border-t border-gray-200 my-6"></div>
+                  <div className="border-t border-gray-200 my-3 md:my-6"></div>
 
                   {/* Amenities Section */}
-                  <div className="mb-6">
-                    <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
-                      <Home className="h-5 w-5 text-blue-600" />
+                  <div className="mb-4 md:mb-6">
+                    <h3 className="flex items-center gap-2 text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">
+                      <Home className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
                       Tiện nghi
                     </h3>
                     <AmenitySelector
@@ -478,12 +478,12 @@ export default function PropertyDetailPage() {
                   </div>
 
                   {/* Divider */}
-                  <div className="border-t border-gray-200 my-6"></div>
+                  <div className="border-t border-gray-200 my-3 md:my-6"></div>
 
                   {/* Pricing & Costs Section */}
-                  <div className="mb-6">
-                    <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
-                      <DollarSign className="h-5 w-5 text-green-600" />
+                  <div className="mb-4 md:mb-6">
+                    <h3 className="flex items-center gap-2 text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">
+                      <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-green-600" />
                       Giá cả & Chi phí
                     </h3>
                     <div className="space-y-3">
@@ -513,8 +513,8 @@ export default function PropertyDetailPage() {
                       {/* Additional Costs */}
                       {roomDetail.costs && roomDetail.costs.length > 0 && (
                         <div>
-                          <h4 className="text-lg font-semibold text-gray-900 mb-4">Chi phí phát sinh</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <h4 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">Chi phí phát sinh</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                             {roomDetail.costs.map((cost: typeof roomDetail.costs[number]) => {
                               const isElectricity = cost.name.toLowerCase().includes('điện')
                               const isWater = cost.name.toLowerCase().includes('nước')
@@ -604,14 +604,14 @@ export default function PropertyDetailPage() {
                       </div>
 
                       {/* Divider */}
-                      <div className="border-t border-gray-200 my-6"></div>
+                      <div className="border-t border-gray-200 my-3 md:my-6"></div>
                     </>
                   )}
 
                   {/* Description Section */}
-                  <div className="mb-6">
-                    <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
-                      <MessageCircle className="h-5 w-5 text-blue-600" />
+                  <div className="mb-4 md:mb-6">
+                    <h3 className="flex items-center gap-2 text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">
+                      <MessageCircle className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
                       Mô tả chi tiết
                     </h3>
                     <div className={`${!isDescriptionExpanded ? 'line-clamp-3' : ''}`}>
@@ -636,16 +636,16 @@ export default function PropertyDetailPage() {
                   </div>
 
                   {/* Divider */}
-                  <div className="border-t border-gray-200 my-6"></div>
+                  <div className="border-t border-gray-200 my-3 md:my-6"></div>
 
                   {/* Location Section */}
                   <div>
-                    <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
-                      <MapPin className="h-5 w-5 text-red-600" />
+                    <h3 className="flex items-center gap-2 text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">
+                      <MapPin className="h-4 w-4 md:h-5 md:w-5 text-red-600" />
                       Vị trí
                     </h3>
-                    <div className="space-y-4">
-                      <div className="w-full h-80 bg-gray-200 rounded-xl overflow-hidden shadow-inner">
+                    <div className="space-y-3 md:space-y-4">
+                      <div className="w-full h-48 md:h-80 bg-gray-200 rounded-xl overflow-hidden shadow-inner">
                         {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
                           <iframe
                             width="100%"
@@ -679,7 +679,7 @@ export default function PropertyDetailPage() {
                       </div>
 
                       {/* Map Action Buttons */}
-                      <div className="flex gap-3">
+                      <div className="flex flex-col md:flex-row gap-2 md:gap-3">
                         <Button
                           variant="outline"
                           onClick={() => {
@@ -756,79 +756,79 @@ export default function PropertyDetailPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-1">
+          <div className="lg:col-span-1 space-y-3 md:space-y-1">
             {/* Owner Profile Section */}
-            <Card className="shadow-xl border-0 mb-4 bg-gradient-to-br from-white to-gray-50">
-              <CardContent className="">
+            <Card className="shadow-xl border-0 mb-3 md:mb-4 bg-gradient-to-br from-white to-gray-50">
+              <CardContent className="p-3 md:p-6">
                 {/* Owner Profile */}
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="relative">
-                    <Avatar className="h-16 w-16 ring-4 ring-yellow-200">
+                <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
+                  <div className="relative flex-shrink-0">
+                    <Avatar className="h-12 w-12 md:h-16 md:w-16 ring-2 md:ring-4 ring-yellow-200">
                       {roomDetail.owner?.avatarUrl && roomDetail.owner.avatarUrl.trim() !== '' ? (
                         <div className="w-full h-full relative">
-                          <SizingImage 
-                            src={roomDetail.owner.avatarUrl} 
-                            srcSize="128x128" 
+                          <SizingImage
+                            src={roomDetail.owner.avatarUrl}
+                            srcSize="128x128"
                             alt={`${roomDetail.owner.name || 'Owner'}`}
                             className="object-cover rounded-full"
                             fill
                           />
                         </div>
                       ) : (
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-lg">
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-base md:text-lg">
                           {(roomDetail.owner?.name?.charAt(0) || 'U').toUpperCase()}
                         </AvatarFallback>
                       )}
                     </Avatar>
-                    <div className="absolute -bottom-1 -right-1 bg-green-500 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 md:w-5 md:h-5 rounded-full border-2 border-white flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-white rounded-full"></div>
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-gray-900 text-lg mb-1">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 text-base md:text-lg mb-1 truncate">
                       {roomDetail.owner?.name || ''}
                     </h3>
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-1 md:mb-2">
                       <div className="flex">
                         {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                          <Star key={i} className="h-3 w-3 md:h-4 md:w-4 text-yellow-400 fill-current" />
                         ))}
                       </div>
-                      <span className="text-sm text-gray-600">5.0</span>
+                      <span className="text-xs md:text-sm text-gray-600">5.0</span>
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                    <div className="flex items-center gap-1 text-xs md:text-sm text-gray-500">
                       <Flag className="h-3 w-3" />
                       <span>Việt Nam</span>
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-green-600 mt-1">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div className="flex items-center gap-1 text-xs md:text-sm text-green-600 mt-1">
+                      <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
                       <span>Hoạt động 2 ngày trước</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Contact Information */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Phone className="h-4 w-4 text-gray-600" />
-                    <span className="text-sm text-gray-700">Điện thoại: {roomDetail.owner?.phone || 'Chưa cập nhật'}</span>
-                    <div className="ml-auto">
+                <div className="space-y-2 mb-3 md:mb-4">
+                  <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-gray-50 rounded-lg">
+                    <Phone className="h-3 w-3 md:h-4 md:w-4 text-gray-600 flex-shrink-0" />
+                    <span className="text-xs md:text-sm text-gray-700 truncate flex-1">Điện thoại: {roomDetail.owner?.phone || 'Chưa cập nhật'}</span>
+                    <div className="flex-shrink-0">
                       {roomDetail.owner?.verifiedPhone ? (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <CheckCircle className="h-3 w-3 md:h-4 md:w-4 text-green-500" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-red-500" />
+                        <XCircle className="h-3 w-3 md:h-4 md:w-4 text-red-500" />
                       )}
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Mail className="h-4 w-4 text-gray-600" />
-                    <span className="text-sm text-gray-700">Email: {roomDetail.owner?.email || 'Chưa cập nhật'}</span>
-                    <div className="ml-auto">
+
+                  <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-gray-50 rounded-lg">
+                    <Mail className="h-3 w-3 md:h-4 md:w-4 text-gray-600 flex-shrink-0" />
+                    <span className="text-xs md:text-sm text-gray-700 truncate flex-1">Email: {roomDetail.owner?.email || 'Chưa cập nhật'}</span>
+                    <div className="flex-shrink-0">
                       {roomDetail.owner?.verifiedEmail ? (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <CheckCircle className="h-3 w-3 md:h-4 md:w-4 text-green-500" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-red-500" />
+                        <XCircle className="h-3 w-3 md:h-4 md:w-4 text-red-500" />
                       )}
                     </div>
                   </div>
@@ -862,19 +862,19 @@ export default function PropertyDetailPage() {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{roomDetail.owner?.totalBuildings || 0}</div>
+                <div className="grid grid-cols-2 gap-2 md:gap-4 mb-3 md:mb-4">
+                  <div className="text-center p-2 md:p-3 bg-blue-50 rounded-lg">
+                    <div className="text-xl md:text-2xl font-bold text-blue-600">{roomDetail.owner?.totalBuildings || 0}</div>
                     <div className="text-xs text-gray-600">Tòa nhà</div>
                   </div>
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{roomDetail.owner?.totalRoomInstances || 0}</div>
+                  <div className="text-center p-2 md:p-3 bg-green-50 rounded-lg">
+                    <div className="text-xl md:text-2xl font-bold text-green-600">{roomDetail.owner?.totalRoomInstances || 0}</div>
                     <div className="text-xs text-gray-600">Phòng</div>
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2 md:gap-3">
                   {/* Check if user is owner first */}
                   {user?.role === "landlord" ? (
                     <Button className="bg-gray-400 hover:bg-gray-500 text-white cursor-not-allowed" size="lg">
@@ -966,12 +966,12 @@ export default function PropertyDetailPage() {
         </div>
 
         {/* Similar Posts - Centered Below Main Content */}
-        <div className="container mx-auto py-6">
+        <div className="container mx-auto py-3 md:py-6">
           <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-            <CardHeader>
+            <CardHeader className="p-3 md:p-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <Home className="h-5 w-5 text-blue-600" />
+                <CardTitle className="flex items-center gap-2 text-base md:text-xl">
+                  <Home className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
                   Tin đăng tương tự
                 </CardTitle>
                 <Button
@@ -1003,7 +1003,7 @@ export default function PropertyDetailPage() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 md:p-6">
             
               {/* Loading state for similar posts */}
               {featuredLoading && (
@@ -1026,25 +1026,34 @@ export default function PropertyDetailPage() {
                 <div className="relative">
                   <Swiper
                     modules={[Navigation, Pagination]}
-                    spaceBetween={20}
-                    slidesPerView={1}
+                    spaceBetween={12}
+                    slidesPerView={2}
+                    slidesPerGroup={1}
+                    freeMode={true}
+                    grabCursor={true}
                     navigation={{
                       nextEl: '.swiper-button-next-similar',
                       prevEl: '.swiper-button-prev-similar',
                     }}
-                    pagination={{ 
+                    pagination={{
                       clickable: true,
-                      dynamicBullets: true 
+                      dynamicBullets: true
                     }}
                     breakpoints={{
                       640: {
                         slidesPerView: 2,
+                        spaceBetween: 16,
+                        freeMode: false,
                       },
                       768: {
                         slidesPerView: 3,
+                        spaceBetween: 20,
+                        freeMode: false,
                       },
                       1024: {
                         slidesPerView: 4,
+                        spaceBetween: 20,
+                        freeMode: false,
                       },
                     }}
                     className="similar-posts-swiper"
@@ -1063,12 +1072,12 @@ export default function PropertyDetailPage() {
                   </Swiper>
 
                   {/* Custom Navigation Buttons */}
-                  <div className="swiper-button-prev-similar absolute -left-6 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-xl border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 hover:shadow-2xl">
+                  <div className="swiper-button-prev-similar hidden md:flex absolute -left-6 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-xl border border-gray-200 items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 hover:shadow-2xl">
                     <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                   </div>
-                  <div className="swiper-button-next-similar absolute -right-6 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-xl border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 hover:shadow-2xl">
+                  <div className="swiper-button-next-similar hidden md:flex absolute -right-6 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-xl border border-gray-200 items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 hover:shadow-2xl">
                     <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>

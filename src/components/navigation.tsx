@@ -26,7 +26,8 @@ import {
   Plus,
   Funnel,
   Search,
-  Home
+  Home,
+  ArrowLeft
 } from "lucide-react"
 import { Input } from "./ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuPortal, DropdownMenuTrigger } from "./ui/dropdown-menu"
@@ -39,7 +40,6 @@ export function Navigation() {
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   // Second row removed; scroll-based toggle no longer needed
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<string>("")
   const [selectedProvinceId, setSelectedProvinceId] = useState<number | null>(null)
   const [selectedDistrictId, setSelectedDistrictId] = useState<number | null>(null)
@@ -51,6 +51,17 @@ export function Navigation() {
   const [searchType, setSearchType] = useState<string>('rooms')
   const [isMounted, setIsMounted] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const [isMobileSearchFocused, setIsMobileSearchFocused] = useState(false)
+  const [searchSuggestions] = useState<string[]>([
+    "Phòng trọ giá rẻ",
+    "Phòng trọ có gác",
+    "Nhà trọ quận 1",
+    "Phòng trọ có ban công",
+    "Phòng có điều hòa",
+    "Phòng gần trường"
+  ])
+  const mobileSearchRef = useRef<HTMLDivElement>(null)
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
@@ -200,40 +211,92 @@ export function Navigation() {
   }, [])
 
   return (
-    <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-[9998]" suppressHydrationWarning={true}>
+    <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-[9998] no-print" suppressHydrationWarning={true}>
       {/* First Row: Logo, Search, Login/Signup */}
-      <div className={isAuthPage ? "" : "border-b border-gray-200"}>
-        <div className="container mx-auto px-2 sm:px-4 relative">
-          <div className="flex h-14 sm:h-16 items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-4">
-              {/* Logo - Hidden on mobile */}
-              <Link href="/" className="hidden sm:flex items-center space-x-2">
-                <Image src="/logo.png" alt="Trustay" width={100} height={100} className="w-20 h-20 sm:w-[140px] sm:h-[140px]" />
+      <div className={isAuthPage ? "" : "border-b border-gray-200 bg-gradient-to-r from-white to-gray-50"}>
+        <div className="container mx-auto px-2 sm:px-4">
+          <div className="flex h-14 lg:h-16 items-center justify-between lg:justify-start lg:gap-4 relative">
+            {/* Logo - Always visible on desktop, hidden on mobile */}
+            <div className="hidden lg:flex items-center flex-shrink-0">
+              <Link href="/" className="flex items-center space-x-2">
+                <Image src="/logo.png" alt="Trustay" width={100} height={100} className="w-[100px] h-[40px]" />
               </Link>
             </div>
+
             {/* Search on Mobile - Left aligned */}
             {!isAuthPage && isMounted && (
-              <div className="flex lg:hidden flex-1 items-center gap-2 ml-0">
-                <Input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleSearchKeyDown}
-                  placeholder="Tìm kiếm..."
-                  className="h-9 w-full px-3 rounded-lg text-sm"
-                />
+              <div className="flex lg:hidden flex-1 items-center gap-1 sm:gap-1.5 ml-0 max-w-[calc(100vw-180px)] relative">
+                {/* Back button - show on search and detail pages */}
+                {(pathname === '/rooms' || pathname === '/room-seekings' || pathname === '/roommate' || pathname.startsWith('/rooms/')) && (
+                  <Button
+                    onClick={() => router.back()}
+                    size="sm"
+                    variant="ghost"
+                    className="h-9 w-9 p-0 flex-shrink-0"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                )}
+
+                <div className="relative flex-1" ref={mobileSearchRef}>
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearchKeyDown}
+                    onFocus={() => setShowSearchSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSearchSuggestions(false), 200)}
+                    placeholder="Tìm kiếm..."
+                    className="h-9 w-full min-w-0 px-3 rounded-lg text-sm"
+                  />
+
+                  {/* Search Suggestions Dropdown */}
+                  {showSearchSuggestions && searchQuery.length === 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-[9999] max-h-60 overflow-y-auto">
+                      <div className="py-2">
+                        <div className="px-3 py-1 text-xs text-gray-500 font-medium">Tìm kiếm phổ biến</div>
+                        {searchSuggestions.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              setSearchQuery(suggestion)
+                              setShowSearchSuggestions(false)
+                            }}
+                            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <Search className="h-4 w-4 text-gray-400" />
+                            <span>{suggestion}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <Button
                   onClick={handleSearch}
                   size="sm"
-                  className="h-9 px-3 bg-green-600 hover:bg-green-700 text-white rounded-lg flex-shrink-0"
+                  className="h-9 w-9 p-0 bg-green-600 hover:bg-green-700 text-white rounded-lg flex-shrink-0"
                 >
                   <Search className="h-4 w-4" />
                 </Button>
+
+                {/* Filter button on mobile */}
+                {(pathname === '/rooms' || pathname === '/room-seekings' || pathname === '/roommate') && (
+                  <Button
+                    onClick={() => setIsFilterOpen(true)}
+                    size="sm"
+                    variant="outline"
+                    className="h-9 w-9 p-0 flex-shrink-0"
+                  >
+                    <Funnel className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             )}
 
-            {/* Centered Search + Filter (hidden on mobile) */}
+            {/* Centered Search + Filter (visible on desktop only) */}
             {!isAuthPage && isMounted && (
-              <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 -mx-8">
+              <div className="hidden lg:flex flex-1 items-center justify-center">
                 <div className="flex items-center gap-2 xl:gap-3">
                   {/* Search bar container */}
                   <div className="flex items-center">
@@ -443,141 +506,9 @@ export function Navigation() {
               </div>
             )}
 
-            {/* Mobile Search */}
-            {!isAuthPage && isMounted && (
-              <div className="lg:hidden">
-                <Dialog open={isMobileSearchOpen} onOpenChange={setIsMobileSearchOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
-                      <Search className="h-5 w-5 text-gray-600" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col">
-                    <DialogHeader className="flex-shrink-0">
-                      <DialogTitle>Tìm kiếm</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex-1 overflow-y-auto space-y-4 py-2">
-
-                      {/* Search Type */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Loại tìm kiếm</label>
-                        <div className="space-y-2">
-                          <Button
-                            onClick={() => setSearchType('rooms')}
-                            variant={searchType === 'rooms' ? 'default' : 'outline'}
-                            className={`w-full justify-start h-10 ${searchType === 'rooms' ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                          >
-                            <Home className="h-4 w-4 mr-2" />
-                            Tìm phòng trọ
-                          </Button>
-                          <Button
-                            onClick={() => setSearchType('room-seeking')}
-                            variant={searchType === 'room-seeking' ? 'default' : 'outline'}
-                            className={`w-full justify-start h-10 ${searchType === 'room-seeking' ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                          >
-                            <Search className="h-4 w-4 mr-2" />
-                            Người tìm trọ
-                          </Button>
-                          <Button
-                            onClick={() => setSearchType('roommate')}
-                            variant={searchType === 'roommate' ? 'default' : 'outline'}
-                            className={`w-full justify-start h-10 ${searchType === 'roommate' ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Tìm người ở ghép
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Search Input */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Từ khóa</label>
-                        <Input
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              handleApplyFilters()
-                              setIsMobileSearchOpen(false)
-                            }
-                          }}
-                          placeholder="Nhập để tìm kiếm"
-                          className="w-full"
-                        />
-                      </div>
-
-                      <hr />
-
-                      {/* Simple Filters */}
-                      <div className="space-y-4">
-                        <h4 className="font-medium">Bộ lọc</h4>
-
-                        {/* Location */}
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Khu vực</label>
-                          <AddressSelector
-                            showStreetInput={false}
-                            onChange={(addr) => {
-                              setSelectedProvinceId(addr.province?.id || null)
-                              setSelectedDistrictId(addr.district?.id || null)
-                              setSelectedWardId(addr.ward?.id || null)
-                            }}
-                          />
-                        </div>
-
-                        {/* Price Range */}
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Khoảng giá</label>
-                          <div className="grid grid-cols-2 gap-2">
-                            {[
-                              { v: '', l: 'Tất cả' },
-                              { v: '0-2000000', l: 'Dưới 2tr' },
-                              { v: '2000000-5000000', l: '2-5tr' },
-                              { v: '5000000-999999999', l: 'Trên 5tr' }
-                            ].map(opt => (
-                              <Button
-                                key={opt.v || 'all'}
-                                onClick={() => setSelectedPriceRange(opt.v)}
-                                variant={selectedPriceRange === opt.v ? 'default' : 'outline'}
-                                size="sm"
-                                className={`${selectedPriceRange === opt.v ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                              >
-                                {opt.l}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <DialogFooter className="flex-shrink-0 mt-4 pt-4 border-t">
-                      <div className="flex gap-2 w-full">
-                        <Button
-                          onClick={() => setIsMobileSearchOpen(false)}
-                          variant="outline"
-                          className="flex-1"
-                        >
-                          Hủy
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            handleApplyFilters()
-                            setIsMobileSearchOpen(false)
-                          }}
-                          className="flex-1 bg-green-600 hover:bg-green-700"
-                        >
-                          <Search className="h-4 w-4 mr-2" />
-                          Tìm kiếm
-                        </Button>
-                      </div>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            )}
 
             {/* Right Section - Login/Signup or User Menu */}
-            <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-3">
+            <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 flex-shrink-0 lg:ml-auto">
               {isAuthenticated && user ? (
                 <>
                 <NotificationBell />
@@ -586,7 +517,7 @@ export function Navigation() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowUserDropdown(!showUserDropdown)}
-                  className="flex items-center space-x-1 sm:space-x-2 h-9 sm:h-10 text-gray-700 hover:text-gray-900 cursor-pointer px-1 sm:px-3"
+                  className="flex items-center space-x-1 sm:space-x-2 h-9 lg:h-10 text-gray-700 hover:text-gray-900 cursor-pointer px-1 sm:px-3"
                 >
                   <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                     {user.avatarUrl && !isAvatarError ? (
@@ -653,7 +584,7 @@ export function Navigation() {
                 {user?.role === 'tenant' && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-9 sm:h-10 text-white bg-green-600 hover:bg-green-700 font-medium cursor-pointer px-2 sm:px-4">
+                      <Button variant="outline" size="sm" className="h-9 lg:h-10 text-white bg-green-600 hover:bg-green-700 font-medium cursor-pointer px-2 sm:px-4">
                         <Plus className="h-4 w-4" />
                         <span className="hidden sm:inline ml-1">Đăng bài</span>
                       </Button>
@@ -685,12 +616,12 @@ export function Navigation() {
                 </>
               ) : (
                 <div className="flex items-center space-x-1 sm:space-x-2">
-                  <Button variant="ghost" size="sm" className="h-9 sm:h-10 px-2 sm:px-4" asChild>
+                  <Button variant="ghost" size="sm" className="h-9 lg:h-10 px-2 sm:px-4" asChild>
                     <Link href="/login" className="text-gray-600 hover:text-gray-700 cursor-pointer text-xs sm:text-sm">
                       Đăng nhập
                     </Link>
                   </Button>
-                  <Button size="sm" className="bg-primary hover:bg-green-700 text-white cursor-pointer h-9 sm:h-10 px-2 sm:px-4 text-xs sm:text-sm" asChild>
+                  <Button size="sm" className="bg-primary hover:bg-green-700 text-white cursor-pointer h-9 lg:h-10 px-2 sm:px-4 text-xs sm:text-sm" asChild>
                     <Link href="/register">Đăng ký</Link>
                   </Button>
                 </div>
