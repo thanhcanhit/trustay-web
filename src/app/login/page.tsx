@@ -12,7 +12,7 @@ import { translateAuthError } from "@/utils/errorTranslation"
 import { Eye, EyeOff, PhoneCall } from "lucide-react"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
+  const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -28,8 +28,8 @@ export default function LoginPage() {
     e.preventDefault()
     clearError()
 
-    if (!email || !password) {
-      toast.error("Vui lòng nhập đầy đủ email và mật khẩu")
+    if (!identifier || !password) {
+      toast.error("Vui lòng nhập đầy đủ email/số điện thoại và mật khẩu")
       return
     }
 
@@ -41,10 +41,10 @@ export default function LoginPage() {
       console.warn('Password format validation failed:', errors)
     }
 
-    console.log('Attempting login with:', { email, apiUrl: process.env.NEXT_PUBLIC_API_URL })
+    console.log('Attempting login with:', { identifier, apiUrl: process.env.NEXT_PUBLIC_API_URL })
 
     try {
-      await login({ email, password })
+      await login({ identifier, password })
 
       // Get updated user data to determine redirect
       const { user } = useUserStore.getState()
@@ -125,12 +125,12 @@ export default function LoginPage() {
 
             <form className="space-y-4" onSubmit={handleSubmit}>
               <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="identifier"
+                name="identifier"
+                type="text"
+                placeholder="Email hoặc số điện thoại"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
                 disabled={isLoading}
                 className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50"
@@ -169,7 +169,7 @@ export default function LoginPage() {
               <div className="pt-2">
                 <Button
                   type="submit"
-                  disabled={isLoading || !email || !password}
+                  disabled={isLoading || !identifier || !password}
                   className="w-full h-11 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isLoading ? "ĐANG ĐĂNG NHẬP..." : "ĐĂNG NHẬP"}

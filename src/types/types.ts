@@ -8,7 +8,7 @@ export type { Rental, Contract };
 
 // Authentication Types
 export interface LoginRequest {
-	email: string;
+	identifier: string; // Email hoặc số điện thoại
 	password: string;
 }
 
