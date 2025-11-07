@@ -79,24 +79,24 @@ export function ImageSwiper({
             <SwiperSlide key={index}>
               <div className="relative w-full h-full bg-black">
                 {imageContext === 'detail' ? (
-                  <PhotoView src={image}>
+                  <PhotoView src={image || "/images/error-image.jpg"}>
                     <Image
-                      src={imageErrors[index] ? "/images/error-image.jpg" : image}
+                      src={imageErrors[index] ? "/images/error-image.jpg" : (image || "/images/error-image.jpg")}
                       alt={`${title} ${index + 1}`}
                       fill
                       className={objectFitClass}
                       onError={() => handleImageError(index)}
-                      unoptimized={!imageErrors[index] && image.includes('pt123.cdn.static123.com')}
+                      unoptimized={!imageErrors[index] && image?.includes('pt123.cdn.static123.com')}
                     />
                   </PhotoView>
                 ) : (
                   <Image
-                    src={imageErrors[index] ? "/images/error-image.jpg" : image}
+                    src={imageErrors[index] ? "/images/error-image.jpg" : (image || "/images/error-image.jpg")}
                     alt={`${title} ${index + 1}`}
                     fill
                     className={objectFitClass}
                     onError={() => handleImageError(index)}
-                    unoptimized={!imageErrors[index] && image.includes('pt123.cdn.static123.com')}
+                    unoptimized={!imageErrors[index] && image?.includes('pt123.cdn.static123.com')}
                   />
                 )}
               </div>
@@ -153,13 +153,13 @@ export function ImageSwiper({
               <SwiperSlide key={index} className="!w-20 !h-20">
                 <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-500 cursor-pointer transition-colors">
                   <Image
-                    src={imageErrors[index] ? "/images/error-image.jpg" : image}
+                    src={imageErrors[index] ? "/images/error-image.jpg" : (image || "/images/error-image.jpg")}
                     alt={`${title} thumbnail ${index + 1}`}
                     width={80}
                     height={80}
                     className="object-cover w-full h-full"
                     onError={() => handleImageError(index)}
-                    unoptimized={!imageErrors[index] && image.includes('pt123.cdn.static123.com')}
+                    unoptimized={!imageErrors[index] && image?.includes('pt123.cdn.static123.com')}
                   />
                 </div>
               </SwiperSlide>

@@ -66,33 +66,33 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
       {/* Mobile menu button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-32 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200"
+        className="lg:hidden fixed top-20 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200"
       >
         <Menu className="h-5 w-5 text-gray-600" />
       </button>
 
       {/* Mobile sidebar overlay */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
       {/* Mobile sidebar */}
-      <div className={`lg:hidden fixed top-28 left-0 h-[calc(100vh-7rem)] w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ${
+      <div className={`lg:hidden fixed top-16 left-0 h-[calc(100vh-4rem)] w-72 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 overflow-y-auto ${
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <Sidebar userType={userType} />
+        <Sidebar userType={userType} onNavigate={() => setIsMobileMenuOpen(false)} />
       </div>
 
       {/* Desktop sidebar */}
       <div className="hidden lg:block sticky top-12 h-[calc(100vh-3rem)] w-64 bg-white border-r border-gray-200 shadow-sm flex-shrink-0">
         <Sidebar userType={userType} />
       </div>
-      
+
       <main className="flex-1 overflow-auto">
-        <div className="p-6">
+        <div className="p-3 sm:p-4 md:p-6">
           {children}
         </div>
       </main>

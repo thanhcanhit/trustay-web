@@ -45,9 +45,9 @@ const parseImagePath = (src: string): string => {
     normalizedSrc = normalizedSrc.slice(0, -1)
   }
   
-  // Nếu src rỗng hoặc chỉ có dấu /, trả về empty string
+  // Nếu src rỗng hoặc chỉ có dấu /, trả về placeholder
   if (!normalizedSrc) {
-    return ''
+    return '/images/error-image.jpg'
   }
   
   // Tách đường dẫn thành các phần
@@ -93,18 +93,23 @@ export const SizingImage: React.FC<SizingImageProps> = ({
   ...restProps
 }) => {
   const { parsedSrc, dimensions, fallbackUrls } = useMemo(() => {
-    const parsedSrc = parseImagePath(src)
-    const fallbackUrls = createFallbackUrls(src, srcSize)
-    const dimensions = width && height 
+    // Validate src is not empty
+    const validSrc = src && src.trim() !== '' ? src : '/images/error-image.jpg'
+    const parsedSrc = parseImagePath(validSrc)
+    const fallbackUrls = createFallbackUrls(validSrc, srcSize)
+    const dimensions = width && height
       ? { width, height }
       : getDimensions(srcSize)
     return { parsedSrc, dimensions, fallbackUrls }
   }, [src, srcSize, width, height])
 
+  // Additional safety check - if parsedSrc is still empty, use fallback
+  const safeSrc = parsedSrc && parsedSrc.trim() !== '' ? parsedSrc : '/images/error-image.jpg'
+
   return (
     <Image
-      src={parsedSrc}
-      alt={alt}
+      src={safeSrc}
+      alt={alt || 'Image'}
       {...(fill ? { fill } : { width: dimensions.width, height: dimensions.height })}
       {...restProps}
       onError={(e) => {
@@ -112,9 +117,13 @@ export const SizingImage: React.FC<SizingImageProps> = ({
         const target = e.target as HTMLImageElement
         if (fallbackUrls.length > 0) {
           const nextUrl = fallbackUrls.shift()
-          if (nextUrl) {
+          if (nextUrl && nextUrl.trim() !== '') {
             target.src = nextUrl
+          } else {
+            target.src = '/images/error-image.jpg'
           }
+        } else {
+          target.src = '/images/error-image.jpg'
         }
       }}
     />

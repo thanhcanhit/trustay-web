@@ -13,6 +13,8 @@ import {
   ChevronRight,
   Shield,
   CreditCard,
+  Menu,
+  X,
 } from "lucide-react"
 import { useUserStore } from "@/stores/userStore"
 
@@ -82,6 +84,7 @@ export function ProfileSidebar({ userRole }: ProfileSidebarProps) {
   const pathname = usePathname()
   const { user, logout } = useUserStore()
   const [expandedItems, setExpandedItems] = useState<string[]>(['Quản lý cá nhân'])
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const toggleExpanded = (itemTitle: string) => {
     setExpandedItems(prev =>
@@ -95,8 +98,38 @@ export function ProfileSidebar({ userRole }: ProfileSidebarProps) {
     return pathname === href
   }
 
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false)
+  }
+
   return (
-    <div className="flex h-[calc(100vh-3rem)] w-64 flex-col bg-white border-r border-gray-200 sticky top-12">
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="lg:hidden fixed top-16 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200"
+      >
+        {isMobileMenuOpen ? (
+          <X className="h-6 w-6 text-gray-600" />
+        ) : (
+          <Menu className="h-6 w-6 text-gray-600" />
+        )}
+      </button>
+
+      {/* Overlay for mobile */}
+      {isMobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+          onClick={closeMobileMenu}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={cn(
+        "flex h-[calc(100vh-3rem)] w-64 flex-col bg-white border-r border-gray-200 sticky top-12 z-40",
+        "lg:translate-x-0 transition-transform duration-300",
+        isMobileMenuOpen ? "fixed translate-x-0" : "max-lg:fixed max-lg:-translate-x-full"
+      )}>
       {/* User Info */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
@@ -155,6 +188,7 @@ export function ProfileSidebar({ userRole }: ProfileSidebarProps) {
                 ) : (
                   <Link
                     href={item.href!}
+                    onClick={closeMobileMenu}
                     className={cn(
                       "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                       pathname === item.href
@@ -192,6 +226,7 @@ export function ProfileSidebar({ userRole }: ProfileSidebarProps) {
                       <Link
                         key={subItem.href}
                         href={subItem.href}
+                        onClick={closeMobileMenu}
                         className={cn(
                           "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors relative",
                           isSubActive
@@ -203,12 +238,12 @@ export function ProfileSidebar({ userRole }: ProfileSidebarProps) {
                         {isSubActive && (
                           <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-green-600 rounded-r-full" />
                         )}
-                        
-                        <SubIcon 
+
+                        <SubIcon
                           className={cn(
                             "h-5 w-5",
                             isSubActive ? "text-green-600" : "text-gray-500"
-                          )} 
+                          )}
                         />
                         <span>{subItem.title}</span>
                       </Link>
@@ -232,5 +267,6 @@ export function ProfileSidebar({ userRole }: ProfileSidebarProps) {
         </button>
       </div>
     </div>
+    </>
   )
 }

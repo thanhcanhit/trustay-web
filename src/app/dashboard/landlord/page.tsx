@@ -121,27 +121,25 @@ function DashboardContent() {
   }
 
   return (
-    <div className="px-6">      
+    <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Tổng quan</h1>
-          <p className="text-gray-600">Quản lý thông tin kinh doanh trên Trọ Mới</p>
-          <p className="text-sm text-gray-500 mt-1">
-            Hiển thị 3 nhà trọ gần đây nhất • 
-            <Link href="/dashboard/landlord/properties" className="text-blue-600 hover:text-blue-800 ml-1">
-              Xem tất cả nhà trọ
-            </Link>
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <Link href="/dashboard/landlord/properties/add">
-            <Button className="bg-blue-500 hover:bg-blue-600 cursor-pointer">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">Tổng quan</h1>
+        <p className="text-sm md:text-base text-gray-600">Quản lý thông tin kinh doanh trên Trọ Mới</p>
+        <p className="text-xs md:text-sm text-gray-500 mt-1">
+          Hiển thị 3 nhà trọ gần đây nhất •
+          <Link href="/dashboard/landlord/properties" className="text-blue-600 hover:text-blue-800 ml-1">
+            Xem tất cả
+          </Link>
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4">
+          <Link href="/dashboard/landlord/properties/add" className="flex-1 sm:flex-initial">
+            <Button className="bg-blue-500 hover:bg-blue-600 cursor-pointer w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Thêm trọ mới
             </Button>
           </Link>
-          <Button className="bg-orange-500 hover:bg-orange-600">
+          <Button className="bg-orange-500 hover:bg-orange-600 w-full sm:w-auto">
             <Eye className="h-4 w-4 mr-2" />
             Tạo quảng cáo
           </Button>
@@ -149,7 +147,7 @@ function DashboardContent() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
         <StatCard
           title="Phòng (3 trọ gần đây)"
           value={stats.totalRooms}
@@ -176,20 +174,20 @@ function DashboardContent() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Properties List */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Nhà trọ gần đây</h2>
-                <p className="text-sm text-gray-500">3 nhà trọ được cập nhật gần đây nhất</p>
+                <h2 className="text-base md:text-lg font-semibold text-gray-900">Nhà trọ gần đây</h2>
+                <p className="text-xs md:text-sm text-gray-500">3 nhà trọ được cập nhật gần đây nhất</p>
               </div>
-              <div className="flex space-x-2">
-                <Link href="/dashboard/landlord/properties">
-                  <Button variant="outline">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Link href="/dashboard/landlord/properties" className="flex-1 sm:flex-initial">
+                  <Button variant="outline" className="w-full sm:w-auto">
                     Xem tất cả
                   </Button>
                 </Link>
-                <Link href="/dashboard/landlord/properties/add">
-                  <Button className="bg-blue-500 hover:bg-blue-600">
+                <Link href="/dashboard/landlord/properties/add" className="flex-1 sm:flex-initial">
+                  <Button className="bg-blue-500 hover:bg-blue-600 w-full sm:w-auto">
                     <Plus className="h-4 w-4 mr-2" />
                     Thêm trọ mới
                   </Button>
@@ -228,31 +226,33 @@ function DashboardContent() {
                     : 0
 
                   return (
-                    <div key={building.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-4">
-                          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                            <BuildingIcon className="h-8 w-8 text-gray-400" />
+                    <div key={building.id} className="border border-gray-200 rounded-lg p-3 md:p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="flex items-start space-x-3 md:space-x-4 flex-1 min-w-0">
+                          <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <BuildingIcon className="h-6 w-6 md:h-8 md:w-8 text-gray-400" />
                           </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900">{building.name}</h3>
-                            <p className="text-gray-600 text-sm flex items-center mt-1">
-                              <MapPin className="h-4 w-4 mr-1" />
-                              {building.addressLine1}
-                              {building.location && (
-                                <span>, {building.location.wardName}, {building.location.districtName}, {building.location.provinceName}</span>
-                              )}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm md:text-base text-gray-900 truncate">{building.name}</h3>
+                            <p className="text-gray-600 text-xs md:text-sm flex items-start mt-1">
+                              <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-1 flex-shrink-0 mt-0.5" />
+                              <span className="line-clamp-2">
+                                {building.addressLine1}
+                                {building.location && (
+                                  <span>, {building.location.wardName}, {building.location.districtName}, {building.location.provinceName}</span>
+                                )}
+                              </span>
                             </p>
-                            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 text-xs md:text-sm text-gray-500">
                               <span>{buildingStats.totalRooms} phòng</span>
                               <span>•</span>
                               <span>{buildingStats.occupiedRooms} đã thuê</span>
                               <span>•</span>
                               <span>Tỷ lệ: {occupancyRate}%</span>
-                              <span>•</span>
-                              <span>{buildingStats.totalRevenue > 0 ? `${(buildingStats.totalRevenue / 1000000).toFixed(1)}M VNĐ/tháng` : 'Chưa có doanh thu'}</span>
+                              <span className="hidden sm:inline">•</span>
+                              <span className="w-full sm:w-auto">{buildingStats.totalRevenue > 0 ? `${(buildingStats.totalRevenue / 1000000).toFixed(1)}M VNĐ/tháng` : 'Chưa có doanh thu'}</span>
                             </div>
-                            <div className="flex items-center space-x-2 mt-2">
+                            <div className="flex flex-wrap items-center gap-2 mt-2">
                               <span className={`text-xs px-2 py-1 rounded ${
                                 building.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                               }`}>
@@ -266,14 +266,14 @@ function DashboardContent() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex space-x-2">
-                          <Link href={`/dashboard/landlord/properties/${building.id}`}>
-                            <Button variant="outline" size="sm">
+                        <div className="flex sm:flex-col gap-2 sm:gap-2 w-full sm:w-auto">
+                          <Link href={`/dashboard/landlord/properties/${building.id}`} className="flex-1 sm:flex-initial">
+                            <Button variant="outline" size="sm" className="w-full whitespace-nowrap">
                               Xem chi tiết
                             </Button>
                           </Link>
-                          <Link href={`/dashboard/landlord/properties/${building.id}/edit`}>
-                            <Button size="sm">
+                          <Link href={`/dashboard/landlord/properties/${building.id}/edit`} className="flex-1 sm:flex-initial">
+                            <Button size="sm" className="w-full">
                               Chỉnh sửa
                             </Button>
                           </Link>
@@ -289,10 +289,10 @@ function DashboardContent() {
       </div>
 
       {/* Quick Actions */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="mt-6 md:mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
         {/* Recent Contracts */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Hợp đồng gần đây</h3>
+        <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4">Hợp đồng gần đây</h3>
           {loadingContracts ? (
             <div className="text-center py-8">
               <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
@@ -350,8 +350,8 @@ function DashboardContent() {
         </div>
 
         {/* Landlord Rating Stats */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Đánh giá của bạn</h3>
+        <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4">Đánh giá của bạn</h3>
           {loadingStats ? (
             <div className="text-center py-8">
               <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
