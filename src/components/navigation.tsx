@@ -511,9 +511,17 @@ export function Navigation() {
               </div>
             )}
 
-
-            {/* Right Section - Login/Signup or User Menu */}
+            {/* Right Section - AI Button + Login/Signup or User Menu */}
             <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 flex-shrink-0 lg:ml-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 w-10 cursor-pointer rounded-full"
+                onClick={() => toggleAISidebar(!isAIOpen)}
+                aria-label="Mở Trustay AI"
+              >
+                <Sparkles className="h-4 w-4 text-green-600" />
+              </Button>
               {isAuthenticated && user ? (
                 <>
                 <NotificationBell />
@@ -631,7 +639,6 @@ export function Navigation() {
                   </Button>
                 </div>
               )}
-
 
             </div>
           </div>
