@@ -14,6 +14,7 @@ import {
   verifyPhoneCode,
   registerWithVerification,
   registerWithVerificationNoPhone,
+  type RegisterRequest,
 } from "@/actions"
 import Image from "next/image"
 import {
@@ -215,7 +216,9 @@ export default function RegisterPage() {
 
         // Store phone for later
         setPhone(contactValue)
-        toast.success(`Mã xác thực đã được gửi đến số điện thoại: ${contactValue}`)
+        // Auto-fill OTP mặc định cho số điện thoại
+        setVerificationCode("123456")
+        toast.success(`Mã xác thực đã được gửi đến số điện thoại: ${contactValue} (OTP mặc định: 123456)`)
       }
 
       // Move to verification step
@@ -359,22 +362,29 @@ export default function RegisterPage() {
           role,
         }, verificationToken)
       } else {
-        // Register with phone (need to ask for email in form)
-        if (!email) {
-          toast.error("Vui lòng nhập email!")
-          setIsLoading(false)
-          return
+        // Register with phone (email is optional)
+        if (email) {
+          // Register with both phone and email
+          authResult = await registerWithVerification({
+            email,
+            phone,
+            password,
+            firstName,
+            lastName,
+            gender,
+            role,
+          }, verificationToken)
+        } else {
+          // Register with phone only (no email)
+          authResult = await registerWithVerificationNoPhone({
+            phone,
+            password,
+            firstName,
+            lastName,
+            gender,
+            role,
+          } as RegisterRequest, verificationToken)
         }
-
-        authResult = await registerWithVerification({
-          email,
-          phone,
-          password,
-          firstName,
-          lastName,
-          gender,
-          role,
-        }, verificationToken)
       }
 
       if (!authResult.success) {
@@ -679,10 +689,9 @@ export default function RegisterPage() {
                       id="email"
                       name="email"
                       type="email"
-                      placeholder="Email"
+                      placeholder="Email (tùy chọn)"
                       value={email}
                       onChange={(e) => setEmail(cleanEmail(e.target.value))}
-                      required
                       disabled={isLoading}
                       className={`w-full h-11 px-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:opacity-50 ${
                         validationErrors.email ? 'border-red-300 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'
