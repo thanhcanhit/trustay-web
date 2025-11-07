@@ -115,8 +115,9 @@ export default function RootLayout({
                   <Navigation />
                 </Suspense>
                 <div className="flex-1 flex min-h-0">
-                  <main className="flex-1 page-content min-h-0">{children}
-                    <AISidebar /></main>
+                	<main className="flex-1 page-content pt-14 sm:pt-16">{children}
+                		<AISidebar />
+                	</main>
                 </div>
                 <FooterGate />
                 <ChatBubble />
