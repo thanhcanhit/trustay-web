@@ -28,7 +28,7 @@ import {
   Funnel,
   Search,
   Home,
-  ArrowLeft
+  ArrowLeft,
   Sparkles
 } from "lucide-react"
 import { Input } from "./ui/input"
@@ -53,7 +53,6 @@ export function Navigation() {
   const [searchType, setSearchType] = useState<string>('rooms')
   const [isMounted, setIsMounted] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const [isMobileSearchFocused, setIsMobileSearchFocused] = useState(false)
   const [searchSuggestions] = useState<string[]>([
     "Phòng trọ giá rẻ",
     "Phòng trọ có gác",

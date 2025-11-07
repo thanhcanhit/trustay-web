@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Search, Users, Plus } from 'lucide-react'
 import { RoomSeekingForm } from '../forms/room-seeking-form'
 import { RoommatePostForm } from '../forms/roommate-post-form'
-import { useUserStore } from '@/stores/userStore'
 
 type PostType = 'room-seeking' | 'roommate'
 
@@ -40,7 +39,6 @@ export function PostCreationWizard() {
 	const searchParams = useSearchParams()
 	const [selectedType, setSelectedType] = useState<PostType | null>(null)
 	const [currentStep, setCurrentStep] = useState(1)
-	const { user } = useUserStore()
 
 	// Handle URL parameters to auto-select post type
 	useEffect(() => {

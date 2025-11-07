@@ -25,6 +25,7 @@ export function AITablePreview({ columns, rows, previewLimit, onOpenFull }: AITa
       return (
         <PhotoProvider>
           <PhotoView src={cell}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={cell} alt={col.label} className={`${compact ? 'w-10 h-10' : 'w-20 h-20'} object-cover rounded border`} />
           </PhotoView>
         </PhotoProvider>

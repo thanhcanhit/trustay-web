@@ -194,6 +194,7 @@ export function AISidebar() {
                     {hasChart(m) && m.chart.url && (
                       <div className="mt-3">
                         <PhotoView src={m.chart.url}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={m.chart.url} alt={m.chart.alt || 'Chart'} width={m.chart.width} height={m.chart.height} className="max-w-full h-auto rounded border" />
                         </PhotoView>
                       </div>

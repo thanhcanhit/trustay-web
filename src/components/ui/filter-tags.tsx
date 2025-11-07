@@ -19,7 +19,6 @@ export function FilterTags({ basePath = '/rooms' }: FilterTagsProps) {
   const maxPrice = searchParams.get('maxPrice')
   const minArea = searchParams.get('minArea')
   const maxArea = searchParams.get('maxArea')
-  const provinceId = searchParams.get('provinceId')
   const amenities = searchParams.get('amenities')
 
   if (roomType) {
