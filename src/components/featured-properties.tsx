@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useRoomStore } from "@/stores/roomStore"
 import { RoomCard } from "@/components/ui/room-card"
@@ -30,10 +31,10 @@ export function FeaturedProperties() {
 
 
 
-  const handleRoomClick = (id: string) => {
-    // Navigate to room detail page using id
-    window.location.href = `/rooms/${id}`
-  }
+  // const handleRoomClick = (id: string) => {
+  //   // Navigate to room detail page using id
+  //   window.location.href = `/rooms/${id}`
+  // }
 
   return (
     <section className="py-8 sm:py-12 bg-gray-50">
@@ -78,7 +79,7 @@ export function FeaturedProperties() {
                 room={room}
                 isSaved={savedRooms.includes(room.id)}
                 onSaveToggle={toggleSaveRoom}
-                onClick={handleRoomClick}
+                // onClick={handleRoomClick}
               />
             ))}
           </div>
@@ -97,26 +98,26 @@ export function FeaturedProperties() {
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
-              <Button
-                variant="outline"
-                onClick={() => window.location.href = '/rooms'}
-              >
-                Xem tất cả phòng trọ
-              </Button>
+              <Link href="/rooms">
+                <Button variant="outline">
+                  Xem tất cả phòng trọ
+                </Button>
+              </Link>
             </EmptyContent>
           </Empty>
         )}
 
         {/* View More Button */}
         <div className="text-center mt-6 sm:mt-8">
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => window.location.href = '/rooms'}
-            className="text-sm sm:text-base px-4 sm:px-6"
-          >
-            Xem thêm phòng trọ
-          </Button>
+          <Link href="/rooms">
+            <Button
+              variant="outline"
+              size="lg"
+              className="text-sm sm:text-base px-4 sm:px-6"
+            >
+              Xem thêm phòng trọ
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
