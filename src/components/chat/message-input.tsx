@@ -136,13 +136,13 @@ export function MessageInput({ onSendMessage, disabled = false }: MessageInputPr
   };
 
   return (
-    <div className="p-4 border-t bg-white">
+    <div className="p-3 md:p-4 border-t bg-white">
       {/* Attachment Preview */}
       {attachments.length > 0 && (
-        <div className="mb-3 flex gap-2 flex-wrap">
+        <div className="mb-2 md:mb-3 flex gap-2 flex-wrap">
           {attachments.map((attachment, index) => (
             <div key={index} className="relative group">
-              <div className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border border-gray-200">
                 {attachment.type === 'image' ? (
                   <Image
                     src={attachment.url}
@@ -160,7 +160,7 @@ export function MessageInput({ onSendMessage, disabled = false }: MessageInputPr
               </div>
               <button
                 onClick={() => removeAttachment(index)}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
               >
                 <X size={14} />
               </button>
@@ -170,7 +170,7 @@ export function MessageInput({ onSendMessage, disabled = false }: MessageInputPr
       )}
 
       {/* Input Area */}
-      <div className="flex items-end gap-2">
+      <div className="flex items-end gap-1.5 md:gap-2">
         {/* Attachment Buttons */}
         <div className="flex gap-1 mb-1">
           <input
@@ -188,17 +188,8 @@ export function MessageInput({ onSendMessage, disabled = false }: MessageInputPr
             title="Đính kèm hình ảnh/video"
             disabled={disabled}
           >
-            <ImageIcon size={20} />
+            <ImageIcon size={20} className="md:w-5 md:h-5 w-4 h-4" />
           </button>
-
-          {/* Other buttons can be added here */}
-          {/* <button
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Emoji"
-            disabled={disabled}
-          >
-            <Smile size={20} />
-          </button> */}
         </div>
 
         {/* Text Input */}
@@ -209,13 +200,14 @@ export function MessageInput({ onSendMessage, disabled = false }: MessageInputPr
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyPress}
           disabled={disabled}
-          className="flex-1"
+          className="flex-1 text-sm md:text-base"
         />
 
         {/* Send Button */}
         <Button
           onClick={handleSend}
           disabled={disabled || (!message.trim() && attachments.length === 0)}
+          className="text-sm md:text-base px-3 md:px-4"
         >
           Gửi
         </Button>

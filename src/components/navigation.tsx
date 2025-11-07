@@ -29,7 +29,8 @@ import {
   Search,
   Home,
   ArrowLeft,
-  Sparkles
+  Sparkles,
+  MessageCircle
 } from "lucide-react"
 import { Input } from "./ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuPortal, DropdownMenuTrigger } from "./ui/dropdown-menu"
@@ -510,7 +511,7 @@ export function Navigation() {
               </div>
             )}
 
-            {/* Right Section - AI Button + Login/Signup or User Menu */}
+            {/* Right Section - AI Button + Messages + Login/Signup or User Menu */}
             <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 flex-shrink-0 lg:ml-auto">
               <Button
                 variant="outline"
@@ -523,6 +524,17 @@ export function Navigation() {
               </Button>
               {isAuthenticated && user ? (
                 <>
+                {/* Messages Button - Mobile Only */}
+                <Link href="/messages" className="lg:hidden">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-10 w-10 cursor-pointer rounded-full relative"
+                    aria-label="Tin nhắn"
+                  >
+                    <MessageCircle className="h-4 w-4 text-green-600" />
+                  </Button>
+                </Link>
                 <NotificationBell />
                 <div className="relative" ref={dropdownRef}>
                 <Button

@@ -99,7 +99,7 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col overflow-x-hidden`}
       >
         <QueryProvider>
           <AuthProvider>
@@ -114,10 +114,9 @@ export default function RootLayout({
                 }>
                   <Navigation />
                 </Suspense>
-                <div className="flex-1 flex min-h-0">
-                	<main className="flex-1 page-content pt-14 sm:pt-16">{children}
-                		<AISidebar />
-                	</main>
+                <div className="flex-1 flex min-h-0 overflow-x-hidden">
+                	<main className="flex-1 page-content pt-14 sm:pt-16 w-full max-w-full overflow-x-hidden">{children}</main>
+                	<AISidebar />
                 </div>
                 <FooterGate />
                 <ChatBubble />
