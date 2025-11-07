@@ -270,11 +270,8 @@ export const useRentalStore = create<RentalState>((set, get) => ({
 			const result = await terminateRental(id, data, token);
 			if (result.success) {
 				set({
-					current: result.data.data,
 					submitting: false,
 				});
-				// Reload rentals lists
-				await get().loadRentals();
 				return true;
 			} else {
 				set({

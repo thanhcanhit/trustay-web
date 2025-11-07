@@ -200,16 +200,16 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
     <div className="max-w-4xl mx-auto">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <BuildingIcon className="h-5 w-5" />
+          <CardTitle className="flex items-center space-x-2 text-lg md:text-xl">
+            <BuildingIcon className="h-5 w-5 flex-shrink-0" />
             <span>{mode === 'create' ? 'Thêm dãy trọ mới' : 'Chỉnh sửa dãy trọ'}</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <CardContent className="p-4 md:p-6">
+          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
             {/* Basic Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Thông tin cơ bản</h3>
+            <div className="space-y-3 md:space-y-4">
+              <h3 className="text-base md:text-lg font-medium">Thông tin cơ bản</h3>
               
               <FormField>
                 <FormLabel>
@@ -255,9 +255,9 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
             <Separator />
 
             {/* Address Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium flex items-center space-x-2">
-                <MapPin className="h-5 w-5" />
+            <div className="space-y-3 md:space-y-4">
+              <h3 className="text-base md:text-lg font-medium flex items-center space-x-2">
+                <MapPin className="h-5 w-5 flex-shrink-0" />
                 <span>Địa chỉ</span>
               </h3>
 
@@ -293,8 +293,8 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
             <Separator />
 
             {/* Location Coordinates (Optional) */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Tọa độ địa lý (tùy chọn)</h3>
+            <div className="space-y-3 md:space-y-4">
+              <h3 className="text-base md:text-lg font-medium">Tọa độ địa lý (tùy chọn)</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField>
@@ -330,21 +330,21 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
             <Separator />
 
             {/* Actions */}
-            <div className="flex justify-end space-x-4 pt-6">
+            <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-4 md:pt-6">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleCancel}
                 disabled={loading}
-                className="cursor-pointer"
+                className="cursor-pointer w-full sm:w-auto order-2 sm:order-1"
               >
                 <X className="h-4 w-4 mr-2" />
                 Hủy
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={loading}
-                className="bg-green-500 hover:bg-green-600 cursor-pointer"
+                className="bg-green-500 hover:bg-green-600 cursor-pointer w-full sm:w-auto order-1 sm:order-2"
               >
                 {loading ? (
                   <>

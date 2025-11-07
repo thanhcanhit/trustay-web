@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FormField, FormLabel } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useReferenceStore, type CostType } from '@/stores/referenceStore';
 import { getCostTypeIcon } from '@/utils/icon-mapping';
 import { type RoomCost } from '@/types/types';
@@ -172,29 +173,40 @@ export function CostCheckboxSelector({
     );
   }
 
+  const handleCostTypeChange = (costTypeId: string, newCostType: 'fixed' | 'per_person' | 'metered') => {
+    const newCosts = selectedCosts.map(cost =>
+      cost.systemCostTypeId === costTypeId
+        ? { ...cost, costType: newCostType, isMetered: newCostType === 'metered' }
+        : cost
+    );
+    onSelectionChange(newCosts);
+  };
+
   return (
     <div className={`space-y-4 ${className}`}>
       <FormField>
         <FormLabel>Chi phí phát sinh</FormLabel>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 space-x-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filteredCostTypes.map((costType) => {
             const IconComponent = getCostTypeIcon(costType.name);
             const checked = isSelected(costType.id);
             const currentValue = costValues[costType.id] || 0;
-            
+            const selectedCost = selectedCosts.find(c => c.systemCostTypeId === costType.id);
+
             return (
               <div
                 key={costType.id}
-                className="flex items-center space-x-2 p-2 border-b border-gray-200"
+                className="flex flex-col space-y-2 p-3 border rounded-md"
               >
+                <div className="flex items-center space-x-2">
                   <Checkbox
-                  id={`cost-${costType.id}`}
-                  checked={checked}
-                  onCheckedChange={(checked) => handleCostToggle(costType, !!checked)}
+                    id={`cost-${costType.id}`}
+                    checked={checked}
+                    onCheckedChange={(checked) => handleCostToggle(costType, !!checked)}
                   />
-                  
+
                   <div className="flex items-center space-x-2 flex-1">
-                    <IconComponent className="h-4 w-4 text-gray-600" />
+                    <IconComponent className="h-3.5 w-3.5 text-gray-600" />
                     <Label
                       htmlFor={`cost-${costType.id}`}
                       className="text-sm font-medium cursor-pointer flex-1"
@@ -202,22 +214,42 @@ export function CostCheckboxSelector({
                       {costType.name}
                     </Label>
                   </div>
-                  
-                  {checked && (
+                </div>
+
+                {checked && (
+                  <>
                     <div className="flex items-center space-x-2">
+                      <Label className="text-xs text-gray-600 min-w-[70px]">Loại chi phí:</Label>
+                      <Select
+                        value={selectedCost?.costType || 'fixed'}
+                        onValueChange={(value) => handleCostTypeChange(costType.id, value as 'fixed' | 'per_person' | 'metered')}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fixed">Cố định</SelectItem>
+                          <SelectItem value="per_person">Theo người</SelectItem>
+                          <SelectItem value="metered">Theo đồng hồ</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Label className="text-xs text-gray-600 min-w-[70px]">Số tiền:</Label>
                       <Input
                         type="number"
                         value={currentValue}
                         onChange={(e) => handleValueChange(costType.id, parseFloat(e.target.value) || 0)}
-                        className="w-24 h-8 text-xs border-none"
+                        className="h-8 text-sm"
                         min="0"
                         step="1000"
                       />
-                      <span className="text-xs text-gray-500 min-w-[30px]">
+                      <span className="text-xs text-gray-500 min-w-[40px]">
                         {costType.unit || 'VND'}
                       </span>
                     </div>
-                  )}
+                  </>
+                )}
               </div>
             );
           })}
@@ -232,14 +264,17 @@ export function CostCheckboxSelector({
             {selectedCosts.map((cost) => {
               const costType = costTypes.find(ct => ct.id === cost.systemCostTypeId);
               if (!costType) return null;
-              
+
               const IconComponent = getCostTypeIcon(costType.name);
-              
+              const costTypeLabel = cost.costType === 'fixed' ? 'Cố định' :
+                                    cost.costType === 'per_person' ? 'Theo người' : 'Theo đồng hồ';
+
               return (
                 <div key={cost.systemCostTypeId} className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <IconComponent className="h-4 w-4 text-gray-600" />
                     <span className="text-sm">{costType.name}</span>
+                    <span className="text-xs text-gray-500">({costTypeLabel})</span>
                   </div>
                   <span className="text-sm font-medium">
                     {formatAmount(cost.value || 0, cost.unit || 'VND')}

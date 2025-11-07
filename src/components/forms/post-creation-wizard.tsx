@@ -4,13 +4,12 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Search, Users, Home, Plus } from 'lucide-react'
+import { Search, Users, Plus } from 'lucide-react'
 import { RoomSeekingForm } from '../forms/room-seeking-form'
 import { RoommatePostForm } from '../forms/roommate-post-form'
-import { RentalPostForm } from '../forms/rental-post-form'
 import { useUserStore } from '@/stores/userStore'
 
-type PostType = 'room-seeking' | 'roommate' | 'rental'
+type PostType = 'room-seeking' | 'roommate'
 
 interface PostTypeOption {
 	id: PostType
@@ -35,13 +34,6 @@ const postTypes: PostTypeOption[] = [
 		icon: <Users className="h-6 w-6" />,
 		color: 'bg-green-500',
 	},
-	{
-		id: 'rental',
-		title: 'Cho thuê trọ',
-		description: 'Đăng bài cho thuê phòng trọ của bạn',
-		icon: <Home className="h-6 w-6" />,
-		color: 'bg-orange-500',
-	},
 ]
 
 export function PostCreationWizard() {
@@ -53,7 +45,7 @@ export function PostCreationWizard() {
 	// Handle URL parameters to auto-select post type
 	useEffect(() => {
 		const typeParam = searchParams.get('type') as PostType
-		if (typeParam && ['room-seeking', 'roommate', 'rental'].includes(typeParam)) {
+		if (typeParam && ['room-seeking', 'roommate'].includes(typeParam)) {
 			setSelectedType(typeParam)
 			setCurrentStep(2)
 		}
@@ -79,8 +71,6 @@ export function PostCreationWizard() {
 				return <RoomSeekingForm onBack={handleBack} />
 			case 'roommate':
 				return <RoommatePostForm onBack={handleBack} />
-			case 'rental':
-				return <RentalPostForm onBack={handleBack} />
 			default:
 				return null
 		}
@@ -99,10 +89,8 @@ export function PostCreationWizard() {
 				</p>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-				{postTypes
-					.filter((type) => (type.id === 'rental' ? user?.role === 'landlord' : true))
-					.map((type) => {
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+				{postTypes.map((type) => {
 						const isDisabled = type.id === 'roommate'
 						const cardClasses = isDisabled
 							? 'h-full flex flex-col cursor-not-allowed opacity-60'

@@ -96,7 +96,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="vi">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
@@ -105,15 +105,15 @@ export default function RootLayout({
             <AppInitializer>
               <NotificationProvider>
                 <Suspense fallback={
-                  <div className="bg-white shadow-sm">
-                    <div className="container mx-auto px-4 py-4">
-                      <div className="animate-pulse h-8 bg-gray-200 rounded"></div>
+                  <div className="bg-white shadow-sm fixed top-0 left-0 right-0 z-[9998]">
+                    <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
+                      <div className="animate-pulse h-6 sm:h-8 bg-gray-200 rounded"></div>
                     </div>
                   </div>
                 }>
                   <Navigation />
                 </Suspense>
-                <main className="flex-1 page-content">{children}</main>
+                <main className="flex-1 page-content pt-14 sm:pt-16">{children}</main>
                 <FooterGate />
                 <ChatBubble />
                 <Toaster

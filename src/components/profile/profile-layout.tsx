@@ -43,8 +43,8 @@ export function ProfileLayout({ children }: ProfileLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <ProfileSidebar userRole={user.role} />
-      <main className="flex-1 overflow-auto">
-        <div className="p-6">
+      <main className="flex-1 overflow-auto w-full lg:w-auto">
+        <div className="p-4 lg:p-6">
           {children}
         </div>
       </main>

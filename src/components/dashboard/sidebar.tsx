@@ -45,6 +45,7 @@ interface SidebarItem {
 
 interface SidebarProps {
   userType: 'tenant' | 'landlord'
+  onNavigate?: () => void
 }
 
 const tenantItems: SidebarItem[] = [
@@ -189,7 +190,7 @@ const landlordItems: SidebarItem[] = [
   }
 ]
 
-export function Sidebar({ userType }: SidebarProps) {
+export function Sidebar({ userType, onNavigate }: SidebarProps) {
   const pathname = usePathname()
   const { user, logout } = useUserStore()
   const [expandedItems, setExpandedItems] = useState<string[]>(
@@ -216,15 +217,15 @@ export function Sidebar({ userType }: SidebarProps) {
   }
 
   return (
-    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200 overflow-hidden">
+    <div className="flex h-full w-full flex-col bg-white overflow-hidden">
       {/* User Info */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-4 sm:p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
             <User className="h-5 w-5 text-green-600" />
           </div>
-          <div>
-            <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-gray-900 truncate">{user?.firstName} {user?.lastName}</p>
             <p className="text-xs text-gray-500">
               {userType === 'tenant' ? 'Người thuê trọ' : 'Chủ nhà trọ'}
             </p>
@@ -264,10 +265,10 @@ export function Sidebar({ userType }: SidebarProps) {
                       "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-not-allowed opacity-50"
                     )}
                   >
-                    <Icon className="h-5 w-5" />
-                    <span>{item.title}</span>
+                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    <span className="truncate">{item.title}</span>
                     {item.badge && (
-                      <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
+                      <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full flex-shrink-0">
                         {item.badge}
                       </span>
                     )}
@@ -275,6 +276,7 @@ export function Sidebar({ userType }: SidebarProps) {
                 ) : (
                   <Link
                     href={item.href!}
+                    onClick={onNavigate}
                     className={cn(
                       "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                       pathname === item.href
@@ -282,10 +284,10 @@ export function Sidebar({ userType }: SidebarProps) {
                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                     )}
                   >
-                    <Icon className="h-5 w-5" />
-                    <span>{item.title}</span>
+                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    <span className="truncate">{item.title}</span>
                     {item.badge && (
-                      <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
+                      <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full flex-shrink-0">
                         {item.badge}
                       </span>
                     )}
@@ -305,13 +307,14 @@ export function Sidebar({ userType }: SidebarProps) {
                         key={subItem.href}
                         className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors relative cursor-not-allowed opacity-50"
                       >
-                        <SubIcon className="h-5 w-5 text-gray-400" />
-                        <span>{subItem.title}</span>
+                        <SubIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{subItem.title}</span>
                       </div>
                     ) : (
                       <Link
                         key={subItem.href}
                         href={subItem.href}
+                        onClick={onNavigate}
                         className={cn(
                           "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors relative",
                           isSubActive
@@ -323,14 +326,14 @@ export function Sidebar({ userType }: SidebarProps) {
                         {isSubActive && (
                           <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-blue-600 rounded-r-full" />
                         )}
-                        
-                        <SubIcon 
+
+                        <SubIcon
                           className={cn(
-                            "h-5 w-5",
+                            "h-5 w-5 flex-shrink-0",
                             isSubActive ? "text-blue-600" : "text-gray-500"
-                          )} 
+                          )}
                         />
-                        <span>{subItem.title}</span>
+                        <span className="truncate">{subItem.title}</span>
                       </Link>
                     )
                   })}

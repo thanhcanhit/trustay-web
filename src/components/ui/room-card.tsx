@@ -65,7 +65,7 @@ export function RoomCard({
 
   const handleClick = () => {
     if (onClick) {
-      onClick(room.slug);
+      onClick(room.id);
     }
   };
 
@@ -85,9 +85,9 @@ export function RoomCard({
       onClick={handleClick}
     >
       {/* Image Container */}
-      <div className="relative h-40">
+      <div className="relative h-32 md:h-40">
         <Image
-          src={imageError ? "/images/error-image.jpg" : room.images?.[0]?.url}
+          src={imageError ? "/images/error-image.jpg" : (room.images?.[0]?.url || "/images/error-image.jpg")}
           alt={room.name || "Room image"}
           fill
           className="object-cover"
@@ -119,59 +119,59 @@ export function RoomCard({
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+      <div className="p-2 md:p-4">
+        <h3 className="font-semibold text-gray-900 mb-1 md:mb-2 line-clamp-2 text-sm md:text-base">
           {room.name}
         </h3>
         {/* Location */}
-        <div className="flex items-center text-xsm text-gray-500">
-          <MapPin className="h-4 w-4 mr-1" />
-          <span>{room.location.districtName}, {room.location.provinceName}</span>
+        <div className="flex items-center text-xs md:text-sm text-gray-500 mb-1">
+          <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-1 flex-shrink-0" />
+          <span className="truncate">{room.location.districtName}, {room.location.provinceName}</span>
         </div>
 
         {/* Price */}
-        <div className="text-green-600 font-bold text-lg mb-2">
+        <div className="text-green-600 font-bold text-base md:text-lg mb-1 md:mb-2">
           {formatPrice(room.pricing.basePriceMonthly)}tr/tháng
         </div>
 
         {/* Room Type & Building */}
-        <div className="flex text-xsm text-gray-600 mb-2 gap-1">
+        <div className="flex text-xs md:text-sm text-gray-600 mb-1 md:mb-2 gap-1">
           <span className="inline-flex items-center gap-1">
             <Users className="h-3 w-3" />
             {room.maxOccupancy} người
           </span>
           <span className="text-gray-400">•</span>
-          {getRoomTypeDisplayName(room.roomType)}
+          <span className="truncate">{getRoomTypeDisplayName(room.roomType)}</span>
         </div>
 
         {/* Amenities & Costs */}
         <div className="flex items-center justify-between text-xs text-gray-600">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2">
             {wifiAvailable && (
-              <Badge className="bg-green-100 text-green-700 font-bold border border-green-200">
+              <Badge className="bg-green-100 text-green-700 font-bold border border-green-200 px-1 md:px-2">
                 <Wifi className="h-3 w-3" />
-                Wifi
+                <span className="hidden md:inline">Wifi</span>
               </Badge>
             )}
           </div>
 
           {(electricityCost || waterCost) && (
-            <div className='flex flex-col gap-1'>
+            <div className='flex flex-col gap-0.5 md:gap-1'>
               {electricityCost && (
                 <div className="flex items-center gap-1">
                   <Zap className="h-3 w-3 text-yellow-600" />
-                  <span>{new Intl.NumberFormat('vi-VN').format(parseInt(electricityCost.value))}đ</span>
+                  <span className="text-xs">{new Intl.NumberFormat('vi-VN').format(parseInt(electricityCost.value))}đ</span>
                 </div>
               )}
               {waterCost && (
                 <div className="flex items-center gap-1">
                   <Droplets className="h-3 w-3 text-blue-600" />
-                  <span>{new Intl.NumberFormat('vi-VN').format(parseInt(waterCost.value))}đ</span>
+                  <span className="text-xs">{new Intl.NumberFormat('vi-VN').format(parseInt(waterCost.value))}đ</span>
                 </div>
               )}
             </div>
           )}
-        </div>        
+        </div>
       </div>
     </div>
   );

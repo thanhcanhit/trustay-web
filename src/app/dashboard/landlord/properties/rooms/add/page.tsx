@@ -554,20 +554,16 @@ function AddRoomPageContent() {
 
   return (
     <DashboardLayout userType="landlord">
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms'}>
-              <Button variant="outline" size="sm" className="cursor-pointer">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Quay lại
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Thêm loại phòng mới</h1>
-              <p className="text-gray-600">Tạo loại phòng và sinh ra các phòng cụ thể</p>
-            </div>
-          </div>
+      <div>
+        <div className="mb-6 md:mb-8">
+          <Link href={selectedBuildingId ? `/dashboard/landlord/properties/rooms?buildingId=${selectedBuildingId}` : '/dashboard/landlord/properties/rooms'}>
+            <Button variant="outline" size="sm" className="cursor-pointer mb-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Quay lại
+            </Button>
+          </Link>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">Thêm loại phòng mới</h1>
+          <p className="text-sm md:text-base text-gray-600">Tạo loại phòng và sinh ra các phòng cụ thể</p>
         </div>
 
         <MultiStepForm
@@ -578,10 +574,10 @@ function AddRoomPageContent() {
           {/* Step 1: Basic Info */}
           <StepContent stepIndex={0} currentStep={currentStep}>
             <Card>
-              <CardContent className="p-6 space-y-6">
+              <CardContent className="p-4 md:p-6 space-y-4 md:space-y-6">
                 <div className="flex items-center space-x-2 mb-4">
-                  <BuildingIcon className="h-5 w-5 text-blue-600" />
-                  <h3 className="text-lg font-medium">Thông tin cơ bản</h3>
+                  <BuildingIcon className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                  <h3 className="text-base md:text-lg font-medium">Thông tin cơ bản</h3>
                 </div>
 
                 {/* Building Selection */}
@@ -737,15 +733,15 @@ function AddRoomPageContent() {
           {/* Step 2: Pricing & Costs */}
           <StepContent stepIndex={1} currentStep={currentStep}>
             <Card>
-              <CardContent className="p-6 space-y-8">
+              <CardContent className="p-4 md:p-6 space-y-6 md:space-y-8">
                 <div className="flex items-center space-x-2 mb-4">
-                  <DollarSign className="h-5 w-5 text-green-600" />
-                  <h3 className="text-lg font-medium">Giá cả & Chi phí phát sinh</h3>
+                  <DollarSign className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  <h3 className="text-base md:text-lg font-medium">Giá cả & Chi phí phát sinh</h3>
                 </div>
 
                 <Separator />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 items-end">
                   <FormField>
                     <FormLabel>Giá thuê hàng tháng (VNĐ) <span className="text-red-500">*</span></FormLabel>
                     <Input
@@ -769,17 +765,18 @@ function AddRoomPageContent() {
                     />
                     {errors.depositAmount && <FormMessage>{errors.depositAmount}</FormMessage>}
                   </FormField>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField>
                     <FormLabel>Số tháng cọc</FormLabel>
                     <Input
-                      type="number"
-                      min="1"
-                      placeholder="2"
-                      value={formData.pricing?.depositMonths || ''}
-                      onChange={(e) => updateNestedFormData('pricing', 'depositMonths', parseInt(e.target.value) || 2)}
+                      type="text"
+                      disabled
+                      value={
+                        formData.pricing?.basePriceMonthly && formData.pricing?.depositAmount && Number(formData.pricing.basePriceMonthly) > 0
+                          ? (Number(formData.pricing.depositAmount) / Number(formData.pricing.basePriceMonthly)).toFixed(1)
+                          : '0'
+                      }
+                      className="bg-gray-50 text-gray-600"
                     />
                   </FormField>
 
@@ -806,41 +803,6 @@ function AddRoomPageContent() {
                   </FormField>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField>
-                    <FormLabel>Chi phí tiện ích hàng tháng (VNĐ)</FormLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="500000"
-                      value={formData.pricing?.utilityCostMonthly || ''}
-                      onChange={(e) => updateNestedFormData('pricing', 'utilityCostMonthly', parseInt(e.target.value) || 0)}
-                    />
-                  </FormField>
-
-                  <FormField>
-                    <FormLabel>Phí vệ sinh (VNĐ)</FormLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="200000"
-                      value={formData.pricing?.cleaningFee || ''}
-                      onChange={(e) => updateNestedFormData('pricing', 'cleaningFee', parseInt(e.target.value) || 0)}
-                    />
-                  </FormField>
-                  <FormField>
-                  <FormLabel>Phí dịch vụ (%)</FormLabel>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    placeholder="5.0"
-                    value={formData.pricing?.serviceFeePercentage || ''}
-                    onChange={(e) => updateNestedFormData('pricing', 'serviceFeePercentage', parseFloat(e.target.value) || 0)}
-                  />
-                </FormField>
-                </div>
 
                 {/* Costs Section */}
                 <div>
@@ -856,10 +818,10 @@ function AddRoomPageContent() {
           {/* Step 3: Amenities & Rules */}
           <StepContent stepIndex={2} currentStep={currentStep}>
             <Card>
-              <CardContent className="p-6 space-y-8">
+              <CardContent className="p-4 md:p-6 space-y-6 md:space-y-8">
                 <div className="flex items-center space-x-2 mb-4">
-                  <Home className="h-5 w-5 text-purple-600" />
-                  <h3 className="text-lg font-medium">Tiện nghi & Nội quy</h3>
+                  <Home className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                  <h3 className="text-base md:text-lg font-medium">Tiện nghi & Nội quy</h3>
                 </div>
 
                 <Separator />
@@ -901,10 +863,10 @@ function AddRoomPageContent() {
           {/* Step 4: Images */}
           <StepContent stepIndex={3} currentStep={currentStep}>
             <Card>
-              <CardContent className="p-6 space-y-6">
+              <CardContent className="p-4 md:p-6 space-y-4 md:space-y-6">
                 <div className="flex items-center space-x-2 mb-4">
-                  <ImageIcon className="h-5 w-5 text-orange-600" />
-                  <h3 className="text-lg font-medium">Hình ảnh phòng</h3>
+                  <ImageIcon className="h-5 w-5 text-orange-600 flex-shrink-0" />
+                  <h3 className="text-base md:text-lg font-medium">Hình ảnh phòng</h3>
                 </div>
 
                 <Separator />

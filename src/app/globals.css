@@ -198,6 +198,16 @@
   .scrollbar-thumb-rounded-full::-webkit-scrollbar-thumb {
     border-radius: 9999px;
   }
+
+  /* Hide scrollbar completely */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
 }
 
 /* Custom Swiper Navigation Styles */
