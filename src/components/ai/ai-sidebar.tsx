@@ -109,7 +109,7 @@ export function AISidebar() {
   return (
     <aside
       className={cn(
-        'fixed top-16 right-0 h-[calc(100vh-4rem)] z-[9990] w-[360px] border-l bg-white flex flex-col min-h-0 overflow-hidden transition-transform duration-300 ease-in-out',
+        'fixed top-14 sm:top-16 right-0 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] z-[9990] w-full sm:w-[400px] md:w-[420px] lg:w-[450px] max-w-[95vw] border-l bg-white flex flex-col min-h-0 overflow-hidden transition-transform duration-300 ease-in-out',
         isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
       )}
       aria-label="AI assistant sidebar"
@@ -118,46 +118,46 @@ export function AISidebar() {
 
       <div className="flex-1 min-h-0 flex flex-col">
         <div className="flex-1 min-h-0 flex flex-col">
-          <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          <div className="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2">
             <PhotoProvider>
               {isLoading && (
-                <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
                   <Loader2 className="animate-spin" size={16} /> Đang tải…
                 </div>
               )}
               {error && (
-                <div className="text-sm text-red-600">{error}</div>
+                <div className="text-xs sm:text-sm text-red-600">{error}</div>
               )}
               {messageList.length === 0 && !isLoading && (
-                <div className="px-2 py-4">
-                  <div className="text-center mb-4">
-                    <h2 className="text-xl font-semibold text-gray-900">What can I help with?</h2>
+                <div className="px-1 sm:px-2 py-3 sm:py-4">
+                  <div className="text-center mb-3 sm:mb-4">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900">What can I help with?</h2>
                   </div>
-                  <div className="grid grid-cols-1 gap-2">
+                  <div className="grid grid-cols-1 gap-1.5 sm:gap-2">
                     {quickSuggestions.slice(0, 5).map((q, idx) => (
                       <button
                         key={idx}
                         type="button"
                         onClick={() => sendPrompt(q)}
-                        className="w-fit max-w-full px-4 py-2 rounded-full bg-gray-100 text-gray-800 text-sm hover:bg-gray-200 border text-left"
+                        className="w-fit max-w-full px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-gray-100 text-gray-800 text-xs sm:text-sm hover:bg-gray-200 border text-left"
                         aria-label={q}
                       >
                         {q}
                       </button>
                     ))}
                   </div>
-                  <div className="mt-4 text-center text-xs text-gray-500">
+                  <div className="mt-3 sm:mt-4 text-center text-[10px] sm:text-xs text-gray-500">
                     Gợi ý: Bạn có thể hỏi về phòng trọ, dãy trọ, người ở ghép…
                   </div>
                 </div>
               )}
               {messageList.map((m) => (
                 <div key={m.id} className={cn('flex', m.role === 'user' ? 'justify-end' : 'justify-start')}>
-                  <div className={cn('max-w-[85%] rounded-lg px-3 py-2 break-words', m.role === 'user' ? 'bg-primary text-white' : 'bg-gray-100')}>
+                  <div className={cn('max-w-[90%] sm:max-w-[85%] rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 break-words text-xs sm:text-sm', m.role === 'user' ? 'bg-primary text-white' : 'bg-gray-100')}>
                     {m.id === 'typing' ? (
                       <AITypingIndicator />
                     ) : m.role === 'assistant' ? (
-                      <div className="prose prose-sm max-w-none">
+                      <div className="prose prose-sm max-w-none [&_*]:text-xs [&_*]:sm:text-sm">
                         {m.content && (
                           <AIMessageMarkdown
                             content={m.content}
@@ -169,12 +169,12 @@ export function AISidebar() {
                         )}
                       </div>
                     ) : (
-                      <span className="whitespace-pre-wrap">{m.content}</span>
+                      <span className="whitespace-pre-wrap text-xs sm:text-sm">{m.content}</span>
                     )}
                     {hasContentStats(m) && (
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="mt-1.5 sm:mt-2 flex flex-wrap gap-1 sm:gap-2">
                         {m.contentStats.map((s, idx) => (
-                          <span key={idx} className="text-xs bg-white/80 border rounded-full px-2 py-1">
+                          <span key={idx} className="text-[10px] sm:text-xs bg-white/80 border rounded-full px-1.5 sm:px-2 py-0.5 sm:py-1">
                             {s.label}: {s.value}{s.unit ? s.unit : ''}
                           </span>
                         ))}
@@ -192,7 +192,7 @@ export function AISidebar() {
                       />
                     )}
                     {hasChart(m) && m.chart.url && (
-                      <div className="mt-3">
+                      <div className="mt-2 sm:mt-3">
                         <PhotoView src={m.chart.url}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={m.chart.url} alt={m.chart.alt || 'Chart'} width={m.chart.width} height={m.chart.height} className="max-w-full h-auto rounded border" />
@@ -208,17 +208,17 @@ export function AISidebar() {
                       />
                     )}
                     {hasAssistantResult(m) && m.sql && (
-                      <details className="mt-2 text-xs">
-                        <summary className="cursor-pointer inline-flex items-center gap-1">
-                          <ChevronDown size={12} /> Chi tiết kết quả
+                      <details className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs">
+                        <summary className="cursor-pointer inline-flex items-center gap-0.5 sm:gap-1">
+                          <ChevronDown size={10} className="sm:w-3 sm:h-3" /> Chi tiết kết quả
                         </summary>
-                        <div className="mt-2">
-                          <div className="text-gray-600 mb-1">SQL:</div>
-                          <pre className="bg-white border rounded p-2 overflow-auto max-h-40 whitespace-pre-wrap text-gray-700">{m.sql}</pre>
+                        <div className="mt-1.5 sm:mt-2">
+                          <div className="text-gray-600 mb-0.5 sm:mb-1 text-[10px] sm:text-xs">SQL:</div>
+                          <pre className="bg-white border rounded p-1.5 sm:p-2 overflow-auto max-h-32 sm:max-h-40 whitespace-pre-wrap text-gray-700 text-[10px] sm:text-xs">{m.sql}</pre>
                           {m.results && Array.isArray(m.results) && (
-                            <div className="mt-2">
-                              <div className="text-gray-600 mb-1">Kết quả {m.count ?? m.results.length}:</div>
-                              <pre className="bg-white border rounded p-2 overflow-auto max-h-48 whitespace-pre-wrap text-gray-700">{JSON.stringify(m.results, null, 2)}</pre>
+                            <div className="mt-1.5 sm:mt-2">
+                              <div className="text-gray-600 mb-0.5 sm:mb-1 text-[10px] sm:text-xs">Kết quả {m.count ?? m.results.length}:</div>
+                              <pre className="bg-white border rounded p-1.5 sm:p-2 overflow-auto max-h-40 sm:max-h-48 whitespace-pre-wrap text-gray-700 text-[10px] sm:text-xs">{JSON.stringify(m.results, null, 2)}</pre>
                             </div>
                           )}
                         </div>
@@ -226,11 +226,13 @@ export function AISidebar() {
                     )}
                   </div>
                   <Dialog open={tableDialogOpen} onOpenChange={setTableDialogOpen}>
-                    <DialogContent className="sm:max-w-3xl bg-white/95 backdrop:bg-black/20">
+                    <DialogContent className="w-[95vw] max-w-3xl bg-white/95 backdrop:bg-black/20">
                       <DialogHeader>
-                        <DialogTitle>Xem bảng đầy đủ</DialogTitle>
+                        <DialogTitle className="text-sm sm:text-base">Xem bảng đầy đủ</DialogTitle>
                       </DialogHeader>
-                      {tableDialogContent}
+                      <div className="overflow-x-auto">
+                        {tableDialogContent}
+                      </div>
                     </DialogContent>
                   </Dialog>
                 </div>

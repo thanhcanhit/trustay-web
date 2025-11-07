@@ -33,7 +33,7 @@ export function SortingTabs({ basePath = '/rooms' }: SortingTabsProps) {
   }
 
   return (
-    <div className="bg-white border-b sticky top-[56px] lg:top-[64px] z-[9997] shadow-sm">
+    <div className="bg-white border-b sticky top-3 lg:top-5 z-[1] shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex items-center overflow-x-auto scrollbar-hide no-print">
         {/* Liên quan / Mặc định */}

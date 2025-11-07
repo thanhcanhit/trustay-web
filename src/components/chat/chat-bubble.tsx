@@ -6,14 +6,29 @@ import { MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ChatWindow } from "./chat-window";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 
 export function ChatBubble() {
+  const router = useRouter();
   const { user, isAuthenticated } = useUserStore();
   const [isChatOpen, setChatOpen] = useState(false);
   const getUnreadConversationCount = useChatStore((state) => state.getUnreadConversationCount);
   const loadConversations = useChatStore((state) => state.loadConversations);
   const conversations = useChatStore((state) => state.conversations);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Load conversations when component mounts
   useEffect(() => {
@@ -35,16 +50,23 @@ export function ChatBubble() {
     return null;
   }
 
-  const toggleChat = () => {
-    setChatOpen(!isChatOpen);
+  const handleChatClick = () => {
+    if (isMobile) {
+      // Redirect to /messages page on mobile
+      router.push('/messages');
+    } else {
+      // Toggle chat window on desktop
+      setChatOpen(!isChatOpen);
+    }
   };
 
   return (
     <>
-      {!isChatOpen && (
+      {/* Ẩn ChatBubble trên mobile vì đã có nút tin nhắn trong navigation */}
+      {!isChatOpen && !isMobile && (
         <div className="fixed bottom-0 right-6 z-50">
           <button
-            onClick={toggleChat}
+            onClick={handleChatClick}
             className="flex items-center justify-center w-30 h-12 bg-primary hover:bg-green-600 text-white shadow-lg transition-all duration-300 ease-in-out cursor-pointer relative"
             aria-label="Chat"
           >
@@ -61,7 +83,8 @@ export function ChatBubble() {
           </button>
         </div>
       )}
-      {isChatOpen && <ChatWindow onClose={toggleChat} />}
+      {/* Only show ChatWindow on desktop */}
+      {isChatOpen && !isMobile && <ChatWindow onClose={() => setChatOpen(false)} />}
     </>
   );
 }
