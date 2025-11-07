@@ -20,6 +20,7 @@ export function AIListPreview({ items, onOpenFull }: AIListPreviewProps) {
       {item.thumbnailUrl && (
         <PhotoProvider>
           <PhotoView src={item.thumbnailUrl}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={item.thumbnailUrl} alt={item.title} width={compact ? 32 : 48} height={compact ? 32 : 48} className="rounded object-cover border" />
           </PhotoView>
         </PhotoProvider>

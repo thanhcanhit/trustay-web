@@ -43,6 +43,7 @@ export function AIMessageMarkdown({ content, onOpenTable }: AIMessageMarkdownPro
             const s = typeof src === 'string' ? src : undefined;
             return s ? (
               <PhotoView src={s}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={s} alt={alt || ''} className="max-w-full h-auto rounded border" />
               </PhotoView>
             ) : null;
