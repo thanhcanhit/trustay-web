@@ -11,7 +11,13 @@ export {
 
 // Export types (prefer types.ts for ApiResponse)
 export * from '../types/types';
-
+// Export AI assistant actions (session-based)
+export {
+	clearAIHistory,
+	getAIHistory,
+	postAIChat,
+	textToSQL,
+} from './ai.action';
 // Export auth actions (excluding conflicting ApiError and updateUserProfile)
 export {
 	//changePassword,

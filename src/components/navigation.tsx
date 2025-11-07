@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react"
 import { usePathname, useRouter } from "next/navigation"
 // import { motion, AnimatePresence } from "motion/react"
 import { useUserStore } from "@/stores/userStore"
+import { useAIAssistantStore } from "@/stores/aiAssistant.store"
 import { useSearchFilters } from "@/hooks/use-search-filters"
 import { encodeSearchQuery } from "@/utils/search-params"
 import { Button } from "@/components/ui/button"
@@ -28,6 +29,7 @@ import {
   Search,
   Home,
   ArrowLeft
+  Sparkles
 } from "lucide-react"
 import { Input } from "./ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuPortal, DropdownMenuTrigger } from "./ui/dropdown-menu"
@@ -62,6 +64,7 @@ export function Navigation() {
   ])
   const mobileSearchRef = useRef<HTMLDivElement>(null)
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false)
+  const toggleAISidebar = useAIAssistantStore(s => s.toggleSidebar)
 
   useEffect(() => {
     setIsMounted(true)
@@ -210,6 +213,8 @@ export function Navigation() {
     }
   }, [])
 
+  const isAIOpen = useAIAssistantStore(s => s.isSidebarOpen)
+
   return (
     <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-[9998] no-print" suppressHydrationWarning={true}>
       {/* First Row: Logo, Search, Login/Signup */}
@@ -306,8 +311,8 @@ export function Navigation() {
                         <Button variant="outline" className="h-10 w-40 xl:w-44 px-2 rounded-l-lg rounded-r-none border-r-0 bg-white hover:bg-gray-50 cursor-pointer">
                           <Home className="h-4 w-4 mr-1" />
                           {searchType === 'rooms' ? 'Tìm phòng trọ' :
-                           searchType === 'room-seeking' ? 'Người tìm trọ' :
-                           'Tìm người ở ghép'}
+                            searchType === 'room-seeking' ? 'Người tìm trọ' :
+                              'Tìm người ở ghép'}
                           <ChevronDown className="h-3 w-3 ml-1" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -492,8 +497,8 @@ export function Navigation() {
                           >
                             Hủy
                           </Button>
-                          <Button 
-                            onClick={handleApplyFilters} 
+                          <Button
+                            onClick={handleApplyFilters}
                             className="flex-1 sm:flex-initial bg-green-600 hover:bg-green-700 cursor-pointer"
                           >
                             Áp dụng
@@ -626,8 +631,8 @@ export function Navigation() {
                   </Button>
                 </div>
               )}
-                    
-              
+
+
             </div>
           </div>
         </div>
