@@ -1,4 +1,4 @@
-// 'use server';
+'use server';
 
 import type { AIChatResponse, AIHistoryResponse } from '@/types/ai';
 import type { ApiResponse } from '../lib/api-client';
