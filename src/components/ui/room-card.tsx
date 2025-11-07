@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { 
+import Link from 'next/link';
+import {
   Droplets,
-  //Heart, 
-  MapPin, 
-  Users, 
+  //Heart,
+  MapPin,
+  Users,
   Wifi,
   Zap} from 'lucide-react';
 import type { RoomListing } from '@/types/types';
@@ -18,7 +19,7 @@ interface RoomCardProps {
   room: RoomListing;
   onSaveToggle?: (roomId: string) => void;
   isSaved?: boolean;
-  onClick?: (slug: string) => void;
+  onClick?: (id: string) => void;
   className?: string;
 }
 
@@ -26,7 +27,7 @@ export function RoomCard({
   room,
   //onSaveToggle,
   //isSaved = false,
-  onClick,
+  // onClick,
   className = ''
 }: RoomCardProps) {
   const [imageError, setImageError] = useState(false);
@@ -63,12 +64,6 @@ export function RoomCard({
     );
   };
 
-  const handleClick = () => {
-    if (onClick) {
-      onClick(room.id);
-    }
-  };
-
   // const handleSaveClick = (e: React.MouseEvent) => {
   //   e.stopPropagation();
   //   if (onSaveToggle) {
@@ -80,9 +75,9 @@ export function RoomCard({
   const wifiAvailable = hasWifi();
 
   return (
-    <div
-      className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer ${className}`}
-      onClick={handleClick}
+    <Link
+      href={`/rooms/${room.id}`}
+      className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer block ${className}`}
     >
       {/* Image Container */}
       <div className="relative h-32 md:h-40">
@@ -173,6 +168,6 @@ export function RoomCard({
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
