@@ -233,6 +233,10 @@ const ERROR_PATTERNS: Record<string, ErrorPattern> = {
 			'phone has been used',
 			'phone is used',
 			'phone is taken',
+			'phone already registered',
+			'phone number already registered',
+			'phone registered',
+			'phone number registered',
 		],
 		message: 'Số điện thoại đã được sử dụng',
 	},
@@ -483,6 +487,16 @@ export const translateErrorMessage = (
 		errorMessage.toLowerCase().includes('registered')
 	) {
 		return 'Email đã được sử dụng';
+	}
+
+	// Special case for "Phone number is already registered" exact match
+	if (
+		(errorMessage.toLowerCase().includes('phone') ||
+			errorMessage.toLowerCase().includes('số điện thoại')) &&
+		errorMessage.toLowerCase().includes('already') &&
+		errorMessage.toLowerCase().includes('registered')
+	) {
+		return 'Số điện thoại đã được sử dụng';
 	}
 
 	// Special case for email already exists variations

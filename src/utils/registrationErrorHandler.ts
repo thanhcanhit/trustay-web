@@ -140,20 +140,22 @@ export class RegistrationErrorHandler {
 
 		// Phone number conflict detection
 		if (this.isPhoneConflictError(lowerErrorMessage)) {
-			this.setError('phone', errorMessage);
+			const translatedMessage = translateRegistrationError(errorMessage);
+			this.setError('phone', translatedMessage);
 			return {
 				errorType: 'phone_conflict',
-				message: errorMessage,
+				message: translatedMessage,
 				field: 'phone',
 			};
 		}
 
 		// Email conflict detection
 		if (this.isEmailConflictError(lowerErrorMessage)) {
-			this.setError('email', errorMessage);
+			const translatedMessage = translateRegistrationError(errorMessage);
+			this.setError('email', translatedMessage);
 			return {
 				errorType: 'email_conflict',
-				message: errorMessage,
+				message: translatedMessage,
 				field: 'email',
 			};
 		}
@@ -209,11 +211,13 @@ export class RegistrationErrorHandler {
 				message.includes('already used') ||
 				message.includes('already in use') ||
 				message.includes('is already in use') ||
+				message.includes('already registered') ||
 				message.includes('taken') ||
 				message.includes('in use') ||
 				message.includes('duplicate') ||
 				message.includes('exists') ||
-				message.includes('conflict'))
+				message.includes('conflict') ||
+				message.includes('registered'))
 		);
 	}
 
