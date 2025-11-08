@@ -59,8 +59,12 @@ export default function InvoicesPage() {
   const [meterInputs, setMeterInputs] = useState<Record<string, { oldReading: string; newReading: string }>>({})
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  // Count bills that need meter data
-  const billsNeedingMeterData = bills.filter(b => b.status === 'draft' && b.meteredCostsToInput && b.meteredCostsToInput.length > 0).length
+  // Count bills that need meter data (both draft and pending can be edited)
+  const billsNeedingMeterData = bills.filter(b =>
+    (b.status === 'draft' || b.status === 'pending') &&
+    b.meteredCostsToInput &&
+    b.meteredCostsToInput.length > 0
+  ).length
 
   // Get selected bill and its metered costs
   const selectedBill = bills.find(b => b.id === selectedBillId)
@@ -174,7 +178,8 @@ export default function InvoicesPage() {
     }
 
     loadLandlordBills(params)
-  }, [loadLandlordBills, buildingFilter, statusFilter, searchTerm, billingPeriod, sortBy, sortOrder])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildingFilter, statusFilter, searchTerm, billingPeriod, sortBy, sortOrder])
 
   const handleViewDetail = (bill: Bill) => {
     router.push(`/dashboard/landlord/invoices/${bill.id}`)
@@ -267,7 +272,7 @@ export default function InvoicesPage() {
       const input = meterInputs[cost.roomCostId]
       return !input?.oldReading || !input?.newReading
     })
-    
+
     if (hasEmptyInput) {
       toast.error('Vui lòng nhập đầy đủ số cũ và số mới')
       return
@@ -299,56 +304,69 @@ export default function InvoicesPage() {
     // Get occupancy count from bill or default to 1
     const occupancyCount = selectedBill.occupancyCount || 1
 
+    // Save current bill ID and find next bill BEFORE submitting
+    const currentBillId = selectedBill.id
+
+    // Find all bills that need meter data (both draft and pending can be edited)
+    const billsNeedingInput = bills.filter(b =>
+      (b.status === 'draft' || b.status === 'pending') &&
+      b.meteredCostsToInput &&
+      b.meteredCostsToInput.length > 0
+    )
+
+    // Find next bill from ALL bills needing input
+    const currentInputIndex = billsNeedingInput.findIndex(b => b.id === currentBillId)
+    const nextBill = currentInputIndex >= 0 && currentInputIndex < billsNeedingInput.length - 1
+      ? billsNeedingInput[currentInputIndex + 1]
+      : null
+
+    // Prepare next bill data BEFORE API call
+    let nextBillInputs: Record<string, { oldReading: string; newReading: string }> | null = null
+    if (nextBill) {
+      nextBillInputs = {}
+      nextBill.meteredCostsToInput?.forEach(cost => {
+        if (nextBillInputs) {
+          nextBillInputs[cost.roomCostId] = {
+            oldReading: cost.lastReading > 0 ? cost.lastReading.toString() : '',
+            newReading: cost.currentReading > 0 ? cost.currentReading.toString() : ''
+          }
+        }
+      })
+    }
+
+    // Move to next bill IMMEDIATELY (optimistic update) to keep form open
+    if (nextBill && nextBillInputs) {
+      setSelectedBillId(nextBill.id)
+      setMeterInputs(nextBillInputs)
+
+      // Focus first input
+      setTimeout(() => {
+        if (inputRefs.current[0]) {
+          inputRefs.current[0]?.focus()
+        }
+      }, 100)
+    } else {
+      // No more bills, clear selection AFTER showing success
+      setSelectedBillId(null)
+      setMeterInputs({})
+    }
+
+    // Submit the update in background
     const success = await updateWithMeterData({
-      billId: selectedBill.id,
+      billId: currentBillId,
       occupancyCount,
       meterData
     })
-    
+
     if (success) {
       toast.success('Đã cập nhật số đồng hồ thành công')
-      
-      // Reload bills with current filters
-      const params: LandlordBillQueryParams = {
-        page: 1,
-        limit: 50,
-        sortBy,
-        sortOrder,
-      }
 
-      if (buildingFilter !== 'all') {
-        params.buildingId = buildingFilter
-      }
-
-      if (statusFilter !== 'all') {
-        params.status = statusFilter as BillStatus
-      }
-
-      if (searchTerm) {
-        params.search = searchTerm
-      }
-
-      if (billingPeriod) {
-        params.billingPeriod = billingPeriod
-      }
-
-      await loadLandlordBills(params)
-      
-      // Move to next bill that needs meter data
-      const currentIndex = bills.findIndex(b => b.id === selectedBillId)
-      const nextBill = bills
-        .slice(currentIndex + 1)
-        .find(b => b.status === 'draft' && b.meteredCostsToInput && b.meteredCostsToInput.length > 0)
-      
-      if (nextBill) {
-        handleSelectBill(nextBill)
-      } else {
-        // No more bills, clear selection
-        setSelectedBillId(null)
-        setMeterInputs({})
+      if (!nextBill) {
+        toast.info('Đã hoàn thành tất cả hóa đơn cần nhập số đồng hồ')
       }
     } else {
       toast.error(meterError || 'Có lỗi xảy ra khi cập nhật số đồng hồ')
+      // On error, could revert to previous bill but for now just show error
     }
   }
 
@@ -575,7 +593,7 @@ export default function InvoicesPage() {
                           >
                             <TableCell className="font-medium">
                               {bill.billingMonth}/{bill.billingYear}
-                              {bill.status === 'draft' && bill.meteredCostsToInput && bill.meteredCostsToInput.length > 0 && (
+                              {(bill.status === 'draft' || bill.status === 'pending') && bill.meteredCostsToInput && bill.meteredCostsToInput.length > 0 && (
                                 <Badge variant="outline" className="ml-2 text-xs text-blue-600 border-blue-600">
                                   Cần nhập
                                 </Badge>
@@ -740,7 +758,7 @@ export default function InvoicesPage() {
             {/* Right side - Draft Invoice Panel (Real-time) */}
             <div className="lg:col-span-1">
               {selectedBill ? (
-                <Card className="sticky top-6 border-2 border-blue-500">
+                <Card className="sticky top-6 border-2 border-blue-500 h-fit">
                   <CardContent className="pt-6">
                     <div className="mb-4">
                       <h3 className="text-lg font-semibold">
@@ -822,7 +840,7 @@ export default function InvoicesPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <Card className="sticky top-6">
+                <Card className="sticky top-6 h-fit">
                   <CardContent className="pt-6">
                     <div className="text-center py-8">
                       <Receipt className="h-12 w-12 mx-auto mb-4 text-gray-400" />

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import {
   Droplets,
   //Heart,
@@ -75,8 +74,7 @@ export function RoomCard({
   const wifiAvailable = hasWifi();
 
   return (
-    <Link
-      href={`/rooms/${room.id}`}
+    <div
       className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer block ${className}`}
     >
       {/* Image Container */}
@@ -168,6 +166,6 @@ export function RoomCard({
           )}
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
