@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRatingStore } from '@/stores/ratingStore';
+import { useUserStore } from '@/stores/userStore';
 import type {
 	RatingTargetType,
 	RatingResponseDto,
@@ -57,6 +58,7 @@ export function RatingsList({
 		getRatings,
 		deleteRating,
 	} = useRatingStore();
+	const { isAuthenticated } = useUserStore();
 
 	const [currentPage, setCurrentPage] = useState(
 		initialParams.page || 1,
@@ -151,6 +153,8 @@ export function RatingsList({
 					<Button
 						onClick={() => setIsCreatingRating(true)}
 						className="gap-2"
+						disabled={!isAuthenticated}
+						title={!isAuthenticated ? 'Vui lòng đăng nhập để viết đánh giá' : ''}
 					>
 						<PlusCircle className="w-4 h-4" />
 						Viết đánh giá

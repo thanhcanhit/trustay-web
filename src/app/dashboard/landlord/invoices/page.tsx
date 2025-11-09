@@ -694,7 +694,7 @@ export default function InvoicesPage() {
                         return (
                           <div key={cost.roomCostId} className="space-y-2">
                             <Label className="text-sm font-medium">{displayName}</Label>
-                            <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <Input
                                   ref={(el) => { inputRefs.current[inputIndex] = el }}
@@ -706,7 +706,7 @@ export default function InvoicesPage() {
                                   onKeyDown={(e) => handleMeterInputKeyDown(e, inputIndex)}
                                   className="text-sm"
                                 />
-                                <div className="text-xs text-gray-500 mt-1">Số cũ ({cost.unit})</div>
+                                <div className="text-xs text-gray-500 mt-1">Số cũ</div>
                               </div>
                               <div>
                                 <Input
@@ -719,7 +719,7 @@ export default function InvoicesPage() {
                                   onKeyDown={(e) => handleMeterInputKeyDown(e, inputIndex + 1)}
                                   className="text-sm"
                                 />
-                                <div className="text-xs text-gray-500 mt-1">Số mới ({cost.unit})</div>
+                                <div className="text-xs text-gray-500 mt-1">Số mới</div>
                               </div>
                             </div>
                           </div>
