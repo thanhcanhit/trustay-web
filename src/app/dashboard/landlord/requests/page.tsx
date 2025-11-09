@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
@@ -244,179 +242,146 @@ export default function RequestsPage() {
                 </EmptyHeader>
               </Empty>
             ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[200px]">Người thuê</TableHead>
-                      <TableHead className="w-[180px]">Liên hệ</TableHead>
-                      <TableHead className="w-[150px]">Phòng</TableHead>
-                      <TableHead className="w-[110px]">Ngày vào</TableHead>
-                      <TableHead className="w-[130px]">Ngày gửi</TableHead>
-                      <TableHead className="w-[120px]">Trạng thái</TableHead>
-                      <TableHead className="w-[130px]">Xác nhận tenant</TableHead>
-                      <TableHead className="text-right w-[200px]">Thao tác</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredBookingRequests.map((request) => (
-                      <TableRow key={request.id}>
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            <ClickableUserAvatar
-                              userId={request.tenant?.id || ''}
-                              avatarUrl={request.tenant?.avatarUrl}
-                              userName={`${request.tenant?.firstName || ''} ${request.tenant?.lastName || ''}`}
-                              size="md"
-                            />
-                            <div className="min-w-0">
-                              <p className="font-medium text-sm truncate">
-                                {request.tenant?.firstName} {request.tenant?.lastName}
-                              </p>
-                              {request.messageToOwner && (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div className="flex items-center text-xs text-gray-500 mt-1 cursor-help">
-                                        <MessageSquare className="h-3 w-3 mr-1" />
-                                        <span className="truncate">Có tin nhắn</span>
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs">
-                                      <p className="text-xs whitespace-pre-wrap">{request.messageToOwner}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              )}
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredBookingRequests.map((request) => (
+                  <Card key={request.id} className="hover:shadow-lg transition-shadow">
+                    <div className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <ClickableUserAvatar
+                            userId={request.tenant?.id || ''}
+                            avatarUrl={request.tenant?.avatarUrl}
+                            userName={`${request.tenant?.firstName || ''} ${request.tenant?.lastName || ''}`}
+                            size="md"
+                          />
+                          <div>
+                            <h3 className="text-lg font-semibold line-clamp-1">
+                              {request.tenant?.firstName} {request.tenant?.lastName}
+                            </h3>
+                            <p className="text-xs text-gray-500">
+                              {request.room?.name ? `Phòng ${request.room.name}` : request.room?.building?.name || '-'}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge className={BOOKING_STATUS_COLORS[request.status as keyof typeof BOOKING_STATUS_COLORS]}>
+                          {BOOKING_STATUS_LABELS[request.status as keyof typeof BOOKING_STATUS_LABELS]}
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="space-y-1 text-sm">
+                          {request.tenant?.phone && (
+                            <div className="flex items-center text-gray-600">
+                              <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                              <span>{request.tenant.phone}</span>
                             </div>
+                          )}
+                          <div className="flex items-center text-gray-600">
+                            <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                            <span className="truncate">{request.tenant?.email || '-'}</span>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            {request.tenant?.phone && (
-                              <div className="flex items-center text-xs text-gray-600">
-                                <Phone className="h-3 w-3 mr-1.5 text-gray-400" />
-                                <span className="truncate">{request.tenant.phone}</span>
-                              </div>
-                            )}
-                            <div className="flex items-center text-xs text-gray-600">
-                              <Mail className="h-3 w-3 mr-1.5 text-gray-400" />
-                              <span className="truncate">{request.tenant?.email || '-'}</span>
-                            </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2 text-sm">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          <span className="text-gray-600">Ngày vào: {format(new Date(request.moveInDate), 'dd/MM/yyyy', { locale: vi })}</span>
+                        </div>
+
+                        <div className="flex items-center space-x-2 text-sm">
+                          <Clock className="h-4 w-4 text-gray-400" />
+                          <span className="text-gray-500">Gửi: {format(new Date(request.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
+                        </div>
+
+                        {request.messageToOwner && (
+                          <div className="text-sm">
+                            <p className="text-gray-600 font-medium mb-1 flex items-center">
+                              <MessageSquare className="h-4 w-4 mr-1" />
+                              Tin nhắn:
+                            </p>
+                            <p className="text-gray-700 bg-gray-50 p-2 rounded text-xs whitespace-pre-wrap">
+                              {request.messageToOwner}
+                            </p>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <p className="text-sm truncate">
-                            {request.room?.name ? `Phòng ${request.room.name}` : request.room?.building?.name || '-'}
-                          </p>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Calendar className="h-3 w-3 mr-1.5 text-gray-400" />
-                            <span>{format(new Date(request.moveInDate), 'dd/MM/yyyy', { locale: vi })}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center text-xs text-gray-500">
-                            <Clock className="h-3 w-3 mr-1.5 text-gray-400" />
-                            <span>{format(new Date(request.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={BOOKING_STATUS_COLORS[request.status as keyof typeof BOOKING_STATUS_COLORS]}>
-                            {BOOKING_STATUS_LABELS[request.status as keyof typeof BOOKING_STATUS_LABELS]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {request.status === 'approved' ? (
-                            <div>
+                        )}
+
+                        {request.status === 'approved' && (
+                          <div className="pt-2 border-t">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-600">Xác nhận tenant:</span>
                               <Badge className={CONFIRMED_COLORS[String(request.isConfirmedByTenant) as keyof typeof CONFIRMED_COLORS]}>
                                 {CONFIRMED_LABELS[String(request.isConfirmedByTenant) as keyof typeof CONFIRMED_LABELS]}
                               </Badge>
-                              {request.isConfirmedByTenant && request.confirmedAt && (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <p className="text-xs text-gray-500 mt-1 cursor-help truncate">
-                                        {format(new Date(request.confirmedAt), 'dd/MM HH:mm', { locale: vi })}
-                                      </p>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Xác nhận lúc: {format(new Date(request.confirmedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              )}
                             </div>
-                          ) : (
-                            <span className="text-xs text-gray-400">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {request.status === 'pending' && (
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                size="sm"
-                                className="bg-green-600 hover:bg-green-700 h-8 px-3"
-                                onClick={() => handleApprove(request.id)}
-                                disabled={submitting}
-                              >
-                                <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                                Chấp nhận
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 border-red-300 hover:bg-red-50 h-8 px-3"
-                                onClick={() => handleReject(request.id)}
-                                disabled={submitting}
-                              >
-                                <X className="h-3.5 w-3.5 mr-1" />
-                                Từ chối
-                              </Button>
+                            {request.isConfirmedByTenant && request.confirmedAt && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Xác nhận lúc: {format(new Date(request.confirmedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-4 pt-4 border-t">
+                        {request.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="flex-1 bg-green-600 hover:bg-green-700"
+                              onClick={() => handleApprove(request.id)}
+                              disabled={submitting}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Chấp nhận
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
+                              onClick={() => handleReject(request.id)}
+                              disabled={submitting}
+                            >
+                              <X className="h-4 w-4 mr-1" />
+                              Từ chối
+                            </Button>
+                          </div>
+                        )}
+                        {request.status === 'approved' && !request.isConfirmedByTenant && (
+                          <div className="text-center">
+                            <div className="inline-flex items-center text-yellow-700 text-sm font-medium">
+                              <Clock className="h-4 w-4 mr-1" />
+                              Đang chờ tenant xác nhận
                             </div>
-                          )}
-                          {request.status === 'approved' && !request.isConfirmedByTenant && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="inline-flex items-center text-xs text-yellow-600 cursor-help">
-                                    <Clock className="h-4 w-4 mr-1" />
-                                    Chờ xác nhận
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p>Đã gửi yêu cầu đến tenant. Khi tenant xác nhận, hợp đồng thuê sẽ được tạo tự động.</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                          {request.status === 'approved' && request.isConfirmedByTenant && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="inline-flex items-center text-xs text-green-600 cursor-help">
-                                    <CheckCircle className="h-4 w-4 mr-1" />
-                                    Hoàn tất
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p>Tenant đã xác nhận. Hợp đồng thuê đã được tạo tự động!</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                          {request.status === 'rejected' && (
-                            <span className="text-xs text-red-600">Đã từ chối</span>
-                          )}
-                          {request.status === 'cancelled' && (
-                            <span className="text-xs text-gray-600">Đã hủy</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                            <p className="text-xs text-gray-500 mt-1">Hợp đồng sẽ được tạo khi tenant xác nhận</p>
+                          </div>
+                        )}
+                        {request.status === 'approved' && request.isConfirmedByTenant && (
+                          <div className="text-center">
+                            <div className="inline-flex items-center text-green-700 text-sm font-medium">
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Hoàn tất - Hợp đồng đã tạo
+                            </div>
+                          </div>
+                        )}
+                        {request.status === 'rejected' && (
+                          <div className="text-center">
+                            <div className="inline-flex items-center text-red-600 text-sm font-medium">
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Đã từ chối
+                            </div>
+                          </div>
+                        )}
+                        {request.status === 'cancelled' && (
+                          <div className="text-center">
+                            <div className="inline-flex items-center text-gray-600 text-sm font-medium">
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Đã hủy
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
               </div>
             )}
 

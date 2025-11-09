@@ -26,19 +26,21 @@ import {
   Star,
 } from "lucide-react"
 import { useUserStore } from "@/stores/userStore"
+import { useSidebarBadges } from "@/hooks/useSidebarBadges"
 
 interface SidebarSubItem {
   title: string
   href: string
   icon: React.ComponentType<{ className?: string }>
   disabled?: boolean
+  badge?: number
 }
 
 interface SidebarItem {
   title: string
   href?: string
   icon: React.ComponentType<{ className?: string }>
-  badge?: string
+  badge?: number
   subItems?: SidebarSubItem[]
   disabled?: boolean
 }
@@ -193,11 +195,32 @@ const landlordItems: SidebarItem[] = [
 export function Sidebar({ userType, onNavigate }: SidebarProps) {
   const pathname = usePathname()
   const { user, logout } = useUserStore()
+  const badges = useSidebarBadges(userType)
   const [expandedItems, setExpandedItems] = useState<string[]>(
     userType === 'tenant' ? ['Quản lý thuê trọ'] : ['Quản lý Trọ']
   )
 
-  const items = userType === 'tenant' ? tenantItems : landlordItems
+  // Update items with badges dynamically
+  const baseItems = userType === 'tenant' ? tenantItems : landlordItems
+  const items = baseItems.map(item => {
+    if (item.subItems) {
+      return {
+        ...item,
+        subItems: item.subItems.map(subItem => {
+          let badge = 0
+          if (userType === 'landlord') {
+            if (subItem.href === '/dashboard/landlord/requests') {
+              badge = badges.bookingRequests
+            } else if (subItem.href === '/dashboard/landlord/roommate-applications') {
+              badge = badges.roommateApplications
+            }
+          }
+          return { ...subItem, badge: badge > 0 ? badge : undefined }
+        })
+      }
+    }
+    return item
+  })
 
   const toggleExpanded = (itemTitle: string) => {
     setExpandedItems(prev =>
@@ -309,6 +332,11 @@ export function Sidebar({ userType, onNavigate }: SidebarProps) {
                       >
                         <SubIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
                         <span className="truncate">{subItem.title}</span>
+                        {subItem.badge && subItem.badge > 0 && (
+                          <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full flex-shrink-0 min-w-[20px] text-center">
+                            {subItem.badge > 99 ? '99+' : subItem.badge}
+                          </span>
+                        )}
                       </div>
                     ) : (
                       <Link
@@ -334,6 +362,11 @@ export function Sidebar({ userType, onNavigate }: SidebarProps) {
                           )}
                         />
                         <span className="truncate">{subItem.title}</span>
+                        {subItem.badge && subItem.badge > 0 && (
+                          <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full flex-shrink-0 min-w-[20px] text-center">
+                            {subItem.badge > 99 ? '99+' : subItem.badge}
+                          </span>
+                        )}
                       </Link>
                     )
                   })}
