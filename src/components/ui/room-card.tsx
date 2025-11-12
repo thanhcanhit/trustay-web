@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   Droplets,
   //Heart,
@@ -20,6 +21,7 @@ interface RoomCardProps {
   isSaved?: boolean;
   onClick?: (id: string) => void;
   className?: string;
+  asLink?: boolean; // Add option to render as link or div
 }
 
 export function RoomCard({
@@ -27,7 +29,8 @@ export function RoomCard({
   //onSaveToggle,
   //isSaved = false,
   // onClick,
-  className = ''
+  className = '',
+  asLink = true
 }: RoomCardProps) {
   const [imageError, setImageError] = useState(false);
   const formatPrice = (priceString: string) => {
@@ -73,10 +76,10 @@ export function RoomCard({
   const { electricityCost, waterCost } = getElectricityWaterCost();
   const wifiAvailable = hasWifi();
 
-  return (
-    <div
-      className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer block ${className}`}
-    >
+  const cardClassName = `bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer block ${className}`;
+
+  const cardContent = (
+    <>
       {/* Image Container */}
       <div className="relative h-32 md:h-40">
         <Image
@@ -96,7 +99,7 @@ export function RoomCard({
             </span>
           </div>
         )}
-        
+
 
         {/* Save Button
         {onSaveToggle && (
@@ -166,6 +169,20 @@ export function RoomCard({
           )}
         </div>
       </div>
+    </>
+  );
+
+  if (asLink) {
+    return (
+      <Link href={`/rooms/${room.id}`} className={cardClassName}>
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={cardClassName}>
+      {cardContent}
     </div>
   );
 }

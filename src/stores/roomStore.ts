@@ -205,7 +205,8 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 		set({ roomLoading: true, roomError: null });
 
 		try {
-			const room = await getRoomByIdListing(id);
+			const token = TokenManager.getAccessToken();
+			const room = await getRoomByIdListing(id, token);
 			set({
 				currentRoom: room,
 				roomLoading: false,

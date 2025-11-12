@@ -128,13 +128,12 @@ function RoomsPageContent() {
             <>
               <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-6">
                 {rooms.map((room) => (
-                  <Link key={room.id} href={`/rooms/${room.id}`}>
-                    <RoomCard
-                      room={room}
-                      isSaved={savedRooms.includes(room.id)}
-                      onSaveToggle={toggleSaveRoom}
-                    />
-                  </Link>
+                  <RoomCard
+                    key={room.id}
+                    room={room}
+                    isSaved={savedRooms.includes(room.id)}
+                    onSaveToggle={toggleSaveRoom}
+                  />
                 ))}
               </div>
 

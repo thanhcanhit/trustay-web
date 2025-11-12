@@ -71,10 +71,13 @@ export async function searchRoomListings(params: RoomSearchParams): Promise<Room
 /**
  * Get room detail by id
  */
-export async function getRoomById(id: string): Promise<RoomDetail> {
+export async function getRoomById(id: string, token?: string): Promise<RoomDetail> {
 	try {
 		const response = await serverApiCall<RoomDetail>(`/api/rooms/public/id/${id}`, {
 			method: 'GET',
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
 		});
 
 		return response;
