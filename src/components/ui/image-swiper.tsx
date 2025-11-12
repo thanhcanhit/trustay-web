@@ -49,23 +49,29 @@ export function ImageSwiper({
     [images]
   )
 
-  // Validate images on mount and when images change
+  // Validate images sequentially with delay to avoid rate limiting
   useEffect(() => {
     const validateImages = async () => {
       setIsValidating(true)
       const validatedImages: string[] = []
 
-      for (const imageUrl of normalizedImages) {
+      for (let i = 0; i < normalizedImages.length; i++) {
+        const imageUrl = normalizedImages[i]
+
         try {
-          // Create a promise to check if image loads
+          // Add delay between requests to avoid rate limiting (200ms between each check)
+          if (i > 0) {
+            await new Promise(resolve => setTimeout(resolve, 200))
+          }
+
           const isValid = await new Promise<boolean>((resolve) => {
             const img = new window.Image()
             img.onload = () => resolve(true)
             img.onerror = () => resolve(false)
             img.src = imageUrl
 
-            // Timeout after 5 seconds
-            setTimeout(() => resolve(false), 5000)
+            // Timeout after 3 seconds
+            setTimeout(() => resolve(false), 3000)
           })
 
           if (isValid) {
@@ -149,6 +155,9 @@ export function ImageSwiper({
                       fill
                       className={objectFitClass}
                       unoptimized={image?.includes('pt123.cdn.static123.com')}
+                      priority={index === 0}
+                      loading={index === 0 ? undefined : 'lazy'}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   </PhotoView>
                 ) : (
@@ -158,6 +167,9 @@ export function ImageSwiper({
                     fill
                     className={objectFitClass}
                     unoptimized={image?.includes('pt123.cdn.static123.com')}
+                    priority={index === 0}
+                    loading={index === 0 ? undefined : 'lazy'}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                 )}
               </div>
@@ -220,6 +232,8 @@ export function ImageSwiper({
                     height={80}
                     className="object-cover w-full h-full"
                     unoptimized={image?.includes('pt123.cdn.static123.com')}
+                    loading="lazy"
+                    sizes="80px"
                   />
                 </div>
               </SwiperSlide>
