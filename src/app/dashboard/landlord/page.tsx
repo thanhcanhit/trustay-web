@@ -6,10 +6,8 @@ import { Badge } from "@/components/ui/badge"
 import {
   Building as BuildingIcon,
   Users,
-  DollarSign,
   TrendingUp,
   Plus,
-  Eye,
   MapPin,
   Calendar,
   Loader2,
@@ -53,7 +51,7 @@ function DashboardContent() {
   const { sent, loadingSent, loadSent } = useInvitationStore()
   const { bills, loading: loadingBills, loadLandlordBills } = useBillStore()
   const [loadingStats, setLoadingStats] = useState(true)
-  const [analytics, setAnalytics] = useState(() => generateDashboardAnalytics())
+  const analytics = generateDashboardAnalytics()
 
   useEffect(() => {
     // Only fetch if we haven't fetched yet and not currently loading
@@ -133,32 +131,6 @@ function DashboardContent() {
 
   const { buildings, buildingRooms, stats } = dashboardData
 
-  // Helper function to calculate building stats
-  const getBuildingStats = (buildingId: string) => {
-    const rooms = buildingRooms.get(buildingId) || []
-    let totalRooms = 0
-    let occupiedRooms = 0
-    let totalRevenue = 0
-
-    for (const room of rooms) {
-      if (room.roomInstances && Array.isArray(room.roomInstances)) {
-        totalRooms += room.roomInstances.length
-        
-        const occupiedInstances = room.roomInstances.filter(
-          instance => instance.status === 'occupied'
-        )
-        occupiedRooms += occupiedInstances.length
-        
-        if (room.pricing && occupiedInstances.length > 0) {
-          const monthlyRevenue = parseFloat(room.pricing.basePriceMonthly) || 0
-          totalRevenue += monthlyRevenue * occupiedInstances.length
-        }
-      }
-    }
-
-    return { totalRooms, occupiedRooms, totalRevenue }
-  }
-
   return (
     <div>
       {/* Header */}
@@ -204,13 +176,11 @@ function DashboardContent() {
             title="Tổng toà nhà"
             value={buildings.length}
             icon={BuildingIcon}
-            trend={null}
           />
           <StatCard
             title="Tổng phòng (loại)"
             value={Array.from(buildingRooms.values()).reduce((total, rooms) => total + rooms.length, 0)}
             icon={MapPin}
-            trend={null}
           />
           <StatCard
             title="Tổng phòng (đơn vị)"
@@ -220,13 +190,11 @@ function DashboardContent() {
               }, 0)
             }, 0)}
             icon={MapPin}
-            trend={null}
           />
           <StatCard
             title="Tỷ lệ lấp đầy"
-            value={`${stats?.occupancy?.toFixed(0) || 0}%`}
+            value={`${stats?.occupancyRate?.toFixed(0) || 0}%`}
             icon={TrendingUp}
-            trend={null}
           />
         </div>
       </div>

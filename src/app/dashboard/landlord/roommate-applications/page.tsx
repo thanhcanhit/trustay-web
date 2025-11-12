@@ -50,7 +50,7 @@ export default function RoommateApplicationsPage() {
   const { sendMessage: sendChatMessage, setCurrentUserId } = useChatStore()
   const { user } = useUserStore()
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'accepted' | 'rejected' | 'awaiting_confirmation'>('all')
   const [page, setPage] = useState(1)
   const [respondDialog, setRespondDialog] = useState<{ open: boolean; applicationId: string | null; approve: boolean }>({
     open: false,
@@ -208,18 +208,15 @@ export default function RoommateApplicationsPage() {
             />
           </div>
 
-          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1) }}>
+          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as typeof statusFilter); setPage(1) }}>
             <SelectTrigger className="w-52">
               <SelectValue placeholder="Trạng thái" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả trạng thái</SelectItem>
-              <SelectItem value="pending">Chờ tenant phản hồi</SelectItem>
               <SelectItem value="accepted">Tenant đã chấp nhận</SelectItem>
               <SelectItem value="rejected">Đã từ chối</SelectItem>
               <SelectItem value="awaiting_confirmation">Chờ xác nhận</SelectItem>
-              <SelectItem value="cancelled">Đã hủy</SelectItem>
-              <SelectItem value="expired">Đã hết hạn</SelectItem>
             </SelectContent>
           </Select>
 

@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card"
 import { MonthYearSelector } from "@/components/dashboard/MonthYearSelector"
 import { useState } from "react"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 export function RevenueChart() {
   const now = new Date()

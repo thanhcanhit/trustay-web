@@ -225,7 +225,7 @@ export function RevenueByRoomChart({ data }: RevenueByRoomChartProps) {
               <Cell
                 key={`cell-${index}`}
                 fill={COLORS[index % COLORS.length]}
-                opacity={viewLevel !== 'instance' ? 1 : (entry as any).status === 'occupied' ? 1 : 0.4}
+                opacity={viewLevel !== 'instance' ? 1 : ('status' in entry && entry.status === 'occupied') ? 1 : 0.4}
               />
             ))}
           </Bar>
@@ -251,10 +251,10 @@ export function RevenueByRoomChart({ data }: RevenueByRoomChartProps) {
                   style={{ backgroundColor: COLORS[index % COLORS.length] }}
                 />
                 <span className="text-sm font-medium text-gray-900">{item.name}</span>
-                {viewLevel === 'instance' && (item as any).status === 'vacant' && (
+                {viewLevel === 'instance' && 'status' in item && item.status === 'vacant' && (
                   <span className="text-xs px-2 py-0.5 bg-gray-200 text-gray-600 rounded">Trống</span>
                 )}
-                {viewLevel === 'instance' && (item as any).status === 'occupied' && (
+                {viewLevel === 'instance' && 'status' in item && item.status === 'occupied' && (
                   <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">Đã thuê</span>
                 )}
               </div>

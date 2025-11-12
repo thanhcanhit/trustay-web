@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "lucide-react"
-import { useState } from "react"
 
 export type DateRange = '3months' | '6months' | '1year' | 'all'
 
