@@ -11,7 +11,7 @@ import { parseSearchParams } from '@/utils/search-params';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { useRoomsQuery } from '@/hooks/useRoomsQuery';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
-import Link from 'next/link';
+// import Link from 'next/link';
 import { SortingTabs } from '@/components/ui/sorting-tabs';
 import { FilterTags } from '@/components/ui/filter-tags';
 
