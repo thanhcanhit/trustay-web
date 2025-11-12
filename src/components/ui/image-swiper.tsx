@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Thumbs, FreeMode } from 'swiper/modules'
@@ -38,8 +38,6 @@ export function ImageSwiper({
   imageContext = 'gallery'
 }: ImageSwiperProps) {
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null)
-  const [validImages, setValidImages] = useState<string[]>([])
-  const [isValidating, setIsValidating] = useState(true)
 
   // Normalize images to string array and create stable reference
   const normalizedImages = React.useMemo(() =>
@@ -49,68 +47,8 @@ export function ImageSwiper({
     [images]
   )
 
-  // Validate images sequentially with delay to avoid rate limiting
-  useEffect(() => {
-    const validateImages = async () => {
-      setIsValidating(true)
-      const validatedImages: string[] = []
-
-      for (let i = 0; i < normalizedImages.length; i++) {
-        const imageUrl = normalizedImages[i]
-
-        try {
-          // Add delay between requests to avoid rate limiting (200ms between each check)
-          if (i > 0) {
-            await new Promise(resolve => setTimeout(resolve, 200))
-          }
-
-          const isValid = await new Promise<boolean>((resolve) => {
-            const img = new window.Image()
-            img.onload = () => resolve(true)
-            img.onerror = () => resolve(false)
-            img.src = imageUrl
-
-            // Timeout after 3 seconds
-            setTimeout(() => resolve(false), 3000)
-          })
-
-          if (isValid) {
-            validatedImages.push(imageUrl)
-          }
-        } catch {
-          // Skip invalid images
-          continue
-        }
-      }
-
-      setValidImages(validatedImages)
-      setIsValidating(false)
-    }
-
-    if (normalizedImages.length > 0) {
-      validateImages()
-    } else {
-      setIsValidating(false)
-    }
-  }, [normalizedImages])
-
-  // Show loading state while validating
-  if (isValidating) {
-    return (
-      <div className={`bg-gray-100 rounded-lg flex items-center justify-center ${height} ${className}`}>
-        <div className="text-gray-400 text-center">
-          <svg className="animate-spin h-8 w-8 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <p className="text-sm">Đang tải hình ảnh...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Don't render anything if no valid images
-  if (validImages.length === 0) {
+  // Don't render anything if no images
+  if (normalizedImages.length === 0) {
     return (
       <div className={`bg-gray-100 rounded-lg flex items-center justify-center ${height} ${className}`}>
         <div className="text-gray-400 text-center">
@@ -144,7 +82,7 @@ export function ImageSwiper({
           spaceBetween={0}
           slidesPerView={1}
         >
-          {validImages.map((image, index) => (
+          {normalizedImages.map((image, index) => (
             <SwiperSlide key={index}>
               <div className="relative w-full h-full bg-black">
                 {imageContext === 'detail' ? (
@@ -178,7 +116,7 @@ export function ImageSwiper({
         </Swiper>
 
         {/* Custom Navigation Buttons */}
-        {validImages.length > 1 && (
+        {normalizedImages.length > 1 && (
           <>
             <div className="swiper-button-prev-custom absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white rounded-full w-10 h-10 flex items-center justify-center cursor-pointer transition-colors">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,7 +149,7 @@ export function ImageSwiper({
       </div>
 
       {/* Thumbnail Swiper */}
-      {showThumbs && validImages.length > 1 && (
+      {showThumbs && normalizedImages.length > 1 && (
         <div className="p-4">
           <Swiper
             onSwiper={setThumbsSwiper}
@@ -222,7 +160,7 @@ export function ImageSwiper({
             watchSlidesProgress={true}
             className="thumbs-swiper"
           >
-            {validImages.map((image, index) => (
+            {normalizedImages.map((image, index) => (
               <SwiperSlide key={index} className="!w-20 !h-20">
                 <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-500 cursor-pointer transition-colors">
                   <Image
