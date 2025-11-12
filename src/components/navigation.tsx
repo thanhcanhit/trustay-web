@@ -39,7 +39,6 @@ export function Navigation() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, isAuthenticated, logout } = useUserStore()
-  const [isAvatarError, setIsAvatarError] = useState(false)
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   // Second row removed; scroll-based toggle no longer needed
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -544,7 +543,7 @@ export function Navigation() {
                   className="flex items-center space-x-1 sm:space-x-2 h-9 lg:h-10 text-gray-700 hover:text-gray-900 cursor-pointer px-1 sm:px-3"
                 >
                   <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
-                    {user.avatarUrl && !isAvatarError ? (
+                    {user.avatarUrl && user.avatarUrl.trim() !== '' ? (
                       <div className="w-full h-full relative">
                         <SizingImage
                           src={user.avatarUrl}
@@ -552,7 +551,6 @@ export function Navigation() {
                           alt={`${user.firstName} ${user.lastName}`}
                           className="object-cover rounded-full"
                           fill
-                          onError={() => setIsAvatarError(true)}
                         />
                       </div>
                     ) : (

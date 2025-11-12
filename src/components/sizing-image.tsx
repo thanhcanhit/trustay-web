@@ -3,15 +3,6 @@ import { useMemo } from 'react'
 
 type SrcSize = '128x128' | '256x256' | '512x512' | '1024x1024' | '1920x1080'
 
-// Fallback sizes nếu kích thước gốc không khả dụng
-const FALLBACK_SIZES: Record<SrcSize, SrcSize[]> = {
-  '128x128': ['256x256', '512x512'],
-  '256x256': ['512x512', '128x128'],
-  '512x512': ['256x256', '1024x1024'],
-  '1024x1024': ['512x512', '256x256'],
-  '1920x1080': ['1024x1024', '512x512']
-}
-
 interface SizingImageProps extends Omit<ImageProps, 'src' | 'width' | 'height'> {
   src: string
   srcSize: SrcSize
@@ -72,11 +63,6 @@ const parseImagePath = (src: string): string => {
   }
 }
 
-// Function để tạo fallback URLs
-const createFallbackUrls = (src: string, size: SrcSize): string[] => {
-  const fallbackSizes = FALLBACK_SIZES[size] || []
-  return fallbackSizes.map(() => parseImagePath(src))
-}
 
 const getDimensions = (size: SrcSize): { width: number; height: number } => {
   const [width, height] = size.split('x').map(Number)
@@ -92,15 +78,14 @@ export const SizingImage: React.FC<SizingImageProps> = ({
   fill,
   ...restProps
 }) => {
-  const { parsedSrc, dimensions, fallbackUrls } = useMemo(() => {
+  const { parsedSrc, dimensions } = useMemo(() => {
     // Validate src is not empty
     const validSrc = src && src.trim() !== '' ? src : '/images/error-image.jpg'
     const parsedSrc = parseImagePath(validSrc)
-    const fallbackUrls = createFallbackUrls(validSrc, srcSize)
     const dimensions = width && height
       ? { width, height }
       : getDimensions(srcSize)
-    return { parsedSrc, dimensions, fallbackUrls }
+    return { parsedSrc, dimensions }
   }, [src, srcSize, width, height])
 
   // Additional safety check - if parsedSrc is still empty, use fallback
@@ -112,20 +97,6 @@ export const SizingImage: React.FC<SizingImageProps> = ({
       alt={alt || 'Image'}
       {...(fill ? { fill } : { width: dimensions.width, height: dimensions.height })}
       {...restProps}
-      onError={(e) => {
-        // Nếu ảnh gốc lỗi, thử fallback URLs
-        const target = e.target as HTMLImageElement
-        if (fallbackUrls.length > 0) {
-          const nextUrl = fallbackUrls.shift()
-          if (nextUrl && nextUrl.trim() !== '') {
-            target.src = nextUrl
-          } else {
-            target.src = '/images/error-image.jpg'
-          }
-        } else {
-          target.src = '/images/error-image.jpg'
-        }
-      }}
     />
   )
 }

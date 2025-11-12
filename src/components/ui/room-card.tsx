@@ -33,6 +33,7 @@ export function RoomCard({
   asLink = true
 }: RoomCardProps) {
   const [imageError, setImageError] = useState(false);
+  const [imageRetryCount, setImageRetryCount] = useState(0);
   const formatPrice = (priceString: string) => {
     const price = parseInt(priceString);
     return new Intl.NumberFormat('vi-VN').format(price / 1000000);
@@ -87,7 +88,13 @@ export function RoomCard({
           alt={room.name || "Room image"}
           fill
           className="object-cover"
-          onError={() => setImageError(true)}
+          onError={() => {
+            // Only retry once to avoid infinite loops
+            if (imageRetryCount < 1) {
+              setImageRetryCount(prev => prev + 1);
+              setImageError(true);
+            }
+          }}
           unoptimized={!imageError && room.images?.[0]?.url?.includes('pt123.cdn.static123.com')}
         />
 
