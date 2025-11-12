@@ -124,6 +124,7 @@ export const useAIAssistantStore = create<AIStateSnapshot & AIActions>()(
 
 				try {
 					const token = TokenManager.getAccessToken();
+					const currentPage = typeof window !== 'undefined' ? window.location.pathname : undefined;
 					// Add a temporary typing message
 					set((s) => ({
 						isThinking: true,
@@ -137,7 +138,7 @@ export const useAIAssistantStore = create<AIStateSnapshot & AIActions>()(
 							},
 						],
 					}));
-					const res = await postAIChat(content, token);
+					const res = await postAIChat(content, currentPage, token);
 
 					// Support both old AIChatResponse and new ChatEnvelope
 					const maybeEnvelope = res as unknown as Partial<ChatEnvelope>;

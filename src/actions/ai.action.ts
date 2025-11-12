@@ -1,4 +1,4 @@
-'use server';
+//'use server';
 
 import type { AIChatResponse, AIHistoryResponse } from '@/types/ai';
 import type { ApiResponse } from '../lib/api-client';
@@ -9,7 +9,10 @@ const apiCall = createServerApiCall();
 // Use central types from '@/types/ai'
 
 const AI_ENDPOINTS = {
-	chat: (query: string) => `/api/ai/chat?query=${encodeURIComponent(query)}`,
+	chat: (query: string, currentPage?: string) => {
+		const baseUrl = `/api/ai/chat?query=${encodeURIComponent(query)}`;
+		return currentPage ? `${baseUrl}&currentPage=${encodeURIComponent(currentPage)}` : baseUrl;
+	},
 	history: '/api/ai/chat/history',
 	text2sql: '/api/ai/text2sql',
 };
@@ -27,9 +30,13 @@ function unwrap<T>(resp: unknown): T {
 	return resp as T;
 }
 
-export async function postAIChat(query: string, token?: string): Promise<AIChatResponse> {
+export async function postAIChat(
+	query: string,
+	currentPage?: string,
+	token?: string,
+): Promise<AIChatResponse> {
 	const resp = await apiCall<ApiResponse<AIChatResponse> | AIChatResponse>(
-		AI_ENDPOINTS.chat(query),
+		AI_ENDPOINTS.chat(query, currentPage),
 		{ method: 'POST', timeout: 0 },
 		token,
 	);
