@@ -65,18 +65,25 @@ export const updateUserProfile = async (
 export const changePassword = async (
 	passwordData: ChangePasswordRequest,
 	token?: string,
-): Promise<{ message: string }> => {
+): Promise<{ success: boolean; message?: string; error?: string }> => {
 	if (!token) {
-		throw new Error('No access token found');
+		return { success: false, error: 'No access token found' };
 	}
-	return await serverApiCall<{ message: string }>(
-		'/api/auth/change-password',
-		{
-			method: 'PUT',
-			data: passwordData,
-		},
-		token,
-	);
+
+	try {
+		const result = await serverApiCall<{ message: string }>(
+			'/api/auth/change-password',
+			{
+				method: 'PUT',
+				data: passwordData,
+			},
+			token,
+		);
+		return { success: true, message: result.message };
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : 'Failed to change password';
+		return { success: false, error: errorMessage };
+	}
 };
 
 // Upload user avatar

@@ -32,6 +32,15 @@ const ERROR_PATTERNS: Record<string, ErrorPattern> = {
 		],
 		message: 'Email/Số điện thoại hoặc mật khẩu không chính xác',
 	},
+	currentPasswordIncorrect: {
+		patterns: [
+			'current password is incorrect',
+			'current password incorrect',
+			'wrong current password',
+			'invalid current password',
+		],
+		message: 'Mật khẩu hiện tại không chính xác',
+	},
 	userNotFound: {
 		patterns: ['user not found', 'email not found', 'account not found', 'no user found'],
 		message: 'Tài khoản không tồn tại',

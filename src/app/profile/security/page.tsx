@@ -33,25 +33,33 @@ function ChangePasswordCard() {
     setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }))
   }
 
-  const handleChangePassword = async () => {
+  const handleChangePassword = async (e?: React.MouseEvent) => {
+    e?.preventDefault()
+    e?.stopPropagation()
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error("Mật khẩu mới không khớp!")
       return
     }
 
     setIsLoading(true)
+
     try {
       await changePassword({
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
       })
+
       toast.success("Đổi mật khẩu thành công!")
+      // Chỉ đóng form và clear data khi thành công
       setIsChangingPassword(false)
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    } catch (error: unknown) {
+      // Khi có lỗi, giữ nguyên form để user có thể sửa
+      const errorMessage = error instanceof Error ? error.message : "Đã xảy ra lỗi, vui lòng thử lại sau"
       const translatedError = translateErrorMessage(errorMessage, "Đổi mật khẩu thất bại")
       toast.error(translatedError)
+      // KHÔNG đóng form và KHÔNG clear data khi có lỗi
     } finally {
       setIsLoading(false)
     }
@@ -65,7 +73,7 @@ function ChangePasswordCard() {
           <h3 className="text-lg font-medium">Đổi mật khẩu</h3>
         </div>
         {!isChangingPassword && (
-          <Button onClick={() => setIsChangingPassword(true)} variant="outline">
+          <Button type="button" onClick={() => setIsChangingPassword(true)} variant="outline">
             Đổi mật khẩu
           </Button>
         )}
@@ -89,6 +97,7 @@ function ChangePasswordCard() {
                 type="button"
                 variant="ghost"
                 size="icon"
+                tabIndex={-1}
                 onClick={() => togglePasswordVisibility('currentPassword')}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 hover:text-gray-700"
               >
@@ -114,6 +123,7 @@ function ChangePasswordCard() {
                 type="button"
                 variant="ghost"
                 size="icon"
+                tabIndex={-1}
                 onClick={() => togglePasswordVisibility('newPassword')}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 hover:text-gray-700"
               >
@@ -139,6 +149,7 @@ function ChangePasswordCard() {
                 type="button"
                 variant="ghost"
                 size="icon"
+                tabIndex={-1}
                 onClick={() => togglePasswordVisibility('confirmPassword')}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 hover:text-gray-700"
               >
@@ -152,17 +163,19 @@ function ChangePasswordCard() {
           </div>
           <div className="flex space-x-3">
             <Button
+              type="button"
               onClick={handleChangePassword}
               className="bg-green-600 hover:bg-green-700"
               disabled={!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword || isLoading}
             >
               {isLoading ? "Đang đổi..." : "Đổi mật khẩu"}
             </Button>
-            <Button 
+            <Button
+              type="button"
               onClick={() => {
                 setIsChangingPassword(false)
                 setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
-              }} 
+              }}
               variant="outline"
             >
               Hủy
