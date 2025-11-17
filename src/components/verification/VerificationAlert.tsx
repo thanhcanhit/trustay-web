@@ -1,11 +1,11 @@
-import { useState } from 'react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { AlertCircle, CheckCircle, Loader2, Mail, Phone } from 'lucide-react'
+import { CheckCircle, Loader2, Mail, Phone } from 'lucide-react'
 import { toast } from 'sonner'
+import { useVerificationStore } from '@/stores/verificationStore'
 
 interface VerificationAlertProps {
   type: 'email' | 'phone'
@@ -17,88 +17,42 @@ interface VerificationAlertProps {
 export function VerificationAlert({ type, value, isVerified = false, onVerificationComplete }: VerificationAlertProps) {
   const [showDialog, setShowDialog] = useState(false)
   const [verificationCode, setVerificationCode] = useState('')
-  const [isSending, setIsSending] = useState(false)
-  const [isVerifying, setIsVerifying] = useState(false)
   const [codeSent, setCodeSent] = useState(false)
+
+  const { isLoading, error, sendVerificationCode, verifyCode: verifyCodeAction, clearError } = useVerificationStore()
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error)
+      clearError()
+    }
+  }, [error, clearError])
 
   if (isVerified) {
     return null
   }
 
-  const sendVerificationCode = async () => {
-    setIsSending(true)
-    try {
-      const token = localStorage.getItem('token')
-      const endpoint = type === 'email'
-        ? `${process.env.NEXT_PUBLIC_API_URL}/auth/verify-email/send`
-        : `${process.env.NEXT_PUBLIC_API_URL}/auth/verify-phone/send`
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ [type]: value })
-      })
-
-      if (response.ok) {
-        setCodeSent(true)
-        toast.success(`Mã xác thực đã được gửi đến ${type === 'email' ? 'email' : 'số điện thoại'} của bạn`)
-      } else {
-        const data = await response.json()
-        const errorMessage = typeof data.message === 'string' ? data.message : 'Có lỗi xảy ra khi gửi mã xác thực'
-        toast.error(errorMessage)
-      }
-    } catch (error) {
-      console.error('Error sending verification code:', error)
-      toast.error('Có lỗi xảy ra khi gửi mã xác thực')
-    } finally {
-      setIsSending(false)
+  const handleSendVerificationCode = async () => {
+    const success = await sendVerificationCode(type, value)
+    if (success) {
+      setCodeSent(true)
+      toast.success(`Mã xác thực đã được gửi đến ${type === 'email' ? 'email' : 'số điện thoại'} của bạn`)
     }
   }
 
-  const verifyCode = async () => {
+  const handleVerifyCode = async () => {
     if (!verificationCode || verificationCode.length !== 6) {
       toast.error('Vui lòng nhập mã xác thực 6 số')
       return
     }
 
-    setIsVerifying(true)
-    try {
-      const token = localStorage.getItem('token')
-      const endpoint = type === 'email'
-        ? `${process.env.NEXT_PUBLIC_API_URL}/auth/verify-email`
-        : `${process.env.NEXT_PUBLIC_API_URL}/auth/verify-phone`
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          [type]: value,
-          code: verificationCode
-        })
-      })
-
-      if (response.ok) {
-        toast.success(`${type === 'email' ? 'Email' : 'Số điện thoại'} đã được xác thực thành công!`)
-        setShowDialog(false)
-        setVerificationCode('')
-        setCodeSent(false)
-        onVerificationComplete?.()
-      } else {
-        const data = await response.json()
-        const errorMessage = typeof data.message === 'string' ? data.message : 'Mã xác thực không chính xác'
-        toast.error(errorMessage)
-      }
-    } catch (error) {
-      console.error('Error verifying code:', error)
-      toast.error('Có lỗi xảy ra khi xác thực')
-    } finally {
-      setIsVerifying(false)
+    const success = await verifyCodeAction(type, value, verificationCode)
+    if (success) {
+      toast.success(`${type === 'email' ? 'Email' : 'Số điện thoại'} đã được xác thực thành công!`)
+      setShowDialog(false)
+      setVerificationCode('')
+      setCodeSent(false)
+      onVerificationComplete?.()
     }
   }
 
@@ -130,11 +84,11 @@ export function VerificationAlert({ type, value, isVerified = false, onVerificat
                   Nhấn nút bên dưới để nhận mã xác thực
                 </p>
                 <Button
-                  onClick={sendVerificationCode}
-                  disabled={isSending}
+                  onClick={handleSendVerificationCode}
+                  disabled={isLoading}
                   className="w-full"
                 >
-                  {isSending ? (
+                  {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Đang gửi...
@@ -166,11 +120,11 @@ export function VerificationAlert({ type, value, isVerified = false, onVerificat
 
                 <div className="flex gap-2">
                   <Button
-                    onClick={verifyCode}
-                    disabled={isVerifying || verificationCode.length !== 6}
+                    onClick={handleVerifyCode}
+                    disabled={isLoading || verificationCode.length !== 6}
                     className="flex-1"
                   >
-                    {isVerifying ? (
+                    {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Đang xác thực...
@@ -181,10 +135,10 @@ export function VerificationAlert({ type, value, isVerified = false, onVerificat
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={sendVerificationCode}
-                    disabled={isSending}
+                    onClick={handleSendVerificationCode}
+                    disabled={isLoading}
                   >
-                    {isSending ? (
+                    {isLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       'Gửi lại'
