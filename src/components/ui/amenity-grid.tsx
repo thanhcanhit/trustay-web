@@ -39,10 +39,14 @@ export function AmenityGrid({
   const selectedAmenityIds = Array.isArray(selectedAmenities)
     ? selectedAmenities
         .filter(item => item != null)
-        .map(item =>
-          typeof item === 'string' ? item : item?.systemAmenityId
-        )
-        .filter(id => id != null)
+        .map(item => {
+          if (typeof item === 'string') {
+            return item;
+          }
+          // Handle RoomAmenity object
+          return item?.systemAmenityId || item?.id;
+        })
+        .filter(id => id != null && id !== '')
     : [];
 
   const handleAmenityToggle = (amenityId: string) => {

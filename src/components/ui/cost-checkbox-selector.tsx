@@ -42,19 +42,42 @@ export function CostCheckboxSelector({
 
   // Initialize cost values from selected costs
   useEffect(() => {
+    if (!selectedCosts || selectedCosts.length === 0) {
+      return;
+    }
+
     const initialValues: Record<string, number> = {};
-          selectedCosts.forEach(cost => {
-        // Lấy giá trị từ cost, có thể là từ API response với fixedAmount, unitPrice, baseRate
-        const extendedCost = cost as ExtendedRoomCost;
-        const value = extendedCost.fixedAmount || extendedCost.unitPrice || cost.value || 0;
-        initialValues[cost.systemCostTypeId] = value;
-      });
+    selectedCosts.forEach(cost => {
+      if (!cost || !cost.systemCostTypeId) return;
+
+      // Lấy giá trị từ cost, có thể là từ API response với fixedAmount, unitPrice, baseRate
+      const extendedCost = cost as ExtendedRoomCost;
+      let value = 0;
+
+      // Try different fields that might contain the value
+      if (extendedCost.fixedAmount) {
+        value = typeof extendedCost.fixedAmount === 'string'
+          ? parseFloat(extendedCost.fixedAmount)
+          : extendedCost.fixedAmount;
+      } else if (extendedCost.unitPrice) {
+        value = typeof extendedCost.unitPrice === 'string'
+          ? parseFloat(extendedCost.unitPrice)
+          : extendedCost.unitPrice;
+      } else if (cost.value) {
+        value = typeof cost.value === 'string'
+          ? parseFloat(cost.value)
+          : cost.value;
+      }
+
+      initialValues[cost.systemCostTypeId] = value || 0;
+    });
+
     setCostValues(prev => {
       // Only update if different to prevent infinite loops
-      const hasChanged = Object.keys(initialValues).some(key => 
+      const hasChanged = Object.keys(initialValues).some(key =>
         prev[key] !== initialValues[key]
       ) || Object.keys(prev).length !== Object.keys(initialValues).length;
-      
+
       return hasChanged ? initialValues : prev;
     });
   }, [selectedCosts]);

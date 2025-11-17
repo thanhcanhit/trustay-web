@@ -87,30 +87,50 @@ const ROOM_TYPES = getRoomTypeOptions()
 const convertAmenitiesToObjects = (amenities: string[] | RoomAmenity[]): RoomAmenity[] => {
   if (!Array.isArray(amenities)) return []
 
-  return amenities.filter(amenity => amenity != null).map(amenity => {
-    if (typeof amenity === 'string') {
-      const amenityData = useReferenceStore.getState().amenities.find(a => a.id === amenity)
-      return {
-        id: '',
-        roomId: '',
-        systemAmenityId: amenity,
-        customValue: amenityData?.name || '',
-        notes: '',
-        createdAt: '',
-        systemAmenity: {
-          name: amenityData?.name || '',
-          nameEn: amenityData?.name || '',
-          category: amenityData?.category || ''
+  return amenities
+    .filter(amenity => amenity != null)
+    .map(amenity => {
+      if (typeof amenity === 'string') {
+        const amenityData = useReferenceStore.getState().amenities.find(a => a.id === amenity)
+        return {
+          id: '',
+          roomId: '',
+          systemAmenityId: amenity,
+          customValue: amenityData?.name || '',
+          notes: '',
+          createdAt: '',
+          systemAmenity: {
+            name: amenityData?.name || '',
+            nameEn: amenityData?.name || '',
+            category: amenityData?.category || ''
+          }
         }
       }
-    }
-    // Handle API response data - make sure systemAmenityId exists
-    if (!amenity.systemAmenityId) {
-      console.warn('Amenity missing systemAmenityId:', amenity)
-      return null as unknown as RoomAmenity
-    }
-    return amenity
-  }).filter(amenity => amenity != null && amenity.systemAmenityId)
+      // Handle API response data - API might return 'id' instead of 'systemAmenityId'
+      const apiAmenity = amenity as unknown as Record<string, unknown>;
+      const systemAmenityId = amenity.systemAmenityId || apiAmenity.id as string;
+
+      if (!systemAmenityId) {
+        console.warn('Amenity missing systemAmenityId and id:', amenity)
+        return null as unknown as RoomAmenity
+      }
+
+      // Convert to proper RoomAmenity format
+      return {
+        id: amenity.id || '',
+        roomId: amenity.roomId || '',
+        systemAmenityId: systemAmenityId,
+        customValue: amenity.customValue || apiAmenity.name as string || '',
+        notes: amenity.notes || '',
+        createdAt: amenity.createdAt || '',
+        systemAmenity: amenity.systemAmenity || {
+          name: apiAmenity.name as string || '',
+          nameEn: apiAmenity.name as string || '',
+          category: apiAmenity.category as string || ''
+        }
+      }
+    })
+    .filter(amenity => amenity != null && amenity.systemAmenityId)
 }
 
 const convertCostsToObjects = (costs: string[] | RoomCost[]): UpdateRoomCost[] => {
@@ -142,55 +162,80 @@ const convertCostsToObjects = (costs: string[] | RoomCost[]): UpdateRoomCost[] =
     return 'fixed';
   };
   
-  return costs.map(cost => {
-    if (typeof cost === 'string') {
-      const costTypeData = useReferenceStore.getState().costTypes.find(c => c.id === cost)
-      return {
-        systemCostTypeId: cost,
-        value: 0,
-        costType: determineCostType(cost),
-        unit: 'VND',
-        isMandatory: true,
-        isIncludedInRent: false,
-        notes: costTypeData?.name || ''
+  return costs
+    .filter(cost => cost != null)
+    .map(cost => {
+      if (typeof cost === 'string') {
+        const costTypeData = useReferenceStore.getState().costTypes.find(c => c.id === cost)
+        return {
+          systemCostTypeId: cost,
+          value: 0,
+          costType: determineCostType(cost),
+          unit: 'VND',
+          isMandatory: true,
+          isIncludedInRent: false,
+          notes: costTypeData?.name || ''
+        }
       }
-    }
-    
-    // Handle API response data with extended fields
-    const apiCost = cost as ApiCost;
-    const value = parseFloat(apiCost.fixedAmount || '0') || apiCost.unitPrice || 0;
-    
-    // Return only the fields allowed by the API specification
-    return {
-      systemCostTypeId: cost.systemCostTypeId,
-      value: value,
-      costType: cost.costType || 'fixed' as const,
-      unit: cost.unit || 'VND',
-      isMandatory: Boolean(cost.isOptional === false),
-      isIncludedInRent: Boolean(cost.includedInRent),
-      notes: cost.notes || ''
-    }
-  })
+
+      // Handle API response data with extended fields
+      const apiCost = cost as unknown as Record<string, unknown>;
+      const extendedCost = cost as ApiCost;
+
+      // API might return 'id' instead of 'systemCostTypeId'
+      const systemCostTypeId = cost.systemCostTypeId || apiCost.id as string;
+
+      let value = 0;
+
+      // Try to extract value from different possible fields
+      if (extendedCost.fixedAmount != null && extendedCost.fixedAmount !== '') {
+        const parsed = parseFloat(String(extendedCost.fixedAmount));
+        if (!isNaN(parsed)) value = parsed;
+      } else if (extendedCost.unitPrice != null) {
+        value = typeof extendedCost.unitPrice === 'number' ? extendedCost.unitPrice : parseFloat(String(extendedCost.unitPrice)) || 0;
+      } else if (apiCost.value != null) {
+        // Fallback to 'value' field if it exists
+        value = typeof apiCost.value === 'number' ? apiCost.value : parseFloat(String(apiCost.value)) || 0;
+      }
+
+      // Return only the fields allowed by the API specification
+      return {
+        systemCostTypeId: systemCostTypeId,
+        value: value,
+        costType: cost.costType || determineCostType(systemCostTypeId) || 'fixed' as const,
+        unit: cost.unit || 'VND',
+        isMandatory: Boolean(cost.isOptional === false),
+        isIncludedInRent: Boolean(cost.includedInRent),
+        notes: cost.notes || apiCost.notes as string || ''
+      }
+    })
 }
 
 const convertRulesToObjects = (rules: string[] | RoomRule[]): UpdateRoomRule[] => {
   if (!Array.isArray(rules)) return []
-  
-  return rules.map(rule => {
-    if (typeof rule === 'string') {
-      const ruleData = useReferenceStore.getState().rules.find(r => r.id === rule)
-      return {
-        systemRuleId: rule,
-        customValue: ruleData?.name || '',
-        notes: ''
+
+  return rules
+    .filter(rule => rule != null)
+    .map(rule => {
+      if (typeof rule === 'string') {
+        const ruleData = useReferenceStore.getState().rules.find(r => r.id === rule)
+        return {
+          systemRuleId: rule,
+          customValue: ruleData?.name || '',
+          notes: ''
+        }
       }
-    }
-    return {
-      systemRuleId: rule.systemRuleId,
-      customValue: rule.customValue || '',
-      notes: rule.notes || ''
-    }
-  })
+      // Handle API response data - API might return 'id' instead of 'systemRuleId'
+      const apiRule = rule as unknown as Record<string, unknown>;
+      const systemRuleId = rule.systemRuleId || apiRule.id as string;
+
+      return {
+        systemRuleId: systemRuleId,
+        customValue: rule.customValue || apiRule.name as string || '',
+        notes: rule.notes || ''
+      }
+    })
+    .filter(rule => rule.systemRuleId != null && rule.systemRuleId !== '')
 }
 
 export default function EditRoomPage() {
@@ -222,7 +267,25 @@ export default function EditRoomPage() {
       }
 
       setRoom(roomData)
-      
+
+      // Log raw data for debugging
+      console.log('Room data from API:', {
+        amenities: roomData.amenities,
+        costs: roomData.costs,
+        rules: roomData.rules
+      });
+
+      // Convert data to proper format
+      const convertedAmenities = convertAmenitiesToObjects(roomData.amenities || []);
+      const convertedCosts = convertCostsToObjects(roomData.costs || []);
+      const convertedRules = convertRulesToObjects(roomData.rules || []);
+
+      console.log('Converted data:', {
+        amenities: convertedAmenities,
+        costs: convertedCosts,
+        rules: convertedRules
+      });
+
       // Initialize form with room data - only allowed fields for update
       setFormData({
         name: roomData.name,
@@ -235,9 +298,9 @@ export default function EditRoomPage() {
           depositAmount: roomData.pricing?.depositAmount ? parseFloat(roomData.pricing.depositAmount) : undefined,
           isNegotiable: roomData.pricing?.priceNegotiable
         },
-        amenities: convertAmenitiesToObjects(roomData.amenities || []),
-        costs: convertCostsToObjects(roomData.costs || []),
-        rules: convertRulesToObjects(roomData.rules || []),
+        amenities: convertedAmenities,
+        costs: convertedCosts,
+        rules: convertedRules,
         isActive: roomData.isActive
       })
     } catch (error) {
