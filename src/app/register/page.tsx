@@ -404,9 +404,15 @@ export default function RegisterPage() {
         duration: 3000,
       })
 
-      // Redirect to profile page
+      // Redirect to appropriate dashboard based on role
       setTimeout(() => {
-        router.push('/profile')
+        if (role === 'tenant') {
+          router.push('/dashboard/tenant')
+        } else if (role === 'landlord') {
+          router.push('/dashboard/landlord')
+        } else {
+          router.push('/profile')
+        }
       }, 1500)
     } catch (error: unknown) {
       const { message } = errorHandler.handleServerError(error, 'registration')
