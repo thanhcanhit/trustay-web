@@ -86,8 +86,8 @@ const ROOM_TYPES = getRoomTypeOptions()
 // Helper function to convert string IDs to full objects
 const convertAmenitiesToObjects = (amenities: string[] | RoomAmenity[]): RoomAmenity[] => {
   if (!Array.isArray(amenities)) return []
-  
-  return amenities.map(amenity => {
+
+  return amenities.filter(amenity => amenity != null).map(amenity => {
     if (typeof amenity === 'string') {
       const amenityData = useReferenceStore.getState().amenities.find(a => a.id === amenity)
       return {
@@ -104,8 +104,13 @@ const convertAmenitiesToObjects = (amenities: string[] | RoomAmenity[]): RoomAme
         }
       }
     }
+    // Handle API response data - make sure systemAmenityId exists
+    if (!amenity.systemAmenityId) {
+      console.warn('Amenity missing systemAmenityId:', amenity)
+      return null as unknown as RoomAmenity
+    }
     return amenity
-  })
+  }).filter(amenity => amenity != null && amenity.systemAmenityId)
 }
 
 const convertCostsToObjects = (costs: string[] | RoomCost[]): UpdateRoomCost[] => {

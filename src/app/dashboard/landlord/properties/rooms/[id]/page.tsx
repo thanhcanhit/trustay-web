@@ -13,7 +13,7 @@ import { type Room, type RoomInstance } from "@/types/types"
 import Link from "next/link"
 import { toast } from "sonner"
 import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
-import { ROOM_TYPE_LABELS } from "@/constants/basic"
+import { ROOM_TYPE_LABELS } from "@/types/room-seeking"
 
 const STATUS_COLORS = {
   available: 'bg-green-100 text-green-800',
@@ -291,29 +291,14 @@ export default function RoomDetailPage() {
               <Separator className="my-3" />
 
               <h4 className="text-sm font-semibold text-gray-900 mb-3">Thông tin sinh phòng</h4>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Số lượng phòng</label>
                   <p className="mt-0.5 text-gray-900">{room.totalRooms || 'N/A'} phòng</p>
                 </div>
-
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Tiền tố</label>
-                  <p className="mt-0.5 text-gray-900">{room.roomNumberPrefix || 'N/A'}</p>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Số bắt đầu</label>
-                  <p className="mt-0.5 text-gray-900">{room.roomNumberStart || 'N/A'}</p>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Ví dụ</label>
-                  <p className="mt-0.5 text-gray-900 text-sm">
-                    {room.roomNumberPrefix && room.roomNumberStart ?
-                      `${room.roomNumberPrefix}${room.roomNumberStart}, ${room.roomNumberPrefix}${room.roomNumberStart + 1}` :
-                      'N/A'}
-                  </p>
+                  <label className="text-sm font-medium text-gray-500">Địa chỉ</label>
+                  <p className="mt-0.5 text-gray-900">{room.location?.wardName}, {room.location?.districtName}, {room.location?.provinceName}</p>
                 </div>
               </div>
             </div>
@@ -331,28 +316,16 @@ export default function RoomDetailPage() {
                   <div>
                     <label className="text-xs font-medium text-gray-500">Giá thuê/tháng</label>
                     <p className="mt-0.5 text-base font-bold text-green-600">
-                      {room.pricing?.basePriceMonthly ?
-                        Number(room.pricing.basePriceMonthly).toLocaleString('vi-VN') :
-                        'N/A'} VNĐ
+                      {Number(room.pricing?.basePriceMonthly).toLocaleString('vi-VN')} VNĐ
                     </p>
                   </div>
 
                   <div>
                     <label className="text-xs font-medium text-gray-500">Tiền cọc</label>
                     <p className="mt-0.5 text-base font-bold text-blue-600">
-                      {room.pricing?.depositAmount ?
-                        Number(room.pricing.depositAmount).toLocaleString('vi-VN') :
-                        'N/A'} VNĐ
+                      {Number(room.pricing?.depositAmount).toLocaleString('vi-VN')} VNĐ
                     </p>
-                    <p className="text-xs text-gray-500">({room.pricing?.depositMonths || 'N/A'} tháng)</p>
                   </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-medium text-gray-500">Thời gian thuê</label>
-                  <p className="mt-0.5 text-sm text-gray-900">
-                    {room.pricing?.minimumStayMonths || 'N/A'} - {room.pricing?.maximumStayMonths || '∞'} tháng
-                  </p>
                 </div>
 
                 <div className="flex flex-wrap gap-1.5 pt-1">
@@ -370,9 +343,9 @@ export default function RoomDetailPage() {
                 <>
                   <Separator className="my-3" />
                   <div className="flex flex-wrap gap-1.5">
-                    {room.amenities.map((amenity, index) => (
+                    {room.amenities.map((amenity: { name?: string; systemAmenity?: { name: string }; customValue?: string }, index) => (
                       <Badge key={index} variant="outline" className="text-xs">
-                        {amenity.systemAmenity?.name || amenity.customValue || `Tiện nghi ${index + 1}`}
+                        {amenity.name || amenity.systemAmenity?.name || amenity.customValue || `Tiện nghi ${index + 1}`}
                       </Badge>
                     ))}
                   </div>
@@ -384,13 +357,13 @@ export default function RoomDetailPage() {
                 <>
                   <Separator className="my-3" />
                   <div className="flex flex-wrap gap-1.5">
-                    {room.rules.map((rule, index) => (
+                    {room.rules.map((rule: { name?: string; systemRule?: { name: string }; customValue?: string; isEnforced: boolean }, index) => (
                       <Badge
                         key={index}
                         variant={rule.isEnforced ? "default" : "secondary"}
                         className="text-xs"
                       >
-                        {rule.systemRule?.name || rule.customValue || `Quy định ${index + 1}`}
+                        {rule.name || rule.systemRule?.name || rule.customValue || `Quy định ${index + 1}`}
                         {rule.isEnforced && ' ⚠️'}
                       </Badge>
                     ))}
@@ -403,10 +376,10 @@ export default function RoomDetailPage() {
                 <>
                   <Separator className="my-3" />
                   <div className="space-y-2">
-                    {room.costs.map((cost, index) => (
+                    {room.costs.map((cost: { name?: string; systemCostType?: { name: string }; notes?: string; value?: string | number }, index) => (
                       <div key={index} className="flex justify-between items-start text-xs">
                         <span className="text-gray-900 font-medium">
-                          {cost.systemCostType?.name || cost.notes || `Chi phí ${index + 1}`}
+                          {cost.name || cost.systemCostType?.name || cost.notes || `Chi phí ${index + 1}`}
                         </span>
                         <span className="font-bold text-green-600">
                           {cost.value ? Number(cost.value).toLocaleString('vi-VN') : 'N/A'} VNĐ
@@ -467,7 +440,7 @@ export default function RoomDetailPage() {
                         {instance.roomNumber}
                       </TableCell>
                       <TableCell>
-                        {instance.floorNumber ? `Tầng ${instance.floorNumber}` : 'N/A'}
+                        {room.floorNumber ? `Tầng ${room.floorNumber}` : (instance.floorNumber ? `Tầng ${instance.floorNumber}` : 'N/A')}
                       </TableCell>
                       <TableCell>
                         <Badge className={STATUS_COLORS[instance.status as keyof typeof STATUS_COLORS]}>

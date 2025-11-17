@@ -53,7 +53,7 @@ interface FormData {
 	minBudget: string
 	maxBudget: string
 	currency: 'VND' | 'USD'
-	preferredRoomType: 'boarding_house' | 'apartment' | 'house' | 'studio'
+	preferredRoomType: 'boarding_house' | 'apartment' | 'whole_house' | 'dormitory' | 'sleepbox';
 	occupancy: string
 	moveInDate: string
 	isPublic: boolean

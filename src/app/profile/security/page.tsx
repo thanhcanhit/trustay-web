@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { Key, Eye, EyeOff, Mail } from "lucide-react"
 import { ProfileLayout } from "@/components/profile/profile-layout"
 import { useUserStore } from "@/stores/userStore"
+import { translateErrorMessage } from "@/utils/errorTranslation"
 
 function ChangePasswordCard() {
   const { changePassword } = useUserStore()
@@ -48,7 +49,9 @@ function ChangePasswordCard() {
       setIsChangingPassword(false)
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
     } catch (error) {
-      toast.error("Lỗi: " + (error instanceof Error ? error.message : "Unknown error"))
+      const errorMessage = error instanceof Error ? error.message : "Unknown error"
+      const translatedError = translateErrorMessage(errorMessage, "Đổi mật khẩu thất bại")
+      toast.error(translatedError)
     } finally {
       setIsLoading(false)
     }
@@ -208,9 +211,11 @@ function ChangeEmailCard() {
       
       setOtpSent(true)
       toast.success("Mã OTP đã được gửi đến email mới!")
-      
+
     } catch (error) {
-      toast.error("Lỗi: " + (error instanceof Error ? error.message : "Unknown error"))
+      const errorMessage = error instanceof Error ? error.message : "Unknown error"
+      const translatedError = translateErrorMessage(errorMessage, "Gửi mã OTP thất bại")
+      toast.error(translatedError)
     } finally {
       setIsLoading(false)
     }
@@ -235,7 +240,9 @@ function ChangeEmailCard() {
       setOtpSent(false)
       setEmailData({ newEmail: '', password: '', verificationCode: '' })
     } catch (error) {
-      toast.error("Lỗi: " + (error instanceof Error ? error.message : "Unknown error"))
+      const errorMessage = error instanceof Error ? error.message : "Unknown error"
+      const translatedError = translateErrorMessage(errorMessage, "Xác thực mã OTP thất bại")
+      toast.error(translatedError)
     } finally {
       setIsLoading(false)
     }

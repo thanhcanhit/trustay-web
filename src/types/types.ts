@@ -460,6 +460,14 @@ export interface Room {
 		reserved: number;
 		unavailable: number;
 	};
+	location?: {
+		wardId: number;
+		wardName: string;
+		districtId: number;
+		districtName: string;
+		provinceId: number;
+		provinceName: string;
+	};
 }
 
 export interface CreateRoomRequest {

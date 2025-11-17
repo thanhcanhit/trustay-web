@@ -30,7 +30,7 @@ const ERROR_PATTERNS: Record<string, ErrorPattern> = {
 			'login failed',
 			'authentication failed',
 		],
-		message: 'Email hoặc mật khẩu không chính xác',
+		message: 'Email/Số điện thoại hoặc mật khẩu không chính xác',
 	},
 	userNotFound: {
 		patterns: ['user not found', 'email not found', 'account not found', 'no user found'],
@@ -115,6 +115,17 @@ const ERROR_PATTERNS: Record<string, ErrorPattern> = {
 		patterns: ['phone'],
 		subPatterns: ['required', 'missing'],
 		message: 'Số điện thoại là bắt buộc',
+	},
+	phoneAlreadyRegistered: {
+		patterns: [
+			'Phone number is already registered',
+			'phone number is already registered',
+			'Phone number is already registered.',
+			'phone number is already registered.',
+			'phone already registered',
+			'phone number already registered',
+		],
+		message: 'Số điện thoại đã được sử dụng',
 	},
 	firstNameRequired: {
 		patterns: ['first name'],
@@ -490,6 +501,16 @@ export const translateErrorMessage = (
 	}
 
 	// Special case for "Phone number is already registered" exact match
+	if (
+		errorMessage === 'Phone number is already registered' ||
+		errorMessage === 'phone number is already registered' ||
+		errorMessage === 'Phone number is already registered.' ||
+		errorMessage === 'phone number is already registered.'
+	) {
+		return 'Số điện thoại đã được sử dụng';
+	}
+
+	// Special case for phone number already exists variations
 	if (
 		(errorMessage.toLowerCase().includes('phone') ||
 			errorMessage.toLowerCase().includes('số điện thoại')) &&
