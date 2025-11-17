@@ -37,15 +37,20 @@ export function RuleGrid({
   const filteredRules = category ? getRulesByCategory(category) : rules;
   
   // Handle both string[] and RoomRule[] inputs
-  const selectedRuleIds = Array.isArray(selectedRules) 
-    ? selectedRules.map(item => 
-        typeof item === 'string' ? item : item.systemRuleId
-      )
+  const selectedRuleIds = Array.isArray(selectedRules)
+    ? selectedRules
+        .filter(item => item != null)
+        .map(item =>
+          typeof item === 'string' ? item : item?.systemRuleId
+        )
+        .filter(id => id != null && id !== '')
     : [];
 
-  const selectedRuleObjects = selectedRules.filter(item => 
-    typeof item !== 'string'
-  ) as RoomRule[];
+  const selectedRuleObjects = Array.isArray(selectedRules)
+    ? selectedRules.filter(item =>
+        item != null && typeof item !== 'string'
+      ) as RoomRule[]
+    : [];
 
   const handleRuleToggle = (ruleId: string) => {
     const isCurrentlySelected = selectedRuleIds.includes(ruleId);

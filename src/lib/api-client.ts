@@ -171,6 +171,15 @@ const extractErrorMessage = (error: AxiosError): string => {
 
 	if (typeof data === 'object') {
 		const errorData = data as Record<string, unknown>;
+
+		// Handle nested message object (e.g., { message: { message: "...", error: "..." } })
+		if (errorData.message && typeof errorData.message === 'object') {
+			const nestedMessage = errorData.message as Record<string, unknown>;
+			if (nestedMessage.message && typeof nestedMessage.message === 'string') {
+				return nestedMessage.message;
+			}
+		}
+
 		const message = errorData.message || errorData.error || errorData.msg || 'Server error';
 		return typeof message === 'string' ? message : JSON.stringify(data);
 	}

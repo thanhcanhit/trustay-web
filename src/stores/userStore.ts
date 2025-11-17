@@ -334,28 +334,21 @@ export const useUserStore = create<UserState>()(
 			},
 
 			changePassword: async (passwordData: ChangePasswordRequest) => {
-				set({ isLoading: true, error: null });
-
-				try {
-					const token = TokenManager.getAccessToken();
-					if (!token) {
-						throw new Error('No access token found');
-					}
-
-					await apiChangePassword(passwordData, token);
-
-					set({
-						isLoading: false,
-						error: null,
-					});
-				} catch (error: unknown) {
-					const errorMessage = error instanceof Error ? error.message : 'Failed to change password';
-					set({
-						isLoading: false,
-						error: errorMessage,
-					});
-					throw error;
+				// Don't update store loading state to prevent unwanted re-renders
+				const token = TokenManager.getAccessToken();
+				if (!token) {
+					const errorMessage = 'No access token found';
+					throw new Error(errorMessage);
 				}
+
+				const result = await apiChangePassword(passwordData, token);
+
+				if (!result.success) {
+					const errorMessage = result.error || 'Failed to change password';
+					throw new Error(errorMessage);
+				}
+
+				// Successfully changed password - no state update needed
 			},
 
 			requestChangeEmail: async (emailData: RequestChangeEmailRequest) => {
