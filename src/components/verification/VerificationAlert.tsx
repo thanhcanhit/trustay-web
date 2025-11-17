@@ -47,7 +47,8 @@ export function VerificationAlert({ type, value, isVerified = false, onVerificat
         toast.success(`Mã xác thực đã được gửi đến ${type === 'email' ? 'email' : 'số điện thoại'} của bạn`)
       } else {
         const data = await response.json()
-        toast.error(data.message || 'Có lỗi xảy ra khi gửi mã xác thực')
+        const errorMessage = typeof data.message === 'string' ? data.message : 'Có lỗi xảy ra khi gửi mã xác thực'
+        toast.error(errorMessage)
       }
     } catch (error) {
       console.error('Error sending verification code:', error)
@@ -90,7 +91,8 @@ export function VerificationAlert({ type, value, isVerified = false, onVerificat
         onVerificationComplete?.()
       } else {
         const data = await response.json()
-        toast.error(data.message || 'Mã xác thực không chính xác')
+        const errorMessage = typeof data.message === 'string' ? data.message : 'Mã xác thực không chính xác'
+        toast.error(errorMessage)
       }
     } catch (error) {
       console.error('Error verifying code:', error)
@@ -102,22 +104,12 @@ export function VerificationAlert({ type, value, isVerified = false, onVerificat
 
   return (
     <>
-      <Alert className="border-yellow-200 bg-yellow-50 mt-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <AlertCircle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-800 text-sm">
-              {type === 'email' ? 'Email' : 'Số điện thoại'} chưa được xác thực
-            </AlertDescription>
-          </div>
-          <button
-            onClick={() => setShowDialog(true)}
-            className="text-sm font-medium text-yellow-700 hover:text-yellow-800 hover:underline transition-colors"
-          >
-            Xác thực ngay
-          </button>
-        </div>
-      </Alert>
+      <button
+        onClick={() => setShowDialog(true)}
+        className="text-sm font-medium text-green-600 hover:text-green-500 hover:underline transition-colors mt-1"
+      >
+        Xác thực ngay
+      </button>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>
