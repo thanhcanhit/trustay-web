@@ -427,7 +427,9 @@ export default function RoomInstancesPage() {
                       />
                       <div>
                         <CardTitle className="text-lg">{instance.roomNumber}</CardTitle>
-                        <p className="text-sm text-gray-600">Tầng {instance.floorNumber}</p>
+                        <p className="text-sm text-gray-600">
+                          {room.floorNumber ? `Tầng ${room.floorNumber}` : (instance.floorNumber ? `Tầng ${instance.floorNumber}` : 'N/A')}
+                        </p>
                       </div>
                     </div>
                     

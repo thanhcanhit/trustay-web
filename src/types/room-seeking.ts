@@ -83,7 +83,7 @@ export interface CreateRoomSeekingPostRequest {
 	minBudget: number;
 	maxBudget: number;
 	currency: 'VND' | 'USD';
-	preferredRoomType: 'boarding_house' | 'apartment' | 'house' | 'studio';
+	preferredRoomType: 'boarding_house' | 'apartment' | 'whole_house' | 'dormitory' | 'sleepbox';
 	occupancy: number;
 	moveInDate: string;
 	isPublic: boolean;
@@ -100,7 +100,7 @@ export interface UpdateRoomSeekingPostRequest {
 	minBudget?: number;
 	maxBudget?: number;
 	currency?: 'VND' | 'USD';
-	preferredRoomType?: 'boarding_house' | 'apartment' | 'house' | 'studio';
+	preferredRoomType?: 'boarding_house' | 'apartment' | 'whole_house' | 'dormitory' | 'sleepbox';
 	occupancy?: number;
 	moveInDate?: string;
 	isPublic?: boolean;
@@ -160,9 +160,10 @@ export interface RoomSeekingFormData {
 // Constants
 export const ROOM_TYPES = {
 	BOARDING_HOUSE: 'boarding_house',
+	DORMITORY: 'dormitory',
+	SLEEPBOX: 'sleepbox',
 	APARTMENT: 'apartment',
-	HOUSE: 'house',
-	STUDIO: 'studio',
+	WHOLE_HOUSE: 'whole_house',
 } as const;
 
 export const CURRENCIES = {
@@ -180,9 +181,10 @@ export const POST_STATUSES = {
 // Room type labels for display
 export const ROOM_TYPE_LABELS = {
 	[ROOM_TYPES.BOARDING_HOUSE]: 'Nhà trọ',
+	[ROOM_TYPES.DORMITORY]: 'Ký túc xá',
+	[ROOM_TYPES.SLEEPBOX]: 'Sleepbox',
 	[ROOM_TYPES.APARTMENT]: 'Căn hộ',
-	[ROOM_TYPES.HOUSE]: 'Nhà nguyên căn',
-	[ROOM_TYPES.STUDIO]: 'Studio',
+	[ROOM_TYPES.WHOLE_HOUSE]: 'Nhà nguyên căn',
 } as const;
 
 // Currency labels for display

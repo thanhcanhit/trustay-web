@@ -3,7 +3,7 @@ import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } f
 // API Configuration
 export const API_CONFIG = {
 	BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
-	TIMEOUT: 30000,
+	TIMEOUT: 60000,
 	HEADERS: {
 		'Content-Type': 'application/json',
 		'User-Agent': 'Trustay-Frontend/1.0',

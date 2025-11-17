@@ -110,14 +110,12 @@ export function VerificationAlert({ type, value, isVerified = false, onVerificat
               {type === 'email' ? 'Email' : 'Số điện thoại'} chưa được xác thực
             </AlertDescription>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+          <button
             onClick={() => setShowDialog(true)}
+            className="text-sm font-medium text-yellow-700 hover:text-yellow-800 hover:underline transition-colors"
           >
             Xác thực ngay
-          </Button>
+          </button>
         </div>
       </Alert>
 

@@ -29,7 +29,8 @@ function RoomsManagementPageContent() {
     myRoomsError: roomsError,
     myRoomsPagination,
     fetchMyRooms,
-    deleteMyRoom
+    deleteMyRoom,
+    myRoomsError
   } = useRoomStore()
 
   // Building store
@@ -90,11 +91,13 @@ function RoomsManagementPageContent() {
       if (success) {
         toast.success('Xóa loại phòng thành công')
       } else {
-        toast.error('Không thể xóa loại phòng')
+        const errorMessage = myRoomsError || 'Không thể xóa loại phòng'
+        toast.error(errorMessage)
       }
     } catch (error) {
       console.error('Error deleting room:', error)
-      toast.error('Không thể xóa loại phòng. Vui lòng kiểm tra lại.')
+      const errorMessage = error instanceof Error ? error.message : 'Không thể xóa loại phòng. Vui lòng kiểm tra lại.'
+      toast.error(errorMessage)
     }
   }
 
