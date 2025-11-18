@@ -44,7 +44,7 @@ export function RevenueTrendChart({ data, isLoading }: RevenueTrendChartProps) {
   const sortedDates = Array.from(allDates).sort()
 
   const chartData = sortedDates.map(date => {
-    const dataPoint: any = { date }
+    const dataPoint: Record<string, string | number> = { date }
     data.dataset.forEach(ds => {
       const point = ds.points.find(p => p.x === date)
       dataPoint[ds.label] = point ? point.y / 1000000 : 0 // Convert to millions

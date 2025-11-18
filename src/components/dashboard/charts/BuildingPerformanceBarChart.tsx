@@ -42,7 +42,7 @@ export function BuildingPerformanceBarChart({ data, isLoading }: BuildingPerform
   })
 
   const chartData = Array.from(allBuildings).map(buildingName => {
-    const dataPoint: any = {
+    const dataPoint: Record<string, string | number> = {
       name: buildingName.length > 20 ? buildingName.substring(0, 20) + '...' : buildingName,
       fullName: buildingName
     }

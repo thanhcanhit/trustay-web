@@ -17,8 +17,7 @@ import {
   ClipboardList,
   Clock,
   MessageSquare,
-  Receipt,
-  CheckCircle
+  Receipt
 } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -48,7 +47,6 @@ function DashboardContent() {
     loadingDashboardFinance,
     errorDashboardOverview,
     errorDashboardOperations,
-    errorDashboardFinance,
     loadDashboardOverview,
     loadDashboardOperations,
     loadDashboardFinance,

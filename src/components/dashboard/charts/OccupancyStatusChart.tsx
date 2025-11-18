@@ -102,7 +102,7 @@ export function OccupancyStatusChart({ data, isLoading }: OccupancyStatusChartPr
           <Legend
             verticalAlign="bottom"
             height={36}
-            formatter={(value, entry: any) => {
+            formatter={(value) => {
               const item = chartData.find(d => d.name === value)
               return `${value} (${item?.value || 0})`
             }}
