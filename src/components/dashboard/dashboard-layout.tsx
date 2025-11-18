@@ -62,7 +62,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50">
       {/* Mobile menu button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -86,16 +86,20 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
         <Sidebar userType={userType} onNavigate={() => setIsMobileMenuOpen(false)} />
       </div>
 
-      {/* Desktop sidebar */}
-      <div className="hidden lg:block sticky top-12 h-[calc(100vh-3rem)] w-64 bg-white border-r border-gray-200 shadow-sm flex-shrink-0">
-        <Sidebar userType={userType} />
-      </div>
+      <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+        {/* Desktop sidebar */}
+        <aside className="hidden lg:block w-64 flex-shrink-0">
+          <div className="h-full bg-white border-r border-gray-200 shadow-sm overflow-y-auto">
+            <Sidebar userType={userType} />
+          </div>
+        </aside>
 
-      <main className="flex-1 overflow-auto">
-        <div className="p-3 sm:p-4 md:p-6">
-          {children}
-        </div>
-      </main>
+        <main className="flex-1 min-w-0 overflow-y-auto">
+          <div className="p-3 sm:p-4 md:p-6">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   )
 }

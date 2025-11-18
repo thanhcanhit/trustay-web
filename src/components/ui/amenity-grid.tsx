@@ -44,7 +44,7 @@ export function AmenityGrid({
             return item;
           }
           // Handle RoomAmenity object
-          return item?.systemAmenityId || item?.id;
+          return item?.systemAmenityId;
         })
         .filter(id => id != null && id !== '')
     : [];
