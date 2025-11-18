@@ -1,7 +1,13 @@
-'use server';
+//'use server';
 
 import { createServerApiCall } from '@/lib/api-client';
-import type { RoomWithOccupantsListResponse, TenantListResponse } from '@/types/types';
+import type {
+	DashboardFinanceResponseDto,
+	DashboardOperationsResponseDto,
+	DashboardOverviewResponseDto,
+	RoomWithOccupantsListResponse,
+	TenantListResponse,
+} from '@/types/types';
 import { extractErrorMessage } from '@/utils/api-error-handler';
 
 interface ApiErrorResult {
@@ -81,6 +87,82 @@ export const listMyRoomsWithOccupants = async (
 		return {
 			success: false,
 			error: extractErrorMessage(error, 'Không thể tải danh sách phòng và người thuê'),
+		};
+	}
+};
+
+// Dashboard Overview (Landlord only)
+export const getDashboardOverview = async (
+	params?: {
+		buildingId?: string;
+	},
+	token?: string,
+): Promise<ApiResult<DashboardOverviewResponseDto>> => {
+	try {
+		const q = new URLSearchParams();
+		if (params?.buildingId) q.append('buildingId', params.buildingId);
+
+		const endpoint = `/api/dashboard/overview${q.toString() ? `?${q.toString()}` : ''}`;
+		const response = await apiCall<DashboardOverviewResponseDto>(
+			endpoint,
+			{ method: 'GET' },
+			token,
+		);
+		return { success: true, data: response };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể tải dữ liệu tổng quan'),
+		};
+	}
+};
+
+// Dashboard Operations (Landlord only)
+export const getDashboardOperations = async (
+	params?: {
+		buildingId?: string;
+	},
+	token?: string,
+): Promise<ApiResult<DashboardOperationsResponseDto>> => {
+	try {
+		const q = new URLSearchParams();
+		if (params?.buildingId) q.append('buildingId', params.buildingId);
+
+		const endpoint = `/api/dashboard/operations${q.toString() ? `?${q.toString()}` : ''}`;
+		const response = await apiCall<DashboardOperationsResponseDto>(
+			endpoint,
+			{ method: 'GET' },
+			token,
+		);
+		return { success: true, data: response };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể tải dữ liệu hoạt động'),
+		};
+	}
+};
+
+// Dashboard Finance (Landlord only)
+export const getDashboardFinance = async (
+	params?: {
+		buildingId?: string;
+		referenceMonth?: string; // Format: YYYY-MM
+	},
+	token?: string,
+): Promise<ApiResult<DashboardFinanceResponseDto>> => {
+	try {
+		const q = new URLSearchParams();
+		if (params?.buildingId) q.append('buildingId', params.buildingId);
+		if (params?.referenceMonth) q.append('referenceMonth', params.referenceMonth);
+
+		const endpoint = `/api/dashboard/finance${q.toString() ? `?${q.toString()}` : ''}`;
+		const response = await apiCall<DashboardFinanceResponseDto>(endpoint, { method: 'GET' }, token);
+		return { success: true, data: response };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể tải dữ liệu tài chính'),
 		};
 	}
 };

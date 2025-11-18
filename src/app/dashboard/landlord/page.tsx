@@ -22,43 +22,48 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { useBuildingStore } from "@/stores/buildingStore"
+import { useLandlordStore } from "@/stores/landlordStore"
 import { useUserStore } from "@/stores/userStore"
 import { useRatingStore } from "@/stores/ratingStore"
 import { useContractStore } from "@/stores/contractStore"
-import { useBookingRequestStore } from "@/stores/bookingRequestStore"
-import { useInvitationStore } from "@/stores/invitationStore"
-import { useBillStore } from "@/stores/billStore"
 import { RatingStats } from "@/components/rating"
 import { format, differenceInDays } from "date-fns"
 import { vi } from "date-fns/locale"
 import {
-  RevenueChart,
-  OccupancyChart,
-  PropertyPerformanceChart,
-  RoomTypeDistributionChart,
-  RevenueByRoomChart
+  RevenueTrendChart,
+  BuildingPerformanceBarChart,
+  RoomTypePieChart,
+  OccupancyStatusChart,
+  OperationsPipelineChart
 } from "@/components/dashboard/charts"
-import { generateDashboardAnalytics } from "@/lib/mock-analytics"
 
 // Client Component for Dashboard Content
 function DashboardContent() {
-  const { dashboardData, isLoading, error, hasFetched, fetchDashboardData, forceRefresh } = useBuildingStore()
+  const {
+    dashboardOverview,
+    dashboardOperations,
+    dashboardFinance,
+    loadingDashboardOverview,
+    loadingDashboardOperations,
+    loadingDashboardFinance,
+    errorDashboardOverview,
+    errorDashboardOperations,
+    errorDashboardFinance,
+    loadDashboardOverview,
+    loadDashboardOperations,
+    loadDashboardFinance,
+  } = useLandlordStore()
   const { user } = useUserStore()
   const { getRatingStats, statistics } = useRatingStore()
   const { contracts, loading: loadingContracts, loadContracts } = useContractStore()
-  const { received, loadingReceived, loadReceived } = useBookingRequestStore()
-  const { sent, loadingSent, loadSent } = useInvitationStore()
-  const { bills, loading: loadingBills, loadLandlordBills } = useBillStore()
   const [loadingStats, setLoadingStats] = useState(true)
-  const analytics = generateDashboardAnalytics()
 
+  // Load dashboard data
   useEffect(() => {
-    // Only fetch if we haven't fetched yet and not currently loading
-    if (!hasFetched && !isLoading) {
-      fetchDashboardData()
-    }
-  }, [hasFetched, isLoading, fetchDashboardData])
+    loadDashboardOverview()
+    loadDashboardOperations()
+    loadDashboardFinance()
+  }, [loadDashboardOverview, loadDashboardOperations, loadDashboardFinance])
 
   // Fetch landlord rating stats
   useEffect(() => {
@@ -77,20 +82,8 @@ function DashboardContent() {
     loadContracts({ page: 1, limit: 3, status: 'active' })
   }, [loadContracts])
 
-  // Fetch pending booking requests
-  useEffect(() => {
-    loadReceived({ page: 1, limit: 5, status: 'pending' })
-  }, [loadReceived])
-
-  // Fetch pending invitations
-  useEffect(() => {
-    loadSent({ page: 1, limit: 5, status: 'pending' })
-  }, [loadSent])
-
-  // Fetch unpaid bills
-  useEffect(() => {
-    loadLandlordBills({ page: 1, limit: 5, status: 'pending' })
-  }, [loadLandlordBills])
+  const isLoading = loadingDashboardOverview || loadingDashboardOperations
+  const hasError = errorDashboardOverview || errorDashboardOperations
 
   if (isLoading) {
     return (
@@ -103,12 +96,16 @@ function DashboardContent() {
     )
   }
 
-  if (error) {
+  if (hasError) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <p className="text-red-600 mb-4">Lỗi: {error}</p>
-          <Button onClick={forceRefresh} variant="outline">
+          <p className="text-red-600 mb-4">Lỗi: {errorDashboardOverview || errorDashboardOperations}</p>
+          <Button onClick={() => {
+            loadDashboardOverview()
+            loadDashboardOperations()
+            loadDashboardFinance()
+          }} variant="outline">
             Thử lại
           </Button>
         </div>
@@ -116,20 +113,22 @@ function DashboardContent() {
     )
   }
 
-  if (!dashboardData) {
+  if (!dashboardOverview) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <p className="text-gray-600 mb-4">Không có dữ liệu dashboard</p>
-          <Button onClick={forceRefresh} variant="outline">
+          <Button onClick={() => {
+            loadDashboardOverview()
+            loadDashboardOperations()
+            loadDashboardFinance()
+          }} variant="outline">
             Thử lại
           </Button>
         </div>
       </div>
     )
   }
-
-  const { buildings, buildingRooms, stats } = dashboardData
 
   return (
     <div>
@@ -169,169 +168,221 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Compact 6-column Layout */}
       <div className="mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
           <StatCard
             title="Tổng toà nhà"
-            value={buildings.length}
+            value={dashboardOverview.buildings.total}
             icon={BuildingIcon}
+            compact
           />
           <StatCard
-            title="Tổng phòng (loại)"
-            value={Array.from(buildingRooms.values()).reduce((total, rooms) => total + rooms.length, 0)}
+            title="Phòng trống"
+            value={dashboardOverview.rooms.availableInstances}
             icon={MapPin}
+            compact
           />
           <StatCard
-            title="Tổng phòng (đơn vị)"
-            value={Array.from(buildingRooms.values()).reduce((total, rooms) => {
-              return total + rooms.reduce((sum, room) => {
-                return sum + (room.roomInstances?.length || 0)
-              }, 0)
-            }, 0)}
-            icon={MapPin}
+            title="Phòng đã thuê"
+            value={dashboardOverview.rooms.occupiedInstances}
+            icon={Users}
+            compact
           />
           <StatCard
             title="Tỷ lệ lấp đầy"
-            value={`${stats?.occupancyRate?.toFixed(0) || 0}%`}
+            value={`${(dashboardOverview.rooms.occupancyRate * 100).toFixed(0)}%`}
             icon={TrendingUp}
+            compact
+          />
+          <StatCard
+            title="Người thuê đang hoạt động"
+            value={dashboardOverview.tenants.activeTenants}
+            icon={Users}
+            compact
+          />
+          <StatCard
+            title="Đánh giá trung bình"
+            value={dashboardOverview.tenants.averageRating > 0 ? dashboardOverview.tenants.averageRating.toFixed(1) : 'N/A'}
+            icon={Star}
+            compact
           />
         </div>
       </div>
 
-      {/* Alert Widgets Row - Notifications & Alerts - MOVED TO TOP */}
+      {/* Alert Widgets Row - Notifications & Alerts */}
       <div className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Pending Booking Requests */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* Pending Bookings */}
         <Link href="/dashboard/landlord/requests">
-          <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <div className="flex items-center justify-between mb-3">
+          <div className="bg-white rounded-lg border border-gray-200 p-3 hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <ClipboardList className="h-5 w-5 text-blue-600" />
+                <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <ClipboardList className="h-4 w-4 text-blue-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900">Yêu cầu mới</h3>
+                <h3 className="text-sm font-semibold text-gray-900">Yêu cầu đặt phòng</h3>
               </div>
-              {!loadingReceived && received.length > 0 && (
-                <Badge className="bg-red-500 text-white">{received.length}</Badge>
+              {dashboardOperations && dashboardOperations.summary.pendingBookings > 0 && (
+                <Badge className="bg-blue-500 text-white text-xs">{dashboardOperations.summary.pendingBookings}</Badge>
               )}
             </div>
-            {loadingReceived ? (
-              <div className="text-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto text-gray-400" />
-              </div>
-            ) : received.length === 0 ? (
-              <p className="text-sm text-gray-500">Không có yêu cầu thuê mới</p>
-            ) : (
-              <div className="space-y-2">
-                {received.slice(0, 3).map((req) => (
-                  <div key={req.id} className="flex items-start justify-between text-sm">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">
-                        {req.tenant?.firstName} {req.tenant?.lastName}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {req.room?.name ? `Phòng ${req.room.name}` : '-'}
-                      </p>
-                    </div>
-                    <Clock className="h-4 w-4 text-gray-400 ml-2 flex-shrink-0" />
-                  </div>
-                ))}
-                {received.length > 3 && (
-                  <p className="text-xs text-blue-600 mt-2">+{received.length - 3} yêu cầu khác</p>
-                )}
-              </div>
-            )}
+            <p className="text-xl font-bold text-gray-900">
+              {dashboardOperations?.summary.pendingBookings || 0}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">Yêu cầu chờ xử lý</p>
           </div>
         </Link>
 
         {/* Pending Invitations */}
         <Link href="/dashboard/landlord/requests">
-          <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <div className="flex items-center justify-between mb-3">
+          <div className="bg-white rounded-lg border border-gray-200 p-3 hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <div className="h-10 w-10 bg-amber-100 rounded-full flex items-center justify-center">
-                  <MessageSquare className="h-5 w-5 text-amber-600" />
+                <div className="h-8 w-8 bg-amber-100 rounded-full flex items-center justify-center">
+                  <MessageSquare className="h-4 w-4 text-amber-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900">Lời mời chờ</h3>
+                <h3 className="text-sm font-semibold text-gray-900">Lời mời</h3>
               </div>
-              {!loadingSent && sent.filter(i => i.status === 'accepted' && !i.isConfirmedBySender).length > 0 && (
-                <Badge className="bg-amber-500 text-white">
-                  {sent.filter(i => i.status === 'accepted' && !i.isConfirmedBySender).length}
-                </Badge>
+              {dashboardOperations && dashboardOperations.summary.pendingInvitations > 0 && (
+                <Badge className="bg-amber-500 text-white text-xs">{dashboardOperations.summary.pendingInvitations}</Badge>
               )}
             </div>
-            {loadingSent ? (
-              <div className="text-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto text-gray-400" />
-              </div>
-            ) : sent.filter(i => i.status === 'accepted' && !i.isConfirmedBySender).length === 0 ? (
-              <p className="text-sm text-gray-500">Không có lời mời cần xác nhận</p>
-            ) : (
-              <div className="space-y-2">
-                {sent.filter(i => i.status === 'accepted' && !i.isConfirmedBySender).slice(0, 3).map((inv) => (
-                  <div key={inv.id} className="flex items-start justify-between text-sm">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">
-                        {inv.recipient?.firstName} {inv.recipient?.lastName}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {inv.room?.name || '-'} • Chờ xác nhận
-                      </p>
-                    </div>
-                    <CheckCircle className="h-4 w-4 text-amber-500 ml-2 flex-shrink-0" />
-                  </div>
-                ))}
-              </div>
-            )}
+            <p className="text-xl font-bold text-gray-900">
+              {dashboardOperations?.summary.pendingInvitations || 0}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">Lời mời chờ phản hồi</p>
           </div>
         </Link>
 
-        {/* Unpaid Bills */}
-        <Link href="/dashboard/landlord/invoices">
-          <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <div className="flex items-center justify-between mb-3">
+        {/* Pending Contracts */}
+        <Link href="/dashboard/landlord/contracts">
+          <div className="bg-white rounded-lg border border-gray-200 p-3 hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <div className="h-10 w-10 bg-orange-100 rounded-full flex items-center justify-center">
-                  <Receipt className="h-5 w-5 text-orange-600" />
+                <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <FileText className="h-4 w-4 text-green-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900">Hóa đơn chờ</h3>
+                <h3 className="text-sm font-semibold text-gray-900">Hợp đồng</h3>
               </div>
-              {!loadingBills && bills.filter(b => b.status === 'pending').length > 0 && (
-                <Badge className="bg-orange-500 text-white">
-                  {bills.filter(b => b.status === 'pending').length}
-                </Badge>
+              {dashboardOperations && dashboardOperations.summary.contractAlerts > 0 && (
+                <Badge className="bg-green-500 text-white text-xs">{dashboardOperations.summary.contractAlerts}</Badge>
               )}
             </div>
-            {loadingBills ? (
-              <div className="text-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto text-gray-400" />
-              </div>
-            ) : bills.filter(b => b.status === 'pending').length === 0 ? (
-              <p className="text-sm text-gray-500">Không có hóa đơn chờ thanh toán</p>
-            ) : (
-              <div className="space-y-2">
-                {bills.filter(b => b.status === 'pending').slice(0, 3).map((bill) => (
-                  <div key={bill.id} className="flex items-start justify-between text-sm">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">
-                        {bill.rental?.roomInstance?.room?.name ? `Phòng ${bill.rental.roomInstance.room.name}` :
-                         bill.rental?.room?.name ? `Phòng ${bill.rental.room.name}` : '-'}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {bill.totalAmount ? `${(bill.totalAmount / 1000000).toFixed(1)}M VNĐ` : '-'}
-                      </p>
-                    </div>
-                    <AlertTriangle className="h-4 w-4 text-orange-500 ml-2 flex-shrink-0" />
-                  </div>
-                ))}
-                {bills.filter(b => b.status === 'pending').length > 3 && (
-                  <p className="text-xs text-orange-600 mt-2">+{bills.filter(b => b.status === 'pending').length - 3} hóa đơn khác</p>
-                )}
-              </div>
-            )}
+            <p className="text-xl font-bold text-gray-900">
+              {dashboardOperations?.summary.contractAlerts || 0}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">Hợp đồng chờ ký</p>
           </div>
         </Link>
+
+        {/* Upcoming Move-ins */}
+        <div className="bg-white rounded-lg border border-gray-200 p-3 h-full">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-2">
+              <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <Calendar className="h-4 w-4 text-purple-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900">Dọn vào sắp tới</h3>
+            </div>
+          </div>
+          <p className="text-xl font-bold text-gray-900">
+            {dashboardOverview?.pipeline.upcomingMoveIns || 0}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">Trong 7 ngày tới</p>
+        </div>
+        </div>
+      </div>
+
+      {/* Revenue Summary Cards */}
+      {dashboardFinance && (
+        <div className="mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-white rounded-lg border border-gray-200 p-3">
+              <p className="text-xs text-gray-600 mb-1">Tổng doanh thu</p>
+              <p className="text-xl font-bold text-gray-900">
+                {(dashboardFinance.revenue.totalBilled / 1000000).toFixed(1)}M VNĐ
+              </p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 p-3">
+              <p className="text-xs text-gray-600 mb-1">Đã thu</p>
+              <p className="text-xl font-bold text-green-600">
+                {(dashboardFinance.revenue.totalPaid / 1000000).toFixed(1)}M VNĐ
+              </p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 p-3">
+              <p className="text-xs text-gray-600 mb-1">Còn nợ</p>
+              <p className="text-xl font-bold text-orange-600">
+                {(dashboardFinance.revenue.outstandingAmount / 1000000).toFixed(1)}M VNĐ
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Alert Summary Cards */}
+      <div className="mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Expiring Rentals */}
+          <Link href="/dashboard/landlord/rentals">
+            <div className="bg-white rounded-lg border border-orange-200 p-3 hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <div className="h-8 w-8 bg-orange-100 rounded-full flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-orange-600" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-gray-900">Thuê sắp hết hạn</h3>
+                </div>
+                {dashboardOverview.alerts.expiringRentals > 0 && (
+                  <Badge className="bg-orange-500 text-white text-xs">{dashboardOverview.alerts.expiringRentals}</Badge>
+                )}
+              </div>
+              <p className="text-xl font-bold text-gray-900">
+                {dashboardOverview.alerts.expiringRentals}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Trong 30 ngày tới</p>
+            </div>
+          </Link>
+
+          {/* Expiring Contracts */}
+          <Link href="/dashboard/landlord/contracts">
+            <div className="bg-white rounded-lg border border-red-200 p-3 hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
+                    <FileText className="h-4 w-4 text-red-600" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-gray-900">Hợp đồng sắp hết hạn</h3>
+                </div>
+                {dashboardOverview.alerts.expiringContracts > 0 && (
+                  <Badge className="bg-red-500 text-white text-xs">{dashboardOverview.alerts.expiringContracts}</Badge>
+                )}
+              </div>
+              <p className="text-xl font-bold text-gray-900">
+                {dashboardOverview.alerts.expiringContracts}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Trong 30 ngày tới</p>
+            </div>
+          </Link>
+
+          {/* Open Alerts */}
+          <div className="bg-white rounded-lg border border-yellow-200 p-3 h-full">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900">Cảnh báo mở</h3>
+              </div>
+              {dashboardOverview.alerts.openAlerts > 0 && (
+                <Badge className="bg-yellow-500 text-white text-xs">{dashboardOverview.alerts.openAlerts}</Badge>
+              )}
+            </div>
+            <p className="text-xl font-bold text-gray-900">
+              {dashboardOverview.alerts.openAlerts}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">Cần xử lý</p>
+          </div>
         </div>
       </div>
 
@@ -392,26 +443,35 @@ function DashboardContent() {
       <div className="mb-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-1">Thống kê & Phân tích</h2>
-          <p className="text-sm text-gray-600">Theo dõi hiệu suất kinh doanh của bạn - Chọn tháng/năm ở mỗi biểu đồ</p>
+          <p className="text-sm text-gray-600">Theo dõi hiệu suất kinh doanh của bạn</p>
         </div>
 
-        {/* Main Charts with Month/Year Selectors */}
+        {/* Main Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <RevenueChart />
-          <OccupancyChart />
+          <RevenueTrendChart
+            data={dashboardFinance?.charts?.revenueTrend || null}
+            isLoading={loadingDashboardFinance}
+          />
+          <BuildingPerformanceBarChart
+            data={dashboardFinance?.charts?.buildingPerformance || null}
+            isLoading={loadingDashboardFinance}
+          />
         </div>
 
-        {/* Revenue by Room - Full width */}
-        <div className="mb-6">
-          <RevenueByRoomChart data={analytics.revenueByRoom} />
-        </div>
-
-        {/* Secondary Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <PropertyPerformanceChart data={analytics.propertyPerformance} />
-          </div>
-          <RoomTypeDistributionChart data={analytics.roomTypeDistribution} />
+        {/* Secondary Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <RoomTypePieChart
+            data={dashboardFinance?.charts?.roomTypeDistribution || null}
+            isLoading={loadingDashboardFinance}
+          />
+          <OccupancyStatusChart
+            data={dashboardOverview?.rooms || null}
+            isLoading={loadingDashboardOverview}
+          />
+          <OperationsPipelineChart
+            data={dashboardOperations?.summary || null}
+            isLoading={loadingDashboardOperations}
+          />
         </div>
       </div>
 

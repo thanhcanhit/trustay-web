@@ -1279,3 +1279,144 @@ export interface GetRatingsQueryParams {
 	sortBy?: string; // Default: 'createdAt'
 	sortOrder?: 'asc' | 'desc'; // Default: 'desc'
 }
+
+// Dashboard Types
+export interface DashboardOverviewResponseDto {
+	buildings: {
+		total: number;
+		active: number;
+	};
+	rooms: {
+		totalInstances: number;
+		occupiedInstances: number;
+		availableInstances: number;
+		reservedInstances: number;
+		maintenanceInstances: number;
+		occupancyRate: number;
+	};
+	pipeline: {
+		pendingBookings: number;
+		pendingInvitations: number;
+		roommateApprovals: number;
+		upcomingMoveIns: number;
+	};
+	tenants: {
+		activeTenants: number;
+		verifiedTenants: number;
+		averageRating: number;
+	};
+	alerts: {
+		expiringRentals: number;
+		expiringContracts: number;
+		openAlerts: number;
+	};
+}
+
+export interface OperationItemDto {
+	id: string;
+	type: 'booking' | 'invitation' | 'roommate_application' | 'contract';
+	title: string;
+	buildingName: string;
+	roomName: string;
+	status: string;
+	senderName: string;
+	targetDate?: string;
+}
+
+export interface DashboardOperationsResponseDto {
+	summary: {
+		pendingBookings: number;
+		pendingInvitations: number;
+		roommateApplications: number;
+		contractAlerts: number;
+	};
+	queues: {
+		bookings: OperationItemDto[];
+		invitations: OperationItemDto[];
+		roommateApplications: OperationItemDto[];
+		contracts: OperationItemDto[];
+	};
+}
+
+export interface ChartDataPoint {
+	label: string;
+	value: number;
+	secondaryValue?: number;
+}
+
+export interface ChartResponseDto {
+	type: 'line' | 'bar' | 'pie';
+	title: string;
+	data: ChartDataPoint[];
+}
+
+// New Chart API Format
+export interface ChartPoint {
+	x: string;
+	y: number;
+}
+
+export interface ChartDataset {
+	label: string;
+	points: ChartPoint[];
+}
+
+export interface ChartMeta {
+	unit: string;
+	period?: {
+		start: string;
+		end: string;
+	};
+	filters?: Record<string, unknown>;
+}
+
+export interface NewChartResponseDto {
+	type: 'line' | 'bar' | 'pie';
+	title: string;
+	meta: ChartMeta;
+	dataset: ChartDataset[];
+}
+
+export interface BillDetailDto {
+	id: string;
+	title: string;
+	amount: number;
+	dueDate: string;
+	status: BillStatus;
+	tenantName: string;
+}
+
+export interface PaymentDetailDto {
+	id: string;
+	amount: number;
+	paidDate: string;
+	description: string;
+	paymentMethod: string;
+}
+
+export interface DashboardFinanceResponseDto {
+	referencePeriod: {
+		startDate: string;
+		endDate: string;
+	};
+	revenue: {
+		totalBilled: number;
+		totalPaid: number;
+		outstandingAmount: number;
+	};
+	bills: {
+		overdueCount: number;
+		dueSoonCount: number;
+		overdueBills: BillDetailDto[];
+		dueSoonBills: BillDetailDto[];
+	};
+	payments: {
+		pendingPayments: number;
+		latestPayments: PaymentDetailDto[];
+	};
+	charts: {
+		revenueTrend: NewChartResponseDto;
+		buildingPerformance: NewChartResponseDto;
+		roomTypeDistribution: NewChartResponseDto;
+	};
+}
