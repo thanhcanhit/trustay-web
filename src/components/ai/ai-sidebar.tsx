@@ -32,23 +32,20 @@ export function AISidebar() {
   const quickSuggestions: ReadonlyArray<string> = useMemo(
     () => [
       // --- Guest / Tìm phòng (không cần đăng nhập) ---
-      'Tìm phòng trọ có gác lửng và ban công ở Gò Vấp dưới 5 triệu.',
-      'Có studio full nội thất nào ở Quận 1 không?',
-      'Phòng nào có máy lạnh ở Bình Thạnh?',
-      'Tìm phòng trọ gần IUH',
-  
+      'Tìm phòng trọ có máy lạnh ở Gò Vấp dưới 5 triệu.',
+      'Có phòng trọ đầy đủ nội thất nào ở Quận 1 không?',
+      'Tìm phòng trọ gần trường IUH',
+
       // --- Tenant / Tài khoản & Quản lý ---
       'Hóa đơn điện nước tháng này của tôi bao nhiêu?',
+      "Có hoá đơn nào chưa thanh toán không?",
       'Hợp đồng thuê nhà của tôi khi nào hết hạn?',
-      'Tôi đã thanh toán những hóa đơn nào tháng này?',
-      'Có hóa đơn nào chưa thanh toán không?',
       'Lịch sử thanh toán 3 tháng qua của tôi.',
-  
+
       // --- Tenant / Tìm bạn ở ghép ---
-      'Có ai đang tìm bạn ở ghép nữ gần HUTECH không?',
-      'Tìm người ở ghép nam cho phòng 2 người ở Quận 7.',
+      'Tìm người ở ghép nam cho phòng 2 người ở HCM.',
       'Có bài đăng tìm bạn ở ghép nào ở Bình Thạnh không?',
-  
+
       // --- Landlord / Thống kê & Doanh thu ---
       'Thống kê doanh thu 6 tháng qua của tôi.',
       'Tỷ lệ lấp đầy các phòng của tôi hiện tại bao nhiêu?',
@@ -56,13 +53,14 @@ export function AISidebar() {
       'Có bao nhiêu phòng đang trống?',
       'Tổng số tiền thu được tháng này là bao nhiêu?',
       'Phòng nào đang có hợp đồng sắp hết hạn?',
-  
+
       // --- Landlord / Quản lý phòng ---
       'Danh sách tất cả phòng của tôi.',
       'Có yêu cầu thuê phòng nào đang chờ duyệt không?',
-      'Phòng nào đang bảo trì?',
       'Thống kê số lượng phòng theo trạng thái.',
-  
+      "Tôi muốn đăng tải phòng trọ của tôi",
+      "Tôi muốn đăng tải dãy trọ của tôi",
+
       // --- Phân tích phòng (khi đang xem trang phòng) ---
       'Đánh giá phòng hiện tại.',
       'Giá phòng hiện tại có hợp lý không?',
@@ -124,9 +122,8 @@ export function AISidebar() {
     [messages]
   );
 
-  const onSend = async (content: string) => {
-    // Attachments not supported by current backend contract; ignore files for now
-    await sendPrompt(content);
+  const onSend = async (content: string, images?: string[]) => {
+    await sendPrompt(content, images);
   };
 
   return (
