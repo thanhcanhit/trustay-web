@@ -15,11 +15,17 @@ type AIActions = {
 	toggleSidebar: (open?: boolean) => void;
 	loadHistory: () => Promise<void>;
 	clearHistory: () => Promise<void>;
-	sendPrompt: (content: string) => Promise<void>;
+	sendPrompt: (content: string, images?: string[]) => Promise<void>;
 	setError: (message: string | null) => void;
+	setContextImages: (images: string[] | null) => void;
 };
 
-export const useAIAssistantStore = create<AIStateSnapshot & AIActions>()(
+type AIStoreState = AIStateSnapshot &
+	AIActions & {
+		contextImages: string[] | null;
+	};
+
+export const useAIAssistantStore = create<AIStoreState>()(
 	persist(
 		(set) => ({
 			isSidebarOpen: false,
@@ -28,11 +34,14 @@ export const useAIAssistantStore = create<AIStateSnapshot & AIActions>()(
 			error: null,
 			sessionId: undefined,
 			messages: [],
+			contextImages: null,
 
 			toggleSidebar: (open) =>
 				set((s) => ({ isSidebarOpen: typeof open === 'boolean' ? open : !s.isSidebarOpen })),
 
 			setError: (message) => set({ error: message ?? null }),
+
+			setContextImages: (images) => set({ contextImages: images }),
 
 			loadHistory: async () => {
 				try {
@@ -112,7 +121,7 @@ export const useAIAssistantStore = create<AIStateSnapshot & AIActions>()(
 				}
 			},
 
-			sendPrompt: async (content: string) => {
+			sendPrompt: async (content: string, images?: string[]) => {
 				// Optimistically append user message
 				const userMsg: AIHistoryMessage = {
 					id: `local_${Date.now()}`,
@@ -125,6 +134,8 @@ export const useAIAssistantStore = create<AIStateSnapshot & AIActions>()(
 				try {
 					const token = TokenManager.getAccessToken();
 					const currentPage = typeof window !== 'undefined' ? window.location.pathname : undefined;
+					// Use provided images or fall back to context images
+					const imagesToSend = images ?? useAIAssistantStore.getState().contextImages ?? undefined;
 					// Add a temporary typing message
 					set((s) => ({
 						isThinking: true,
@@ -138,7 +149,11 @@ export const useAIAssistantStore = create<AIStateSnapshot & AIActions>()(
 							},
 						],
 					}));
-					const res = await postAIChat(content, currentPage, token);
+					const res = await postAIChat(content, currentPage, token, imagesToSend);
+					// Clear context images after use
+					if (imagesToSend && !images) {
+						set({ contextImages: null });
+					}
 
 					// Support both old AIChatResponse and new ChatEnvelope
 					const maybeEnvelope = res as unknown as Partial<ChatEnvelope>;

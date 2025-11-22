@@ -9,10 +9,7 @@ const apiCall = createServerApiCall();
 // Use central types from '@/types/ai'
 
 const AI_ENDPOINTS = {
-	chat: (query: string, currentPage?: string) => {
-		const baseUrl = `/api/ai/chat?query=${encodeURIComponent(query)}`;
-		return currentPage ? `${baseUrl}&currentPage=${encodeURIComponent(currentPage)}` : baseUrl;
-	},
+	chat: '/api/ai/chat',
 	history: '/api/ai/chat/history',
 	text2sql: '/api/ai/text2sql',
 };
@@ -30,14 +27,26 @@ function unwrap<T>(resp: unknown): T {
 	return resp as T;
 }
 
+export interface ChatRequest {
+	query: string;
+	currentPage?: string;
+	images?: string[];
+}
+
 export async function postAIChat(
 	query: string,
 	currentPage?: string,
 	token?: string,
+	images?: string[],
 ): Promise<AIChatResponse> {
+	const requestBody: ChatRequest = {
+		query,
+		...(currentPage && { currentPage }),
+		...(images && images.length > 0 && { images }),
+	};
 	const resp = await apiCall<ApiResponse<AIChatResponse> | AIChatResponse>(
-		AI_ENDPOINTS.chat(query, currentPage),
-		{ method: 'POST', timeout: 0 },
+		AI_ENDPOINTS.chat,
+		{ method: 'POST', data: requestBody, timeout: 0 },
 		token,
 	);
 	return unwrap<AIChatResponse>(resp);

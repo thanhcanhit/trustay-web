@@ -18,6 +18,7 @@ import { RuleGrid } from "@/components/ui/rule-grid"
 import { ImageUploadWithApi, UploadedImage } from "@/components/ui/image-upload-with-api"
 import { useReferenceStore } from "@/stores/referenceStore"
 import { useRoomStore } from "@/stores/roomStore"
+import { useAIAssistantStore } from "@/stores/aiAssistant.store"
 import { 
   type CreateRoomRequest, 
   type Building,
@@ -106,6 +107,23 @@ function AddRoomPageContent() {
   } = useReferenceStore()
 
   const { loadBuildings, createNewRoom } = useRoomStore()
+  const setContextImages = useAIAssistantStore((s) => s.setContextImages)
+
+  // Helper to extract image path from full URL
+  const extractImagePath = (url: string): string => {
+    try {
+      // If it's already a path starting with /, return as is
+      if (url.startsWith('/')) {
+        return url
+      }
+      // If it's a full URL, extract the path
+      const urlObj = new URL(url)
+      return urlObj.pathname
+    } catch {
+      // If URL parsing fails, assume it's already a path
+      return url.startsWith('/') ? url : `/${url}`
+    }
+  }
 
   // Form data - using proper RoomCost format
   const [formData, setFormData] = useState<Partial<CreateRoomFormData>>({
@@ -872,7 +890,14 @@ function AddRoomPageContent() {
                 <Separator />
                 <ImageUploadWithApi
                   value={formData.images || []}
-                  onChange={(images) => updateFormData('images', images)}
+                  onChange={(images) => {
+                    updateFormData('images', images)
+                    // Extract image paths and set them in AI context for chat
+                    const imagePaths = images
+                      .filter(img => img.url) // Only include uploaded images
+                      .map(img => extractImagePath(img.url))
+                    setContextImages(imagePaths.length > 0 ? imagePaths : null)
+                  }}
                   maxFiles={5}
                   accept="image/*"
                   disabled={false}
