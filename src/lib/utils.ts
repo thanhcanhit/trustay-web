@@ -13,11 +13,27 @@ export interface ImageUrlOptions {
 	format?: 'jpg' | 'png' | 'webp';
 }
 
+/**
+ * Check if a path is already a full URL (has domain/protocol)
+ * Returns true if the path starts with http://, https://, //, or data:
+ */
+function isFullUrl(path: string): boolean {
+	if (!path) return false;
+
+	return (
+		path.startsWith('http://') ||
+		path.startsWith('https://') ||
+		path.startsWith('//') ||
+		path.startsWith('data:')
+	);
+}
+
 export function getImageUrl(imagePath: string, options: ImageUrlOptions = {}): string {
 	if (!imagePath) return '';
 
-	// If it's already a full URL (starts with http:// or https://), return as-is
-	if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+	// If it's already a full URL (has domain), return as-is
+	// Only combine with backend URL if it's a relative path
+	if (isFullUrl(imagePath)) {
 		return imagePath;
 	}
 

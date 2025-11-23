@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Thumbs, FreeMode } from 'swiper/modules'
 import type { Swiper as SwiperType } from 'swiper'
-// import { getOptimizedImageUrl } from '@/lib/utils'
+import { getImageUrl } from '@/lib/utils'
 import { PhotoProvider, PhotoView } from 'react-photo-view'
 
 // Import Swiper styles
@@ -40,10 +40,13 @@ export function ImageSwiper({
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null)
 
   // Normalize images to string array and create stable reference
+  // Handle both full URLs and paths that need to be combined with backend URL
   const normalizedImages = React.useMemo(() =>
-    images.map(img =>
-      typeof img === 'string' ? img : img.url
-    ).filter(img => img && img.trim() !== ""),
+    images.map(img => {
+      const imagePath = typeof img === 'string' ? img : img.url
+      // Use getImageUrl to handle path normalization (combines with backend URL if needed)
+      return getImageUrl(imagePath, { size: 'original' })
+    }).filter(img => img && img.trim() !== ""),
     [images]
   )
 
