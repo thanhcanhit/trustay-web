@@ -12,6 +12,7 @@ const AI_ENDPOINTS = {
 	chat: '/api/ai/chat',
 	history: '/api/ai/chat/history',
 	text2sql: '/api/ai/text2sql',
+	roomPublish: '/api/ai/room-publish',
 };
 
 // Helper to unwrap ApiResponse if the backend wraps responses
@@ -74,4 +75,67 @@ export async function textToSQL(
 		| { sql: string; results?: Array<Record<string, unknown>> }
 	>(AI_ENDPOINTS.text2sql, { method: 'POST', data: { query }, timeout: 0 }, token);
 	return unwrap<{ sql: string; results?: Array<Record<string, unknown>> }>(resp);
+}
+
+// Room Publishing with AI - Dedicated endpoint for room publishing flow
+export interface RoomPublishRequest {
+	message?: string; // Optional - can be empty to trigger creation
+	buildingId?: string;
+	images?: string[];
+}
+
+export enum RoomPublishingStatus {
+	NEED_MORE_INFO = 'NEED_MORE_INFO',
+	READY_TO_CREATE = 'READY_TO_CREATE',
+	CREATED = 'CREATED',
+	CREATION_FAILED = 'CREATION_FAILED',
+}
+
+export interface RoomPublishResponse {
+	success: boolean;
+	data?: {
+		kind: 'CONTENT' | 'CONTROL';
+		sessionId: string;
+		timestamp: string;
+		message: string;
+		status: RoomPublishingStatus;
+		payload?: {
+			mode: 'CONTENT' | 'ROOM_PUBLISH';
+			plan?: {
+				shouldCreateBuilding: boolean;
+				buildingId?: string;
+				buildingPayload?: unknown;
+				roomPayload: unknown;
+				description: string;
+			};
+			roomId?: string; // For CREATED status
+			error?: string; // For CREATION_FAILED status
+		};
+		meta?: {
+			stage: string;
+			planReady?: boolean;
+			shouldCreateBuilding?: boolean;
+		};
+	};
+	error?: string;
+	message?: string;
+}
+
+export async function postAIRoomPublish(
+	message: string,
+	images?: string[],
+	token?: string,
+	buildingId?: string,
+): Promise<RoomPublishResponse> {
+	const requestBody: RoomPublishRequest = {
+		message,
+		...(images && images.length > 0 && { images }),
+		...(buildingId && { buildingId }),
+	};
+	const resp = await apiCall<RoomPublishResponse>(
+		AI_ENDPOINTS.roomPublish,
+		{ method: 'POST', data: requestBody, timeout: 0 },
+		token,
+	);
+	return resp;
 }
