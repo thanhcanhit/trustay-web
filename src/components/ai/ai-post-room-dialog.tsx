@@ -155,12 +155,12 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
 
   // Auto-redirect when room is created
   useEffect(() => {
-    if (dialogState === 'created' && publishPlan?.payload?.roomPath) {
-      const roomPath = publishPlan.payload.roomPath;
-      if (roomPath) {
+    if (dialogState === 'created' && publishPlan?.payload?.roomId) {
+      const roomId = publishPlan.payload.roomId;
+      if (roomId) {
         const timer = setTimeout(() => {
-          // Use roomPath from API response
-          router.push(roomPath);
+          // Use roomId to build path
+          router.push(`/rooms/${roomId}`);
           // Close dialog after navigation
           onOpenChange(false);
         }, 2000);
@@ -168,7 +168,7 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
         return () => clearTimeout(timer);
       }
     }
-  }, [dialogState, publishPlan?.payload?.roomPath, router, onOpenChange]);
+  }, [dialogState, publishPlan?.payload?.roomId, router, onOpenChange]);
 
   // Handle response and update state based on status
   const handleResponse = (response: RoomPublishResponse | null) => {
@@ -662,7 +662,6 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
               <div className="flex justify-center">
                 <div className="relative">
                   <Sparkles className="h-16 w-16 text-primary animate-pulse" />
-                  <Loader2 className="h-8 w-8 text-primary animate-spin absolute top-4 left-4" />
                 </div>
               </div>
               <div>
@@ -862,19 +861,34 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
                   {publishPlan?.message || "Phòng trọ của bạn đã được tạo thành công. Đang chuyển hướng..."}
                 </p>
               </div>
-              {publishPlan?.payload?.roomPath && (
-                <Button 
-                  onClick={() => {
-                    const roomPath = publishPlan.payload?.roomPath;
-                    if (roomPath) {
-                      router.push(roomPath);
-                      handleClose();
-                    }
-                  }} 
-                  className="w-full"
-                >
-                  Xem phòng
-                </Button>
+              {publishPlan?.payload?.roomId && (
+                <div className="flex gap-3 w-full">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      const roomId = publishPlan.payload?.roomId;
+                      if (roomId) {
+                        router.push(`/rooms/${roomId}`);
+                        handleClose();
+                      }
+                    }} 
+                    className="flex-1"
+                  >
+                    Xem phòng
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      const roomId = publishPlan.payload?.roomId;
+                      if (roomId) {
+                        router.push(`/dashboard/landlord/properties/rooms/${roomId}`);
+                        handleClose();
+                      }
+                    }} 
+                    className="flex-1"
+                  >
+                    Chỉnh sửa chi tiết phòng
+                  </Button>
+                </div>
               )}
             </div>
           </div>
@@ -1059,7 +1073,7 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
                   Đang xử lý...
                 </>
               ) : (
-                'Gửi cho AI'
+                'Tạo phòng ngay'
               )}
             </Button>
           </DialogFooter>
