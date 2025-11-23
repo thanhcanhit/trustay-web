@@ -493,11 +493,11 @@ export default function RegisterPage() {
                   {validationErrors.phone && (
                     <p className="text-xs text-red-600 mt-1">{validationErrors.phone}</p>
                   )}
-                  {contactValue && !validationErrors.email && !validationErrors.phone && (
+                  {/* {contactValue && !validationErrors.email && !validationErrors.phone && (
                     <p className="text-xs text-gray-600 mt-1">
                       Đã phát hiện: {contactType === 'email' ? 'Email' : 'Số điện thoại'}
                     </p>
-                  )}
+                  )} */}
                 </div>
 
                 <div className="pt-2">
