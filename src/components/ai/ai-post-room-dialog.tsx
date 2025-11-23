@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import type { CreateBuildingRequest, CreateRoomRequest, Building } from '@/types/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import parse from 'html-react-parser';
 
 interface AIPostRoomDialogProps {
   open: boolean;
@@ -70,7 +71,7 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
       const fetchBuildings = async () => {
         // Only fetch if we don't have buildings yet
         if (buildings.length > 0) return;
-        
+
         setIsLoadingBuildings(true);
         const token = TokenManager.getAccessToken();
         if (!token) {
@@ -124,7 +125,7 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
     try {
       setIsThinking(true);
       const response = await postAIRoomPublish(message, imagePaths, token, buildingId);
-      
+
       if (!response.success) {
         toast.error(response.error || response.message || 'Có lỗi xảy ra');
         return null;
@@ -178,37 +179,41 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
     // Status is now in payload.status
     const status = data.payload?.status || RoomPublishingStatus.NEED_MORE_INFO;
 
-    // Add assistant message to conversation
+    // Prepare assistant message (but don't add to conversation yet)
     const assistantMessage: ConversationMessage = {
       id: `assistant_${Date.now()}`,
       role: 'assistant',
       content: data.message,
       timestamp: data.timestamp || new Date().toISOString(),
     };
-    setConversationMessages(prev => [...prev, assistantMessage]);
 
     // Handle different statuses
     switch (status) {
       case RoomPublishingStatus.NEED_MORE_INFO:
         // AI needs more information
+        // Don't add assistant message to conversation in clarification mode
+        // Only set the plan data to access the message
+        setPublishPlan(data);
         setClarificationQuestions([]);
         // Extract questions from message if available
         const questionLines = data.message
           .split('\n')
           .filter(line => {
             const trimmed = line.trim();
-            return trimmed.startsWith('•') || 
-                   trimmed.startsWith('-') || 
-                   trimmed.startsWith('*') ||
-                   /^\d+\./.test(trimmed);
+            return trimmed.startsWith('•') ||
+              trimmed.startsWith('-') ||
+              trimmed.startsWith('*') ||
+              /^\d+\./.test(trimmed);
           })
           .map(line => line.replace(/^[•\-*\d.]+\s*/, '').trim())
           .filter(line => line.length > 0);
-        
+
         if (questionLines.length > 0) {
           setClarificationQuestions(questionLines);
           setDialogState('clarification');
         } else {
+          // If no structured questions, add to conversation
+          setConversationMessages(prev => [...prev, assistantMessage]);
           setDialogState('conversation');
         }
         break;
@@ -246,24 +251,24 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
       const remainingSlots = MAX_IMAGES - currentCount;
       if (remainingSlots <= 0) return currentImages;
 
-    const newImages: ImagePreview[] = [];
-    const filesToUpload: File[] = [];
+      const newImages: ImagePreview[] = [];
+      const filesToUpload: File[] = [];
 
-    for (let i = 0; i < files.length && newImages.length < remainingSlots; i++) {
-      const file = files[i];
-      if (!file.type.startsWith('image/')) continue;
-      if (file.size > 5 * 1024 * 1024) continue; // Max 5MB
+      for (let i = 0; i < files.length && newImages.length < remainingSlots; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) continue;
+        if (file.size > 5 * 1024 * 1024) continue; // Max 5MB
 
-      const preview = URL.createObjectURL(file);
-      const imagePreview: ImagePreview = {
-        id: Math.random().toString(36).substr(2, 9),
-        file,
-        preview,
-        isUploading: true,
-      };
-      newImages.push(imagePreview);
-      filesToUpload.push(file);
-    }
+        const preview = URL.createObjectURL(file);
+        const imagePreview: ImagePreview = {
+          id: Math.random().toString(36).substr(2, 9),
+          file,
+          preview,
+          isUploading: true,
+        };
+        newImages.push(imagePreview);
+        filesToUpload.push(file);
+      }
 
       if (newImages.length === 0) return currentImages;
 
@@ -327,7 +332,7 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
     try {
       setIsSubmitting(true);
       const messageContent = content || 'Đăng tải phòng trọ';
-      
+
       // Add initial user message to conversation
       const userMessage: ConversationMessage = {
         id: `user_${Date.now()}`,
@@ -336,20 +341,20 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
         timestamp: new Date().toISOString(),
       };
       setConversationMessages([userMessage]);
-      
+
       // Change to loading state
       setDialogState('loading');
-      
+
       // Send to room-publish API
       const response = await sendRoomPublishMessage(
-        messageContent, 
+        messageContent,
         imagePaths.length > 0 ? imagePaths : undefined,
         selectedBuildingId || undefined
       );
-      
+
       // Handle response
       handleResponse(response);
-      
+
       // Clear initial form but keep images for context
       setDescription("");
     } catch (error) {
@@ -373,7 +378,7 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
         timestamp: new Date().toISOString(),
       };
       setConversationMessages(prev => [...prev, userMessage]);
-      
+
       setReplyText("");
       if (dialogState === 'clarification') {
         setDialogState('loading');
@@ -449,7 +454,7 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent 
+      <DialogContent
         className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0"
         style={{ zIndex: 10001 }}
       >
@@ -468,191 +473,191 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
 
         {dialogState === 'form' && (
           <div className="flex-1 overflow-y-auto space-y-4 px-6 pb-4">
-          {/* Building Select */}
-          <div className="space-y-2">
-            <label htmlFor="building" className="text-sm font-medium">
-              Chọn dãy trọ (tùy chọn)
-            </label>
-            {isLoadingBuildings ? (
-              <div className="border border-gray-200 rounded-lg p-4 text-center">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2 text-gray-400" />
-                <p className="text-sm text-gray-500">Đang tải danh sách dãy trọ...</p>
-              </div>
-            ) : buildings.length === 0 ? (
-              <div className="border border-blue-200 bg-blue-50 rounded-lg p-4">
-                <p className="text-sm text-blue-900 font-medium mb-1">
-                  Bạn chưa có dãy trọ nào
-                </p>
-                <p className="text-xs text-blue-700">
-                  Hãy điền thông tin phòng trọ bên dưới, chúng tôi sẽ tạo dãy trọ mới giúp bạn.
-                </p>
-              </div>
-            ) : (
-              <>
-                <Select
-                  value={selectedBuildingId || "new-building"}
-                  onValueChange={(value) => setSelectedBuildingId(value === "new-building" ? "" : value)}
-                  disabled={isSubmitting}
+            {/* Building Select */}
+            <div className="space-y-2">
+              <label htmlFor="building" className="text-sm font-medium">
+                Chọn dãy trọ (tùy chọn)
+              </label>
+              {isLoadingBuildings ? (
+                <div className="border border-gray-200 rounded-lg p-4 text-center">
+                  <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm text-gray-500">Đang tải danh sách dãy trọ...</p>
+                </div>
+              ) : buildings.length === 0 ? (
+                <div className="border border-blue-200 bg-blue-50 rounded-lg p-4">
+                  <p className="text-sm text-blue-900 font-medium mb-1">
+                    Bạn chưa có dãy trọ nào
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    Hãy điền thông tin phòng trọ bên dưới, chúng tôi sẽ tạo dãy trọ mới giúp bạn.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <Select
+                    value={selectedBuildingId || "new-building"}
+                    onValueChange={(value) => setSelectedBuildingId(value === "new-building" ? "" : value)}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger id="building" className="w-full">
+                      <SelectValue placeholder="Chọn dãy trọ hoặc để trống để tạo mới">
+                        {selectedBuildingId ? (
+                          buildings.find(b => b.id === selectedBuildingId)?.name || ""
+                        ) : null}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="z-[10002]">
+                      <SelectItem value="new-building">
+                        <span className="text-gray-500 italic">Không chọn (Tạo dãy trọ mới)</span>
+                      </SelectItem>
+                      {buildings.map((building) => {
+                        // Format location string
+                        const locationParts: string[] = [];
+                        if (building.location?.wardName) locationParts.push(building.location.wardName);
+                        if (building.location?.districtName) locationParts.push(building.location.districtName);
+                        if (building.location?.provinceName) locationParts.push(building.location.provinceName);
+                        const locationText = locationParts.length > 0
+                          ? locationParts.join(', ')
+                          : building.addressLine1 || '';
+
+                        return (
+                          <SelectItem key={building.id} value={building.id}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{building.name}</span>
+                              {locationText && (
+                                <span className="text-xs text-gray-500 mt-0.5">
+                                  {locationText}
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  {selectedBuildingId && (
+                    <p className="text-xs text-gray-500">
+                      Phòng sẽ được thêm vào dãy trọ đã chọn
+                    </p>
+                  )}
+                  {!selectedBuildingId && (
+                    <p className="text-xs text-gray-500">
+                      Để trống nếu bạn muốn tạo dãy trọ mới
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Description Textarea */}
+            <div className="space-y-2">
+              <label htmlFor="description" className="text-sm font-medium">
+                Mô tả phòng trọ
+              </label>
+              <Textarea
+                id="description"
+                placeholder="Ví dụ: Phòng trọ 20m², có máy lạnh, wifi, gần trường học, giá 2 triệu/tháng..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="min-h-[120px] resize-none"
+                disabled={isSubmitting}
+              />
+            </div>
+
+            {/* Image Upload */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Hình ảnh phòng (tùy chọn)</label>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => handleFileSelect(e.target.files)}
+                className="hidden"
+                disabled={isUploading || isSubmitting}
+              />
+
+              {/* Upload Button */}
+              {images.length < MAX_IMAGES && (
+                <div
+                  onClick={() => !isUploading && !isSubmitting && fileInputRef.current?.click()}
+                  className={cn(
+                    "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
+                    isUploading || isSubmitting
+                      ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-50"
+                      : "border-gray-300 cursor-pointer hover:border-primary hover:bg-primary/5"
+                  )}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if ((e.key === 'Enter' || e.key === ' ') && !isUploading && !isSubmitting) {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
                 >
-                  <SelectTrigger id="building" className="w-full">
-                    <SelectValue placeholder="Chọn dãy trọ hoặc để trống để tạo mới">
-                      {selectedBuildingId ? (
-                        buildings.find(b => b.id === selectedBuildingId)?.name || ""
-                      ) : null}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="z-[10002]">
-                    <SelectItem value="new-building">
-                      <span className="text-gray-500 italic">Không chọn (Tạo dãy trọ mới)</span>
-                    </SelectItem>
-                    {buildings.map((building) => {
-                      // Format location string
-                      const locationParts: string[] = [];
-                      if (building.location?.wardName) locationParts.push(building.location.wardName);
-                      if (building.location?.districtName) locationParts.push(building.location.districtName);
-                      if (building.location?.provinceName) locationParts.push(building.location.provinceName);
-                      const locationText = locationParts.length > 0 
-                        ? locationParts.join(', ')
-                        : building.addressLine1 || '';
-
-                      return (
-                        <SelectItem key={building.id} value={building.id}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{building.name}</span>
-                            {locationText && (
-                              <span className="text-xs text-gray-500 mt-0.5">
-                                {locationText}
-                              </span>
-                            )}
-                          </div>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-                {selectedBuildingId && (
-                  <p className="text-xs text-gray-500">
-                    Phòng sẽ được thêm vào dãy trọ đã chọn
-                  </p>
-                )}
-                {!selectedBuildingId && (
-                  <p className="text-xs text-gray-500">
-                    Để trống nếu bạn muốn tạo dãy trọ mới
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Description Textarea */}
-          <div className="space-y-2">
-            <label htmlFor="description" className="text-sm font-medium">
-              Mô tả phòng trọ
-            </label>
-            <Textarea
-              id="description"
-              placeholder="Ví dụ: Phòng trọ 20m², có máy lạnh, wifi, gần trường học, giá 2 triệu/tháng..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="min-h-[120px] resize-none"
-              disabled={isSubmitting}
-            />
-          </div>
-
-          {/* Image Upload */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Hình ảnh phòng (tùy chọn)</label>
-            
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => handleFileSelect(e.target.files)}
-              className="hidden"
-              disabled={isUploading || isSubmitting}
-            />
-
-            {/* Upload Button */}
-            {images.length < MAX_IMAGES && (
-              <div
-                onClick={() => !isUploading && !isSubmitting && fileInputRef.current?.click()}
-                className={cn(
-                  "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
-                  isUploading || isSubmitting
-                    ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-50"
-                    : "border-gray-300 cursor-pointer hover:border-primary hover:bg-primary/5"
-                )}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if ((e.key === 'Enter' || e.key === ' ') && !isUploading && !isSubmitting) {
-                    e.preventDefault();
-                    fileInputRef.current?.click();
-                  }
-                }}
-              >
-                {isUploading ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="h-8 w-8 text-primary animate-spin" />
-                    <p className="text-sm text-gray-600">Đang tải lên...</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload className="h-8 w-8 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Click để chọn ảnh</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {images.length}/{MAX_IMAGES} ảnh • Tối đa 5MB/ảnh
-                      </p>
+                  {isUploading ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                      <p className="text-sm text-gray-600">Đang tải lên...</p>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Image Preview Grid */}
-            {images.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
-                {images.map((img) => (
-                  <div key={img.id} className="relative group aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
-                    <div className="absolute inset-0">
-                      <Image
-                        src={img.preview}
-                        alt="Preview"
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 50vw, 33vw"
-                      />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <Upload className="h-8 w-8 text-gray-400" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Click để chọn ảnh</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {images.length}/{MAX_IMAGES} ảnh • Tối đa 5MB/ảnh
+                        </p>
+                      </div>
                     </div>
-                    {img.isUploading && (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
-                        <Loader2 className="h-6 w-6 text-white animate-spin" />
+                  )}
+                </div>
+              )}
+
+              {/* Image Preview Grid */}
+              {images.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+                  {images.map((img) => (
+                    <div key={img.id} className="relative group aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
+                      <div className="absolute inset-0">
+                        <Image
+                          src={img.preview}
+                          alt="Preview"
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 50vw, 33vw"
+                        />
                       </div>
-                    )}
-                    {img.uploadError && (
-                      <div className="absolute inset-0 bg-red-500/70 flex items-center justify-center z-10">
-                        <X className="h-6 w-6 text-white" />
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeImage(img.id);
-                      }}
-                      className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-all z-20 border-2 border-white opacity-0 group-hover:opacity-100"
-                      aria-label="Remove image"
-                      disabled={isSubmitting}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+                      {img.isUploading && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
+                          <Loader2 className="h-6 w-6 text-white animate-spin" />
+                        </div>
+                      )}
+                      {img.uploadError && (
+                        <div className="absolute inset-0 bg-red-500/70 flex items-center justify-center z-10">
+                          <X className="h-6 w-6 text-white" />
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeImage(img.id);
+                        }}
+                        className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-all z-20 border-2 border-white opacity-0 group-hover:opacity-100"
+                        aria-label="Remove image"
+                        disabled={isSubmitting}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
         )}
 
         {/* Loading State */}
@@ -680,49 +685,33 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
                 <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <h3 className="text-sm font-semibold text-blue-900 mb-2">AI cần thêm thông tin</h3>
-                  <p className="text-sm text-blue-800 mb-3">
-                    Để tạo bài đăng hoàn chỉnh, vui lòng cung cấp thêm các thông tin sau:
-                  </p>
-                  <div className="space-y-2">
-                    {clarificationQuestions.map((question, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleReply(question)}
-                        className="w-full text-left bg-white border border-blue-200 rounded-lg px-4 py-3 hover:bg-blue-50 hover:border-blue-300 transition-colors text-sm text-blue-900"
-                      >
-                        {question}
-                      </button>
-                    ))}
-                  </div>
+                  {/* Show AI message if available */}
+                  {publishPlan?.message && (
+                    <div className="text-sm text-blue-800 mb-3 prose prose-sm max-w-none [&_*]:text-sm [&_*]:text-blue-800 [&_p]:mb-2">
+                      {parse(publishPlan.message)}
+                    </div>
+                  )}
+                  {clarificationQuestions.length > 0 && (
+                    <>
+                      <p className="text-sm text-blue-800 mb-3">
+                        Bạn có thể trả lời bằng cách chọn một trong các gợi ý sau:
+                      </p>
+                      <div className="space-y-2">
+                        {clarificationQuestions.map((question, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleReply(question)}
+                            className="w-full text-left bg-white border border-blue-200 rounded-lg px-4 py-3 hover:bg-blue-50 hover:border-blue-300 transition-colors text-sm text-blue-900"
+                          >
+                            {question}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
-
-            {/* Show conversation messages if any */}
-            {conversationMessages.length > 0 && (
-              <div className="space-y-3">
-                {conversationMessages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={cn(
-                      "flex",
-                      message.role === 'user' ? 'justify-end' : 'justify-start'
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "max-w-[80%] rounded-lg px-3 py-2 text-sm break-words",
-                        message.role === 'user'
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-gray-100 text-gray-900"
-                      )}
-                    >
-                      <div className="whitespace-pre-wrap">{message.content}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
 
             {/* Reply Input */}
             <div className="border-t pt-4">
@@ -780,7 +769,7 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
               {/* Plan Details */}
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
                 <h4 className="text-sm font-semibold text-gray-900">Thông tin sẽ được tạo:</h4>
-                
+
                 {plan.shouldCreateBuilding && building && (
                   <div className="space-y-2">
                     <div className="text-xs font-medium text-gray-700">Dãy trọ mới:</div>
@@ -803,17 +792,19 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
                         </div>
                       )}
                       {room?.description && (
-                        <div className="text-gray-500 italic">
-                          {String(room.description)}
+                        <div className="text-gray-500 prose prose-sm max-w-none [&_*]:text-xs [&_*]:text-gray-500 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-gray-700 [&_h3]:mt-2 [&_h3]:mb-1 [&_p]:mb-1 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:space-y-1 [&_li]:mb-0.5 [&_strong]:font-semibold [&_strong]:text-gray-700">
+                          {parse(String(room.description))}
                         </div>
                       )}
                     </div>
                   </div>
                 )}
 
-                <div className="text-xs text-gray-500 italic pt-2 border-t">
-                  {plan.description}
-                </div>
+                {plan.description && (
+                  <div className="text-xs text-gray-500 prose prose-sm max-w-none pt-2 border-t [&_*]:text-xs [&_*]:text-gray-500 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-gray-700 [&_h3]:mt-2 [&_h3]:mb-1 [&_p]:mb-1 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:space-y-1 [&_li]:mb-0.5 [&_strong]:font-semibold [&_strong]:text-gray-700">
+                    {parse(String(plan.description))}
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -863,7 +854,7 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
               </div>
               {publishPlan?.payload?.roomId && (
                 <div className="flex gap-3 w-full">
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={() => {
                       const roomId = publishPlan.payload?.roomId;
@@ -871,19 +862,19 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
                         router.push(`/rooms/${roomId}`);
                         handleClose();
                       }
-                    }} 
+                    }}
                     className="flex-1"
                   >
                     Xem phòng
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => {
                       const roomId = publishPlan.payload?.roomId;
                       if (roomId) {
                         router.push(`/dashboard/landlord/properties/rooms/${roomId}`);
                         handleClose();
                       }
-                    }} 
+                    }}
                     className="flex-1"
                   >
                     Chỉnh sửa chi tiết phòng
@@ -918,7 +909,7 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
               return (
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
                   <h4 className="text-sm font-semibold text-gray-900">Thông tin đã chuẩn bị:</h4>
-                  
+
                   {plan.shouldCreateBuilding && building && (
                     <div className="space-y-2">
                       <div className="text-xs font-medium text-gray-700">Dãy trọ mới:</div>
@@ -940,7 +931,17 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
                             )}/tháng
                           </div>
                         )}
+                        {room?.description && (
+                          <div className="text-gray-500 prose prose-sm max-w-none [&_*]:text-xs [&_*]:text-gray-500 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-gray-700 [&_h3]:mt-2 [&_h3]:mb-1 [&_p]:mb-1 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:space-y-1 [&_li]:mb-0.5 [&_strong]:font-semibold [&_strong]:text-gray-700">
+                            {parse(String(room.description))}
+                          </div>
+                        )}
                       </div>
+                    </div>
+                  )}
+                  {plan.description && (
+                    <div className="text-xs text-gray-500 prose prose-sm max-w-none pt-2 border-t [&_*]:text-xs [&_*]:text-gray-500 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-gray-700 [&_h3]:mt-2 [&_h3]:mb-1 [&_p]:mb-1 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:space-y-1 [&_li]:mb-0.5 [&_strong]:font-semibold [&_strong]:text-gray-700">
+                      {parse(String(plan.description))}
                     </div>
                   )}
                 </div>
@@ -973,7 +974,7 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
         {/* Conversation State */}
         {dialogState === 'conversation' && (
           <>
-            <div 
+            <div
               ref={messagesContainerRef}
               className="flex-1 overflow-y-auto px-6 py-4 space-y-3 min-h-0"
             >

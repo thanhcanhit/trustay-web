@@ -18,8 +18,11 @@ import { AITablePreview } from './ai-table-preview';
 import { AIControlBlock } from './ai-control-block';
 import { AIMessageMarkdown } from './ai-message-markdown';
 import { AIPostRoomDialog } from './ai-post-room-dialog';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 export function AISidebar() {
+  const router = useRouter();
   const isSidebarOpen = useAIAssistantStore((s) => s.isSidebarOpen);
   const toggleSidebar = useAIAssistantStore((s) => s.toggleSidebar);
   const loadHistory = useAIAssistantStore((s) => s.loadHistory);
@@ -29,6 +32,7 @@ export function AISidebar() {
   const error = useAIAssistantStore((s) => s.error);
   const messages = useAIAssistantStore((s) => s.messages);
   const user = useUserStore((s) => s.user);
+  const isAuthenticated = useUserStore((s) => s.isAuthenticated);
   const isLandlord = user?.role === 'landlord';
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -171,7 +175,20 @@ export function AISidebar() {
       <AIHeader 
         onClear={() => clearHistory()} 
         onClose={() => toggleSidebar(false)}
-        onPostRoom={() => setPostRoomDialogOpen(true)}
+        onPostRoom={() => {
+          if (!isAuthenticated) {
+            toast.info('Đăng nhập để đăng tải phòng', {
+              description: 'Bạn cần đăng nhập để sử dụng tính năng đăng tải phòng với AI. Hãy đăng nhập hoặc đăng ký tài khoản ngay!',
+              action: {
+                label: 'Đăng nhập',
+                onClick: () => router.push('/login'),
+              },
+              duration: 5000,
+            });
+            return;
+          }
+          setPostRoomDialogOpen(true);
+        }}
       />
 
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -202,7 +219,20 @@ export function AISidebar() {
                     {isLandlord && (
                       <Button
                         type="button"
-                        onClick={() => setPostRoomDialogOpen(true)}
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            toast.info('Đăng nhập để đăng tải phòng', {
+                              description: 'Bạn cần đăng nhập để sử dụng tính năng đăng tải phòng với AI. Hãy đăng nhập hoặc đăng ký tài khoản ngay!',
+                              action: {
+                                label: 'Đăng nhập',
+                                onClick: () => router.push('/login'),
+                              },
+                              duration: 5000,
+                            });
+                            return;
+                          }
+                          setPostRoomDialogOpen(true);
+                        }}
                         className="w-fit cursor-pointer justify-start px-3 sm:px-4 py-1.5 sm:py-2 h-auto rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm font-medium"
                       >
                         <Home size={14} className="sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
