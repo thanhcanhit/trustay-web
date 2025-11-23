@@ -96,25 +96,35 @@ export interface RoomPublishResponse {
 	data?: {
 		kind: 'CONTENT' | 'CONTROL';
 		sessionId: string;
-		timestamp: string;
+		timestamp?: string;
 		message: string;
-		status: RoomPublishingStatus;
 		payload?: {
-			mode: 'CONTENT' | 'ROOM_PUBLISH';
+			mode: 'ROOM_PUBLISH';
+			status: RoomPublishingStatus;
+			// For NEED_MORE_INFO
+			missingField?: string;
+			hasPendingActions?: boolean;
+			// For READY_TO_CREATE
 			plan?: {
 				shouldCreateBuilding: boolean;
 				buildingId?: string;
 				buildingPayload?: unknown;
 				roomPayload: unknown;
-				description: string;
+				description?: string;
 			};
-			roomId?: string; // For CREATED status
-			error?: string; // For CREATION_FAILED status
+			// For CREATED
+			roomId?: string;
+			roomSlug?: string;
+			roomPath?: string; // "/rooms/{slug}" - dùng để redirect
+			// For CREATION_FAILED
+			error?: string;
 		};
 		meta?: {
 			stage: string;
 			planReady?: boolean;
 			shouldCreateBuilding?: boolean;
+			pendingActions?: number;
+			actionTypes?: string;
 		};
 	};
 	error?: string;

@@ -51,7 +51,6 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
   const [clarificationQuestions, setClarificationQuestions] = useState<string[]>([]);
   const [publishPlan, setPublishPlan] = useState<RoomPublishResponse['data'] | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [createdRoomId, setCreatedRoomId] = useState<string | null>(null);
   const [creationError, setCreationError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -110,7 +109,6 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
       setReplyText("");
       setClarificationQuestions([]);
       setPublishPlan(null);
-      setCreatedRoomId(null);
       setCreationError(null);
     }
   }, [open]);
@@ -157,30 +155,35 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
 
   // Auto-redirect when room is created
   useEffect(() => {
-    if (dialogState === 'created' && createdRoomId) {
-      const timer = setTimeout(() => {
-        router.push(`/dashboard/landlord/properties/rooms/${createdRoomId}`);
-        // Close dialog after navigation
-        onOpenChange(false);
-      }, 2000);
+    if (dialogState === 'created' && publishPlan?.payload?.roomPath) {
+      const roomPath = publishPlan.payload.roomPath;
+      if (roomPath) {
+        const timer = setTimeout(() => {
+          // Use roomPath from API response
+          router.push(roomPath);
+          // Close dialog after navigation
+          onOpenChange(false);
+        }, 2000);
 
-      return () => clearTimeout(timer);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [dialogState, createdRoomId, router, onOpenChange]);
+  }, [dialogState, publishPlan?.payload?.roomPath, router, onOpenChange]);
 
   // Handle response and update state based on status
   const handleResponse = (response: RoomPublishResponse | null) => {
     if (!response || !response.data) return;
 
     const { data } = response;
-    const status = data.status || RoomPublishingStatus.NEED_MORE_INFO;
+    // Status is now in payload.status
+    const status = data.payload?.status || RoomPublishingStatus.NEED_MORE_INFO;
 
     // Add assistant message to conversation
     const assistantMessage: ConversationMessage = {
       id: `assistant_${Date.now()}`,
       role: 'assistant',
       content: data.message,
-      timestamp: data.timestamp,
+      timestamp: data.timestamp || new Date().toISOString(),
     };
     setConversationMessages(prev => [...prev, assistantMessage]);
 
@@ -218,7 +221,7 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
 
       case RoomPublishingStatus.CREATED:
         // Room created successfully
-        setCreatedRoomId(data.payload?.roomId || null);
+        setPublishPlan(data);
         setDialogState('created');
         break;
 
@@ -859,11 +862,14 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
                   {publishPlan?.message || "Phòng trọ của bạn đã được tạo thành công. Đang chuyển hướng..."}
                 </p>
               </div>
-              {createdRoomId && (
+              {publishPlan?.payload?.roomPath && (
                 <Button 
                   onClick={() => {
-                    router.push(`/dashboard/landlord/properties/rooms/${createdRoomId}`);
-                    handleClose();
+                    const roomPath = publishPlan.payload?.roomPath;
+                    if (roomPath) {
+                      router.push(roomPath);
+                      handleClose();
+                    }
                   }} 
                   className="w-full"
                 >
