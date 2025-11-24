@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { PageHeader } from '@/components/dashboard/page-header';
@@ -40,8 +40,14 @@ import {
 	Receipt,
 	Gauge,
 	Trash2,
+	QrCode,
+	ExternalLink,
+	Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import QRCode from 'react-qr-code';
+import type { PayOSLinkResponse } from '@/types/bill.types';
 
 export default function BillDetailPage() {
 	const params = useParams();
@@ -59,6 +65,8 @@ export default function BillDetailPage() {
 	} = useBillStore();
 
 	const [showMeterDialog, setShowMeterDialog] = useState(false);
+	const [creatingPayLink, setCreatingPayLink] = useState(false);
+	const [payOSInfo, setPayOSInfo] = useState<PayOSLinkResponse | null>(null);
 
 	useEffect(() => {
 		if (billId) {
@@ -94,6 +102,68 @@ export default function BillDetailPage() {
 		// Reload bill after meter data is updated
 		loadById(billId);
 	};
+
+	const buildPayOSUrls = (billIdentifier: string) => {
+		const baseUrl = (process.env.NEXT_PUBLIC_PAYMENT_RETURN_BASE_URL || 'https://trustay.life').replace(/\/$/, '');
+		const query = `billId=${encodeURIComponent(billIdentifier)}`;
+		return {
+			returnUrl: `${baseUrl}/payments/success?${query}`,
+			cancelUrl: `${baseUrl}/payments/cancel?${query}`,
+		};
+	};
+
+	const handleGeneratePayOSLink = async () => {
+		if (!bill) return;
+		if (creatingPayLink) return;
+
+		try {
+			setCreatingPayLink(true);
+			const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+			if (!token) {
+				toast.error('Bạn cần đăng nhập để tạo link thanh toán');
+				return;
+			}
+
+			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bills/${bill.id}/payos-link`, {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(buildPayOSUrls(bill.id)),
+			});
+
+			if (!response.ok) {
+				throw new Error('Không thể tạo liên kết PayOS');
+			}
+
+			const data: PayOSLinkResponse = await response.json();
+			if (!data.checkoutUrl && !data.qrCode) {
+				throw new Error('Không nhận được liên kết PayOS hợp lệ');
+			}
+			setPayOSInfo(data);
+		} catch (error) {
+			console.error('Error creating PayOS link:', error);
+			toast.error('Có lỗi khi tạo liên kết PayOS');
+		} finally {
+			setCreatingPayLink(false);
+		}
+	};
+
+	const copyCheckoutUrl = async () => {
+		if (!payOSInfo?.checkoutUrl) return;
+		try {
+			await navigator.clipboard.writeText(payOSInfo.checkoutUrl);
+			toast.success('Đã sao chép liên kết thanh toán');
+		} catch {
+			toast.error('Không thể sao chép liên kết, vui lòng thử lại');
+		}
+	};
+
+	const formattedPayAmount = useMemo(() => {
+		if (!payOSInfo?.amount) return null;
+		return payOSInfo.amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+	}, [payOSInfo]);
 
 	if (loading) {
 		return (
@@ -402,6 +472,15 @@ export default function BillDetailPage() {
 								<CardTitle>Thao tác</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-2">
+								<Button
+									variant="outline"
+									className="w-full"
+									onClick={handleGeneratePayOSLink}
+									disabled={creatingPayLink}
+								>
+									<QrCode className="w-4 h-4 mr-2" />
+									{creatingPayLink ? 'Đang tạo link PayOS...' : 'Tạo link/QR PayOS'}
+								</Button>
 								{bill.status === 'pending' && (
 									<Button
 										className="w-full"
@@ -476,6 +555,64 @@ export default function BillDetailPage() {
 					onSuccess={handleMeterDataUpdated}
 				/>
 			)}
+
+			<Dialog open={!!payOSInfo} onOpenChange={(open) => !open && setPayOSInfo(null)}>
+				<DialogContent className="max-w-md">
+					<DialogHeader>
+						<DialogTitle>Chia sẻ thanh toán PayOS</DialogTitle>
+						<DialogDescription>
+							Gửi QR hoặc liên kết cho tenant để thanh toán online. Trạng thái hóa đơn sẽ cập nhật tự động.
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="flex flex-col items-center gap-4">
+						<div className="p-4 bg-white rounded-lg border">
+							{payOSInfo?.qrCode ? (
+								// eslint-disable-next-line @next/next/no-img-element
+								<img src={payOSInfo.qrCode} alt="QR PayOS" className="w-56 h-56 object-contain" />
+							) : (
+								payOSInfo?.checkoutUrl && (
+									<QRCode
+										value={payOSInfo.checkoutUrl}
+										size={224}
+										style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+									/>
+								)
+							)}
+						</div>
+
+						{formattedPayAmount && (
+							<div className="text-center">
+								<p className="text-sm text-gray-500">Số tiền</p>
+								<p className="text-xl font-semibold text-gray-900">{formattedPayAmount}</p>
+							</div>
+						)}
+
+						<div className="w-full space-y-2">
+							{payOSInfo?.checkoutUrl && (
+								<>
+									<Button
+										className="w-full gap-2"
+										onClick={() =>
+											payOSInfo.checkoutUrl && window.open(payOSInfo.checkoutUrl, '_blank', 'noopener,noreferrer')
+										}
+									>
+										<ExternalLink className="h-4 w-4" />
+										Mở trang thanh toán
+									</Button>
+									<Button variant="outline" className="w-full gap-2" onClick={copyCheckoutUrl}>
+										<Copy className="h-4 w-4" />
+										Sao chép liên kết
+									</Button>
+								</>
+							)}
+							<Button variant="ghost" className="w-full" onClick={() => setPayOSInfo(null)}>
+								Đóng
+							</Button>
+						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
 		</DashboardLayout>
 	);
 }

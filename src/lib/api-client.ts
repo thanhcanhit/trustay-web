@@ -38,6 +38,18 @@ export const TokenManager = {
 	},
 };
 
+const MAX_RETRY_ATTEMPTS = 5;
+const RETRY_DELAY_MS = 3000;
+
+const delay = (ms: number): Promise<void> =>
+	new Promise((resolve) => {
+		setTimeout(resolve, ms);
+	});
+
+interface RetryableRequestConfig extends AxiosRequestConfig {
+	_retryCount?: number;
+}
+
 // Create axios instance
 const axiosInstance: AxiosInstance = axios.create({
 	baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -65,7 +77,7 @@ axiosInstance.interceptors.request.use(
 
 // Helper function to handle token refresh
 // This will be called by the response interceptor when a 401 error occurs
-const handleTokenRefresh = async (originalRequest: AxiosRequestConfig) => {
+const handleTokenRefresh = async (originalRequest: RetryableRequestConfig) => {
 	// Import userStore dynamically to avoid circular dependency
 	const { useUserStore } = await import('@/stores/userStore');
 	const refreshToken = useUserStore.getState().getRefreshToken();
@@ -116,17 +128,17 @@ axiosInstance.interceptors.response.use(
 		return response;
 	},
 	async (error) => {
-		const originalRequest = error.config;
-		const shouldRetry = error.response?.status === 401 && !originalRequest._retry;
+		const originalRequest = error.config as RetryableRequestConfig;
+		const retryCount = originalRequest?._retryCount ?? 0;
+		const shouldRetry = error.response?.status === 401 && retryCount < MAX_RETRY_ATTEMPTS;
 
-		if (shouldRetry) {
-			originalRequest._retry = true;
+		if (shouldRetry && typeof window !== 'undefined') {
+			originalRequest._retryCount = retryCount + 1;
+			await delay(RETRY_DELAY_MS);
 
-			if (typeof window !== 'undefined') {
-				const refreshResult = await handleTokenRefresh(originalRequest);
-				if (refreshResult) {
-					return refreshResult;
-				}
+			const refreshResult = await handleTokenRefresh(originalRequest);
+			if (refreshResult) {
+				return refreshResult;
 			}
 		}
 

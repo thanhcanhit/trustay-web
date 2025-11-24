@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Receipt, Filter, AlertCircle, Save, Eye, Trash2, CheckCircle } from "lucide-react"
+import { Search, Receipt, Filter, AlertCircle, Save, Eye, Trash2, CheckCircle, QrCode, ExternalLink, Copy } from "lucide-react"
 import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
 import { useBillStore } from "@/stores/billStore"
 import { useBuildingStore } from "@/stores/buildingStore"
@@ -15,6 +15,7 @@ import { getCurrentBillingPeriod, formatCurrency, getBillStatusLabel, getBillSta
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   Table,
   TableBody,
@@ -23,7 +24,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import type { Bill, LandlordBillQueryParams } from "@/types/bill.types"
+import QRCode from "react-qr-code"
+import type { Bill, LandlordBillQueryParams, PayOSLinkResponse } from "@/types/bill.types"
+import { TokenManager } from "@/lib/api-client"
 import type { BillStatus } from "@/types/types"
 
 export default function InvoicesPage() {
@@ -58,6 +61,19 @@ export default function InvoicesPage() {
   const [selectedBillId, setSelectedBillId] = useState<string | null>(null)
   const [meterInputs, setMeterInputs] = useState<Record<string, { oldReading: string; newReading: string }>>({})
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const [creatingPayLinkFor, setCreatingPayLinkFor] = useState<string | null>(null)
+  const [payOSModalData, setPayOSModalData] = useState<{
+    info: PayOSLinkResponse | null
+    bill: Bill | null
+  }>({
+    info: null,
+    bill: null,
+  })
+
+  const formattedPayAmount = useMemo(() => {
+    if (!payOSModalData.info?.amount) return null
+    return payOSModalData.info.amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })
+  }, [payOSModalData.info])
 
   // Count bills that need meter data (both draft and pending can be edited)
   const billsNeedingMeterData = bills.filter(b =>
@@ -248,6 +264,63 @@ export default function InvoicesPage() {
         [field]: value
       }
     }))
+  }
+
+  const buildPayOSUrls = (billId: string) => {
+    const baseUrl = (process.env.NEXT_PUBLIC_PAYMENT_RETURN_BASE_URL || 'https://trustay.life').replace(/\/$/, '')
+    const query = `billId=${encodeURIComponent(billId)}`
+    return {
+      returnUrl: `${baseUrl}/payments/success?${query}`,
+      cancelUrl: `${baseUrl}/payments/cancel?${query}`,
+    }
+  }
+
+  const handleGeneratePayOSLink = async (bill: Bill, event?: React.MouseEvent<HTMLButtonElement>) => {
+    event?.stopPropagation()
+    if (creatingPayLinkFor) return
+
+    try {
+      setCreatingPayLinkFor(bill.id)
+      const token = TokenManager.getAccessToken()
+      if (!token) {
+        toast.error('Bạn cần đăng nhập để tạo link thanh toán')
+        return
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bills/${bill.id}/payos-link`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(buildPayOSUrls(bill.id)),
+      })
+
+      if (!response.ok) {
+        throw new Error('Không thể tạo liên kết PayOS')
+      }
+
+      const data: PayOSLinkResponse = await response.json()
+      setPayOSModalData({
+        info: data,
+        bill,
+      })
+    } catch (error) {
+      console.error('Error generating PayOS link:', error)
+      toast.error('Có lỗi xảy ra khi tạo liên kết PayOS')
+    } finally {
+      setCreatingPayLinkFor(null)
+    }
+  }
+
+  const copyCheckoutUrl = async () => {
+    if (!payOSModalData.info?.checkoutUrl) return
+    try {
+      await navigator.clipboard.writeText(payOSModalData.info.checkoutUrl)
+      toast.success('Đã sao chép liên kết thanh toán')
+    } catch {
+      toast.error('Không thể sao chép liên kết, vui lòng thử lại')
+    }
   }
 
   const handleMeterInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
@@ -629,6 +702,16 @@ export default function InvoicesPage() {
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-blue-600 hover:text-blue-700"
+                                  title="Tạo link PayOS"
+                                  disabled={creatingPayLinkFor === bill.id}
+                                  onClick={(e) => handleGeneratePayOSLink(bill, e)}
+                                >
+                                  <QrCode className={`h-4 w-4 ${creatingPayLinkFor === bill.id ? 'animate-pulse' : ''}`} />
+                                </Button>
                                 
                                 {bill.status === 'pending' && (
                                   <Button
@@ -856,6 +939,81 @@ export default function InvoicesPage() {
           </div>
         )}
       </div>
+      <Dialog open={!!payOSModalData.info} onOpenChange={(open) => {
+        if (!open) {
+          setPayOSModalData({ info: null, bill: null })
+        }
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Tạo liên kết thanh toán PayOS</DialogTitle>
+            <DialogDescription>
+              Gửi QR hoặc đường dẫn này cho tenant để thanh toán online. Trạng thái hóa đơn sẽ tự cập nhật khi PayOS phản hồi.
+            </DialogDescription>
+          </DialogHeader>
+
+          {payOSModalData.bill && (
+            <div className="p-4 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+              Hóa đơn phòng <span className="font-semibold text-foreground">{payOSModalData.bill.rental?.roomInstance?.roomNumber || payOSModalData.bill.id}</span> • Kỳ {payOSModalData.bill.billingMonth}/{payOSModalData.bill.billingYear}
+            </div>
+          )}
+
+          <div className="flex flex-col items-center gap-4">
+            <div className="p-4 bg-white rounded-lg border">
+              {payOSModalData.info?.qrCode ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={payOSModalData.info.qrCode}
+                  alt="Mã QR PayOS"
+                  className="w-60 h-60 object-contain"
+                />
+              ) : payOSModalData.info?.checkoutUrl ? (
+                <QRCode
+                  value={payOSModalData.info.checkoutUrl}
+                  size={240}
+                  style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+                />
+              ) : null}
+            </div>
+
+            {formattedPayAmount && (
+              <div className="text-center">
+                <p className="text-sm text-gray-500">Số tiền</p>
+                <p className="text-2xl font-semibold text-gray-900">{formattedPayAmount}</p>
+              </div>
+            )}
+
+            <div className="w-full space-y-2">
+              {payOSModalData.info?.checkoutUrl && (
+                <>
+                  <Button
+                    className="w-full gap-2"
+                    onClick={() => window.open(payOSModalData.info?.checkoutUrl ?? '#', '_blank', 'noopener,noreferrer')}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Mở trang thanh toán
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={copyCheckoutUrl}
+                  >
+                    <Copy className="h-4 w-4" />
+                    Sao chép liên kết
+                  </Button>
+                </>
+              )}
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => setPayOSModalData({ info: null, bill: null })}
+              >
+                Đóng
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   )
 }

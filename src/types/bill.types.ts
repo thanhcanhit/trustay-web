@@ -175,3 +175,19 @@ export interface PaginatedBillResponse {
 		totalPages: number;
 	};
 }
+
+export interface PayOSLinkRequest {
+	returnUrl?: string;
+	cancelUrl?: string;
+}
+
+export interface PayOSLinkResponse {
+	checkoutUrl: string;
+	qrCode?: string;
+	orderCode: number;
+	amount: number;
+	currency: string;
+	description: string;
+	paymentLinkId: string;
+	expiredAt: number;
+}
