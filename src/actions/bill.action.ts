@@ -9,6 +9,8 @@ import type {
 	GenerateMonthlyBillsResponse,
 	LandlordBillQueryParams,
 	PaginatedBillResponse,
+	PayOSLinkRequest,
+	PayOSLinkResponse,
 	PreviewBillForBuildingRequest,
 	UpdateBillRequest,
 	UpdateBillWithMeterDataRequest,
@@ -323,6 +325,30 @@ export const getTenantBills = async (
 		return {
 			success: false,
 			error: extractErrorMessage(error, 'Không thể tải danh sách hóa đơn'),
+		};
+	}
+};
+
+// Create PayOS checkout link for bill payment
+export const createPayOSLinkForBill = async (
+	billId: string,
+	data?: PayOSLinkRequest,
+	token?: string,
+): Promise<ApiResult<PayOSLinkResponse>> => {
+	try {
+		const response = await apiCall<PayOSLinkResponse>(
+			`/api/bills/${billId}/payos-link`,
+			{
+				method: 'POST',
+				data,
+			},
+			token,
+		);
+		return { success: true, data: response };
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể tạo liên kết PayOS'),
 		};
 	}
 };

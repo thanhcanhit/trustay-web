@@ -62,42 +62,40 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>("");
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [isLoadingBuildings, setIsLoadingBuildings] = useState(false);
+  const [hasFetchedBuildings, setHasFetchedBuildings] = useState(false);
 
   const MAX_IMAGES = 5;
 
   // Fetch buildings when dialog opens
   useEffect(() => {
-    if (open && !isLoadingBuildings) {
-      const fetchBuildings = async () => {
-        // Only fetch if we don't have buildings yet
-        if (buildings.length > 0) return;
+    if (!open || isLoadingBuildings || hasFetchedBuildings) return;
 
-        setIsLoadingBuildings(true);
+    const fetchBuildings = async () => {
+      setIsLoadingBuildings(true);
+      try {
         const token = TokenManager.getAccessToken();
         if (!token) {
-          setIsLoadingBuildings(false);
           return;
         }
 
-        try {
-          const result = await getMyBuildings({ limit: 100 }, token);
-          if (result.success && result.data?.buildings) {
-            setBuildings(result.data.buildings);
-            console.log('Fetched buildings:', result.data.buildings.length);
-          } else {
-            const errorMessage = 'error' in result ? result.error : 'Không thể tải danh sách dãy trọ';
-            console.error('Failed to fetch buildings:', errorMessage);
-          }
-        } catch (error) {
-          console.error('Error fetching buildings:', error);
-        } finally {
-          setIsLoadingBuildings(false);
+        const result = await getMyBuildings({ limit: 100 }, token);
+        if (result.success && result.data?.buildings) {
+          setBuildings(result.data.buildings);
+          console.log('Fetched buildings:', result.data.buildings.length);
+        } else {
+          const errorMessage = 'error' in result ? result.error : 'Không thể tải danh sách dãy trọ';
+          console.error('Failed to fetch buildings:', errorMessage);
         }
-      };
+      } catch (error) {
+        console.error('Error fetching buildings:', error);
+      } finally {
+        setIsLoadingBuildings(false);
+        setHasFetchedBuildings(true);
+      }
+    };
 
-      fetchBuildings();
-    }
-  }, [open, isLoadingBuildings, buildings.length]);
+    void fetchBuildings();
+  }, [open, isLoadingBuildings, hasFetchedBuildings]);
 
   // Reset form when dialog closes
   useEffect(() => {
@@ -111,6 +109,8 @@ export function AIPostRoomDialog({ open, onOpenChange }: AIPostRoomDialogProps) 
       setClarificationQuestions([]);
       setPublishPlan(null);
       setCreationError(null);
+      setBuildings([]);
+      setHasFetchedBuildings(false);
     }
   }, [open]);
 

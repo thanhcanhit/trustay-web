@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -12,8 +12,8 @@ import {
   Zap} from 'lucide-react';
 import type { RoomListing } from '@/types/types';
 import { Badge } from './badge';
-// import { getOptimizedImageUrl } from '@/lib/utils';
 import { getRoomTypeDisplayName } from '@/utils/room-types';
+import { getImageUrl } from '@/lib/utils';
 
 interface RoomCardProps {
   room: RoomListing;
@@ -79,12 +79,23 @@ export function RoomCard({
 
   const cardClassName = `bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer block ${className}`;
 
+  const formattedImageSrc = useMemo(() => {
+    const fallback = '/images/error-image.jpg';
+    if (imageError) return fallback;
+
+    const rawUrl = room.images?.[0]?.url;
+    if (!rawUrl) return fallback;
+
+    const finalUrl = getImageUrl(rawUrl, { size: '512x512', format: 'webp', quality: 80 });
+    return finalUrl || fallback;
+  }, [imageError, room.images]);
+
   const cardContent = (
     <>
       {/* Image Container */}
       <div className="relative h-32 md:h-40">
         <Image
-          src={imageError ? "/images/error-image.jpg" : (room.images?.[0]?.url || "/images/error-image.jpg")}
+          src={formattedImageSrc}
           alt={room.name || "Room image"}
           fill
           className="object-cover"
