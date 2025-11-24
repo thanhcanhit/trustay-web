@@ -961,12 +961,20 @@ export default function InvoicesPage() {
           <div className="flex flex-col items-center gap-4">
             <div className="p-4 bg-white rounded-lg border">
               {payOSModalData.info?.qrCode ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={payOSModalData.info.qrCode}
-                  alt="Mã QR PayOS"
-                  className="w-60 h-60 object-contain"
-                />
+                /^https?:/i.test(payOSModalData.info.qrCode) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={payOSModalData.info.qrCode}
+                    alt="Mã QR PayOS"
+                    className="w-60 h-60 object-contain"
+                  />
+                ) : (
+                  <QRCode
+                    value={payOSModalData.info.qrCode}
+                    size={240}
+                    style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+                  />
+                )
               ) : payOSModalData.info?.checkoutUrl ? (
                 <QRCode
                   value={payOSModalData.info.checkoutUrl}

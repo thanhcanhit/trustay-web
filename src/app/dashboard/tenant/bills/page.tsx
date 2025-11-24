@@ -327,12 +327,20 @@ export default function TenantBillsPage() {
           <div className="flex flex-col items-center gap-4">
             <div className="p-4 bg-white rounded-lg border">
               {payOSInfo?.qrCode ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={payOSInfo.qrCode}
-                  alt="Mã QR PayOS"
-                  className="w-56 h-56 object-contain"
-                />
+                /^https?:/i.test(payOSInfo.qrCode) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={payOSInfo.qrCode}
+                    alt="Mã QR PayOS"
+                    className="w-56 h-56 object-contain"
+                  />
+                ) : (
+                  <QRCode
+                    value={payOSInfo.qrCode}
+                    size={224}
+                    style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+                  />
+                )
               ) : (
                 payOSInfo?.checkoutUrl && (
                   <QRCode
