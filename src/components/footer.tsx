@@ -10,7 +10,7 @@ export function Footer() {
           <div className="col-span-1 sm:col-span-2 md:col-span-1">
             <div className="flex items-center space-x-2 mb-4">
               <div className="rounded-lg flex items-center justify-center">
-                <Image src="/logo.png" alt="Trustay" width={120} height={120} className="w-24 sm:w-[120px] h-24 sm:h-[120px]" />
+                <Image src="/logo.png" alt="Trustay" width={120} height={100} className="w-24 sm:w-[120px] h-20 sm:h-[70px]" />
               </div>
             </div>
             <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">

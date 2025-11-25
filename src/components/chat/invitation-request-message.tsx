@@ -58,25 +58,35 @@ export function InvitationRequestMessage({ message, isOwnMessage }: InvitationRe
 
   const displayMessage = structuredData?.message || message.content;
 
-  // Render room card for invitation
-  if (isInvitation && roomData) {
+  // Helper function to get image URL from roomImage (supports both string and object formats)
+  const getRoomImageUrl = (roomImage: any): string | undefined => {
+    if (!roomImage) return undefined;
+    if (typeof roomImage === 'string') return roomImage;
+    if (typeof roomImage === 'object' && roomImage.url) return roomImage.url;
+    return undefined;
+  };
+
+  // Render room card for invitation or request
+  if ((isInvitation || isRequest) && roomData) {
+    const imageUrl = getRoomImageUrl(roomData.roomImage);
+
     return (
       <div className="flex flex-col gap-2 max-w-xs">
         <div className="font-semibold text-sm">
-          Lời mời thuê
+          {isInvitation ? 'Lời mời thuê' : 'Yêu cầu thuê'}
         </div>
 
         {/* Room Card */}
         <a
-          href={`/listings/${roomData.roomSlug || roomData.roomId}`}
+          href={`/rooms/${ roomData.roomId}`}
           target="_blank"
           rel="noopener noreferrer"
           className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
         >
-          {roomData.roomImage && (
+          {imageUrl && (
             <div className="relative h-32 w-full">
               <SizingImage
-                src={roomData.roomImage}
+                src={imageUrl}
                 srcSize="512x512"
                 alt={roomData.roomName || "Room"}
                 fill

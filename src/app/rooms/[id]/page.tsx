@@ -25,6 +25,7 @@ import { useUserStore } from "@/stores/userStore"
 import { toast } from "sonner"
 import { MESSAGE_TYPES } from "@/constants/chat.constants"
 import { useChatStore } from "@/stores/chat.store"
+import { encodeStructuredMessage } from "@/lib/chat-message-encoder"
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination } from 'swiper/modules'
 import { RatingsList } from "@/components/rating"
@@ -166,12 +167,12 @@ export default function PropertyDetailPage() {
   // Get similar posts from API response or fallback to featured rooms
   const getSimilarPosts = (): RoomListing[] => {
     // First try to use similarRooms from API response
-    if (roomDetail?.similarRooms && roomDetail.similarRooms.length > 0) {
+    if (roomDetail?.similarRooms && Array.isArray(roomDetail.similarRooms) && roomDetail.similarRooms.length > 0) {
       return roomDetail.similarRooms.slice(0, 8)
     }
 
     // Fallback: Combine featured rooms and search results, excluding current room
-    const allRooms = [...featuredRooms, ...searchResults]
+    const allRooms = [...(featuredRooms || []), ...(searchResults || [])]
 
     // Remove duplicates by ID and exclude current room
     const uniqueRooms = allRooms.reduce((acc, room) => {
@@ -241,9 +242,31 @@ export default function PropertyDetailPage() {
     if (ok && roomDetail?.owner?.id) {
       try {
         console.log('🚀 Starting to send booking request notification message')
+
+        // Prepare structured message with room information
+        const roomLocation = [
+          roomDetail.address,
+          roomDetail.location?.wardName,
+          roomDetail.location?.districtName,
+          roomDetail.location?.provinceName
+        ].filter(Boolean).join(', ');
+
+        const structuredContent = encodeStructuredMessage({
+          type: 'request',
+          room: {
+            roomId: roomDetail.id,
+            roomSlug: roomDetail.slug,
+            roomName: roomDetail.name,
+            roomImage: roomDetail.images?.[0]?.url,
+            roomPrice: roomDetail.pricing?.basePriceMonthly,
+            roomLocation: roomLocation || undefined,
+          },
+          message: messageToOwner || 'Tôi quan tâm đến phòng của bạn và muốn gửi yêu cầu thuê.',
+        })
+
         console.log('📝 Message payload:', {
           recipientId: roomDetail.owner.id,
-          content: messageToOwner || 'Tôi quan tâm đến phòng của bạn và muốn gửi yêu cầu thuê.',
+          content: structuredContent,
           type: MESSAGE_TYPES.REQUEST
         })
         console.log('👤 Current user:', user)
@@ -252,7 +275,7 @@ export default function PropertyDetailPage() {
         // Send notification message to room owner using chat store
         await sendChatMessage({
           recipientId: roomDetail.owner.id,
-          content: messageToOwner || 'Tôi quan tâm đến phòng của bạn và muốn gửi yêu cầu thuê.',
+          content: structuredContent,
           type: MESSAGE_TYPES.REQUEST
         })
 
@@ -472,7 +495,7 @@ export default function PropertyDetailPage() {
                       Tiện nghi
                     </h3>
                     <AmenitySelector
-                      selectedAmenities={roomDetail.amenities.map((a: typeof roomDetail.amenities[number]) => a.id)}
+                      selectedAmenities={(roomDetail.amenities || []).map((a: typeof roomDetail.amenities[number]) => a.id)}
                       onSelectionChange={() => {}} // Read-only
                       mode="display"
                     />
@@ -512,7 +535,7 @@ export default function PropertyDetailPage() {
                       </div>
 
                       {/* Additional Costs */}
-                      {roomDetail.costs && roomDetail.costs.length > 0 && (
+                      {roomDetail.costs && Array.isArray(roomDetail.costs) && roomDetail.costs.length > 0 && (
                         <div>
                           <h4 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">Chi phí phát sinh</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
@@ -566,7 +589,7 @@ export default function PropertyDetailPage() {
                   <div className="border-t border-gray-200 my-6"></div>
 
                   {/* Rules Section */}
-                  {roomDetail.rules && roomDetail.rules.length > 0 && (
+                  {roomDetail.rules && Array.isArray(roomDetail.rules) && roomDetail.rules.length > 0 && (
                     <>
                       <div className="mb-6">
                         <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
@@ -616,9 +639,9 @@ export default function PropertyDetailPage() {
                       Mô tả chi tiết
                     </h3>
                     <div className={`${!isDescriptionExpanded ? 'line-clamp-3' : ''}`}>
-                      <HTMLContent content={roomDetail.description} />
+                      <HTMLContent content={roomDetail.description || ''} />
                     </div>
-                    {roomDetail.description.length > 150 && (
+                    {roomDetail.description && roomDetail.description.length > 150 && (
                       <button
                         onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
                         className="mt-4 text-blue-600 hover:text-blue-800 flex items-center text-sm font-medium transition-colors"

@@ -278,7 +278,7 @@ function RentalDetailContent() {
                   <Home className="h-5 w-5" />
                   Thông tin phòng trọ
                 </CardTitle>
-                {rental.roomInstance?.room?.slug && (
+                {rental.roomInstance?.room?.id && (
                   <Button
                     size="sm"
                     variant="outline"
