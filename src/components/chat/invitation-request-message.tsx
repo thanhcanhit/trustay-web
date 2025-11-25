@@ -59,7 +59,7 @@ export function InvitationRequestMessage({ message, isOwnMessage }: InvitationRe
   const displayMessage = structuredData?.message || message.content;
 
   // Helper function to get image URL from roomImage (supports both string and object formats)
-  const getRoomImageUrl = (roomImage: any): string | undefined => {
+  const getRoomImageUrl = (roomImage: string | { url: string } | null | undefined): string | undefined => {
     if (!roomImage) return undefined;
     if (typeof roomImage === 'string') return roomImage;
     if (typeof roomImage === 'object' && roomImage.url) return roomImage.url;

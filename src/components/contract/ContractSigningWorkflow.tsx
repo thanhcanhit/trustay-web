@@ -40,7 +40,7 @@ const ContractSigningWorkflow: React.FC<ContractSigningWorkflowProps> = ({
 
 	// Kiểm tra xem có thể ký không - cho phép ký khi status là draft, pending_signatures, hoặc partially_signed
 	// và user hiện tại chưa ký
-	const canSign = (contract.status === 'pending_signatures' || contract.status === 'draft' || contract.status === 'partially_signed') && !hasCurrentUserSigned;
+	const canSign = (contract.status === 'pending_signature' || contract.status === 'draft' || contract.status === 'partially_signed') && !hasCurrentUserSigned;
 
 	// Lấy thông tin chữ ký của user hiện tại
 	const currentUserSignature = currentUserRole === 'landlord'

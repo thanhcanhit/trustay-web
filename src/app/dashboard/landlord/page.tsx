@@ -509,7 +509,7 @@ function DashboardContent() {
                     </div>
                     <span className={`text-xs px-2 py-1 rounded ${
                       contract.status === 'active' ? 'bg-green-100 text-green-800' : 
-                      contract.status === 'pending_signatures' ? 'bg-yellow-100 text-yellow-800' :
+                      contract.status === 'pending_signature' ? 'bg-yellow-100 text-yellow-800' :
                       contract.status === 'fully_signed' ? 'bg-blue-100 text-blue-800' :
                       contract.status === 'partially_signed' ? 'bg-orange-100 text-orange-800' :
                       contract.status === 'draft' ? 'bg-gray-100 text-gray-800' :
@@ -517,7 +517,7 @@ function DashboardContent() {
                       'bg-gray-100 text-gray-800'
                     }`}>
                       {contract.status === 'active' ? 'Đang thuê' : 
-                       contract.status === 'pending_signatures' ? 'Chờ ký' :
+                       contract.status === 'pending_signature' ? 'Chờ ký' :
                        contract.status === 'fully_signed' ? 'Đã ký đầy đủ' :
                        contract.status === 'partially_signed' ? 'Đã ký một phần' :
                        contract.status === 'draft' ? 'Bản nháp' :

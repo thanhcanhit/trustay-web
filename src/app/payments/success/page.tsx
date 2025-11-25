@@ -3,10 +3,11 @@
 import { CheckCircle2, Home, RefreshCcw } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const billId = searchParams.get("billId")
@@ -67,3 +68,14 @@ export default function PaymentSuccessPage() {
   )
 }
 
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white flex items-center justify-center">
+        <div className="animate-pulse">Đang tải...</div>
+      </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
+  )
+}

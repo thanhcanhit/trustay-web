@@ -10,7 +10,7 @@ export const ROOM_TYPE_LABELS = {
 // Contract Status Labels - Sử dụng translateContractStatus từ utils để có đầy đủ và nhất quán
 export const CONTRACT_SIGN = {
 	draft: 'Bản nháp',
-	pending_signatures: 'Chờ ký',
+	pending_signature: 'Chờ ký',
 	partially_signed: 'Đã ký một phần',
 	fully_signed: 'Đã ký đầy đủ',
 	signed: 'Đã ký',
@@ -23,7 +23,7 @@ export const CONTRACT_SIGN = {
 // Contract Status Colors - Sử dụng getContractStatusColor từ utils để có đầy đủ và nhất quán
 export const STATUS_COLORS = {
 	draft: 'bg-gray-100 text-gray-800',
-	pending_signatures: 'bg-yellow-100 text-yellow-800',
+	pending_signature: 'bg-yellow-100 text-yellow-800',
 	partially_signed: 'bg-blue-100 text-blue-800',
 	fully_signed: 'bg-green-100 text-green-800',
 	signed: 'bg-green-100 text-green-800',
