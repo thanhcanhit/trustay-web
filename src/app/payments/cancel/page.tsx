@@ -1,6 +1,4 @@
 "use client"
-
-import { Suspense } from "react"
 import { AlertTriangle, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
