@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"
 import { CheckCircle2, Home, RefreshCcw } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
