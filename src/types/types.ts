@@ -578,7 +578,7 @@ export type RentalStatus = 'active' | 'pending' | 'expired' | 'terminated';
 // Contract Status và Type từ API guide
 export type ContractStatus =
 	| 'draft'
-	| 'pending_signatures'
+	| 'pending_signature'
 	| 'partially_signed'
 	| 'fully_signed'
 	| 'active'
