@@ -1,12 +1,31 @@
 "use client"
 
+import { Suspense } from "react"
 import { CheckCircle2, Home, RefreshCcw } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function PaymentSuccessPage() {
+/**
+ * Helps Next.js hydrate search params before showing the success UI.
+ */
+function PaymentSuccessFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white flex items-center justify-center px-4 py-12">
+      <Card className="max-w-lg w-full border-emerald-100">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-2xl font-semibold text-gray-900">
+            Đang tải trạng thái thanh toán...
+          </CardTitle>
+          <p className="text-gray-500 text-sm">Vui lòng đợi giây lát.</p>
+        </CardHeader>
+      </Card>
+    </div>
+  )
+}
+
+function PaymentSuccessPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const billId = searchParams.get("billId")
@@ -64,6 +83,14 @@ export default function PaymentSuccessPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<PaymentSuccessFallback />}>
+      <PaymentSuccessPageContent />
+    </Suspense>
   )
 }
 

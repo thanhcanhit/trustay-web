@@ -1,12 +1,33 @@
 "use client"
 
+import { Suspense } from "react"
 import { AlertTriangle, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function PaymentCancelPage() {
+/**
+ * Displays a friendly loading state while the search params hydrate.
+ */
+function PaymentCancelFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white flex items-center justify-center px-4 py-12">
+      <Card className="max-w-lg w-full border-orange-100">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-2xl font-semibold text-gray-900">
+            Đang tải thông tin thanh toán...
+          </CardTitle>
+          <p className="text-gray-500 text-sm">
+            Vui lòng đợi trong giây lát.
+          </p>
+        </CardHeader>
+      </Card>
+    </div>
+  )
+}
+
+function PaymentCancelPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const billId = searchParams.get("billId")
@@ -63,6 +84,14 @@ export default function PaymentCancelPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function PaymentCancelPage() {
+  return (
+    <Suspense fallback={<PaymentCancelFallback />}>
+      <PaymentCancelPageContent />
+    </Suspense>
   )
 }
 
