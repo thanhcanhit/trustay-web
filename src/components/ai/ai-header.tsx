@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { Sparkles, Trash2, X, Home } from 'lucide-react';
+import { Sparkles, Trash2, X } from 'lucide-react';
 
 interface AIHeaderProps {
   onClear: () => void;
