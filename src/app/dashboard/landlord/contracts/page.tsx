@@ -241,7 +241,7 @@ export default function ContractsPage() {
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 <SelectItem value="active">{translateContractStatus('active')}</SelectItem>
                 <SelectItem value="draft">{translateContractStatus('draft')}</SelectItem>
-                <SelectItem value="pending_signatures">{translateContractStatus('pending_signatures')}</SelectItem>
+                <SelectItem value="pending_signature">{translateContractStatus('pending_signature')}</SelectItem>
                 <SelectItem value="partially_signed">{translateContractStatus('partially_signed')}</SelectItem>
                 <SelectItem value="signed">{translateContractStatus('signed')}</SelectItem>
                 <SelectItem value="fully_signed">{translateContractStatus('fully_signed')}</SelectItem>

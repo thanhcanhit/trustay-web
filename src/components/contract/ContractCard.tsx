@@ -82,8 +82,8 @@ export function ContractCard({
 
   // Check if user can sign
   const canSign = userType === "landlord"
-    ? (contract.status === 'draft' || contract.status === 'pending_signatures' || contract.status === 'partially_signed') && !contract.landlordSignature
-    : (contract.status === 'draft' || contract.status === 'pending_signatures') && !contract.tenantSignature
+    ? (contract.status === 'draft' || contract.status === 'pending_signature' || contract.status === 'partially_signed') && !contract.landlordSignature
+    : (contract.status === 'draft' || contract.status === 'pending_signature') && !contract.tenantSignature
 
   return (
     <Card className="hover:shadow-lg transition-shadow duration-200">
