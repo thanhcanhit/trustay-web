@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react'
 import { useNotifications } from '@/hooks/useNotifications'
-import { useRealtime } from '@/hooks/useRealtime'
 import { useUserStore } from '@/stores/userStore'
 
 interface NotificationProviderProps {
@@ -13,15 +12,15 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   const { user, isAuthenticated } = useUserStore()
   const { refresh } = useNotifications()
 
-  // Set up realtime connection for notifications
-  useRealtime(user?.id || '')
+  // Note: useRealtime is called in DashboardLayout to avoid duplicate connections
 
   // Load notifications when user becomes authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
       refresh()
     }
-  }, [isAuthenticated, user, refresh])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user])
 
   // Set up periodic refresh for notifications (every 5 minutes)
   useEffect(() => {
@@ -32,7 +31,8 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     }, 5 * 60 * 1000) // 5 minutes
 
     return () => clearInterval(interval)
-  }, [isAuthenticated, user, refresh])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user])
 
   return <>{children}</>
 }

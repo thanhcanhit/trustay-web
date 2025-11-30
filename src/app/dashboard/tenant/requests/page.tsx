@@ -137,7 +137,7 @@ function RequestsContent() {
               <CardContent className="pt-0">
                 <div className="space-y-3">
                   {req.owner && (
-                    <div className="flex items-start space-x-3 text-sm pb-2 border-b">
+                    <div className="flex items-start space-x-3 text-sm border-b">
                       <ClickableUserAvatar
                         userId={req.owner.id || ''}
                         avatarUrl={req.owner.avatarUrl}
@@ -219,7 +219,7 @@ function RequestsContent() {
                         <AlertDescription className="text-blue-800">
                           <strong>Chủ nhà đã chấp nhận yêu cầu của bạn!</strong>
                           <br />
-                          <span className="text-sm">Hãy xác nhận để tạo hợp đồng thuê tự động.</span>
+                          <span className="text-sm">Hãy xác nhận để được thêm vào phòng trọ.</span>
                         </AlertDescription>
                       </Alert>
 
@@ -253,7 +253,7 @@ function RequestsContent() {
                           ) : (
                             <>
                               <CheckCircle2 className="mr-2 h-4 w-4" />
-                              Xác nhận và tạo hợp đồng
+                              Xác nhận yêu cầu
                             </>
                           )
                         ) : (
@@ -285,12 +285,10 @@ function RequestsContent() {
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
                       <AlertDescription className="text-green-800">
                         <strong>Đã xác nhận!</strong>
-                        <br />
                         <span className="text-sm">
                           Xác nhận lúc: {req.confirmedAt && format(new Date(req.confirmedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
                         </span>
-                        <br />
-                        <span className="text-sm">Hợp đồng thuê đã được tạo tự động.</span>
+                        <span className="text-sm">Yêu cầu đã được xác nhận.</span>
                       </AlertDescription>
                     </Alert>
                   )}

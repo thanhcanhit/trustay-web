@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useBillStore } from '@/stores/billStore';
-import { RoomInstanceSearchDialog } from '@/components/billing/RoomInstanceSearchDialog';
 import { getCurrentBillingPeriod, getPeriodDates } from '@/utils/billUtils';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -24,15 +23,30 @@ import {
 	Calendar,
 	DollarSign,
 	Zap,
+	Loader2,
 } from 'lucide-react';
-import type { RoomInstanceSearchResult } from '@/types/types';
+import type { RoomInstanceSearchResult, RoomStatus } from '@/types/types';
 import type { MeterReading } from '@/types/bill.types';
+import { useRoomStore } from '@/stores/roomStore';
+import { useBuildingStore } from '@/stores/buildingStore';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 
 export default function CreateSingleBillPage() {
 	const router = useRouter();
 	const { createForRoomInstance, submitting, submitError } = useBillStore();
+	const {
+		searchInstances,
+		instanceSearchResults,
+		instanceSearchLoading,
+	} = useRoomStore();
+	const { buildings, fetchAllBuildings } = useBuildingStore();
 
-	const [showSearch, setShowSearch] = useState(false);
 	const [selectedRoom, setSelectedRoom] = useState<RoomInstanceSearchResult | null>(null);
 	const [billingPeriod, setBillingPeriod] = useState(getCurrentBillingPeriod());
 	const [occupancyCount, setOccupancyCount] = useState(1);
@@ -40,6 +54,53 @@ export default function CreateSingleBillPage() {
 	const [meterReadings, setMeterReadings] = useState<
 		Array<{ costId: string; costName: string; lastReading: string; currentReading: string }>
 	>([]);
+
+	// Search filters
+	const [searchTerm, setSearchTerm] = useState('');
+	const [buildingId, setBuildingId] = useState('all');
+	const [statusFilter, setStatusFilter] = useState<RoomStatus | 'all'>('occupied');
+
+	// Load buildings on mount
+	useEffect(() => {
+		fetchAllBuildings();
+	}, [fetchAllBuildings]);
+
+	// Auto search on filter change
+	useEffect(() => {
+		handleSearch();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [buildingId, statusFilter]);
+
+	const handleSearch = async () => {
+		const params: {
+			buildingId?: string;
+			search?: string;
+			status?: RoomStatus;
+		} = {};
+
+		if (buildingId !== 'all') {
+			params.buildingId = buildingId;
+		}
+		if (searchTerm.trim()) {
+			params.search = searchTerm.trim();
+		}
+		if (statusFilter !== 'all') {
+			params.status = statusFilter;
+		}
+
+		// Ensure at least one parameter is provided
+		if (!params.buildingId && !params.search && !params.status) {
+			return;
+		}
+
+		await searchInstances(params);
+	};
+
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === 'Enter') {
+			handleSearch();
+		}
+	};
 
 	const handleRoomSelect = (room: RoomInstanceSearchResult) => {
 		setSelectedRoom(room);
@@ -131,6 +192,78 @@ export default function CreateSingleBillPage() {
 								<CardTitle>Chọn phòng</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-4">
+								{/* Search Filters */}
+								<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+									<div className="space-y-2">
+										<Label htmlFor="building">Toà nhà</Label>
+										<Select value={buildingId} onValueChange={setBuildingId}>
+											<SelectTrigger id="building">
+												<SelectValue placeholder="Tất cả toà nhà" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="all">Tất cả toà nhà</SelectItem>
+												{buildings.map((building) => (
+													<SelectItem key={building.id} value={building.id}>
+														{building.name}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+
+									<div className="space-y-2">
+										<Label htmlFor="status">Trạng thái</Label>
+										<Select
+											value={statusFilter}
+											onValueChange={(value) =>
+												setStatusFilter(value as RoomStatus | 'all')
+											}
+										>
+											<SelectTrigger id="status">
+												<SelectValue placeholder="Tất cả trạng thái" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="all">Tất cả</SelectItem>
+												<SelectItem value="occupied">Đang thuê</SelectItem>
+												<SelectItem value="available">Trống</SelectItem>
+												<SelectItem value="maintenance">Bảo trì</SelectItem>
+												<SelectItem value="reserved">Đã đặt</SelectItem>
+												<SelectItem value="unavailable">Không khả dụng</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
+
+									<div className="space-y-2">
+										<Label htmlFor="search">Tìm kiếm</Label>
+										<div className="relative">
+											<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+											<Input
+												id="search"
+												placeholder="Tên, email, SĐT..."
+												value={searchTerm}
+												onChange={(e) => setSearchTerm(e.target.value)}
+												onKeyDown={handleKeyDown}
+												className="pl-9"
+											/>
+										</div>
+									</div>
+								</div>
+
+								<Button onClick={handleSearch} disabled={instanceSearchLoading} className="w-full">
+									{instanceSearchLoading ? (
+										<>
+											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+											Đang tìm kiếm...
+										</>
+									) : (
+										<>
+											<Search className="mr-2 h-4 w-4" />
+											Tìm kiếm
+										</>
+									)}
+								</Button>
+
+								{/* Search Results */}
 								{selectedRoom ? (
 									<div className="space-y-4">
 										<div className="flex items-start justify-between p-4 border rounded-lg bg-accent/50">
@@ -159,18 +292,92 @@ export default function CreateSingleBillPage() {
 											<Button
 												variant="outline"
 												size="sm"
-												onClick={() => setShowSearch(true)}
+												onClick={() => setSelectedRoom(null)}
 											>
-												<Search className="h-4 w-4 mr-2" />
 												Đổi phòng
 											</Button>
 										</div>
 									</div>
 								) : (
-									<Button onClick={() => setShowSearch(true)} className="w-full">
-										<Search className="h-4 w-4 mr-2" />
-										Chọn phòng
-									</Button>
+									<div className="space-y-2">
+										{instanceSearchLoading ? (
+											<div className="flex items-center justify-center py-8">
+												<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+											</div>
+										) : instanceSearchResults.length > 0 ? (
+											<>
+												<div className="text-sm text-muted-foreground mb-2">
+													Tìm thấy {instanceSearchResults.length} phòng
+												</div>
+												<div className="space-y-2 max-h-[400px] overflow-y-auto">
+													{instanceSearchResults.map((instance) => (
+														<Card
+															key={instance.id}
+															className="cursor-pointer hover:bg-accent transition-colors"
+															onClick={() => handleRoomSelect(instance)}
+														>
+															<CardContent className="p-4">
+																<div className="flex items-start justify-between gap-4">
+																	<div className="flex-1 space-y-1">
+																		<div className="flex items-center gap-2">
+																			<h4 className="font-semibold">
+																				Phòng {instance.roomNumber}
+																			</h4>
+																			{instance.status && (
+																				<Badge
+																					variant="outline"
+																					className={
+																						instance.status === 'occupied'
+																							? 'bg-blue-100 text-blue-700 border-blue-300'
+																							: instance.status === 'available'
+																								? 'bg-green-100 text-green-700 border-green-300'
+																								: 'bg-gray-100 text-gray-700 border-gray-300'
+																					}
+																				>
+																					{instance.status === 'occupied'
+																						? 'Đang thuê'
+																						: instance.status === 'available'
+																							? 'Trống'
+																							: instance.status}
+																				</Badge>
+																			)}
+																		</div>
+																		<div className="flex items-center gap-2 text-sm text-muted-foreground">
+																			<Building2 className="h-3 w-3" />
+																			<span>{instance.buildingName}</span>
+																		</div>
+																		<div className="flex items-center gap-2 text-sm text-muted-foreground">
+																			<Users className="h-3 w-3" />
+																			<span>{instance.roomName}</span>
+																		</div>
+																		{instance.notes && (
+																			<div className="text-sm text-muted-foreground">
+																				<span className="font-medium">Ghi chú:</span>{' '}
+																				{instance.notes}
+																			</div>
+																		)}
+																	</div>
+																	{instance.floorNumber !== undefined && (
+																		<div className="text-sm text-muted-foreground">
+																			Tầng {instance.floorNumber}
+																		</div>
+																	)}
+																</div>
+															</CardContent>
+														</Card>
+													))}
+												</div>
+											</>
+										) : searchTerm || buildingId !== 'all' || statusFilter !== 'all' ? (
+											<div className="text-center py-8 text-muted-foreground">
+												Không tìm thấy phòng nào
+											</div>
+										) : (
+											<div className="text-center py-8 text-muted-foreground">
+												Chọn bộ lọc và nhấn tìm kiếm để bắt đầu
+											</div>
+										)}
+									</div>
 								)}
 							</CardContent>
 						</Card>
@@ -387,16 +594,6 @@ export default function CreateSingleBillPage() {
 					</div>
 				</div>
 			</div>
-
-			{/* Room Search Dialog */}
-			<RoomInstanceSearchDialog
-				open={showSearch}
-				onOpenChange={setShowSearch}
-				onSelect={handleRoomSelect}
-				title="Chọn phòng để tạo hóa đơn"
-				description="Tìm kiếm phòng theo tenant, địa chỉ hoặc ghi chú"
-				filterStatus="occupied"
-			/>
 		</DashboardLayout>
 	);
 }

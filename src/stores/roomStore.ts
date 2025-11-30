@@ -490,7 +490,16 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 				throw new Error(response.error || 'Failed to search room instances');
 			}
 
-			const mappedData = response.data.data.map((item) => ({
+			// Get current user info to filter by ownerId
+			const userStoreState = (await import('./userStore')).useUserStore.getState();
+			const currentUserId = userStoreState.user?.id;
+
+			// Filter results to only show rooms owned by current user
+			const filteredData = currentUserId
+				? response.data.data.filter((item) => item.ownerId === currentUserId)
+				: response.data.data;
+
+			const mappedData = filteredData.map((item) => ({
 				...item,
 				status: item.status as RoomStatus,
 			}));

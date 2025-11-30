@@ -2,6 +2,7 @@
 
 import { Bell, Trash2, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +33,9 @@ export function NotificationBell() {
   } = useNotifications()
 
   const { user } = useUserStore()
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
+  const [isNavigating, setIsNavigating] = useState(false)
 
   const handleMarkAllAsRead = async () => {
     await markAllAsRead()
@@ -72,6 +75,10 @@ export function NotificationBell() {
         return "❌"
       case 'rental_request':
         return "🏠"
+      case 'monthly_bill_created':
+      case 'bill_created':
+      case 'bill_reminder':
+        return "🧾"
       case 'PAYMENT_RECEIVED':
       case 'payment_reminder':
         return "💰"
@@ -134,15 +141,136 @@ export function NotificationBell() {
     }
   }
 
+  const handleNotificationClick = async (notification: NotificationData | NotificationItem) => {
+    if (isNavigating) return // Prevent multiple clicks
+    
+    console.log('🔔 Notification clicked:', notification)
+    console.log('📋 Notification type:', notification.type)
+    console.log('📦 Notification data:', notification.data)
+    
+    // Set navigating state
+    setIsNavigating(true)
+    
+    // Mark as read if not already
+    if (!notification.isRead && notification.id) {
+      await handleMarkAsRead(notification.id)
+    }
+
+    // Close the dropdown
+    setIsOpen(false)
+
+    // Navigate based on notification type and data
+    const notificationData = notification.data as Record<string, unknown> | undefined
+    console.log('🔍 Parsed notification data:', notificationData)
+
+    // Handle booking-related notifications
+    if (notificationData?.bookingId && typeof notificationData.bookingId === 'string') {
+      console.log('📋 Handling booking notification, bookingId:', notificationData.bookingId)
+      // Check user role to determine which dashboard to navigate to
+      const isLandlord = notification.type === 'booking_request' || 
+                         notification.type === 'BOOKING_REQUEST'
+      
+      if (isLandlord) {
+        console.log('➡️ Navigating to landlord requests')
+        router.push('/dashboard/landlord/requests')
+      } else {
+        console.log('➡️ Navigating to tenant requests')
+        router.push('/dashboard/tenant/requests')
+      }
+      return
+    }
+
+    // Handle invitation-related notifications
+    if (notification.type === 'ROOM_INVITATION' || notification.type === 'room_invitation') {
+      console.log('📨 Handling invitation notification')
+      router.push('/dashboard/tenant/requests')
+      return
+    }
+
+    // Handle bill-related notifications
+    console.log('💵 Checking if bill notification...')
+    console.log('💵 Type check:', notification.type === 'monthly_bill_created')
+    console.log('💵 BillId exists:', notificationData?.billId)
+    console.log('💵 BillId type:', typeof notificationData?.billId)
+    
+    if (notification.type === 'monthly_bill_created' || 
+        notification.type === 'bill_created' ||
+        notification.type === 'bill_reminder') {
+      console.log('✅ This is a bill notification!')
+      if (notificationData?.billId && typeof notificationData.billId === 'string') {
+        const billUrl = `/dashboard/tenant/invoices/${notificationData.billId}`
+        console.log('➡️ Navigating to bill:', billUrl)
+        router.push(billUrl)
+      } else {
+        console.log('➡️ Navigating to invoices list (no billId)')
+        router.push('/dashboard/tenant/invoices')
+      }
+      return
+    }
+
+    // Handle payment-related notifications
+    if (notification.type === 'payment_reminder' || 
+        notification.type === 'PAYMENT_RECEIVED' ||
+        notification.type === 'PAYMENT_FAILED') {
+      if (notificationData?.rentalId && typeof notificationData.rentalId === 'string') {
+        router.push(`/dashboard/tenant/rentals/${notificationData.rentalId}`)
+      } else {
+        router.push('/dashboard/tenant/rentals')
+      }
+      return
+    }
+
+    // Handle contract-related notifications
+    if (notification.type === 'contract_update') {
+      if (notificationData?.contractId && typeof notificationData.contractId === 'string') {
+        router.push(`/dashboard/tenant/contracts/${notificationData.contractId}`)
+      } else {
+        router.push('/dashboard/tenant/contracts')
+      }
+      return
+    }
+
+    // Handle message notifications
+    if (notification.type === 'message') {
+      if (notificationData?.conversationId && typeof notificationData.conversationId === 'string') {
+        router.push(`/messages?conversation=${notificationData.conversationId}`)
+      } else {
+        router.push('/messages')
+      }
+      return
+    }
+
+    // Handle room-related notifications
+    if (notificationData?.roomId && typeof notificationData.roomId === 'string') {
+      router.push(`/rooms/${notificationData.roomId}`)
+      return
+    }
+    
+    // If no specific navigation matched, just close and reset loading
+    setIsNavigating(false)
+  }
+
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="relative h-10 w-10 rounded-full hover:bg-gray-100"
-        >
-          <Bell className="h-5 w-5" />
+    <>
+      {/* Loading overlay */}
+      {isNavigating && (
+        <div className="fixed inset-0 bg-black/50 z-[100000] flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 flex flex-col items-center gap-3">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+            <p className="text-sm text-gray-600">Đang chuyển trang...</p>
+          </div>
+        </div>
+      )}
+      
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="relative h-10 w-10 rounded-full hover:bg-gray-100"
+            disabled={isNavigating}
+          >
+            <Bell className="h-5 w-5" />
           {unread > 0 && (
             <Badge
               variant="destructive"
@@ -206,8 +334,15 @@ export function NotificationBell() {
         ) : (
           <div className="max-h-80 overflow-y-auto">
             {notifications.slice(0, 10).map((notification) => (
-              <DropdownMenuItem key={notification.id || notification.receivedAt} className="p-0">
-                <div className={`flex items-start gap-3 p-3 w-full hover:bg-gray-50 cursor-pointer ${!notification.isRead ? 'bg-blue-50' : ''}`}>
+              <DropdownMenuItem 
+                key={notification.id || notification.receivedAt} 
+                className="p-0"
+                asChild
+              >
+                <div 
+                  className={`flex items-start gap-3 p-3 w-full hover:bg-gray-50 cursor-pointer ${!notification.isRead ? 'bg-blue-50' : ''}`}
+                  onClick={() => handleNotificationClick(notification)}
+                >
                   <div className="text-lg flex-shrink-0 mt-0.5">
                     {getNotificationIcon(notification.type)}
                   </div>
@@ -274,5 +409,6 @@ export function NotificationBell() {
         )}
       </DropdownMenuContent>
     </DropdownMenu>
+    </>
   )
 }

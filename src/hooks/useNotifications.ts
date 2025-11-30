@@ -49,8 +49,14 @@ export function useNotifications() {
 				const token = TokenManager.getAccessToken();
 				const response = await getNotifications(params, token ?? undefined);
 				if (response?.data && Array.isArray(response.data)) {
+					// Map notificationType to type for consistency
+					const mappedData = response.data.map((notif: any) => ({
+						...notif,
+						type: notif.notificationType || notif.type,
+					}));
+
 					// Filter notifications to only include ones belonging to current user
-					const userNotifications = response.data.filter(
+					const userNotifications = mappedData.filter(
 						(notification) => notification.userId === user?.id,
 					);
 

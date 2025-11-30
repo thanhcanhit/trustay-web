@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 import { Sidebar } from "./sidebar"
 import { Menu } from "lucide-react"
 import { useRealtime } from "@/hooks/useRealtime"
+import { useSidebarBadges } from "@/hooks/useSidebarBadges"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -19,6 +20,9 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
   // Enable realtime notifications for authenticated users
   useRealtime(user?.id || '')
+
+  // Load badges once at layout level to avoid duplicate API calls
+  const badges = useSidebarBadges(userType)
 
   useEffect(() => {
     console.log('DashboardLayout state:', {
@@ -83,14 +87,14 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
       <div className={`lg:hidden fixed top-16 left-0 h-[calc(100vh-4rem)] w-72 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 overflow-y-auto ${
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <Sidebar userType={userType} onNavigate={() => setIsMobileMenuOpen(false)} />
+        <Sidebar userType={userType} badges={badges} onNavigate={() => setIsMobileMenuOpen(false)} />
       </div>
 
       <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
         {/* Desktop sidebar */}
         <aside className="hidden lg:block w-64 flex-shrink-0">
           <div className="h-full bg-white border-r border-gray-200 shadow-sm overflow-y-auto">
-            <Sidebar userType={userType} />
+            <Sidebar userType={userType} badges={badges} />
           </div>
         </aside>
 

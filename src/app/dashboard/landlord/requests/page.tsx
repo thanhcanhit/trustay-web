@@ -90,11 +90,13 @@ export default function RequestsPage() {
   // Load data
   useEffect(() => {
     loadReceived({ page: bookingPage, limit: 12, status: bookingStatusFilter === 'all' ? undefined : bookingStatusFilter })
-  }, [loadReceived, bookingPage, bookingStatusFilter])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingPage, bookingStatusFilter])
 
   useEffect(() => {
     loadSent({ page: invitationPage, limit: 12, status: invitationStatusFilter === 'all' ? undefined : invitationStatusFilter })
-  }, [loadSent, invitationPage, invitationStatusFilter])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invitationPage, invitationStatusFilter])
 
   // Booking Requests
   const canBookingPrev = useMemo(() => receivedMeta?.hasPrev, [receivedMeta])
@@ -207,7 +209,8 @@ export default function RequestsPage() {
                 <SelectContent>
                   <SelectItem value="all">Tất cả trạng thái</SelectItem>
                   <SelectItem value="pending">Chờ xử lý</SelectItem>
-                  <SelectItem value="approved">Đã chấp nhận</SelectItem>
+                  <SelectItem value="accepted">Đã chấp nhận</SelectItem>
+                  <SelectItem value="awaiting_confirmation">Chờ xác nhận</SelectItem>
                   <SelectItem value="rejected">Đã từ chối</SelectItem>
                   <SelectItem value="cancelled">Đã hủy</SelectItem>
                 </SelectContent>
@@ -384,14 +387,13 @@ export default function RequestsPage() {
                               <Clock className="h-4 w-4 mr-1" />
                               Đang chờ tenant xác nhận
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">Hợp đồng sẽ được tạo khi tenant xác nhận</p>
                           </div>
                         )}
                         {request.status === 'accepted' && request.isConfirmedByTenant && (
                           <div className="text-center">
                             <div className="inline-flex items-center text-green-700 text-sm font-medium">
                               <CheckCircle className="h-4 w-4 mr-1" />
-                              Hoàn tất - Hợp đồng đã tạo
+                              Hoàn tất - Yêu cầu đã được xác nhận
                             </div>
                           </div>
                         )}

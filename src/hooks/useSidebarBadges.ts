@@ -37,7 +37,8 @@ export function useSidebarBadges(userType: 'tenant' | 'landlord') {
 			// Fetch accepted roommate applications (waiting for landlord to approve/reject)
 			fetchLandlordPendingApplications({ page: 1, limit: 1, status: 'accepted' });
 		}
-	}, [userType, loadBookingRequests, loadInvitations, fetchLandlordPendingApplications]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [userType]);
 
 	useEffect(() => {
 		if (userType === 'landlord') {
