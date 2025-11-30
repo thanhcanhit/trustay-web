@@ -18,13 +18,14 @@ import { toast } from "sonner"
 import { ClickableUserAvatar } from "@/components/profile/clickable-user-avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-function BookingStatusBadge({ status }: { status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'accepted' }) {
+function BookingStatusBadge({ status }: { status: 'pending' | 'awaiting_confirmation' | 'rejected' | 'cancelled' | 'accepted' | 'expired' }) {
   const map = {
     pending: { label: 'Đang chờ', className: 'bg-amber-100 text-amber-800' },
-    approved: { label: 'Đã duyệt', className: 'bg-emerald-100 text-emerald-800' },
     accepted: { label: 'Đã chấp nhận', className: 'bg-blue-100 text-blue-800' },
     rejected: { label: 'Từ chối', className: 'bg-red-100 text-red-800' },
     cancelled: { label: 'Đã hủy', className: 'bg-gray-100 text-gray-800' },
+    expired: { label: 'Đã hết hạn', className: 'bg-gray-100 text-gray-800' },
+    awaiting_confirmation: { label: 'Chờ xác nhận', className: 'bg-yellow-100 text-yellow-800' },
   } as const
   const it = map[status]
   return <Badge className={it.className}>{it.label}</Badge>
@@ -211,7 +212,7 @@ function RequestsContent() {
                     </Button>
                   )}
 
-                  {(req.status === 'approved' || req.status === 'accepted') && !req.isConfirmedByTenant && (
+                  {(req.status === 'awaiting_confirmation' || req.status === 'accepted') && !req.isConfirmedByTenant && (
                     <div className="space-y-3">
                       <Alert className="bg-blue-50 border-blue-200">
                         <AlertCircle className="h-4 w-4 text-blue-600" />
@@ -279,7 +280,7 @@ function RequestsContent() {
                     </div>
                   )}
 
-                  {(req.status === 'approved' || req.status === 'accepted') && req.isConfirmedByTenant && (
+                  {(req.status === 'awaiting_confirmation' || req.status === 'accepted') && req.isConfirmedByTenant && (
                     <Alert className="bg-green-50 border-green-200">
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
                       <AlertDescription className="text-green-800">

@@ -736,7 +736,8 @@ export interface BookingRequest {
 	id: string;
 	roomId: string;
 	tenantId: string;
-	status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'accepted';
+	//pending   accepted  rejected   expired   cancelled   awaiting_confirmation
+	status: 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'expired' | 'awaiting_confirmation';
 	moveInDate: string;
 	moveOutDate?: string | null;
 	rentalMonths?: number | null;
