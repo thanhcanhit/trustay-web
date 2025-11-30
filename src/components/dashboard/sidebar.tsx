@@ -168,7 +168,7 @@ const landlordItems: SidebarItem[] = [
         title: "Phản ánh, sự cố",
         href: "/dashboard/landlord/feedback",
         icon: AlertTriangle,
-        disabled: true
+        disabled: false
       },
       {
         title: "Khách hàng đánh giá",

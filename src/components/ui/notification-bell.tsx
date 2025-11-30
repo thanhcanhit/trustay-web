@@ -35,7 +35,6 @@ export function NotificationBell() {
   const { user } = useUserStore()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
-  const [isNavigating, setIsNavigating] = useState(false)
 
   const handleMarkAllAsRead = async () => {
     await markAllAsRead()
@@ -142,14 +141,9 @@ export function NotificationBell() {
   }
 
   const handleNotificationClick = async (notification: NotificationData | NotificationItem) => {
-    if (isNavigating) return // Prevent multiple clicks
-    
     console.log('🔔 Notification clicked:', notification)
     console.log('📋 Notification type:', notification.type)
     console.log('📦 Notification data:', notification.data)
-    
-    // Set navigating state
-    setIsNavigating(true)
     
     // Mark as read if not already
     if (!notification.isRead && notification.id) {
@@ -163,112 +157,108 @@ export function NotificationBell() {
     const notificationData = notification.data as Record<string, unknown> | undefined
     console.log('🔍 Parsed notification data:', notificationData)
 
-    // Handle booking-related notifications
-    if (notificationData?.bookingId && typeof notificationData.bookingId === 'string') {
-      console.log('📋 Handling booking notification, bookingId:', notificationData.bookingId)
-      // Check user role to determine which dashboard to navigate to
-      const isLandlord = notification.type === 'booking_request' || 
-                         notification.type === 'BOOKING_REQUEST'
-      
-      if (isLandlord) {
-        console.log('➡️ Navigating to landlord requests')
-        router.push('/dashboard/landlord/requests')
-      } else {
-        console.log('➡️ Navigating to tenant requests')
-        router.push('/dashboard/tenant/requests')
-      }
-      return
-    }
+    // Determine navigation path
+    let targetPath: string | null = null
 
-    // Handle invitation-related notifications
-    if (notification.type === 'ROOM_INVITATION' || notification.type === 'room_invitation') {
-      console.log('📨 Handling invitation notification')
-      router.push('/dashboard/tenant/requests')
-      return
+    // Handle room issue notifications (landlord)
+    if (notification.type === 'room_issue_reported') {
+      console.log('🔧 Handling room issue notification')
+      targetPath = '/dashboard/landlord/feedback'
     }
-
-    // Handle bill-related notifications
-    console.log('💵 Checking if bill notification...')
-    console.log('💵 Type check:', notification.type === 'monthly_bill_created')
-    console.log('💵 BillId exists:', notificationData?.billId)
-    console.log('💵 BillId type:', typeof notificationData?.billId)
-    
-    if (notification.type === 'monthly_bill_created' || 
-        notification.type === 'bill_created' ||
-        notification.type === 'bill_reminder') {
-      console.log('✅ This is a bill notification!')
-      if (notificationData?.billId && typeof notificationData.billId === 'string') {
-        const billUrl = `/dashboard/tenant/invoices/${notificationData.billId}`
-        console.log('➡️ Navigating to bill:', billUrl)
-        router.push(billUrl)
-      } else {
-        console.log('➡️ Navigating to invoices list (no billId)')
-        router.push('/dashboard/tenant/invoices')
-      }
-      return
-    }
-
-    // Handle payment-related notifications
-    if (notification.type === 'payment_reminder' || 
-        notification.type === 'PAYMENT_RECEIVED' ||
-        notification.type === 'PAYMENT_FAILED') {
+    // Handle rental created notifications
+    else if (notification.type === 'rental_created') {
+      console.log('📝 Handling rental created notification')
+      const isLandlord = user?.role === 'landlord'
       if (notificationData?.rentalId && typeof notificationData.rentalId === 'string') {
-        router.push(`/dashboard/tenant/rentals/${notificationData.rentalId}`)
+        targetPath = isLandlord 
+          ? `/dashboard/landlord/rentals/${notificationData.rentalId}`
+          : `/dashboard/tenant/rentals/${notificationData.rentalId}`
       } else {
-        router.push('/dashboard/tenant/rentals')
+        targetPath = isLandlord ? '/dashboard/landlord/rentals' : '/dashboard/tenant/rentals'
       }
-      return
     }
-
+    // Handle booking request confirmed (landlord)
+    else if (notification.type === 'booking_request_confirmed') {
+      console.log('✅ Handling booking confirmed notification')
+      if (notificationData?.rentalId && typeof notificationData.rentalId === 'string') {
+        targetPath = `/dashboard/landlord/rentals/${notificationData.rentalId}`
+      } else if (notificationData?.bookingId && typeof notificationData.bookingId === 'string') {
+        targetPath = '/dashboard/landlord/requests'
+      } else {
+        targetPath = '/dashboard/landlord/rentals'
+      }
+    }
+    // Handle booking-related notifications
+    else if (notificationData?.bookingId && typeof notificationData.bookingId === 'string') {
+      console.log('📋 Handling booking notification, bookingId:', notificationData.bookingId)
+      const isLandlord = notification.type === 'booking_request' || 
+                         notification.type === 'BOOKING_REQUEST' ||
+                         notification.type === 'booking_request_received'
+      
+      targetPath = isLandlord ? '/dashboard/landlord/requests' : '/dashboard/tenant/requests'
+    }
+    // Handle invitation-related notifications
+    else if (notification.type === 'ROOM_INVITATION' || 
+             notification.type === 'room_invitation' ||
+             notification.type === 'room_invitation_received') {
+      console.log('📨 Handling invitation notification')
+      targetPath = '/dashboard/tenant/roommate-invitation'
+    }
+    // Handle invitation acceptance/rejection (landlord)
+    else if (notification.type === 'room_invitation_accepted' || 
+             notification.type === 'room_invitation_rejected' ||
+             notification.type === 'INVITATION_REJECTED') {
+      console.log('📨 Handling invitation response notification')
+      targetPath = '/dashboard/landlord/tenants'
+    }
+    // Handle bill-related notifications
+    else if (notification.type === 'monthly_bill_created' || 
+             notification.type === 'bill_created' ||
+             notification.type === 'bill_reminder') {
+      console.log('💵 Handling bill notification')
+      targetPath = notificationData?.billId && typeof notificationData.billId === 'string'
+        ? `/dashboard/tenant/invoices/${notificationData.billId}`
+        : '/dashboard/tenant/invoices'
+    }
+    // Handle payment-related notifications
+    else if (notification.type === 'payment_reminder' || 
+             notification.type === 'PAYMENT_RECEIVED' ||
+             notification.type === 'PAYMENT_FAILED') {
+      targetPath = notificationData?.rentalId && typeof notificationData.rentalId === 'string'
+        ? `/dashboard/tenant/rentals/${notificationData.rentalId}`
+        : '/dashboard/tenant/rentals'
+    }
     // Handle contract-related notifications
-    if (notification.type === 'contract_update') {
-      if (notificationData?.contractId && typeof notificationData.contractId === 'string') {
-        router.push(`/dashboard/tenant/contracts/${notificationData.contractId}`)
-      } else {
-        router.push('/dashboard/tenant/contracts')
-      }
-      return
+    else if (notification.type === 'contract_update') {
+      targetPath = notificationData?.contractId && typeof notificationData.contractId === 'string'
+        ? `/dashboard/tenant/contracts/${notificationData.contractId}`
+        : '/dashboard/tenant/contracts'
     }
-
     // Handle message notifications
-    if (notification.type === 'message') {
-      if (notificationData?.conversationId && typeof notificationData.conversationId === 'string') {
-        router.push(`/messages?conversation=${notificationData.conversationId}`)
-      } else {
-        router.push('/messages')
-      }
-      return
+    else if (notification.type === 'message') {
+      targetPath = notificationData?.conversationId && typeof notificationData.conversationId === 'string'
+        ? `/messages?conversation=${notificationData.conversationId}`
+        : '/messages'
     }
-
     // Handle room-related notifications
-    if (notificationData?.roomId && typeof notificationData.roomId === 'string') {
-      router.push(`/rooms/${notificationData.roomId}`)
-      return
+    else if (notificationData?.roomId && typeof notificationData.roomId === 'string') {
+      targetPath = `/rooms/${notificationData.roomId}`
     }
     
-    // If no specific navigation matched, just close and reset loading
-    setIsNavigating(false)
+    // Navigate if path exists
+    if (targetPath) {
+      console.log('➡️ Navigating to:', targetPath)
+      router.push(targetPath)
+    }
   }
 
   return (
-    <>
-      {/* Loading overlay */}
-      {isNavigating && (
-        <div className="fixed inset-0 bg-black/50 z-[100000] flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 flex flex-col items-center gap-3">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
-            <p className="text-sm text-gray-600">Đang chuyển trang...</p>
-          </div>
-        </div>
-      )}
-      
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="sm"
             className="relative h-10 w-10 rounded-full hover:bg-gray-100"
-            disabled={isNavigating}
           >
             <Bell className="h-5 w-5" />
           {unread > 0 && (
@@ -409,6 +399,5 @@ export function NotificationBell() {
         )}
       </DropdownMenuContent>
     </DropdownMenu>
-    </>
   )
 }

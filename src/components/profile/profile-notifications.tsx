@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/hooks/useNotifications'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Bell, UserCog2, X, CalendarCheck2, UserCheck, Settings } from 'lucide-react'
 
 export function ProfileNotifications() {
+  const router = useRouter()
   const { notifications, error, loadNotifications, markAsRead, deleteNotification } = useNotifications()
   const [filteredNotifications, setFilteredNotifications] = useState<NotificationItem[]>([])
 
@@ -56,12 +58,74 @@ export function ProfileNotifications() {
         return 'Yêu cầu đặt phòng được chấp nhận'
       case 'booking_request_rejected':
         return 'Yêu cầu đặt phòng bị từ chối'
+      case 'booking_request_confirmed':
+        return 'Yêu cầu booking được xác nhận'
       case 'room_invitation_received':
         return 'Lời mời phòng mới'
       case 'profile_updated':
         return 'Hồ sơ được cập nhật'
+      case 'rental_created':
+        return 'Hợp đồng thuê được tạo'
+      case 'room_issue_resolved':
+        return 'Sự cố phòng đã được xử lý'
       default:
         return 'Thông báo'
+    }
+  }
+
+  const getNavigationPath = (notification: NotificationItem): string | null => {
+    const data = notification.data as Record<string, unknown>
+    
+    switch (notification.type) {
+      case 'booking_request_accepted':
+      case 'booking_request_rejected':
+        // Navigate to tenant's booking requests page
+        if (data?.bookingId) {
+          return `/dashboard/tenant/requests?highlight=${data.bookingId}`
+        }
+        return '/dashboard/tenant/requests'
+        
+      case 'booking_request_confirmed':
+      case 'rental_created':
+        // Navigate to tenant's rentals page
+        if (data?.rentalId) {
+          return `/dashboard/tenant/rentals/${data.rentalId}`
+        }
+        return '/dashboard/tenant/rentals'
+        
+      case 'room_invitation_received':
+        // Navigate to roommate invitations page
+        if (data?.invitationId) {
+          return `/dashboard/tenant/roommate-invitation?highlight=${data.invitationId}`
+        }
+        return '/dashboard/tenant/roommate-invitation'
+        
+      case 'room_issue_resolved':
+        // Navigate to rental detail where issues are displayed
+        if (data?.rentalId) {
+          return `/dashboard/tenant/rentals/${data.rentalId}`
+        }
+        return '/dashboard/tenant/rentals'
+        
+      case 'profile_updated':
+        return '/profile'
+        
+      default:
+        return null
+    }
+  }
+
+  const handleNotificationClick = (notification: NotificationItem) => {
+    const path = getNavigationPath(notification)
+    
+    // Mark as read when clicked
+    if (!notification.isRead) {
+      markAsRead(notification.id)
+    }
+    
+    // Navigate to the appropriate page
+    if (path) {
+      router.push(path)
     }
   }
 
@@ -98,7 +162,11 @@ export function ProfileNotifications() {
       <ScrollArea className="h-[600px] pr-4">
         <div className="space-y-4">
           {filteredNotifications.map((notification) => (
-            <Card key={notification.id} className={`p-4 ${!notification.isRead ? 'border-blue-200 bg-blue-50/50' : ''}`}>
+            <Card 
+              key={notification.id} 
+              className={`p-4 transition-colors hover:bg-accent cursor-pointer ${!notification.isRead ? 'border-blue-200 bg-blue-50/50' : ''}`}
+              onClick={() => handleNotificationClick(notification)}
+            >
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-3 flex-1">
                   <div className="mt-1">
@@ -129,7 +197,10 @@ export function ProfileNotifications() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => markAsRead(notification.id)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        markAsRead(notification.id)
+                      }}
                       className="text-xs"
                     >
                       Đánh dấu đã đọc
@@ -138,7 +209,10 @@ export function ProfileNotifications() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => deleteNotification(notification.id)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      deleteNotification(notification.id)
+                    }}
                     className="h-8 w-8"
                   >
                     <X className="h-4 w-4" />
