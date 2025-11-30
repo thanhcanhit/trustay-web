@@ -35,7 +35,12 @@ export function notificationHandler(socket: Socket, userId?: string) {
 			console.log('🔔 [SOCKET] Using full notification object:', payload.notification);
 			// Ensure the notification belongs to current user
 			if (payload.notification.userId === userId) {
-				addNotification(payload.notification, userId);
+				// Map notificationType to type for consistency
+				const mappedNotification = {
+					...payload.notification,
+					type: (payload.notification as any).notificationType || payload.notification.type,
+				};
+				addNotification(mappedNotification, userId);
 			} else {
 				console.log(
 					'🔔 [SOCKET] Ignoring notification for different user:',
