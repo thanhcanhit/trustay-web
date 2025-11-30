@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Receipt, Filter, AlertCircle, Save, Eye, Trash2, CheckCircle, QrCode, ExternalLink, Copy } from "lucide-react"
+import { Search, Receipt, Filter, AlertCircle, Save, Eye, Trash2, CheckCircle, QrCode, ExternalLink, Copy, FileText } from "lucide-react"
 import { PageHeader, PageHeaderActions } from "@/components/dashboard/page-header"
 import { useBillStore } from "@/stores/billStore"
 import { useBuildingStore } from "@/stores/buildingStore"
@@ -460,13 +460,23 @@ export default function InvoicesPage() {
           subtitle="Quản lý tất cả hóa đơn và thanh toán"
           actions={
             <PageHeaderActions.Custom>
-              <Button
-                className="flex items-center space-x-2"
-                onClick={() => router.push('/dashboard/landlord/invoices/create')}
-              >
-                <Receipt className="h-4 w-4" />
-                <span>Tạo hóa đơn mới</span>
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex items-center space-x-2"
+                  onClick={() => router.push('/dashboard/landlord/invoices/create-single')}
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>Tạo cho 1 phòng</span>
+                </Button>
+                <Button
+                  className="flex items-center space-x-2"
+                  onClick={() => router.push('/dashboard/landlord/invoices/create')}
+                >
+                  <Receipt className="h-4 w-4" />
+                  <span>Tạo cho toà nhà</span>
+                </Button>
+              </div>
             </PageHeaderActions.Custom>
           }
         />

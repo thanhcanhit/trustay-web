@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { FormField, FormLabel, FormMessage } from "@/components/ui/form"
@@ -240,6 +240,7 @@ const convertRulesToObjects = (rules: string[] | RoomRule[]): UpdateRoomRule[] =
 
 export default function EditRoomPage() {
   const params = useParams()
+  const router = useRouter()
   const roomId = params.id as string
 
   const { loadRoomById, updateExistingRoom } = useRoomStore()
@@ -418,9 +419,25 @@ export default function EditRoomPage() {
           depositAmount: formData.pricing?.depositAmount,
           isNegotiable: formData.pricing?.isNegotiable
         },
-        amenities: amenities,
-        costs: costs as UpdateRoomCost[],
-        rules: rules as UpdateRoomRule[],
+        amenities: amenities.map(a => ({
+          systemAmenityId: a.systemAmenityId,
+          customValue: a.customValue,
+          notes: a.notes
+        })),
+        costs: costs.map(c => ({
+          systemCostTypeId: c.systemCostTypeId,
+          value: c.value,
+          costType: c.costType,
+          unit: c.unit,
+          isMandatory: c.isMandatory,
+          isIncludedInRent: c.isIncludedInRent,
+          notes: c.notes
+        })),
+        rules: rules.map(r => ({
+          systemRuleId: r.systemRuleId,
+          customValue: r.customValue,
+          notes: r.notes
+        })),
         isActive: formData.isActive!
       }
 
@@ -432,8 +449,9 @@ export default function EditRoomPage() {
       }
 
       toast.success('Cập nhật loại phòng thành công!')
-      // Refresh room data
-      fetchRoomDetail()
+      
+      // Navigate to room detail page
+      router.push(`/dashboard/landlord/properties/rooms/${room.id}`)
     } catch (error) {
       console.error('Error updating room:', error)
       toast.error('Không thể cập nhật loại phòng. Vui lòng thử lại.')

@@ -26,7 +26,6 @@ import {
   Star,
 } from "lucide-react"
 import { useUserStore } from "@/stores/userStore"
-import { useSidebarBadges } from "@/hooks/useSidebarBadges"
 
 interface SidebarSubItem {
   title: string
@@ -45,8 +44,15 @@ interface SidebarItem {
   disabled?: boolean
 }
 
+interface BadgeCounts {
+  bookingRequests: number
+  invitations: number
+  roommateApplications: number
+}
+
 interface SidebarProps {
   userType: 'tenant' | 'landlord'
+  badges?: BadgeCounts
   onNavigate?: () => void
 }
 
@@ -162,7 +168,7 @@ const landlordItems: SidebarItem[] = [
         title: "Phản ánh, sự cố",
         href: "/dashboard/landlord/feedback",
         icon: AlertTriangle,
-        disabled: true
+        disabled: false
       },
       {
         title: "Khách hàng đánh giá",
@@ -192,31 +198,43 @@ const landlordItems: SidebarItem[] = [
   }
 ]
 
-export function Sidebar({ userType, onNavigate }: SidebarProps) {
+export function Sidebar({ userType, badges, onNavigate }: SidebarProps) {
   const pathname = usePathname()
   const { user, logout } = useUserStore()
-  const badges = useSidebarBadges(userType)
   const [expandedItems, setExpandedItems] = useState<string[]>(
     userType === 'tenant' ? ['Quản lý thuê trọ'] : ['Quản lý Trọ']
   )
+
+  // Use default badges if not provided
+  const badgeCounts = badges || {
+    bookingRequests: 0,
+    invitations: 0,
+    roommateApplications: 0
+  }
 
   // Update items with badges dynamically
   const baseItems = userType === 'tenant' ? tenantItems : landlordItems
   const items = baseItems.map(item => {
     if (item.subItems) {
+      // Calculate total badge count for parent item
+      let totalBadge = 0
+      const updatedSubItems = item.subItems.map(subItem => {
+        let badge = 0
+        if (userType === 'landlord') {
+          if (subItem.href === '/dashboard/landlord/requests') {
+            badge = badgeCounts.bookingRequests
+          } else if (subItem.href === '/dashboard/landlord/roommate-applications') {
+            badge = badgeCounts.roommateApplications
+          }
+        }
+        totalBadge += badge
+        return { ...subItem, badge: badge > 0 ? badge : undefined }
+      })
+
       return {
         ...item,
-        subItems: item.subItems.map(subItem => {
-          let badge = 0
-          if (userType === 'landlord') {
-            if (subItem.href === '/dashboard/landlord/requests') {
-              badge = badges.bookingRequests
-            } else if (subItem.href === '/dashboard/landlord/roommate-applications') {
-              badge = badges.roommateApplications
-            }
-          }
-          return { ...subItem, badge: badge > 0 ? badge : undefined }
-        })
+        badge: totalBadge > 0 ? totalBadge : undefined,
+        subItems: updatedSubItems
       }
     }
     return item

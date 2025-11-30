@@ -40,11 +40,13 @@ interface ContractFormData {
   terms: TermsData
   emergencyContact?: EmergencyContact
   specialNote?: string
+  endDate?: string
 }
 
 interface ContractCreationFormProps {
   initialMonthlyRent?: number
   initialDeposit?: number
+  initialEndDate?: string
   onSubmit: (data: ContractFormData) => void
   onCancel: () => void
   isSubmitting?: boolean
@@ -53,6 +55,7 @@ interface ContractCreationFormProps {
 export function ContractCreationForm({
   initialMonthlyRent = 0,
   initialDeposit = 0,
+  initialEndDate,
   onSubmit,
   onCancel,
   isSubmitting = false
@@ -105,6 +108,9 @@ export function ContractCreationForm({
   // Special note state
   const [specialNote, setSpecialNote] = useState("")
 
+  // End date state
+  const [endDate, setEndDate] = useState(initialEndDate || "")
+
   // Helper functions
   const addItem = (
     items: string[],
@@ -140,7 +146,8 @@ export function ContractCreationForm({
         tenantResponsibilities
       },
       emergencyContact: emergencyContact.name && emergencyContact.phone ? emergencyContact : undefined,
-      specialNote: specialNote.trim() || undefined
+      specialNote: specialNote.trim() || undefined,
+      endDate: endDate || undefined
     }
 
     onSubmit(formData)
@@ -212,6 +219,18 @@ export function ContractCreationForm({
                 value={financial.paymentDueDate}
                 onChange={(e) => setFinancial({ ...financial, paymentDueDate: Number(e.target.value) })}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endDate">Ngày kết thúc hợp đồng</Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                placeholder="Chọn ngày kết thúc"
+              />
+              <p className="text-xs text-gray-500">Để trống nếu hợp đồng không xác định thời hạn</p>
             </div>
           </div>
 

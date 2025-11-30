@@ -11,7 +11,7 @@ import { checkPasswordStrength } from '@/actions/auth.action';
 // - At least one digit
 // - At least one special character
 export const PASSWORD_REGEX =
-	/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+	/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.])[A-Za-z\d@$!%*?&.]{6,}$/;
 
 /**
  * Validates password against the regex pattern
@@ -46,7 +46,7 @@ export const getPasswordValidationErrors = (password: string): string[] => {
 		errors.push('Mật khẩu phải có ít nhất 1 chữ số');
 	}
 
-	if (!/[@$!%*?&]/.test(password)) {
+	if (!/[@$!%*?&.]/.test(password)) {
 		errors.push('Mật khẩu phải có ít nhất 1 ký tự đặc biệt (@$!%*?&)');
 	}
 

@@ -287,7 +287,7 @@ function RentalContent() {
                   <div>
                     <p className="text-sm text-gray-600">Ngày kết thúc</p>
                     <p className="font-semibold">
-                      {formatDate(activeRental.contractEndDate)}
+                      {activeRental.contractEndDate? formatDate(activeRental.contractEndDate) : 'Chưa xác định'}
                     </p>
                   </div>
                 </div>

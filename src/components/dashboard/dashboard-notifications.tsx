@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/hooks/useNotifications'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Bell, CalendarCheck2, UserCheck, UserX, X } from 'lucide-react'
 
 export function DashboardNotifications() {
+  const router = useRouter()
   const { notifications, error, loadNotifications, markAsRead: markNotificationAsRead, deleteNotification } = useNotifications()
   const [filteredNotifications, setFilteredNotifications] = useState<NotificationItem[]>([])
 
@@ -64,12 +66,72 @@ export function DashboardNotifications() {
         return 'Yêu cầu đặt phòng mới'
       case 'booking_request_cancelled':
         return 'Yêu cầu đặt phòng bị hủy'
+      case 'booking_request_confirmed':
+        return 'Yêu cầu booking được xác nhận'
       case 'room_invitation_accepted':
         return 'Lời mời được chấp nhận'
       case 'room_invitation_rejected':
         return 'Lời mời bị từ chối'
+      case 'room_issue_reported':
+        return 'Sự cố phòng được báo cáo'
+      case 'rental_created':
+        return 'Hợp đồng thuê được tạo'
       default:
         return 'Thông báo'
+    }
+  }
+
+  const getNavigationPath = (notification: NotificationItem): string | null => {
+    const data = notification.data as Record<string, unknown>
+    
+    switch (notification.type) {
+      case 'room_issue_reported':
+        // Navigate to feedback page where issues are managed
+        return '/dashboard/landlord/feedback'
+        
+      case 'rental_created':
+        // Navigate to specific rental detail page
+        if (data?.rentalId) {
+          return `/dashboard/landlord/rentals/${data.rentalId}`
+        }
+        return '/dashboard/landlord/rentals'
+        
+      case 'booking_request_received':
+      case 'booking_request_cancelled':
+        // Navigate to booking requests page
+        if (data?.bookingId) {
+          return `/dashboard/landlord/requests?highlight=${data.bookingId}`
+        }
+        return '/dashboard/landlord/requests'
+        
+      case 'booking_request_confirmed':
+        // Navigate to rentals page since contract was created
+        if (data?.rentalId) {
+          return `/dashboard/landlord/rentals/${data.rentalId}`
+        }
+        return '/dashboard/landlord/rentals'
+        
+      case 'room_invitation_accepted':
+      case 'room_invitation_rejected':
+        // Navigate to tenants or properties management
+        return '/dashboard/landlord/tenants'
+        
+      default:
+        return null
+    }
+  }
+
+  const handleNotificationClick = (notification: NotificationItem) => {
+    const path = getNavigationPath(notification)
+    
+    // Mark as read when clicked
+    if (!notification.isRead) {
+      markNotificationAsRead(notification.id)
+    }
+    
+    // Navigate to the appropriate page
+    if (path) {
+      router.push(path)
     }
   }
 
@@ -98,7 +160,11 @@ export function DashboardNotifications() {
       <ScrollArea className="h-[600px] pr-4">
         <div className="space-y-4">
           {filteredNotifications.map((notification) => (
-            <Card key={notification.id} className={`p-4 ${!notification.isRead ? 'border-blue-200 bg-blue-50/50' : ''}`}>
+            <Card 
+              key={notification.id} 
+              className={`p-4 transition-colors hover:bg-accent cursor-pointer ${!notification.isRead ? 'border-blue-200 bg-blue-50/50' : ''}`}
+              onClick={() => handleNotificationClick(notification)}
+            >
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-3 flex-1">
                   <div className="mt-1">
@@ -129,7 +195,10 @@ export function DashboardNotifications() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => markNotificationAsRead(notification.id)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        markNotificationAsRead(notification.id)
+                      }}
                       className="text-xs"
                     >
                       Đánh dấu đã đọc
@@ -138,7 +207,10 @@ export function DashboardNotifications() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => deleteNotification(notification.id)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      deleteNotification(notification.id)
+                    }}
                     className="h-8 w-8"
                   >
                     <X className="h-4 w-4" />

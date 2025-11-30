@@ -736,7 +736,8 @@ export interface BookingRequest {
 	id: string;
 	roomId: string;
 	tenantId: string;
-	status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'accepted';
+	//pending   accepted  rejected   expired   cancelled   awaiting_confirmation
+	status: 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'expired' | 'awaiting_confirmation';
 	moveInDate: string;
 	moveOutDate?: string | null;
 	rentalMonths?: number | null;
@@ -1419,4 +1420,113 @@ export interface DashboardFinanceResponseDto {
 		buildingPerformance: NewChartResponseDto;
 		roomTypeDistribution: NewChartResponseDto;
 	};
+}
+
+// ============= ROOM ISSUE TYPES =============
+export type RoomIssueStatus = 'new' | 'in_progress' | 'resolved';
+export type RoomIssueCategory =
+	| 'facility'
+	| 'utility'
+	| 'neighbor'
+	| 'noise'
+	| 'security'
+	| 'other';
+
+export interface RoomIssueReporter {
+	id: string;
+	firstName: string | null;
+	lastName: string | null;
+	email: string;
+	phone: string | null;
+}
+
+export interface RoomIssueRoom {
+	id: string;
+	name: string;
+	slug: string;
+	buildingId: string;
+	buildingName: string;
+	ownerId: string;
+}
+
+export interface RoomIssueRoomInstance {
+	id: string;
+	roomNumber: string;
+	room: RoomIssueRoom;
+}
+
+export interface RoomIssue {
+	id: string;
+	title: string;
+	category: RoomIssueCategory;
+	status: RoomIssueStatus;
+	imageUrls: string[];
+	createdAt: string;
+	updatedAt: string;
+	reporter: RoomIssueReporter;
+	roomInstance: RoomIssueRoomInstance;
+}
+
+export interface CreateRoomIssueRequest {
+	roomInstanceId: string;
+	title: string;
+	category: RoomIssueCategory;
+	imageUrls?: string[];
+}
+
+export interface UpdateRoomIssueRequest {
+	title?: string;
+	category?: RoomIssueCategory;
+	status?: RoomIssueStatus;
+	imageUrls?: string[];
+}
+
+export interface RoomIssueQueryParams {
+	page?: number;
+	limit?: number;
+	roomInstanceId?: string;
+	category?: RoomIssueCategory;
+	status?: RoomIssueStatus;
+}
+
+export interface LandlordRoomIssueQueryParams extends RoomIssueQueryParams {
+	reporterId?: string;
+}
+
+export interface PaginatedRoomIssuesResponse {
+	data: RoomIssue[];
+	meta: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+	};
+}
+
+// ============= ROOM INSTANCE SEARCH TYPES =============
+export interface RoomInstanceSearchResult {
+	id: string;
+	roomNumber: string;
+	roomId: string;
+	roomName: string;
+	buildingId: string;
+	buildingName: string;
+	ownerId: string;
+	ownerName: string;
+	status?: RoomStatus;
+	floorNumber?: number;
+	notes?: string;
+}
+
+export interface RoomInstanceSearchParams {
+	buildingId?: string;
+	search?: string;
+	status?: RoomStatus;
+}
+
+export interface RoomInstanceSearchResponse {
+	success: boolean;
+	message: string;
+	data: RoomInstanceSearchResult[];
+	timestamp: string;
 }

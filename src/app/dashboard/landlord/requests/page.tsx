@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import { Search, Calendar, Phone, Mail, Clock, CheckCircle, MessageSquare, X, UserPlus, Home, DollarSign, XCircle } from "lucide-react"
+import { Search, Calendar, Phone, Mail, Clock, CheckCircle, MessageSquare, X, UserPlus, Home, DollarSign, XCircle, ExternalLink } from "lucide-react"
 import { useBookingRequestStore } from "@/stores/bookingRequestStore"
 import { useInvitationStore } from "@/stores/invitationStore"
 import { format } from "date-fns"
@@ -20,16 +20,20 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/
 
 const BOOKING_STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
+  accepted: 'bg-green-100 text-green-800',
   rejected: 'bg-red-100 text-red-800',
-  cancelled: 'bg-gray-100 text-gray-800'
+  cancelled: 'bg-gray-100 text-gray-800',
+  expired: 'bg-gray-100 text-gray-800',
+  awaiting_confirmation: 'bg-yellow-100 text-yellow-800'
 }
 
 const BOOKING_STATUS_LABELS = {
   pending: 'Chờ xử lý',
-  approved: 'Đã chấp nhận',
+  accepted: 'Đã chấp nhận',
   rejected: 'Đã từ chối',
-  cancelled: 'Đã hủy'
+  cancelled: 'Đã hủy',
+  expired: 'Đã hết hạn',
+  awaiting_confirmation: 'Chờ xác nhận'
 }
 
 const CONFIRMED_COLORS = {
@@ -86,11 +90,13 @@ export default function RequestsPage() {
   // Load data
   useEffect(() => {
     loadReceived({ page: bookingPage, limit: 12, status: bookingStatusFilter === 'all' ? undefined : bookingStatusFilter })
-  }, [loadReceived, bookingPage, bookingStatusFilter])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingPage, bookingStatusFilter])
 
   useEffect(() => {
     loadSent({ page: invitationPage, limit: 12, status: invitationStatusFilter === 'all' ? undefined : invitationStatusFilter })
-  }, [loadSent, invitationPage, invitationStatusFilter])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invitationPage, invitationStatusFilter])
 
   // Booking Requests
   const canBookingPrev = useMemo(() => receivedMeta?.hasPrev, [receivedMeta])
@@ -203,7 +209,8 @@ export default function RequestsPage() {
                 <SelectContent>
                   <SelectItem value="all">Tất cả trạng thái</SelectItem>
                   <SelectItem value="pending">Chờ xử lý</SelectItem>
-                  <SelectItem value="approved">Đã chấp nhận</SelectItem>
+                  <SelectItem value="accepted">Đã chấp nhận</SelectItem>
+                  <SelectItem value="awaiting_confirmation">Chờ xác nhận</SelectItem>
                   <SelectItem value="rejected">Đã từ chối</SelectItem>
                   <SelectItem value="cancelled">Đã hủy</SelectItem>
                 </SelectContent>
@@ -246,8 +253,42 @@ export default function RequestsPage() {
                 {filteredBookingRequests.map((request) => (
                   <Card key={request.id} className="hover:shadow-lg transition-shadow">
                     <div className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-3">
+                      {/* Room Info - Highlighted */}
+                      <div className="mb-4 pb-4 border-b-2 border-blue-100">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center space-x-3 flex-1">
+                            <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                              <Home className="h-6 w-6 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-lg font-bold text-blue-900 line-clamp-1">
+                                {request.room?.name || 'Phòng không xác định'}
+                              </h3>
+                              {request.room?.building?.name && (
+                                <p className="text-sm text-gray-600 line-clamp-1">{request.room.building.name}</p>
+                              )}
+                            </div>
+                          </div>
+                          <Badge className={BOOKING_STATUS_COLORS[request.status as keyof typeof BOOKING_STATUS_COLORS]}>
+                            {BOOKING_STATUS_LABELS[request.status as keyof typeof BOOKING_STATUS_LABELS]}
+                          </Badge>
+                        </div>
+                        {request.room?.slug && (
+                          <a
+                            href={`/rooms/${request.room.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline mt-1 ml-[60px]"
+                          >
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            Xem chi tiết phòng
+                          </a>
+                        )}
+                      </div>
+
+                      {/* Tenant Info */}
+                      <div className="mb-4">
+                        <div className="flex items-center space-x-3 mb-3">
                           <ClickableUserAvatar
                             userId={request.tenant?.id || ''}
                             avatarUrl={request.tenant?.avatarUrl}
@@ -255,21 +296,13 @@ export default function RequestsPage() {
                             size="md"
                           />
                           <div>
-                            <h3 className="text-lg font-semibold line-clamp-1">
+                            <h4 className="font-semibold text-gray-900">
                               {request.tenant?.firstName} {request.tenant?.lastName}
-                            </h3>
-                            <p className="text-xs text-gray-500">
-                              {request.room?.name ? `Phòng ${request.room.name}` : request.room?.building?.name || '-'}
-                            </p>
+                            </h4>
+                            <p className="text-xs text-gray-500">Người thuê</p>
                           </div>
                         </div>
-                        <Badge className={BOOKING_STATUS_COLORS[request.status as keyof typeof BOOKING_STATUS_COLORS]}>
-                          {BOOKING_STATUS_LABELS[request.status as keyof typeof BOOKING_STATUS_LABELS]}
-                        </Badge>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="space-y-1 text-sm">
+                        <div className="space-y-1 text-sm ml-[60px]">
                           {request.tenant?.phone && (
                             <div className="flex items-center text-gray-600">
                               <Phone className="h-4 w-4 mr-2 text-gray-400" />
@@ -281,6 +314,9 @@ export default function RequestsPage() {
                             <span className="truncate">{request.tenant?.email || '-'}</span>
                           </div>
                         </div>
+                      </div>
+
+                      <div className="space-y-3">
 
                         <div className="flex items-center space-x-2 text-sm">
                           <Calendar className="h-4 w-4 text-gray-400" />
@@ -304,7 +340,7 @@ export default function RequestsPage() {
                           </div>
                         )}
 
-                        {request.status === 'approved' && (
+                        {request.status === 'accepted' && (
                           <div className="pt-2 border-t">
                             <div className="flex items-center justify-between">
                               <span className="text-xs text-gray-600">Xác nhận tenant:</span>
@@ -345,20 +381,19 @@ export default function RequestsPage() {
                             </Button>
                           </div>
                         )}
-                        {request.status === 'approved' && !request.isConfirmedByTenant && (
+                        {request.status === 'accepted' && !request.isConfirmedByTenant && (
                           <div className="text-center">
                             <div className="inline-flex items-center text-yellow-700 text-sm font-medium">
                               <Clock className="h-4 w-4 mr-1" />
                               Đang chờ tenant xác nhận
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">Hợp đồng sẽ được tạo khi tenant xác nhận</p>
                           </div>
                         )}
-                        {request.status === 'approved' && request.isConfirmedByTenant && (
+                        {request.status === 'accepted' && request.isConfirmedByTenant && (
                           <div className="text-center">
                             <div className="inline-flex items-center text-green-700 text-sm font-medium">
                               <CheckCircle className="h-4 w-4 mr-1" />
-                              Hoàn tất - Hợp đồng đã tạo
+                              Hoàn tất - Yêu cầu đã được xác nhận
                             </div>
                           </div>
                         )}

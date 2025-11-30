@@ -4,6 +4,7 @@ import { createServerApiCall } from '@/lib/api-client';
 import type {
 	Bill,
 	BillQueryParams,
+	CreateBillForRoomRequest,
 	CreateBillRequest,
 	GenerateMonthlyBillsRequest,
 	GenerateMonthlyBillsResponse,
@@ -83,7 +84,7 @@ const normalizeEntityResponse = <T extends object>(response: unknown): { data: T
 	return { data: parsed as T };
 };
 
-// Create bill for room (Landlord only)
+// Create bill for room (Landlord only) - Original API
 export const createBillForRoom = async (
 	data: CreateBillRequest,
 	token?: string,
@@ -100,6 +101,26 @@ export const createBillForRoom = async (
 		return { success: true, data: normalizeEntityResponse<Bill>(response) };
 	} catch (error) {
 		return { success: false, error: extractErrorMessage(error, 'Không thể tạo hóa đơn') };
+	}
+};
+
+// Create bill by room instance ID (Landlord only) - New enhanced API
+export const createBillByRoomInstance = async (
+	data: CreateBillForRoomRequest,
+	token?: string,
+): Promise<ApiResult<{ data: Bill }>> => {
+	try {
+		const response = await apiCall<{ data: Bill }>(
+			'/api/bills/create-for-room',
+			{
+				method: 'POST',
+				data,
+			},
+			token,
+		);
+		return { success: true, data: normalizeEntityResponse<Bill>(response) };
+	} catch (error) {
+		return { success: false, error: extractErrorMessage(error, 'Không thể tạo hóa đơn cho phòng') };
 	}
 };
 

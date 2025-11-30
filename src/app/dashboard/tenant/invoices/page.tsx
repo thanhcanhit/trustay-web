@@ -1,18 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Filter, AlertCircle } from "lucide-react"
+import { Search, Filter, AlertCircle, CreditCard, Download, Loader2, ExternalLink } from "lucide-react"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { BillCard } from "@/components/billing/BillCard"
 import { useBillStore } from "@/stores/billStore"
 import { useRouter } from "next/navigation"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
-import type { Bill } from "@/types/bill.types"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { toast } from "sonner"
+import QRCode from "react-qr-code"
+import type { Bill, PayOSLinkResponse } from "@/types/bill.types"
 import type { BillStatus } from "@/types/types"
 
 export default function TenantInvoicesPage() {
@@ -28,6 +31,13 @@ export default function TenantInvoicesPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [billingPeriod, setBillingPeriod] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+  const [processingPayment, setProcessingPayment] = useState<string | null>(null)
+  const [payOSInfo, setPayOSInfo] = useState<PayOSLinkResponse | null>(null)
+
+  const formattedAmount = useMemo(() => {
+    if (!payOSInfo?.amount) return null
+    return payOSInfo.amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })
+  }, [payOSInfo])
 
   // Load bills when filters change
   useEffect(() => {
@@ -54,6 +64,90 @@ export default function TenantInvoicesPage() {
 
   const handleViewDetail = (bill: Bill) => {
     router.push(`/dashboard/tenant/invoices/${bill.id}`)
+  }
+
+  const buildPayOSUrls = (billId: string) => {
+    const baseUrl = (process.env.NEXT_PUBLIC_PAYMENT_RETURN_BASE_URL || 'https://trustay.life').replace(/\/$/, '')
+    const query = `billId=${encodeURIComponent(billId)}`
+    return {
+      returnUrl: `${baseUrl}/payments/success?${query}`,
+      cancelUrl: `${baseUrl}/payments/cancel?${query}`
+    }
+  }
+
+  const payBill = async (billId: string) => {
+    setProcessingPayment(billId)
+    try {
+      const token = localStorage.getItem('accessToken')
+      if (!token) {
+        toast.error('Bạn cần đăng nhập để thanh toán')
+        return
+      }
+
+      const payload = buildPayOSUrls(billId)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bills/${billId}/payos-link`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: payload ? JSON.stringify(payload) : undefined
+      })
+
+      if (!response.ok) {
+        throw new Error('Không thể tạo liên kết PayOS')
+      }
+
+      const data: PayOSLinkResponse = await response.json()
+
+      if (!data.checkoutUrl && !data.qrCode) {
+        throw new Error('Không nhận được liên kết thanh toán hợp lệ')
+      }
+
+      setPayOSInfo(data)
+
+      // Refresh bills after payment
+      setTimeout(() => {
+        loadTenantBills({
+          page: 1,
+          limit: 50,
+          ...(statusFilter !== 'all' ? { status: statusFilter as BillStatus } : {}),
+          ...(billingPeriod ? { billingPeriod } : {})
+        })
+      }, 2000)
+    } catch (error) {
+      console.error('Error creating PayOS link:', error)
+      toast.error('Có lỗi xảy ra khi tạo liên kết PayOS')
+    } finally {
+      setProcessingPayment(null)
+    }
+  }
+
+  const downloadBill = async (billId: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bills/${billId}/download`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `bill-${billId}.pdf`
+        a.click()
+        window.URL.revokeObjectURL(url)
+        toast.success('Đã tải xuống hóa đơn')
+      } else {
+        toast.error('Không thể tải xuống hóa đơn')
+      }
+    } catch (error) {
+      console.error('Error downloading bill:', error)
+      toast.error('Có lỗi xảy ra khi tải xuống hóa đơn')
+    }
   }
 
   const resetFilters = () => {
@@ -216,17 +310,51 @@ export default function TenantInvoicesPage() {
 
         {/* Bills Grid */}
         {loading ? (
-          <div className="text-center py-12">Đang tải...</div>
+          <div className="text-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-400" />
+            <p className="text-gray-600">Đang tải...</p>
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredBills.map((bill) => (
-                <BillCard
-                  key={bill.id}
-                  bill={bill}
-                  onViewDetail={handleViewDetail}
-                  userRole="tenant"
-                />
+                <div key={bill.id} className="relative">
+                  <BillCard
+                    bill={bill}
+                    onViewDetail={handleViewDetail}
+                    userRole="tenant"
+                  />
+                  {/* Payment buttons for tenant */}
+                  {(bill.status === 'pending' || bill.status === 'overdue') && (
+                    <div className="mt-2 flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => payBill(bill.id)}
+                        disabled={processingPayment === bill.id}
+                        className={`flex-1 ${bill.status === 'overdue' ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                      >
+                        {processingPayment === bill.id ? (
+                          <>
+                            <Loader2 size={16} className="mr-1 animate-spin" />
+                            Đang xử lý...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard size={16} className="mr-1" />
+                            Thanh Toán
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadBill(bill.id)}
+                      >
+                        <Download size={16} />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
 
@@ -247,6 +375,69 @@ export default function TenantInvoicesPage() {
           </>
         )}
       </div>
+
+      {/* PayOS Payment Dialog */}
+      <Dialog open={!!payOSInfo} onOpenChange={(open) => !open && setPayOSInfo(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Thanh toán qua PayOS</DialogTitle>
+            <DialogDescription>
+              Quét mã QR hoặc mở liên kết để hoàn tất giao dịch. Hệ thống sẽ tự cập nhật trạng thái hóa đơn sau khi PayOS xác nhận.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col items-center gap-4">
+            <div className="p-4 bg-white rounded-lg border">
+              {payOSInfo?.qrCode ? (
+                /^https?:/i.test(payOSInfo.qrCode) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={payOSInfo.qrCode}
+                    alt="Mã QR PayOS"
+                    className="w-56 h-56 object-contain"
+                  />
+                ) : (
+                  <QRCode
+                    value={payOSInfo.qrCode}
+                    size={224}
+                    style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+                  />
+                )
+              ) : (
+                payOSInfo?.checkoutUrl && (
+                  <QRCode
+                    value={payOSInfo.checkoutUrl}
+                    size={224}
+                    style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+                  />
+                )
+              )}
+            </div>
+
+            {formattedAmount && (
+              <div className="text-center">
+                <p className="text-sm text-gray-500">Số tiền</p>
+                <p className="text-xl font-semibold text-gray-900">{formattedAmount}</p>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2 w-full">
+              {payOSInfo?.checkoutUrl && (
+                <Button
+                  onClick={() => payOSInfo.checkoutUrl && window.open(payOSInfo.checkoutUrl, '_blank', 'noopener,noreferrer')}
+                  className="gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Mở trang thanh toán PayOS
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => setPayOSInfo(null)}>
+                Đóng
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   )
 }

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import {
+	createBillByRoomInstance,
 	createBillForRoom,
 	deleteBill,
 	generateMonthlyBillsForBuilding,
@@ -16,6 +17,7 @@ import { TokenManager } from '@/lib/api-client';
 import type {
 	Bill,
 	BillQueryParams,
+	CreateBillForRoomRequest,
 	CreateBillRequest,
 	GenerateMonthlyBillsRequest,
 	GenerateMonthlyBillsResponse,
@@ -64,6 +66,7 @@ interface BillState {
 	loadById: (id: string) => Promise<void>;
 	loadBillById: (id: string) => Promise<Bill | null>;
 	create: (data: CreateBillRequest) => Promise<boolean>;
+	createForRoomInstance: (data: CreateBillForRoomRequest) => Promise<boolean>;
 	update: (id: string, data: UpdateBillRequest) => Promise<boolean>;
 	remove: (id: string) => Promise<boolean>;
 	markPaid: (id: string) => Promise<boolean>;
@@ -184,12 +187,42 @@ export const useBillStore = create<BillState>((set, get) => ({
 		}
 	},
 
-	// Create bill for room
+	// Create bill for room (original API)
 	create: async (data) => {
 		set({ submitting: true, submitError: null });
 		try {
 			const token = TokenManager.getAccessToken();
 			const result = await createBillForRoom(data, token);
+			if (result.success) {
+				set({
+					current: result.data.data,
+					submitting: false,
+				});
+				// Reload bills list
+				await get().loadBills();
+				return true;
+			} else {
+				set({
+					submitError: result.error,
+					submitting: false,
+				});
+				return false;
+			}
+		} catch (error) {
+			set({
+				submitError: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+				submitting: false,
+			});
+			return false;
+		}
+	},
+
+	// Create bill for room instance (new enhanced API with roomInstanceId)
+	createForRoomInstance: async (data) => {
+		set({ submitting: true, submitError: null });
+		try {
+			const token = TokenManager.getAccessToken();
+			const result = await createBillByRoomInstance(data, token);
 			if (result.success) {
 				set({
 					current: result.data.data,

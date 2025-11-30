@@ -138,11 +138,8 @@ export default function LandlordProperties() {
                         </div>
                       </TableCell>
                       <TableCell className="max-w-[250px]">
-                        <div className="text-sm text-gray-600 line-clamp-2 truncate">
+                        <div className="text-sm text-gray-600">
                           {building.addressLine1}
-                          {building.ward && `, ${building.ward.name}`}
-                          {building.district && `, ${building.district.name}`}
-                          {building.province && `, ${building.province.name}`}
                         </div>
                       </TableCell>
                       <TableCell className="text-center">

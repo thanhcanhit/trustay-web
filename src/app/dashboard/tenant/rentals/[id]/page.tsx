@@ -29,7 +29,9 @@ import {
 } from "lucide-react"
 import { useRentalStore } from "@/stores/rentalStore"
 import { useRoomStore } from "@/stores/roomStore"
-import { RentalStatus } from "@/types/types"
+import { useRoomIssueStore } from "@/stores/roomIssueStore"
+import { RentalStatus, RoomIssueCategory } from "@/types/types"
+import { SizingImage } from "@/components/sizing-image"
 import { RenewRentalDialog } from "@/components/rental/RenewRentalDialog"
 import { TerminateRentalDialog } from "@/components/rental/TerminateRentalDialog"
 import { RenewRentalRequest, TerminateRentalRequest } from "@/types/rental.types"
@@ -37,6 +39,16 @@ import { toast } from "sonner"
 import { HTMLContent } from "@/components/ui/html-content"
 import { getRoomTypeDisplayName } from "@/utils/room-types"
 import { translateRoomStatus } from "@/utils"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { X } from "lucide-react"
 
 const RENTAL_STATUS_CONFIG: Record<RentalStatus, { label: string; className: string }> = {
   active: { label: 'Đang thuê', className: 'bg-green-100 text-green-800' },
@@ -101,9 +113,13 @@ function RentalDetailContent() {
   } = useRentalStore()
 
   const { currentRoom, loadRoomDetail } = useRoomStore()
+  const { create: createRoomIssue, submitting: submittingIssue, submitError } = useRoomIssueStore()
 
   const [showRenewDialog, setShowRenewDialog] = useState(false)
   const [showTerminateDialog, setShowTerminateDialog] = useState(false)
+  const [showReportIssueDialog, setShowReportIssueDialog] = useState(false)
+  const [issueTitle, setIssueTitle] = useState('')
+  const [issueCategory, setIssueCategory] = useState<RoomIssueCategory>('other')
 
   useEffect(() => {
     if (rentalId) {
@@ -200,8 +216,34 @@ function RentalDetailContent() {
   }
 
   const handleReportIssue = () => {
-    // TODO: Implement report issue functionality
-    toast.info('Chức năng báo cáo sự cố đang được phát triển')
+    setShowReportIssueDialog(true)
+  }
+
+  const handleSubmitRoomIssue = async () => {
+    if (!issueTitle.trim()) {
+      toast.error('Vui lòng nhập tiêu đề sự cố')
+      return
+    }
+
+    if (!rental?.roomInstance?.id) {
+      toast.error('Không tìm thấy thông tin phòng')
+      return
+    }
+
+    const success = await createRoomIssue({
+      roomInstanceId: rental.roomInstance.id,
+      title: issueTitle.trim(),
+      category: issueCategory,
+    })
+
+    if (success) {
+      toast.success('Đã gửi báo cáo sự cố thành công')
+      setShowReportIssueDialog(false)
+      setIssueTitle('')
+      setIssueCategory('other')
+    } else {
+      toast.error(submitError || 'Không thể gửi báo cáo sự cố')
+    }
   }
 
   return (
@@ -323,8 +365,7 @@ function RentalDetailContent() {
                       </h4>
                       <div className="grid grid-cols-2 gap-2">
                         {currentRoom.images.slice(0, 4).map((img, idx) => (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <SizingImage
                             key={idx}
                             src={img.url}
                             alt={`Room ${idx + 1}`}
@@ -662,6 +703,97 @@ function RentalDetailContent() {
         onSubmit={handleTerminateRental}
         isSubmitting={submitting}
       />
+
+      {/* Report Room Issue Modal */}
+      {showReportIssueDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50" 
+            onClick={() => {
+              setShowReportIssueDialog(false)
+              setIssueTitle('')
+              setIssueCategory('other')
+            }}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md mx-4 p-6 space-y-4">
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Báo cáo sự cố phòng</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Mô tả sự cố bạn đang gặp phải để chủ trọ có thể xử lý kịp thời
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowReportIssueDialog(false)
+                  setIssueTitle('')
+                  setIssueCategory('other')
+                }}
+                className="text-gray-400 hover:text-gray-600"
+                disabled={submittingIssue}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="issue-category">Loại sự cố</Label>
+                <Select value={issueCategory} onValueChange={(value) => setIssueCategory(value as RoomIssueCategory)}>
+                  <SelectTrigger id="issue-category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="facility">Cơ sở vật chất</SelectItem>
+                    <SelectItem value="utility">Tiện ích</SelectItem>
+                    <SelectItem value="neighbor">Hàng xóm</SelectItem>
+                    <SelectItem value="noise">Tiếng ồn</SelectItem>
+                    <SelectItem value="security">An ninh</SelectItem>
+                    <SelectItem value="other">Khác</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="issue-title">Tiêu đề</Label>
+                <Input
+                  id="issue-title"
+                  placeholder="VD: Rò rỉ nước ở phòng tắm"
+                  value={issueTitle}
+                  onChange={(e) => setIssueTitle(e.target.value)}
+                  maxLength={120}
+                />
+                <div className="text-xs text-muted-foreground">
+                  {issueTitle.length}/120 ký tự
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowReportIssueDialog(false)
+                  setIssueTitle('')
+                  setIssueCategory('other')
+                }}
+                disabled={submittingIssue}
+              >
+                Hủy
+              </Button>
+              <Button onClick={handleSubmitRoomIssue} disabled={submittingIssue}>
+                {submittingIssue ? 'Đang gửi...' : 'Gửi báo cáo'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
