@@ -10,7 +10,7 @@ import {
 	markNotificationAsRead as markAsReadAPI,
 } from '@/actions/notification.action';
 import { TokenManager } from '@/lib/api-client';
-import { useNotificationStore } from '@/stores/notification.store';
+import { type NotificationData, useNotificationStore } from '@/stores/notification.store';
 import { useUserStore } from '@/stores/userStore';
 
 export function useNotifications() {
@@ -50,10 +50,10 @@ export function useNotifications() {
 				const response = await getNotifications(params, token ?? undefined);
 				if (response?.data && Array.isArray(response.data)) {
 					// Map notificationType to type for consistency
-					const mappedData = response.data.map((notif: any) => ({
+					const mappedData = response.data.map((notif: Record<string, unknown>) => ({
 						...notif,
-						type: notif.notificationType || notif.type,
-					}));
+						type: (notif.notificationType as string) || (notif.type as string),
+					})) as NotificationData[];
 
 					// Filter notifications to only include ones belonging to current user
 					const userNotifications = mappedData.filter(

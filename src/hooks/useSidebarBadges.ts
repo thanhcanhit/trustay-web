@@ -17,11 +17,7 @@ export function useSidebarBadges(userType: 'tenant' | 'landlord') {
 		roommateApplications: 0,
 	});
 
-	const {
-		loadReceived: loadBookingRequests,
-		received: bookingRequests,
-		receivedMeta,
-	} = useBookingRequestStore();
+	const { loadReceived: loadBookingRequests, received: bookingRequests } = useBookingRequestStore();
 	const { loadSent: loadInvitations, sentMeta } = useInvitationStore();
 	const { fetchLandlordPendingApplications, pagination: roommateAppPagination } =
 		useRoommateApplicationsStore();

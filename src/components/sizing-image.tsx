@@ -5,7 +5,7 @@ type SrcSize = '128x128' | '256x256' | '512x512' | '1024x1024' | '1920x1080'
 
 interface SizingImageProps extends Omit<ImageProps, 'src' | 'width' | 'height'> {
   src: string
-  srcSize: SrcSize
+  srcSize?: SrcSize
   width?: number
   height?: number
   fill?: boolean
@@ -82,9 +82,16 @@ export const SizingImage: React.FC<SizingImageProps> = ({
     // Validate src is not empty
     const validSrc = src && src.trim() !== '' ? src : '/images/error-image.jpg'
     const parsedSrc = parseImagePath(validSrc)
-    const dimensions = width && height
-      ? { width, height }
-      : getDimensions(srcSize)
+    
+    let dimensions: { width: number; height: number }
+    if (width && height) {
+      dimensions = { width, height }
+    } else if (srcSize) {
+      dimensions = getDimensions(srcSize)
+    } else {
+      dimensions = { width: 512, height: 512 } // Default size if srcSize not provided
+    }
+    
     return { parsedSrc, dimensions }
   }, [src, srcSize, width, height])
 

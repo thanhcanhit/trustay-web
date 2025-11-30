@@ -30,6 +30,7 @@ import {
 import { useRentalStore } from "@/stores/rentalStore"
 import { useRoomStore } from "@/stores/roomStore"
 import { RentalStatus } from "@/types/types"
+import { SizingImage } from "@/components/sizing-image"
 import { RenewRentalDialog } from "@/components/rental/RenewRentalDialog"
 import { TerminateRentalDialog } from "@/components/rental/TerminateRentalDialog"
 import { RenewRentalRequest, TerminateRentalRequest } from "@/types/rental.types"
@@ -323,8 +324,7 @@ function RentalDetailContent() {
                       </h4>
                       <div className="grid grid-cols-2 gap-2">
                         {currentRoom.images.slice(0, 4).map((img, idx) => (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <SizingImage
                             key={idx}
                             src={img.url}
                             alt={`Room ${idx + 1}`}

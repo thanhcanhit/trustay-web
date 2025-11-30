@@ -38,7 +38,9 @@ export function notificationHandler(socket: Socket, userId?: string) {
 				// Map notificationType to type for consistency
 				const mappedNotification = {
 					...payload.notification,
-					type: (payload.notification as any).notificationType || payload.notification.type,
+					type:
+						((payload.notification as unknown as Record<string, unknown>)
+							.notificationType as string) || payload.notification.type,
 				};
 				addNotification(mappedNotification, userId);
 			} else {

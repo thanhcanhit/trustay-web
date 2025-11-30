@@ -24,10 +24,7 @@ import {
   DollarSign,
 } from "lucide-react"
 import { useRentalStore } from "@/stores/rentalStore"
-import { useContractStore } from "@/stores/contractStore"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { ContractCreationForm } from "@/components/contract/ContractCreationForm"
 import { toast } from "sonner"
 import { Rental, UpdateRentalRequest, TerminateRentalRequest } from "@/types/rental.types"
 import { UpdateRentalDialog } from "@/components/rental/UpdateRentalDialog"
@@ -52,7 +49,6 @@ const STATUS_LABELS = {
 export default function RentalsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [showFormDialog, setShowFormDialog] = useState(false)
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null)
   const [showUpdateDialog, setShowUpdateDialog] = useState(false)
   const [showTerminateDialog, setShowTerminateDialog] = useState(false)
@@ -67,11 +63,6 @@ export default function RentalsPage() {
     terminate,
     clearErrors
   } = useRentalStore()
-
-  const {
-    autoGenerate,
-    submitting: contractSubmitting
-  } = useContractStore()
 
   useEffect(() => {
     loadLandlordRentals()
@@ -93,65 +84,8 @@ export default function RentalsPage() {
     return matchesSearch && matchesStatus
   })
 
-  const handleOpenContractForm = (rental: Rental) => {
-    setSelectedRental(rental)
-    setShowFormDialog(true)
-  }
-
-  const handleGenerateContract = async (formData: {
-    financial: {
-      monthlyRent: number;
-      deposit: number;
-      depositMonths: number;
-      paymentMethod: string;
-      paymentDueDate: number;
-      electricityPrice: number;
-      waterPrice: number;
-      internetPrice?: number;
-      parkingFee?: number;
-    };
-    terms: {
-      utilities: string[];
-      restrictions: string[];
-      rules: string[];
-      landlordResponsibilities: string[];
-      tenantResponsibilities: string[];
-    };
-    emergencyContact?: {
-      name: string;
-      phone: string;
-    };
-    specialNote?: string;
-  }) => {
-    if (!selectedRental?.id) {
-      toast.error('Không tìm thấy thông tin cho thuê')
-      return
-    }
-
-    // Prepare contract data to send to backend
-    const additionalContractData = {
-      financial: formData.financial,
-      terms: {
-        ...formData.terms,
-        responsibilities: {
-          landlord: formData.terms.landlordResponsibilities,
-          tenant: formData.terms.tenantResponsibilities
-        }
-      },
-      emergencyContact: formData.emergencyContact,
-      specialNote: formData.specialNote
-    }
-
-    const success = await autoGenerate(selectedRental.id, additionalContractData)
-    if (success) {
-      toast.success('Tạo hợp đồng thành công!')
-      setShowFormDialog(false)
-      setSelectedRental(null)
-      // Reload rentals to update contract status
-      await loadLandlordRentals()
-    } else {
-      toast.error('Không thể tạo hợp đồng')
-    }
+  const handleCreateContract = (rentalId: string) => {
+    window.location.href = `/dashboard/landlord/rentals/${rentalId}/create-contract`
   }
 
   const handleViewDetail = (rentalId: string) => {
@@ -413,7 +347,7 @@ export default function RentalsPage() {
                         <Button
                           variant="default"
                           size="sm"
-                          onClick={() => handleOpenContractForm(rental)}
+                          onClick={() => handleCreateContract(rental.id!)}
                           className="flex items-center gap-1 flex-1"
                         >
                           <FileText className="h-3 w-3" />
@@ -469,41 +403,6 @@ export default function RentalsPage() {
             </Button>
           </div>
         )}
-
-        {/* Contract Creation Form Dialog */}
-        <Dialog open={showFormDialog} onOpenChange={(open) => {
-          if (!open) {
-            setShowFormDialog(false)
-            setSelectedRental(null)
-          }
-        }}>
-          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Tạo hợp đồng từ cho thuê</DialogTitle>
-              <DialogDescription>
-                {selectedRental && (
-                  <span>
-                    Phòng: {selectedRental.roomInstance?.room?.name} ({selectedRental.roomInstance?.roomNumber}) -
-                    Người thuê: {selectedRental.tenant?.firstName} {selectedRental.tenant?.lastName}
-                  </span>
-                )}
-              </DialogDescription>
-            </DialogHeader>
-
-            {selectedRental && (
-              <ContractCreationForm
-                initialMonthlyRent={selectedRental.monthlyRent ? parseFloat(selectedRental.monthlyRent) : 0}
-                initialDeposit={selectedRental.depositPaid ? parseFloat(selectedRental.depositPaid) : 0}
-                onSubmit={handleGenerateContract}
-                onCancel={() => {
-                  setShowFormDialog(false)
-                  setSelectedRental(null)
-                }}
-                isSubmitting={contractSubmitting}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
 
         {/* Update Rental Dialog */}
         <UpdateRentalDialog
