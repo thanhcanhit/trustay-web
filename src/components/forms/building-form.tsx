@@ -205,7 +205,7 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
             <span>{mode === 'create' ? 'Thêm dãy trọ mới' : 'Chỉnh sửa dãy trọ'}</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-4 md:p-6">
+        <CardContent className="px-4 md:px-6">
           <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
             {/* Basic Information */}
             <div className="space-y-3 md:space-y-4">
@@ -292,45 +292,8 @@ export function BuildingForm({ building, mode, onSuccess, onCancel }: BuildingFo
 
             <Separator />
 
-            {/* Location Coordinates (Optional) */}
-            <div className="space-y-3 md:space-y-4">
-              <h3 className="text-base md:text-lg font-medium">Tọa độ địa lý (tùy chọn)</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField>
-                  <FormLabel>Vĩ độ (Latitude)</FormLabel>
-                  <Input
-                    type="number"
-                    step="any"
-                    placeholder="10.8231"
-                    value={formData.latitude}
-                    onChange={(e) => updateFormData('latitude', e.target.value)}
-                  />
-                  {errors.latitude && <FormMessage>{errors.latitude}</FormMessage>}
-                </FormField>
-
-                <FormField>
-                  <FormLabel>Kinh độ (Longitude)</FormLabel>
-                  <Input
-                    type="number"
-                    step="any"
-                    placeholder="106.6297"
-                    value={formData.longitude}
-                    onChange={(e) => updateFormData('longitude', e.target.value)}
-                  />
-                  {errors.longitude && <FormMessage>{errors.longitude}</FormMessage>}
-                </FormField>
-              </div>
-              
-              <p className="text-sm text-gray-600">
-                Tọa độ giúp xác định vị trí chính xác của dãy trọ trên bản đồ
-              </p>
-            </div>
-
-            <Separator />
-
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-4 md:pt-6">
+            <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
               <Button
                 type="button"
                 variant="outline"

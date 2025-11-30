@@ -182,7 +182,7 @@ export const useBookingRequestStore = create<BookingRequestState>((set, get) => 
 				item.id === id
 					? {
 							...item,
-							status: 'approved' as const,
+							status: 'accepted' as const,
 							ownerNotes: ownerNotes || item.ownerNotes,
 						}
 					: item,

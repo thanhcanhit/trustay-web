@@ -12,6 +12,7 @@ import {
 	getMyRooms,
 	getRoomById,
 	getRoomInstancesByStatus,
+	searchRoomInstances,
 	updateRoom,
 	updateRoomInstanceStatus,
 } from '@/actions/room.action';
@@ -23,8 +24,11 @@ import type {
 	Room,
 	RoomDetail,
 	RoomInstance,
+	RoomInstanceSearchParams,
+	RoomInstanceSearchResult,
 	RoomListing,
 	RoomSearchParams,
+	RoomStatus,
 	UpdateRoomInstanceStatusRequest,
 	UpdateRoomRequest,
 } from '@/types/types';
@@ -113,6 +117,13 @@ interface RoomState {
 
 	// Building operations
 	loadBuildings: (params?: { limit?: number }) => Promise<Building[]>;
+
+	// Room instance search
+	searchInstances: (params: RoomInstanceSearchParams) => Promise<RoomInstanceSearchResult[]>;
+	instanceSearchResults: RoomInstanceSearchResult[];
+	instanceSearchLoading: boolean;
+	instanceSearchError: string | null;
+	clearInstanceSearch: () => void;
 }
 
 export const useRoomStore = create<RoomState>((set, get) => ({
@@ -137,6 +148,11 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 	myRoomsLoading: false,
 	myRoomsError: null,
 	myRoomsPagination: null,
+
+	// Room instance search initial state
+	instanceSearchResults: [],
+	instanceSearchLoading: false,
+	instanceSearchError: null,
 
 	// Load featured rooms for homepage
 	loadFeaturedRooms: async (limit = 4) => {
@@ -458,5 +474,51 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 			console.error('Failed to load buildings:', error);
 			return [];
 		}
+	},
+
+	// Search room instances with advanced filters
+	searchInstances: async (
+		params: RoomInstanceSearchParams,
+	): Promise<RoomInstanceSearchResult[]> => {
+		set({ instanceSearchLoading: true, instanceSearchError: null });
+
+		try {
+			const token = TokenManager.getAccessToken();
+			const response = await searchRoomInstances(params, token);
+
+			if (!response.success) {
+				throw new Error(response.error || 'Failed to search room instances');
+			}
+
+			const mappedData = response.data.data.map((item) => ({
+				...item,
+				status: item.status as RoomStatus,
+			}));
+
+			set({
+				instanceSearchResults: mappedData,
+				instanceSearchLoading: false,
+				instanceSearchError: null,
+			});
+
+			return mappedData;
+		} catch (error: unknown) {
+			const errorMessage =
+				error instanceof Error ? error.message : 'Failed to search room instances';
+			set({
+				instanceSearchLoading: false,
+				instanceSearchError: errorMessage,
+			});
+			console.error('Failed to search room instances:', error);
+			return [];
+		}
+	},
+
+	// Clear instance search results
+	clearInstanceSearch: () => {
+		set({
+			instanceSearchResults: [],
+			instanceSearchError: null,
+		});
 	},
 }));

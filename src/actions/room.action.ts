@@ -335,3 +335,75 @@ export const deleteRoom = async (
 		};
 	}
 };
+
+// Search room instances with filters
+export const searchRoomInstances = async (
+	params: {
+		buildingId?: string;
+		search?: string;
+		status?: 'available' | 'occupied' | 'maintenance' | 'reserved' | 'unavailable';
+	},
+	token?: string,
+): Promise<
+	ApiResult<{
+		success: boolean;
+		message: string;
+		data: Array<{
+			id: string;
+			roomNumber: string;
+			roomId: string;
+			roomName: string;
+			buildingId: string;
+			buildingName: string;
+			ownerId: string;
+			ownerName: string;
+			status?: string;
+			floorNumber?: number;
+			notes?: string;
+		}>;
+		timestamp: string;
+	}>
+> => {
+	try {
+		const searchParams = new URLSearchParams();
+		if (params.buildingId) searchParams.append('buildingId', params.buildingId);
+		if (params.search) searchParams.append('search', params.search);
+		if (params.status) searchParams.append('status', params.status);
+
+		const endpoint = `/api/rooms/instances/search${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+		const response = await apiCall<{
+			success: boolean;
+			message: string;
+			data: Array<{
+				id: string;
+				roomNumber: string;
+				roomId: string;
+				roomName: string;
+				buildingId: string;
+				buildingName: string;
+				ownerId: string;
+				ownerName: string;
+				status?: string;
+				floorNumber?: number;
+				notes?: string;
+			}>;
+			timestamp: string;
+		}>(
+			endpoint,
+			{
+				method: 'GET',
+			},
+			token,
+		);
+
+		return {
+			success: true,
+			data: response,
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: extractErrorMessage(error, 'Không thể tìm kiếm phòng'),
+		};
+	}
+};

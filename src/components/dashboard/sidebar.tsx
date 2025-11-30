@@ -204,19 +204,25 @@ export function Sidebar({ userType, onNavigate }: SidebarProps) {
   const baseItems = userType === 'tenant' ? tenantItems : landlordItems
   const items = baseItems.map(item => {
     if (item.subItems) {
+      // Calculate total badge count for parent item
+      let totalBadge = 0
+      const updatedSubItems = item.subItems.map(subItem => {
+        let badge = 0
+        if (userType === 'landlord') {
+          if (subItem.href === '/dashboard/landlord/requests') {
+            badge = badges.bookingRequests
+          } else if (subItem.href === '/dashboard/landlord/roommate-applications') {
+            badge = badges.roommateApplications
+          }
+        }
+        totalBadge += badge
+        return { ...subItem, badge: badge > 0 ? badge : undefined }
+      })
+
       return {
         ...item,
-        subItems: item.subItems.map(subItem => {
-          let badge = 0
-          if (userType === 'landlord') {
-            if (subItem.href === '/dashboard/landlord/requests') {
-              badge = badges.bookingRequests
-            } else if (subItem.href === '/dashboard/landlord/roommate-applications') {
-              badge = badges.roommateApplications
-            }
-          }
-          return { ...subItem, badge: badge > 0 ? badge : undefined }
-        })
+        badge: totalBadge > 0 ? totalBadge : undefined,
+        subItems: updatedSubItems
       }
     }
     return item
