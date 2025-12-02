@@ -22,6 +22,7 @@ import {
   type RoomAmenity,
   type RoomCost,
   type RoomRule,
+  type RoomImageCreate,
 } from "@/types/types"
 
 // Interface for update request costs (only allowed fields)
@@ -71,12 +72,14 @@ interface ApiCost {
     category: string;
   };
 }
-import { Building as BuildingIcon, Home, DollarSign } from "lucide-react"
+import { Building as BuildingIcon, Home, DollarSign, Images } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { validateReferenceIds } from "@/utils/referenceValidation"
 import { getRoomTypeOptions } from "@/utils/room-types"
 import { PageHeader } from "@/components/dashboard/page-header"
+import { ImageUploadWithApi, type UploadedImage } from "@/components/ui/image-upload-with-api"
+import { getImageUrl } from "@/lib/utils"
 
 
 // Room types
@@ -256,6 +259,35 @@ export default function EditRoomPage() {
 
   // Form data
   const [formData, setFormData] = useState<Partial<UpdateRoomRequest>>({})
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
+
+  // Helper to convert RoomImageCreate to UploadedImage
+  const convertRoomImagesToUploaded = (images: RoomImageCreate[] | undefined): UploadedImage[] => {
+    if (!images || !Array.isArray(images)) return []
+    
+    return images.map((img, index) => {
+      // Format URL using getImageUrl to handle relative paths
+      const formattedUrl = getImageUrl(img.url, { size: 'original' })
+      
+      return {
+        id: img.url || `existing-${index}`,
+        url: formattedUrl,
+        preview: formattedUrl,
+        isPrimary: img.isPrimary,
+        sortOrder: img.sortOrder || index,
+        altText: img.alt
+      }
+    })
+  }
+
+  // Helper to convert UploadedImage to RoomImageCreate
+  const convertUploadedToRoomImages = (images: UploadedImage[]): RoomImageCreate[] => {
+    return images.map((img) => ({
+      path: img.url,
+      url: img.url,
+      alt: img.altText
+    }))
+  }
 
   const fetchRoomDetail = useCallback(async () => {
     try {
@@ -286,6 +318,10 @@ export default function EditRoomPage() {
         costs: convertedCosts,
         rules: convertedRules
       });
+
+      // Convert and set images
+      const convertedImages = convertRoomImagesToUploaded(roomData.images)
+      setUploadedImages(convertedImages)
 
       // Initialize form with room data - only allowed fields for update
       setFormData({
@@ -438,6 +474,9 @@ export default function EditRoomPage() {
           customValue: r.customValue,
           notes: r.notes
         })),
+        images: {
+          images: convertUploadedToRoomImages(uploadedImages),
+        },
         isActive: formData.isActive!
       }
 
@@ -739,6 +778,47 @@ export default function EditRoomPage() {
                     <li>• Giữ gìn vệ sinh chung</li>
                   </ul>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Images Section */}
+          <Card>
+            <CardContent className="p-6 space-y-6">
+              <div className="flex items-center space-x-2 mb-4">
+                <Images className="h-5 w-5 text-orange-600" />
+                <h3 className="text-lg font-medium">Hình ảnh phòng</h3>
+              </div>
+
+              <Separator />
+
+              <div>
+                <FormLabel>Ảnh phòng</FormLabel>
+                <p className="text-sm text-gray-600 mb-4">
+                  Tải lên tối đa 10 ảnh. Ảnh đầu tiên sẽ là ảnh chính.
+                </p>
+                <ImageUploadWithApi
+                  value={uploadedImages}
+                  onChange={setUploadedImages}
+                  maxFiles={10}
+                  maxSize={5}
+                  uploadMode="bulk"
+                  autoUpload={true}
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Định dạng: JPG, PNG, WebP. Kích thước tối đa: 5MB/ảnh
+                </p>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h5 className="font-medium mb-2">💡 Gợi ý chụp ảnh:</h5>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• Chụp ảnh trong điều kiện ánh sáng tốt</li>
+                  <li>• Chụp toàn cảnh phòng từ nhiều góc độ</li>
+                  <li>• Bao gồm ảnh nhà vệ sinh, ban công (nếu có)</li>
+                  <li>• Chụp các tiện nghi quan trọng (tủ lạnh, máy lạnh...)</li>
+                  <li>• Tránh chụp ảnh mờ hoặc tối</li>
+                </ul>
               </div>
             </CardContent>
           </Card>

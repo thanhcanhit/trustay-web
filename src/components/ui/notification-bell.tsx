@@ -87,6 +87,12 @@ export function NotificationBell() {
         return "📄"
       case 'message':
         return "💬"
+      case 'room_issue_reported':
+      case 'room_issue_resolved':
+      case 'room_issue_updated':
+      case 'room_issue_status_changed':
+      case 'room_issue_status_updated':
+        return "🔧"
       case 'WELCOME':
         return "👋"
       case 'PROFILE_UPDATED':
@@ -129,6 +135,14 @@ export function NotificationBell() {
         return 'Cập nhật hợp đồng'
       case 'message':
         return 'Tin nhắn mới'
+      case 'room_issue_reported':
+        return 'Sự cố phòng được báo cáo'
+      case 'room_issue_resolved':
+        return 'Sự cố phòng đã được xử lý'
+      case 'room_issue_updated':
+      case 'room_issue_status_changed':
+      case 'room_issue_status_updated':
+        return 'Cập nhật trạng thái sự cố'
       case 'WELCOME':
         return 'Chào mừng đến với Trustay'
       case 'PROFILE_UPDATED':
@@ -160,10 +174,18 @@ export function NotificationBell() {
     // Determine navigation path
     let targetPath: string | null = null
 
-    // Handle room issue notifications (landlord)
+    // Handle room issue notifications
     if (notification.type === 'room_issue_reported') {
-      console.log('🔧 Handling room issue notification')
+      console.log('🔧 Handling room issue reported notification (landlord)')
       targetPath = '/dashboard/landlord/feedback'
+    }
+    // Handle room issue resolved/updated notifications (tenant)
+    else if (notification.type === 'room_issue_resolved' || 
+             notification.type === 'room_issue_updated' ||
+             notification.type === 'room_issue_status_changed' ||
+             notification.type === 'room_issue_status_updated') {
+      console.log('🔧 Handling room issue status notification (tenant)')
+      targetPath = '/dashboard/tenant/room-issues'
     }
     // Handle rental created notifications
     else if (notification.type === 'rental_created') {

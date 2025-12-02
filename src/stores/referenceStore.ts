@@ -202,6 +202,9 @@ interface ReferenceState {
 	isLoaded: boolean;
 	error: string | null;
 
+	// Loading promise to prevent duplicate calls
+	loadingPromise: Promise<void> | null;
+
 	// Actions
 	loadReferenceData: (force?: boolean) => Promise<void>;
 	getAmenitiesByCategory: (category?: string) => Amenity[];
@@ -221,40 +224,71 @@ export const useReferenceStore = create<ReferenceState>()((set, get) => ({
 	isLoading: false,
 	isLoaded: false,
 	error: null,
+	loadingPromise: null,
 
 	// Load all reference data
 	loadReferenceData: async (force = false) => {
 		const state = get();
-		if (!force && (state.isLoaded || state.isLoading)) return;
 
-		set({ isLoading: true, error: null });
+		console.log('ReferenceStore.loadReferenceData called:', {
+			force,
+			isLoaded: state.isLoaded,
+			isLoading: state.isLoading,
+			hasPromise: !!state.loadingPromise,
+		});
 
-		try {
-			// Load all reference data in parallel using server actions
-			const [amenities, costTypes, rules, enums] = await Promise.all([
-				getAmenities(),
-				getCostTypes(),
-				getRules(),
-				getAppEnums(),
-			]);
-
-			set({
-				amenities: amenities || [],
-				costTypes: costTypes || [],
-				rules: rules || [],
-				enums: enums || null,
-				isLoading: false,
-				isLoaded: true,
-				error: null,
-			});
-		} catch (error: unknown) {
-			const errorMessage = error instanceof Error ? error.message : 'Failed to load reference data';
-			set({
-				isLoading: false,
-				error: errorMessage,
-			});
-			console.error('Failed to load reference data:', error);
+		// If already loaded or loading (and not forced), skip
+		if (!force && (state.isLoaded || state.isLoading)) {
+			console.log('ReferenceStore: Skipping load (already loaded or loading)');
+			return;
 		}
+
+		// If there's an ongoing loading promise, return it to prevent duplicate calls
+		if (state.loadingPromise) {
+			console.log('ReferenceStore: Returning existing promise to prevent duplicate');
+			return state.loadingPromise;
+		}
+
+		console.log('ReferenceStore: Starting to load reference data...');
+		const loadingPromise = (async () => {
+			set({ isLoading: true, error: null });
+
+			try {
+				// Load all reference data in parallel using server actions
+				console.log('ReferenceStore: Calling server actions...');
+				const [amenities, costTypes, rules, enums] = await Promise.all([
+					getAmenities(),
+					getCostTypes(),
+					getRules(),
+					getAppEnums(),
+				]);
+
+				console.log('ReferenceStore: Successfully loaded reference data');
+
+				set({
+					amenities: amenities || [],
+					costTypes: costTypes || [],
+					rules: rules || [],
+					enums: enums || null,
+					isLoading: false,
+					isLoaded: true,
+					error: null,
+					loadingPromise: null,
+				});
+			} catch (error: unknown) {
+				const errorMessage =
+					error instanceof Error ? error.message : 'Failed to load reference data';
+				set({
+					isLoading: false,
+					error: errorMessage,
+					loadingPromise: null,
+				});
+				console.error('Failed to load reference data:', error);
+			}
+		})();
+
+		set({ loadingPromise });
+		return loadingPromise;
 	},
 
 	// Get amenities by category

@@ -11,7 +11,7 @@ interface SizingImageProps extends Omit<ImageProps, 'src' | 'width' | 'height'> 
   fill?: boolean
 }
 
-const parseImagePath = (src: string): string => {
+export const parseImagePath = (src: string): string => {
   // Nếu là full URL thì giữ nguyên
   if (/^https?:\/\//i.test(src)) {
     return src

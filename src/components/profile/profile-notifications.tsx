@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { NotificationItem } from '@/stores/notification.store'
 import { Button } from '@/components/ui/button'
-import { Bell, UserCog2, X, CalendarCheck2, UserCheck, Settings } from 'lucide-react'
+import { Bell, UserCog2, X, CalendarCheck2, UserCheck, Settings, Wrench } from 'lucide-react'
 
 export function ProfileNotifications() {
   const router = useRouter()
@@ -47,6 +47,8 @@ export function ProfileNotifications() {
         return <UserCheck className="h-4 w-4 text-blue-500" />
       case 'profile_updated':
         return <Settings className="h-4 w-4 text-gray-500" />
+      case 'room_issue_resolved':
+        return <Wrench className="h-4 w-4 text-green-500" />
       default:
         return <Bell className="h-4 w-4" />
     }
@@ -101,11 +103,8 @@ export function ProfileNotifications() {
         return '/dashboard/tenant/roommate-invitation'
         
       case 'room_issue_resolved':
-        // Navigate to rental detail where issues are displayed
-        if (data?.rentalId) {
-          return `/dashboard/tenant/rentals/${data.rentalId}`
-        }
-        return '/dashboard/tenant/rentals'
+        // Navigate to tenant's room issues page
+        return '/dashboard/tenant/room-issues'
         
       case 'profile_updated':
         return '/profile'

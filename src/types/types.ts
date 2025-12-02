@@ -390,7 +390,7 @@ export interface RoomRuleCreate {
 }
 
 export interface RoomImageCreate {
-	path: string;
+	url: string;
 	alt?: string;
 	isPrimary?: boolean;
 	sortOrder?: number;
@@ -450,6 +450,7 @@ export interface Room {
 	amenities?: RoomAmenity[];
 	costs?: RoomCost[];
 	rules?: RoomRule[];
+	images?: RoomImageCreate[];
 	roomInstances?: RoomInstance[];
 	availableInstancesCount?: number;
 	occupiedInstancesCount?: number;
@@ -519,7 +520,9 @@ export interface UpdateRoomRequest {
 		customValue?: string;
 		notes?: string;
 	}>;
-	images?: RoomImagesCreate;
+	images?: {
+		images: RoomImageCreate[];
+	};
 	isActive?: boolean;
 }
 
