@@ -11,7 +11,6 @@ import {
   BarChart3,
   Building,
   Users,
-  Search,
   Heart,
   LogOut,
   ChevronDown,
@@ -20,8 +19,6 @@ import {
   Send,
   Building2,
   FileText,
-  TrendingUp,
-  Wrench,
   AlertTriangle,
   Star,
 } from "lucide-react"
@@ -77,6 +74,12 @@ const tenantItems: SidebarItem[] = [
         title: "Hóa đơn",
         href: "/dashboard/tenant/invoices",
         icon: Receipt,
+        disabled: false
+      },
+      {
+        title: "Sự cố đã báo cáo",
+        href: "/dashboard/tenant/room-issues",
+        icon: AlertTriangle,
         disabled: false
       }
     ]
@@ -147,24 +150,6 @@ const landlordItems: SidebarItem[] = [
         disabled: false
       },
       {
-        title: "Thu chi",
-        href: "/dashboard/landlord/revenue",
-        icon: TrendingUp,
-        disabled: true
-      },
-      {
-        title: "Dịch vụ",
-        href: "/dashboard/landlord/services",
-        icon: Wrench,
-        disabled: true
-      },
-      {
-        title: "Báo cáo",
-        href: "/dashboard/landlord/reports",
-        icon: BarChart3,
-        disabled: true
-      },
-      {
         title: "Phản ánh, sự cố",
         href: "/dashboard/landlord/feedback",
         icon: AlertTriangle,
@@ -175,21 +160,16 @@ const landlordItems: SidebarItem[] = [
         href: "/dashboard/landlord/reviews",
         icon: Star,
         disabled: false
+      },
+      {
+        title: "Quản lý cho thuê",
+        href: "/dashboard/landlord/rentals",
+        icon: Heart,
+        disabled: false
       }
     ]
   },
-  {
-    title: "Quảng cáo Trọ",
-    href: "/dashboard/landlord/advertising",
-    icon: Search,
-    disabled: true
-  },
-  {
-    title: "Quản lý cho thuê",
-    href: "/dashboard/landlord/rentals",
-    icon: Heart,
-    disabled: false
-  },
+
   {
     title: "Thông báo",
     href: "/dashboard/landlord/notifications",

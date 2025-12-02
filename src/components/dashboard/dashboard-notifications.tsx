@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { NotificationItem } from '@/stores/notification.store'
 import { Button } from '@/components/ui/button'
-import { Bell, CalendarCheck2, UserCheck, UserX, X } from 'lucide-react'
+import { Bell, CalendarCheck2, UserCheck, UserX, X, Wrench } from 'lucide-react'
 
 export function DashboardNotifications() {
   const router = useRouter()
@@ -55,6 +55,8 @@ export function DashboardNotifications() {
         return <UserCheck className="h-4 w-4 text-green-500" />
       case 'room_invitation_rejected':
         return <UserX className="h-4 w-4 text-red-500" />
+      case 'room_issue_reported':
+        return <Wrench className="h-4 w-4 text-orange-500" />
       default:
         return <Bell className="h-4 w-4" />
     }

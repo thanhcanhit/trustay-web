@@ -172,7 +172,7 @@ export const updateRoomIssue = async (
 ): Promise<ApiResult<{ data: RoomIssue }>> => {
 	try {
 		const response = await apiCall<{ data: RoomIssue }>(
-			`/api/room-issues/${issueId}`,
+			`/api/room-issues/landlord/${issueId}`,
 			{
 				method: 'PATCH',
 				data,

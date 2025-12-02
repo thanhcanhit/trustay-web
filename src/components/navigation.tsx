@@ -73,8 +73,6 @@ export function Navigation() {
   const {
     searchQuery,
     setSearchQuery
-    // getActiveFilters,
-    // applyFilters
   } = useSearchFilters()
 
   // Get active filters for display
@@ -223,7 +221,7 @@ export function Navigation() {
             {/* Logo - Always visible on desktop, hidden on mobile */}
             <div className="hidden lg:flex items-center flex-shrink-0">
               <Link href="/" className="flex items-center space-x-2">
-                <Image src="/logo.png" alt="Trustay" width={100} height={100} className="w-[100px] h-[40px]" />
+                <Image src="/logo.png" alt="Trustay" width={100} height={40} className="w-[100px] h-[40px] object-contain"  />
               </Link>
             </div>
 
