@@ -230,15 +230,6 @@ export function useNotifications() {
 		loadNotifications();
 	}, [loadNotifications]);
 
-	// Initial load - only load notifications, let setNotifications calculate unread count
-	useEffect(() => {
-		if (isAuthenticated && user) {
-			console.log('Loading initial notifications for user:', user.id);
-			loadNotifications();
-			// Don't load unread count separately - let it be calculated from notifications
-		}
-	}, [isAuthenticated, user, loadNotifications]);
-
 	// Debug unread count changes
 	useEffect(() => {
 		console.log('Unread count changed:', unread);

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { MapPin, Loader2, ChevronDown, ChevronUp, Calendar, Home, Building, CheckCircle, XCircle, AlertCircle, DollarSign, Zap, Droplets, Send, MessageCircle, CalendarClock, Phone, Mail, Star, Globe, Award, TrendingUp, Heart, Share2, Flag } from "lucide-react"
+import { MapPin, Loader2, ChevronDown, ChevronUp, Calendar, Home, Building, CheckCircle, XCircle, AlertCircle, DollarSign, Zap, Droplets, Send, MessageCircle, Phone, Mail, Star, Globe, Award, TrendingUp, Heart, Share2, Flag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { SizingImage } from "@/components/sizing-image"
@@ -45,33 +45,20 @@ export default function PropertyDetailPage() {
   const [moveInDate, setMoveInDate] = useState<string>("")
   const [moveOutDate, setMoveOutDate] = useState<string>("")
   const [messageToOwner, setMessageToOwner] = useState<string>("")
-  const { create, submitting, submitError, clearErrors, mine, loadMine } = useBookingRequestStore()
+  const { create, submitting, submitError, clearErrors } = useBookingRequestStore()
   const { user, isAuthenticated } = useUserStore()
-  const { sendMessage: sendChatMessage, setCurrentUserId } = useChatStore()
-  const [hasExistingRequest, setHasExistingRequest] = useState<boolean>(false)
-  const [existingRequestStatus, setExistingRequestStatus] = useState<string | null>(null)
+  const { sendMessage: sendChatMessage } = useChatStore()
 
   const {
     currentRoom: roomDetail,
     roomLoading: isLoading,
     roomError: error,
-    featuredRooms,
-    featuredLoading,
-    featuredError,
-    searchResults,
     savedRooms,
     loadRoomDetail,
-    loadFeaturedRooms,
-    toggleSaveRoom,
-    clearSearchResults
+    toggleSaveRoom
   } = useRoomStore()
 
   //const isSaved = roomDetail ? savedRooms.includes(roomDetail.id) : false
-
-  // Clear search results when component mounts or room id changes
-  useEffect(() => {
-    clearSearchResults()
-  }, [roomId, clearSearchResults])
 
   // Load room detail from API using store - only once
   useEffect(() => {
@@ -81,41 +68,7 @@ export default function PropertyDetailPage() {
     }
   }, [roomId, hasLoaded, loadRoomDetail])
 
-  // Load featured rooms for similar posts if not already loaded
-  useEffect(() => {
-    if (featuredRooms.length === 0 && !featuredLoading) {
-      loadFeaturedRooms(8) // Load more rooms for similar posts
-    }
-  }, [featuredRooms.length, featuredLoading, loadFeaturedRooms])
 
-  // Load user's booking requests to check for existing requests
-  useEffect(() => {
-    loadMine()
-  }, [loadMine])
-
-  // Set current user ID in chat store when user is authenticated
-  useEffect(() => {
-    if (user?.id) {
-      setCurrentUserId(user.id)
-    }
-  }, [user?.id, setCurrentUserId])
-
-  // Check if user has existing booking request for this room
-  useEffect(() => {
-    if (roomDetail?.id && mine.length >= 0) {
-      const existingRequest = mine.find(request => {
-        // Check direct roomId comparison based on API response structure
-        const roomMatches = request.roomId === roomDetail.id
-        // Check for any status except cancelled
-        const statusMatches = request.status !== 'cancelled'
-
-        return roomMatches && statusMatches
-      })
-
-      setHasExistingRequest(!!existingRequest)
-      setExistingRequestStatus(existingRequest?.status || null)
-    }
-  }, [roomDetail?.id, mine])
 
   // Loading state
   if (isLoading) {
@@ -164,25 +117,15 @@ export default function PropertyDetailPage() {
     })
   }
 
-  // Get similar posts from API response or fallback to featured rooms
+  // Get similar posts from API response only
   const getSimilarPosts = (): RoomListing[] => {
-    // First try to use similarRooms from API response
+    // Use similarRooms from API response
     if (roomDetail?.similarRooms && Array.isArray(roomDetail.similarRooms) && roomDetail.similarRooms.length > 0) {
       return roomDetail.similarRooms.slice(0, 8)
     }
 
-    // Fallback: Combine featured rooms and search results, excluding current room
-    const allRooms = [...(featuredRooms || []), ...(searchResults || [])]
-
-    // Remove duplicates by ID and exclude current room
-    const uniqueRooms = allRooms.reduce((acc, room) => {
-      if (room.id !== roomDetail?.id && !acc.find((r: RoomListing) => r.id === room.id)) {
-        acc.push(room)
-      }
-      return acc
-    }, [] as RoomListing[])
-
-    return uniqueRooms.slice(0, 8) // Limit to 8 similar posts
+    // Return empty array if no similar rooms in API response
+    return []
   }
 
   const handleRoomClick = (id: string) => {
@@ -830,22 +773,6 @@ export default function PropertyDetailPage() {
                       <span className="hidden sm:inline">CT không thể thuê phòng</span>
                       <span className="sm:hidden">Không khả dụng</span>
                     </Button>
-                  ) : hasExistingRequest ? (
-                    <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white cursor-not-allowed text-[10px] sm:text-xs md:text-sm h-9 sm:h-10 md:h-11" size="lg">
-                      <CalendarClock className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                      <span className="hidden sm:inline">
-                        {existingRequestStatus === 'pending' && 'Đã gửi yêu cầu'}
-                        {existingRequestStatus === 'approved' && 'Yêu cầu đã được chấp nhận'}
-                        {existingRequestStatus === 'rejected' && 'Yêu cầu đã bị từ chối'}
-                        {existingRequestStatus === 'cancelled' && 'Yêu cầu đã bị hủy'}
-                      </span>
-                      <span className="sm:hidden">
-                        {existingRequestStatus === 'pending' && 'Đã gửi'}
-                        {existingRequestStatus === 'approved' && 'Đã chấp nhận'}
-                        {existingRequestStatus === 'rejected' && 'Đã từ chối'}
-                        {existingRequestStatus === 'cancelled' && 'Đã hủy'}
-                      </span>
-                    </Button>
                   ) : (
                     <Dialog open={isBookingOpen} onOpenChange={(open) => {
                       setIsBookingOpen(open)
@@ -964,25 +891,8 @@ export default function PropertyDetailPage() {
               </div>
             </CardHeader>
             <CardContent className="p-2 sm:p-3 md:p-6">
-            
-              {/* Loading state for similar posts */}
-              {featuredLoading && (
-                <div className="text-center py-8 sm:py-10 md:py-12">
-                  <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin mx-auto text-blue-600" />
-                  <p className="text-gray-600 mt-2 text-xs sm:text-sm md:text-base">Đang tải tin đăng tương tự...</p>
-                </div>
-              )}
-
-              {/* Error state for similar posts */}
-              {featuredError && (
-                <div className="text-center py-8 sm:py-10 md:py-12">
-                  <AlertCircle className="h-10 w-10 sm:h-12 sm:w-12 text-red-400 mx-auto mb-3 sm:mb-4" />
-                  <p className="text-red-600 text-sm sm:text-base md:text-lg">Không thể tải tin đăng tương tự</p>
-                </div>
-              )}
-
               {/* Similar posts content */}
-              {!featuredLoading && !featuredError && getSimilarPosts().length > 0 && (
+              {getSimilarPosts().length > 0 ? (
                 <div className="relative">
                   <Swiper
                     modules={[Navigation, Pagination]}
@@ -1048,10 +958,7 @@ export default function PropertyDetailPage() {
                     </svg>
                   </div>
                 </div>
-              )}
-
-              {/* No similar posts message */}
-              {!featuredLoading && !featuredError && getSimilarPosts().length === 0 && (
+              ) : (
                 <div className="text-center py-8 sm:py-10 md:py-12">
                   <Home className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
                   <p className="text-gray-600 text-sm sm:text-base md:text-lg mb-3 sm:mb-4">Không có tin đăng tương tự</p>
