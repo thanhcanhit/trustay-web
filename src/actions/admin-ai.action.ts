@@ -8,6 +8,8 @@ import type {
 	AICollection,
 	AILogEntry,
 	AILogStatus,
+	TeachBatchPayload,
+	TeachBatchResult,
 	TeachOrUpdatePayload,
 	TeachOrUpdateResult,
 } from '../types/admin-ai';
@@ -94,6 +96,14 @@ export const getAILogs = async (
 	}
 };
 
+export const getAILogById = async (logId: string, token?: string): Promise<AILogEntry> => {
+	try {
+		return await apiCall<AILogEntry>(`${BASE_ENDPOINT}/logs/${logId}`, { method: 'GET' }, token);
+	} catch (error) {
+		throw new Error(extractErrorMessage(error, 'Could not load AI log'));
+	}
+};
+
 export const teachOrUpdateKnowledge = async (
 	payload: TeachOrUpdatePayload,
 	token?: string,
@@ -147,5 +157,23 @@ export const getChunkCanonicalId = async (
 		);
 	} catch (error) {
 		throw new Error(extractErrorMessage(error, 'Could not load canonical ID for chunk'));
+	}
+};
+
+export const teachBatchKnowledge = async (
+	payload: TeachBatchPayload,
+	token?: string,
+): Promise<TeachBatchResult> => {
+	try {
+		return await apiCall<TeachBatchResult>(
+			`${BASE_ENDPOINT}/teach-json`,
+			{
+				method: 'POST',
+				data: payload,
+			},
+			token,
+		);
+	} catch (error) {
+		throw new Error(extractErrorMessage(error, 'Could not batch teach knowledge'));
 	}
 };

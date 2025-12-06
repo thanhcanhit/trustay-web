@@ -65,3 +65,30 @@ export interface TeachOrUpdateResult {
 	sqlQAId: number;
 	isUpdate: boolean;
 }
+
+export interface TeachBatchItem {
+	question: string;
+	sql: string;
+}
+
+export interface TeachBatchPayload {
+	items: TeachBatchItem[];
+	failFast?: boolean;
+}
+
+export interface TeachBatchItemResult {
+	index: number;
+	success: boolean;
+	message: string;
+	chunkId?: number;
+	sqlQAId?: number;
+	error?: string;
+}
+
+export interface TeachBatchResult {
+	success: boolean;
+	total: number;
+	successful: number;
+	failed: number;
+	results: TeachBatchItemResult[];
+}

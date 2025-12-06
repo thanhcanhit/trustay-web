@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Brain, BookOpenCheck, Database, ListChecks, Wand2 } from 'lucide-react';
 
 import {
@@ -56,18 +57,81 @@ const menuItems = [
 ];
 
 export default function AdminAIPage() {
+	const searchParams = useSearchParams();
+	const router = useRouter();
+	
 	const [isVerified, setIsVerified] = useState(false);
+	const [isInitialized, setIsInitialized] = useState(false);
 	const [activePanel, setActivePanel] = useState<PanelType>('canonical');
 	const [canonicalSearchId, setCanonicalSearchId] = useState<string>('');
 	const [chunksSearchId, setChunksSearchId] = useState<string>('');
 
+	// Initialize from URL params
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
 		const stored = sessionStorage.getItem(PASS_STORAGE_KEY);
 		if (stored === 'true') {
 			setIsVerified(true);
 		}
-	}, []);
+
+		// Read panel from URL
+		const panelParam = searchParams.get('panel') as PanelType;
+		if (panelParam && ['canonical', 'chunks', 'logs', 'teach'].includes(panelParam)) {
+			setActivePanel(panelParam);
+		}
+
+		// Read search IDs from URL
+		const canonicalId = searchParams.get('canonicalId');
+		if (canonicalId) {
+			setCanonicalSearchId(canonicalId);
+		}
+
+		const chunkId = searchParams.get('chunkId');
+		if (chunkId) {
+			setChunksSearchId(chunkId);
+		}
+
+		setIsInitialized(true);
+	}, [searchParams]);
+
+	// Update URL params when activePanel changes (only after initialization)
+	useEffect(() => {
+		if (!isVerified || !isInitialized) return;
+		
+		const current = new URLSearchParams(Array.from(searchParams.entries()));
+		
+		if (activePanel === 'canonical') {
+			current.set('panel', 'canonical');
+			if (canonicalSearchId) {
+				current.set('canonicalId', canonicalSearchId);
+			} else {
+				current.delete('canonicalId');
+			}
+			current.delete('chunkId');
+		} else if (activePanel === 'chunks') {
+			current.set('panel', 'chunks');
+			if (chunksSearchId) {
+				current.set('chunkId', chunksSearchId);
+			} else {
+				current.delete('chunkId');
+			}
+			current.delete('canonicalId');
+		} else {
+			current.set('panel', activePanel);
+			current.delete('canonicalId');
+			current.delete('chunkId');
+		}
+
+		const query = current.toString();
+		const newUrl = query ? `?${query}` : '';
+		const currentUrl = searchParams.toString();
+		const newUrlString = query;
+		
+		// Only update if URL actually changed
+		if (currentUrl !== newUrlString) {
+			router.replace(`/admin/ai${newUrl}`, { scroll: false });
+		}
+	}, [activePanel, canonicalSearchId, chunksSearchId, isVerified, isInitialized, router, searchParams]);
 
 	if (!isVerified) {
 		return <PasscodeGate onVerified={() => setIsVerified(true)} />;

@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ListChecks, RefreshCcw, Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ListChecks, RefreshCcw, Search, Workflow } from 'lucide-react';
 
 import { getAILogs } from '@/actions/admin-ai.action';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import { CellDetailDialog } from './cell-detail-dialog';
 type LogCellType = 'id' | 'question' | 'status' | 'error' | 'duration' | 'created' | 'orchestrator' | 'sqlGeneration' | 'validator' | 'ragContext' | 'tokenUsage' | 'stepsLog';
 
 export function LogsPanel() {
+	const router = useRouter();
 	const [searchInput, setSearchInput] = useState('');
 	const [search, setSearch] = useState('');
 	const [status, setStatus] = useState<AILogStatus | 'all'>('all');
@@ -632,6 +634,7 @@ export function LogsPanel() {
 									<TableHead>Duration</TableHead>
 									<TableHead>Created</TableHead>
 									<TableHead className="w-32">Details</TableHead>
+									<TableHead className="w-24">Flow</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -641,7 +644,7 @@ export function LogsPanel() {
 									errorMessage={error?.message}
 									empty={isEmpty}
 									emptyLabel="Chưa có log nào"
-									colSpan={7}
+									colSpan={8}
 								/>
 
 								{!isLoading &&
@@ -707,6 +710,24 @@ export function LogsPanel() {
 												>
 													View All
 												</Button>
+											</TableCell>
+											<TableCell className="w-24">
+												{item.stepsLog ? (
+													<Button
+														variant="ghost"
+														size="sm"
+														className="h-8 w-full text-xs"
+														onClick={(e) => {
+															e.stopPropagation();
+															router.push(`/admin/ai/process/${item.id}`);
+														}}
+														title="Xem process flow"
+													>
+														<Workflow className="size-3.5" />
+													</Button>
+												) : (
+													<span className="text-muted-foreground text-xs">-</span>
+												)}
 											</TableCell>
 										</TableRow>
 									))}

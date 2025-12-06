@@ -1,17 +1,20 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ShieldCheck, TerminalSquare, Wand2 } from 'lucide-react';
+import { ShieldCheck, TerminalSquare, Wand2, Upload, FileText, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { teachOrUpdateKnowledge } from '@/actions/admin-ai.action';
+import { teachOrUpdateKnowledge, teachBatchKnowledge } from '@/actions/admin-ai.action';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import type { TeachOrUpdateResult } from '@/types/admin-ai';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import type { TeachOrUpdateResult, TeachBatchResult, TeachBatchItem, TeachBatchPayload } from '@/types/admin-ai';
 
 interface TeachFormState {
 	id: string;
@@ -21,13 +24,18 @@ interface TeachFormState {
 
 export function TeachPanel() {
 	const queryClient = useQueryClient();
+	const [activeTab, setActiveTab] = useState<'single' | 'batch'>('single');
 	const [formData, setFormData] = useState<TeachFormState>({
 		id: '',
 		question: '',
 		sql: '',
 	});
+	const [jsonInput, setJsonInput] = useState('');
+	const [failFast, setFailFast] = useState(false);
+	const [batchResult, setBatchResult] = useState<TeachBatchResult | null>(null);
+	const fileInputRef = useRef<HTMLInputElement>(null);
 
-	const mutation = useMutation<TeachOrUpdateResult, Error>({
+	const singleMutation = useMutation<TeachOrUpdateResult, Error>({
 		mutationFn: () =>
 			teachOrUpdateKnowledge({
 				id: formData.id ? Number(formData.id) : undefined,
@@ -45,13 +53,33 @@ export function TeachPanel() {
 		},
 	});
 
-	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+	const batchMutation = useMutation<TeachBatchResult, Error, TeachBatchPayload>({
+		mutationFn: (payload: TeachBatchPayload) => teachBatchKnowledge(payload),
+		onSuccess: (data) => {
+			setBatchResult(data);
+			const successCount = data.successful;
+			const failCount = data.failed;
+			if (failCount === 0) {
+				toast.success(`Đã thêm thành công ${successCount} items`);
+			} else {
+				toast.warning(`Thành công: ${successCount}, Thất bại: ${failCount}`);
+			}
+			void queryClient.invalidateQueries({ queryKey: ['admin-ai-canonical'] });
+			void queryClient.invalidateQueries({ queryKey: ['admin-ai-chunks'] });
+		},
+		onError: (err) => {
+			const message = err instanceof Error ? err.message : 'Không thể batch teach knowledge';
+			toast.error(message);
+		},
+	});
+
+	const handleSingleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		if (!formData.question || !formData.sql) {
 			toast.error('Vui lòng nhập đủ Question và SQL');
 			return;
 		}
-		mutation.mutate();
+		singleMutation.mutate();
 	};
 
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -65,6 +93,77 @@ export function TeachPanel() {
 			question: '',
 			sql: '',
 		});
+	};
+
+	const validateJson = (jsonStr: string): { valid: boolean; items?: TeachBatchItem[]; error?: string } => {
+		try {
+			const parsed = JSON.parse(jsonStr);
+			
+			// Nếu là object đơn lẻ, chuyển thành array
+			const items = Array.isArray(parsed) ? parsed : [parsed];
+			
+			// Validate từng item
+			for (let i = 0; i < items.length; i++) {
+				const item = items[i];
+				if (!item || typeof item !== 'object') {
+					return { valid: false, error: `Item ${i + 1}: Phải là object` };
+				}
+				if (!item.question || typeof item.question !== 'string') {
+					return { valid: false, error: `Item ${i + 1}: Thiếu hoặc sai kiểu field "question"` };
+				}
+				if (!item.sql || typeof item.sql !== 'string') {
+					return { valid: false, error: `Item ${i + 1}: Thiếu hoặc sai kiểu field "sql"` };
+				}
+			}
+			
+			return { valid: true, items };
+		} catch (error) {
+			return { valid: false, error: `JSON không hợp lệ: ${error instanceof Error ? error.message : 'Unknown error'}` };
+		}
+	};
+
+	const handleBatchSubmit = () => {
+		if (!jsonInput.trim()) {
+			toast.error('Vui lòng nhập hoặc upload JSON');
+			return;
+		}
+
+		const validation = validateJson(jsonInput);
+		if (!validation.valid || !validation.items) {
+			toast.error(validation.error || 'JSON không hợp lệ');
+			return;
+		}
+
+		batchMutation.mutate({
+			items: validation.items,
+			failFast,
+		});
+	};
+
+	const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			const content = e.target?.result as string;
+			setJsonInput(content);
+			toast.success('Đã tải file thành công');
+		};
+		reader.onerror = () => {
+			toast.error('Không thể đọc file');
+		};
+		reader.readAsText(file);
+	};
+
+	const handlePasteExample = () => {
+		const example = `[
+  {
+    "question": "Tìm cho tôi các phòng trọ ở Quận 9 giá dưới 3 triệu.",
+    "sql": "SELECT b.name AS building_name, rm.name AS room_type_name, ri.room_number, rp.base_price_monthly\\nFROM rooms rm\\nJOIN buildings b ON b.id = rm.building_id\\nJOIN districts d ON d.id = b.district_id\\nJOIN room_pricing rp ON rp.room_id = rm.id\\nJOIN room_instances ri ON ri.room_id = rm.id\\nWHERE d.name ILIKE '%Quận 9%'\\n  AND rp.base_price_monthly < 3000000\\n  AND ri.status IN ('available', 'reserved');"
+  }
+]`;
+		setJsonInput(example);
 	};
 
 	return (
@@ -84,60 +183,180 @@ export function TeachPanel() {
 					Token JWT tự đính kèm qua TokenManager.
 				</div>
 			</div>
-			<form onSubmit={handleSubmit} className="flex flex-col gap-2">
-				<div className="flex flex-col gap-2">
-					<label className="text-sm font-medium text-foreground">ID (optional - update)</label>
-					<Input
-						type="number"
-						name="id"
-						value={formData.id}
-						onChange={handleChange}
-						placeholder="Nhập ID nếu muốn update"
-					/>
-				</div>
 
+			<Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'single' | 'batch')}>
+				<TabsList className="grid w-full grid-cols-2">
+					<TabsTrigger value="single">Single</TabsTrigger>
+					<TabsTrigger value="batch">Batch (JSON)</TabsTrigger>
+				</TabsList>
+
+				<TabsContent value="single" className="flex flex-col gap-2">
+					<form onSubmit={handleSingleSubmit} className="flex flex-col gap-2">
+						<div className="flex flex-col gap-2">
+							<label className="text-sm font-medium text-foreground">ID (optional - update)</label>
+							<Input
+								type="number"
+								name="id"
+								value={formData.id}
+								onChange={handleChange}
+								placeholder="Nhập ID nếu muốn update"
+							/>
+						</div>
+
+						<div className="flex flex-col gap-2">
+							<label className="text-sm font-medium text-foreground">Question</label>
+							<Textarea
+								name="question"
+								value={formData.question}
+								onChange={handleChange}
+								placeholder="Câu hỏi tiếng Việt..."
+								className="min-h-[100px]"
+							/>
+						</div>
+						<div className="flex flex-col gap-2">
+							<label className="text-sm font-medium text-foreground flex items-center gap-2">
+								SQL
+								<Badge variant="outline" className="uppercase">
+									required
+								</Badge>
+							</label>
+							<Textarea
+								name="sql"
+								value={formData.sql}
+								onChange={handleChange}
+								placeholder="SQL canonical..."
+								className="font-mono text-sm min-h-[160px]"
+							/>
+						</div>
+						<Separator />
+						<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+							<div className="text-sm text-muted-foreground flex items-center gap-2">
+								<TerminalSquare className="size-4" />
+								Gửi tới endpoint <code>/api/admin/ai/teach-or-update</code> (POST).
+							</div>
+							<div className="flex items-center gap-2">
+								<Button type="button" variant="ghost" onClick={handleReset} disabled={singleMutation.isPending}>
+									Làm mới
+								</Button>
+								<Button type="submit" disabled={singleMutation.isPending}>
+									{singleMutation.isPending && <span className="mr-2">...</span>}
+									{formData.id ? 'Update' : 'Add new'}
+								</Button>
+							</div>
+						</div>
+					</form>
+				</TabsContent>
+
+				<TabsContent value="batch" className="flex flex-col gap-2">
 					<div className="flex flex-col gap-2">
-						<label className="text-sm font-medium text-foreground">Question</label>
-						<Textarea
-							name="question"
-							value={formData.question}
-							onChange={handleChange}
-							placeholder="Câu hỏi tiếng Việt..."
-							className="min-h-[100px]"
-						/>
-					</div>
-					<div className="flex flex-col gap-2">
-						<label className="text-sm font-medium text-foreground flex items-center gap-2">
-							SQL
-							<Badge variant="outline" className="uppercase">
-								required
+						<div className="flex items-center gap-2">
+							<Label className="text-sm font-medium">JSON Input</Label>
+							<Badge variant="outline" className="uppercase text-xs">
+								Array or Single Object
 							</Badge>
-						</label>
+						</div>
+						<div className="flex flex-col gap-2 sm:flex-row">
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								onClick={() => fileInputRef.current?.click()}
+								className="sm:w-auto"
+							>
+								<Upload className="size-4 mr-2" />
+								Upload File
+							</Button>
+							<input
+								ref={fileInputRef}
+								type="file"
+								accept=".json,application/json"
+								onChange={handleFileUpload}
+								className="hidden"
+							/>
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								onClick={handlePasteExample}
+								className="sm:w-auto"
+							>
+								<FileText className="size-4 mr-2" />
+								Paste Example
+							</Button>
+						</div>
 						<Textarea
-							name="sql"
-							value={formData.sql}
-							onChange={handleChange}
-							placeholder="SQL canonical..."
-							className="font-mono text-sm min-h-[160px]"
+							value={jsonInput}
+							onChange={(e) => setJsonInput(e.target.value)}
+							placeholder='[{"question": "...", "sql": "..."}, ...]'
+							className="font-mono text-sm min-h-[300px]"
 						/>
 					</div>
+
+					<div className="flex items-center gap-2">
+						<Checkbox
+							id="failFast"
+							checked={failFast}
+							onCheckedChange={(checked) => setFailFast(checked === true)}
+						/>
+						<Label htmlFor="failFast" className="text-sm cursor-pointer">
+							Fail Fast (dừng sớm khi gặp lỗi)
+						</Label>
+					</div>
+
 					<Separator />
+
+					{batchResult && (
+						<div className="flex flex-col gap-2 p-4 border rounded-lg bg-slate-50">
+							<div className="flex items-center justify-between">
+								<h3 className="text-sm font-semibold">Kết quả Batch</h3>
+								<div className="flex items-center gap-4 text-xs">
+									<span className="text-green-600">✓ {batchResult.successful}</span>
+									<span className="text-red-600">✗ {batchResult.failed}</span>
+									<span className="text-muted-foreground">Tổng: {batchResult.total}</span>
+								</div>
+							</div>
+							<div className="flex flex-col gap-1 max-h-[200px] overflow-y-auto">
+								{batchResult.results.map((result, idx) => (
+									<div
+										key={idx}
+										className={`flex items-center gap-2 p-2 rounded text-xs ${
+											result.success ? 'bg-green-50' : 'bg-red-50'
+										}`}
+									>
+										{result.success ? (
+											<CheckCircle2 className="size-4 text-green-600" />
+										) : (
+											<XCircle className="size-4 text-red-600" />
+										)}
+										<span className="font-medium">Item {result.index + 1}:</span>
+										<span className={result.success ? 'text-green-700' : 'text-red-700'}>
+											{result.message}
+										</span>
+										{result.error && (
+											<span className="text-red-600 ml-auto">({result.error})</span>
+										)}
+									</div>
+								))}
+							</div>
+						</div>
+					)}
+
 					<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 						<div className="text-sm text-muted-foreground flex items-center gap-2">
 							<TerminalSquare className="size-4" />
-							Gửi tới endpoint <code>/api/admin/ai/teach-or-update</code> (POST).
+							Gửi tới endpoint <code>/api/admin/ai/teach-json</code> (POST).
 						</div>
-						<div className="flex items-center gap-2">
-							<Button type="button" variant="ghost" onClick={handleReset} disabled={mutation.isPending}>
-								Làm mới
-							</Button>
-							<Button type="submit" disabled={mutation.isPending}>
-								{mutation.isPending && <span className="mr-2">...</span>}
-								{formData.id ? 'Update' : 'Add new'}
-							</Button>
-						</div>
+						<Button
+							type="button"
+							onClick={handleBatchSubmit}
+							disabled={batchMutation.isPending || !jsonInput.trim()}
+						>
+							{batchMutation.isPending && <span className="mr-2">...</span>}
+							Submit Batch
+						</Button>
 					</div>
-				</form>
+				</TabsContent>
+			</Tabs>
 		</div>
 	);
 }
