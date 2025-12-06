@@ -11,6 +11,12 @@ export {
 
 // Export types (prefer types.ts for ApiResponse)
 export * from '../types/types';
+export {
+	getAIChunks,
+	getAILogs,
+	getCanonicalEntries,
+	teachOrUpdateKnowledge,
+} from './admin-ai.action';
 // Export AI assistant actions (session-based)
 export {
 	clearAIHistory,
