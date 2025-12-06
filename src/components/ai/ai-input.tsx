@@ -2,8 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { ImageIcon, X, Loader2 } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { uploadBulkImages } from '@/actions/upload.action';
 import Image from 'next/image';
 
@@ -222,7 +221,7 @@ export function AIInput({ onSend, disabled = false }: AIInputProps) {
           className="hidden"
           disabled={disabled || isUploading}
         />
-        <Button
+        {/* <Button
           type="button"
           variant="ghost"
           size="icon"
@@ -233,7 +232,7 @@ export function AIInput({ onSend, disabled = false }: AIInputProps) {
           title="Upload image"
         >
           <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
-        </Button>
+        </Button> */}
         <div className="flex items-center gap-1.5 sm:gap-2 flex-1 bg-gray-50 border border-gray-200 rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 min-h-[2rem] sm:min-h-[2.5rem]">
           <Input
             type="text"

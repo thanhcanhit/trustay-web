@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
-import { Navigation } from "@/components/navigation";
+import { ConditionalNavigation } from "@/components/conditional-navigation";
 import { FooterGate } from "@/components/footer-gate";
 import { AuthProvider } from "@/components/auth-provider";
 import { AppInitializer } from "@/components/app-initializer";
 import { NotificationProvider } from "@/components/notification-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { ChatBubble } from "@/components/chat/chat-bubble";
-import { AISidebar } from "@/components/ai/ai-sidebar";
+import { ConditionalChatBubble } from "@/components/conditional-chat-bubble";
+import { ConditionalAISidebar } from "@/components/conditional-ai-sidebar";
 import { QueryProvider } from "@/providers/query-provider";
 
 const geistSans = Geist({
@@ -112,14 +112,14 @@ export default function RootLayout({
                     </div>
                   </div>
                 }>
-                  <Navigation />
+                  <ConditionalNavigation />
                 </Suspense>
                 <div className="flex-1 flex min-h-0 overflow-x-hidden">
-                	<main className="flex-1 page-content pt-14 sm:pt-16 w-full max-w-full overflow-x-hidden">{children}</main>
-                	<AISidebar />
+                  <main className="flex-1 page-content w-full max-w-full overflow-x-hidden">{children}</main>
+                  <ConditionalAISidebar />
                 </div>
                 <FooterGate />
-                <ChatBubble />
+                <ConditionalChatBubble />
                 <Toaster
                   position="top-center"
                   expand={true}

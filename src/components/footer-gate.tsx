@@ -9,7 +9,8 @@ export function FooterGate() {
   const shouldHide =
     pathname === '/post' ||
     pathname.startsWith('/dashboard/landlord') ||
-    pathname.startsWith('/profile')
+    pathname.startsWith('/profile') ||
+    pathname.startsWith('/admin')
 
   if (shouldHide) return null
 
