@@ -411,7 +411,7 @@ export default function ProcessDetailPage() {
 	}
 
 	return (
-		<div className="h-screen flex flex-col">
+		<div className="h-screen flex flex-col -mt-12">
 			<div className="border-b bg-white px-4 py-3 flex items-center gap-4">
 				<Button variant="ghost" size="icon" onClick={() => router.push('/admin/ai')}>
 					<ArrowLeft className="size-4" />
