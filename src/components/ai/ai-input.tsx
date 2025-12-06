@@ -2,8 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { ImageIcon, X, Loader2 } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { uploadBulkImages } from '@/actions/upload.action';
 import Image from 'next/image';
 

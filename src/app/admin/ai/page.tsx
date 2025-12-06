@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Brain, BookOpenCheck, Database, ListChecks, Wand2 } from 'lucide-react';
 
@@ -56,7 +56,7 @@ const menuItems = [
 	},
 ];
 
-export default function AdminAIPage() {
+function AdminAIPageContent() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	
@@ -230,5 +230,19 @@ export default function AdminAIPage() {
 				</SidebarInset>
 			</SidebarProvider>
 		</div>
+	);
+}
+
+export default function AdminAIPage() {
+	return (
+		<Suspense fallback={
+			<div className="h-screen flex items-center justify-center">
+				<div className="text-center">
+					<p className="text-muted-foreground">Loading...</p>
+				</div>
+			</div>
+		}>
+			<AdminAIPageContent />
+		</Suspense>
 	);
 }

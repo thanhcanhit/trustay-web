@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Loader2, Clock, Zap, Database, CheckCircle2, XCircle } from 'lucide-react';
@@ -15,27 +15,25 @@ import {
 	Connection,
 	useNodesState,
 	useEdgesState,
-	addEdge,
 	ConnectionMode,
-	Panel,
 	ReactFlowProvider,
 	MarkerType,
 	Handle,
 	Position,
 	useReactFlow,
-	getNodesBounds,
-	getViewportForBounds,
 	BackgroundVariant,
+	type NodeChange,
+	type EdgeChange,
+	type NodeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { getAILogById } from '@/actions/admin-ai.action';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '../../_components/badges';
 import { formatDateTime, formatDuration } from '../../_components/utils';
-import type { AILogEntry } from '@/types/admin-ai';
 
 interface ProcessStep {
 	stepNumber: number;
@@ -91,7 +89,7 @@ function parseStepsLog(stepsLog: string | null | undefined): ProcessStep[] {
 }
 
 const nodeTypes = {
-	default: ({ data, isConnectable = false }: { data: { label: string; content: string; stepNumber: number }; isConnectable?: boolean }) => {
+	default: ({ data }: { data: { label: string; content: string; stepNumber: number } }) => {
 		const colors = [
 			{ bg: 'bg-blue-500', border: 'border-blue-600', text: 'text-blue-700', light: 'bg-blue-50' },
 			{ bg: 'bg-green-500', border: 'border-green-600', text: 'text-green-700', light: 'bg-green-50' },
@@ -187,10 +185,10 @@ function FlowContent({
 }: {
 	nodes: Node[];
 	edges: Edge[];
-	onNodesChange: (changes: any) => void;
-	onEdgesChange: (changes: any) => void;
+	onNodesChange: (changes: NodeChange[]) => void;
+	onEdgesChange: (changes: EdgeChange[]) => void;
 	onConnect: (params: Connection) => void;
-	nodeTypes: any;
+	nodeTypes: NodeTypes;
 }) {
 	const { fitView } = useReactFlow();
 	
@@ -289,8 +287,6 @@ export default function ProcessDetailPage() {
 		if (steps.length === 0) return [];
 
 		// Auto layout - đối xứng trái phải, trên xuống (zigzag pattern)
-		const nodeWidth = 450; // max-w-[450px]
-		const nodeHeight = 250; // estimated height
 		const verticalSpacing = 280; // spacing giữa các nodes theo chiều dọc
 		const horizontalSpacing = 300; // spacing ngang để tạo đối xứng
 		
