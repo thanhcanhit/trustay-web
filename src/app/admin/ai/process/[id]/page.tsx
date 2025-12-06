@@ -25,6 +25,7 @@ import {
 	useReactFlow,
 	getNodesBounds,
 	getViewportForBounds,
+	BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -254,7 +255,7 @@ function FlowContent({
 			selectNodesOnDrag={true}
 			nodesDraggable={true}
 		>
-			<Background variant={'dots' as const} gap={16} size={1} color="#e5e7eb" />
+			<Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#e5e7eb" />
 			<Controls />
 			<MiniMap
 				nodeColor={(node) => {
