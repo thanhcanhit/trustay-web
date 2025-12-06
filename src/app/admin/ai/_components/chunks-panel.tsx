@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Database, RefreshCcw, Search } from 'lucide-react';
+import { Database, RefreshCcw, Search, ExternalLink } from 'lucide-react';
 
 import { getAIChunks } from '@/actions/admin-ai.action';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,13 @@ import { CellDetailDialog } from './cell-detail-dialog';
 
 type ChunkCellType = 'id' | 'collection' | 'content' | 'created';
 
-export function ChunksPanel() {
+interface ChunksPanelProps {
+	onNavigateToCanonical?: (chunkId: number) => Promise<void>;
+	initialSearchId?: string;
+	onSearchIdCleared?: () => void;
+}
+
+export function ChunksPanel({ onNavigateToCanonical, initialSearchId, onSearchIdCleared }: ChunksPanelProps = {}) {
 	const [searchInput, setSearchInput] = useState('');
 	const [search, setSearch] = useState('');
 	const [collection, setCollection] = useState<AICollection | 'all'>('all');
@@ -27,6 +33,17 @@ export function ChunksPanel() {
 	const [selectedItem, setSelectedItem] = useState<AIChunk | null>(null);
 	const [selectedCell, setSelectedCell] = useState<ChunkCellType | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
+
+	useEffect(() => {
+		if (initialSearchId) {
+			setSearchInput(initialSearchId);
+			setSearch(initialSearchId);
+			setOffset(0);
+			if (onSearchIdCleared) {
+				onSearchIdCleared();
+			}
+		}
+	}, [initialSearchId, onSearchIdCleared]);
 
 	const { data, isLoading, isFetching, isError, error, refetch } = useQuery<
 		AdminAIPaginatedResponse<AIChunk>,
@@ -216,6 +233,7 @@ export function ChunksPanel() {
 								<TableHead>Collection</TableHead>
 								<TableHead>Nội dung</TableHead>
 								<TableHead>Created</TableHead>
+								<TableHead className="w-24 min-w-[96px]">Actions</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -225,7 +243,7 @@ export function ChunksPanel() {
 								errorMessage={error?.message}
 								empty={isEmpty}
 								emptyLabel="Chưa có chunk nào"
-								colSpan={4}
+								colSpan={5}
 							/>
 
 							{!isLoading &&
@@ -255,6 +273,23 @@ export function ChunksPanel() {
 											onClick={() => handleCellClick(item, 'created')}
 										>
 											{formatDateTime(item.createdAt)}
+										</TableCell>
+										<TableCell className="w-24 min-w-[96px]">
+											{onNavigateToCanonical && (
+												<Button
+													variant="ghost"
+													size="sm"
+													className="h-8 w-full"
+													onClick={async (e) => {
+														e.stopPropagation();
+														await onNavigateToCanonical(item.id);
+													}}
+													title="Xem canonical liên quan"
+												>
+													<ExternalLink className="size-3.5 mr-1" />
+													Canonical
+												</Button>
+											)}
 										</TableCell>
 									</TableRow>
 								))}

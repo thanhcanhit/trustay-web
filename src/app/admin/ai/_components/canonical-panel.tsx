@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpenCheck, RefreshCcw, Search } from 'lucide-react';
+import { BookOpenCheck, RefreshCcw, Search, ExternalLink } from 'lucide-react';
 
 import { getCanonicalEntries } from '@/actions/admin-ai.action';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,13 @@ import { CellDetailDialog } from './cell-detail-dialog';
 
 type CellType = 'id' | 'question' | 'sql' | 'created' | 'lastUsed';
 
-export function CanonicalPanel() {
+interface CanonicalPanelProps {
+	onNavigateToChunks?: (canonicalId: number) => Promise<void>;
+	initialSearchId?: string;
+	onSearchIdCleared?: () => void;
+}
+
+export function CanonicalPanel({ onNavigateToChunks, initialSearchId, onSearchIdCleared }: CanonicalPanelProps = {}) {
 	const [searchInput, setSearchInput] = useState('');
 	const [search, setSearch] = useState('');
 	const [limit, setLimit] = useState(20);
@@ -25,6 +31,17 @@ export function CanonicalPanel() {
 	const [selectedItem, setSelectedItem] = useState<AICanonicalEntry | null>(null);
 	const [selectedCell, setSelectedCell] = useState<CellType | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
+
+	useEffect(() => {
+		if (initialSearchId) {
+			setSearchInput(initialSearchId);
+			setSearch(initialSearchId);
+			setOffset(0);
+			if (onSearchIdCleared) {
+				onSearchIdCleared();
+			}
+		}
+	}, [initialSearchId, onSearchIdCleared]);
 
 	const { data, isLoading, isFetching, isError, error, refetch } = useQuery<
 		AdminAIPaginatedResponse<AICanonicalEntry>,
@@ -224,6 +241,7 @@ export function CanonicalPanel() {
 									<TableHead className="min-w-[300px]">SQL</TableHead>
 									<TableHead className="min-w-[150px]">Created</TableHead>
 									<TableHead className="min-w-[150px]">Last used</TableHead>
+									<TableHead className="w-24 min-w-[96px]">Actions</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -233,7 +251,7 @@ export function CanonicalPanel() {
 								errorMessage={error?.message}
 								empty={isEmpty}
 								emptyLabel="Chưa có canonical nào"
-								colSpan={5}
+								colSpan={6}
 							/>
 
 							{!isLoading &&
@@ -279,6 +297,23 @@ export function CanonicalPanel() {
 											onClick={() => handleCellClick(item, 'lastUsed')}
 										>
 											{item.lastUsedAt ? formatDateTime(item.lastUsedAt) : 'Chưa dùng'}
+										</TableCell>
+										<TableCell className="w-24 min-w-[96px]">
+											{onNavigateToChunks && (
+												<Button
+													variant="ghost"
+													size="sm"
+													className="h-8 w-full"
+													onClick={async (e) => {
+														e.stopPropagation();
+														await onNavigateToChunks(item.id);
+													}}
+													title="Xem chunks liên quan"
+												>
+													<ExternalLink className="size-3.5 mr-1" />
+													Chunks
+												</Button>
+											)}
 										</TableCell>
 									</TableRow>
 								))}

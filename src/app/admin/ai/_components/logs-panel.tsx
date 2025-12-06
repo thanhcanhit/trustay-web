@@ -16,7 +16,7 @@ import { StatusBadge } from './badges';
 import { formatDateTime, formatDuration } from './utils';
 import { CellDetailDialog } from './cell-detail-dialog';
 
-type LogCellType = 'id' | 'question' | 'status' | 'error' | 'duration' | 'created';
+type LogCellType = 'id' | 'question' | 'status' | 'error' | 'duration' | 'created' | 'orchestrator' | 'sqlGeneration' | 'validator' | 'ragContext' | 'tokenUsage' | 'stepsLog';
 
 export function LogsPanel() {
 	const [searchInput, setSearchInput] = useState('');
@@ -80,20 +80,308 @@ export function LogsPanel() {
 			case 'question':
 				return (
 					<div className="space-y-4">
-						<div className="space-y-2">
-							<h3 className="text-sm font-semibold text-foreground">Question</h3>
-							<p className="text-sm text-foreground whitespace-pre-wrap bg-slate-50 border rounded-md p-4">
-								{selectedItem.question}
-							</p>
-						</div>
-						{selectedItem.response && (
+						{/* Question & Response */}
+						<div className="space-y-3">
 							<div className="space-y-2">
-								<h3 className="text-sm font-semibold text-foreground">Response</h3>
-								<div className="text-sm text-foreground whitespace-pre-wrap bg-green-50 border border-green-200 rounded-md p-4 max-h-[300px] overflow-y-auto">
-									{selectedItem.response}
+								<h3 className="text-sm font-semibold text-foreground">Question</h3>
+								<p className="text-sm text-foreground whitespace-pre-wrap bg-slate-50 border rounded-md p-4">
+									{selectedItem.question}
+								</p>
+							</div>
+							{selectedItem.response && (
+								<div className="space-y-2">
+									<h3 className="text-sm font-semibold text-foreground">Response</h3>
+									<div className="text-sm text-foreground whitespace-pre-wrap bg-green-50 border border-green-200 rounded-md p-4 max-h-[200px] overflow-y-auto">
+										{selectedItem.response}
+									</div>
+								</div>
+							)}
+						</div>
+
+						<div className="border-t pt-4 space-y-4">
+							{/* Orchestrator Data */}
+							{selectedItem.orchestratorData && (
+								<div className="space-y-2">
+									<h3 className="text-sm font-semibold text-foreground">Orchestrator Agent</h3>
+									<div className="bg-blue-50 border border-blue-200 rounded-md p-3 space-y-2">
+										{(() => {
+											const data = selectedItem.orchestratorData as Record<string, unknown>;
+											return (
+												<>
+													{data.duration && (
+														<div className="text-xs">
+															<span className="font-medium">Duration:</span> {String(data.duration)}ms
+														</div>
+													)}
+													{data.userRole && (
+														<div className="text-xs">
+															<span className="font-medium">User Role:</span> {String(data.userRole)}
+														</div>
+													)}
+													{data.entityHint && (
+														<div className="text-xs">
+															<span className="font-medium">Entity:</span> {String(data.entityHint)}
+														</div>
+													)}
+													{data.tablesHint && (
+														<div className="text-xs">
+															<span className="font-medium">Tables:</span> {String(data.tablesHint)}
+														</div>
+													)}
+													{data.filtersHint && (
+														<div className="text-xs">
+															<span className="font-medium">Filters:</span> {String(data.filtersHint)}
+														</div>
+													)}
+													{data.intentAction && (
+														<div className="text-xs">
+															<span className="font-medium">Intent:</span> {String(data.intentAction)}
+														</div>
+													)}
+													{data.requestType && (
+														<div className="text-xs">
+															<span className="font-medium">Request Type:</span> {String(data.requestType)}
+														</div>
+													)}
+													{data.readyForSql !== undefined && (
+														<div className="text-xs">
+															<span className="font-medium">Ready for SQL:</span> {String(data.readyForSql)}
+														</div>
+													)}
+													{data.tokenUsage && (
+														<div className="text-xs mt-2 pt-2 border-t border-blue-300">
+															<span className="font-medium">Tokens:</span> {String((data.tokenUsage as { totalTokens?: number })?.totalTokens || 'N/A')}
+														</div>
+													)}
+												</>
+											);
+										})()}
+									</div>
+								</div>
+							)}
+
+							{/* SQL Generation Attempts */}
+							{selectedItem.sqlGenerationAttempts && selectedItem.sqlGenerationAttempts.length > 0 && (
+								<div className="space-y-2">
+									<h3 className="text-sm font-semibold text-foreground">SQL Generation ({selectedItem.sqlGenerationAttempts.length} attempt{selectedItem.sqlGenerationAttempts.length > 1 ? 's' : ''})</h3>
+									<div className="space-y-3">
+										{selectedItem.sqlGenerationAttempts.map((attempt, idx) => {
+											const attemptData = attempt as Record<string, unknown>;
+											const safetyCheck = attemptData.safetyCheck as { isValid?: boolean; violations?: unknown[] } | undefined;
+											const finalSql = attemptData.finalSql ? String(attemptData.finalSql) : null;
+											const durationMs = attemptData.durationMs ? String(attemptData.durationMs) : null;
+											const tokenUsage = attemptData.tokenUsage as { totalTokens?: number } | undefined;
+											return (
+												<div key={idx} className="bg-purple-50 border border-purple-200 rounded-md p-3 space-y-2">
+													<div className="text-xs font-semibold text-purple-700">Attempt #{idx + 1}</div>
+													{finalSql && (
+														<div className="space-y-1">
+															<div className="text-xs font-medium">Final SQL:</div>
+															<pre className="text-xs font-mono bg-white border rounded p-2 overflow-x-auto whitespace-pre-wrap">
+																{finalSql}
+															</pre>
+														</div>
+													)}
+													{durationMs && (
+														<div className="text-xs">
+															<span className="font-medium">Duration:</span> {durationMs}ms
+														</div>
+													)}
+													{safetyCheck && (
+														<div className="text-xs">
+															<span className="font-medium">Safety Check:</span>{' '}
+															<span className={safetyCheck.isValid ? 'text-green-600' : 'text-red-600'}>
+																{String(safetyCheck.isValid ? 'Valid' : 'Invalid')}
+															</span>
+															{safetyCheck.violations && Array.isArray(safetyCheck.violations) && safetyCheck.violations.length > 0 && (
+																<div className="mt-1 text-red-600">
+																	Violations: {JSON.stringify(safetyCheck.violations)}
+																</div>
+															)}
+														</div>
+													)}
+													{tokenUsage && (
+														<div className="text-xs pt-1 border-t border-purple-300">
+															<span className="font-medium">Tokens:</span> {String(tokenUsage?.totalTokens || 'N/A')}
+														</div>
+													)}
+												</div>
+											);
+										})}
+									</div>
+								</div>
+							)}
+
+							{/* Validator Data */}
+							{selectedItem.validatorData && (
+								<div className="space-y-2">
+									<h3 className="text-sm font-semibold text-foreground">Validator Agent</h3>
+									<div className="bg-amber-50 border border-amber-200 rounded-md p-3 space-y-2">
+										{(() => {
+											const data = selectedItem.validatorData as Record<string, unknown>;
+											return (
+												<>
+													{data.isValid !== undefined && (
+														<div className="text-xs">
+															<span className="font-medium">Valid:</span>{' '}
+															<span className={data.isValid ? 'text-green-600' : 'text-red-600'}>
+																{String(data.isValid)}
+															</span>
+														</div>
+													)}
+													{data.reason && (
+														<div className="text-xs">
+															<span className="font-medium">Reason:</span> {String(data.reason)}
+														</div>
+													)}
+													{data.duration && (
+														<div className="text-xs">
+															<span className="font-medium">Duration:</span> {String(data.duration)}ms
+														</div>
+													)}
+													{data.violations && Array.isArray(data.violations) && data.violations.length > 0 && (
+														<div className="text-xs">
+															<span className="font-medium">Violations:</span>
+															<pre className="text-xs font-mono bg-white border rounded p-2 mt-1 overflow-x-auto">
+																{JSON.stringify(data.violations, null, 2)}
+															</pre>
+														</div>
+													)}
+													{data.tokenUsage && (
+														<div className="text-xs pt-1 border-t border-amber-300">
+															<span className="font-medium">Tokens:</span> {String((data.tokenUsage as { totalTokens?: number })?.totalTokens || 'N/A')}
+														</div>
+													)}
+												</>
+											);
+										})()}
+									</div>
+								</div>
+							)}
+
+							{/* RAG Context */}
+							{selectedItem.ragContext && (
+								<div className="space-y-2">
+									<h3 className="text-sm font-semibold text-foreground">RAG Context</h3>
+									<div className="bg-indigo-50 border border-indigo-200 rounded-md p-3 space-y-2">
+										{(() => {
+											const data = selectedItem.ragContext as Record<string, unknown>;
+											const canonicalDecision = data.canonicalDecision as Record<string, unknown> | undefined;
+											return (
+												<>
+													{data.tablesHint && (
+														<div className="text-xs">
+															<span className="font-medium">Tables:</span> {String(data.tablesHint)}
+														</div>
+													)}
+													{data.filtersHint && (
+														<div className="text-xs">
+															<span className="font-medium">Filters:</span> {String(data.filtersHint)}
+														</div>
+													)}
+													{data.intentAction && (
+														<div className="text-xs">
+															<span className="font-medium">Intent:</span> {String(data.intentAction)}
+														</div>
+													)}
+													{canonicalDecision && (() => {
+														const mode = canonicalDecision.mode ? String(canonicalDecision.mode) : null;
+														const sql = canonicalDecision.sql ? String(canonicalDecision.sql) : null;
+														const sqlQAId = canonicalDecision.sqlQAId ? String(canonicalDecision.sqlQAId) : null;
+														const chunkId = canonicalDecision.chunkId ? String(canonicalDecision.chunkId) : null;
+														const score = canonicalDecision.score !== undefined ? String(canonicalDecision.score) : null;
+														return (
+															<div className="text-xs pt-2 border-t border-indigo-300">
+																<span className="font-medium">Canonical Decision:</span>
+																<div className="mt-1 bg-white border rounded p-2">
+																	{mode && (
+																		<div className="mb-1">
+																			<span className="font-medium">Mode:</span> {mode}
+																		</div>
+																	)}
+																	{sql && (
+																		<div className="mb-1">
+																			<span className="font-medium">SQL:</span>
+																			<pre className="text-xs font-mono bg-slate-50 border rounded p-1 mt-1 overflow-x-auto whitespace-pre-wrap">
+																				{sql}
+																			</pre>
+																		</div>
+																	)}
+																	{sqlQAId && (
+																		<div className="mb-1">
+																			<span className="font-medium">SQL QA ID:</span> {sqlQAId}
+																		</div>
+																	)}
+																	{chunkId && (
+																		<div className="mb-1">
+																			<span className="font-medium">Chunk ID:</span> {chunkId}
+																		</div>
+																	)}
+																	{score !== null && (
+																		<div className="mb-1">
+																			<span className="font-medium">Score:</span> {score}
+																		</div>
+																	)}
+																</div>
+															</div>
+														);
+													})()}
+													{data.schemaContextLength && (
+														<div className="text-xs">
+															<span className="font-medium">Schema Context Length:</span> {String(data.schemaContextLength)}
+														</div>
+													)}
+												</>
+											);
+										})()}
+									</div>
+								</div>
+							)}
+
+							{/* Token Usage Summary */}
+							{selectedItem.tokenUsage && (
+								<div className="space-y-2">
+									<h3 className="text-sm font-semibold text-foreground">Token Usage (Total)</h3>
+									<div className="bg-slate-50 border border-slate-200 rounded-md p-3">
+										<div className="text-xs">
+											<span className="font-medium">Total Tokens:</span> {String((selectedItem.tokenUsage as { totalTokens?: number })?.totalTokens || 'N/A')}
+										</div>
+										{(selectedItem.tokenUsage as { promptTokens?: number })?.promptTokens !== undefined && (
+											<div className="text-xs">
+												<span className="font-medium">Prompt Tokens:</span> {String((selectedItem.tokenUsage as { promptTokens?: number }).promptTokens)}
+											</div>
+										)}
+										{(selectedItem.tokenUsage as { completionTokens?: number })?.completionTokens !== undefined && (
+											<div className="text-xs">
+												<span className="font-medium">Completion Tokens:</span> {String((selectedItem.tokenUsage as { completionTokens?: number }).completionTokens)}
+											</div>
+										)}
+									</div>
+								</div>
+							)}
+
+							{/* Steps Log */}
+							{selectedItem.stepsLog && (
+								<div className="space-y-2">
+									<h3 className="text-sm font-semibold text-foreground">Steps Log</h3>
+									<pre className="text-xs font-mono bg-slate-50 border border-slate-200 rounded-md p-3 overflow-x-auto max-h-[300px] overflow-y-auto whitespace-pre-wrap">
+										{selectedItem.stepsLog}
+									</pre>
+								</div>
+							)}
+
+							{/* Duration & Status */}
+							<div className="grid grid-cols-2 gap-4 pt-2 border-t">
+								{selectedItem.totalDuration && (
+									<div className="text-xs">
+										<span className="font-medium">Total Duration:</span> {formatDuration(selectedItem.totalDuration)}
+									</div>
+								)}
+								<div className="text-xs">
+									<span className="font-medium">Status:</span> <StatusBadge status={selectedItem.status} />
 								</div>
 							</div>
-						)}
+						</div>
 					</div>
 				);
 			case 'status':
@@ -133,6 +421,91 @@ export function LogsPanel() {
 						<p className="text-sm text-muted-foreground">Thời gian tạo log này</p>
 					</div>
 				);
+			case 'orchestrator':
+				return (
+					<div className="space-y-2">
+						<h3 className="text-sm font-semibold text-foreground">Orchestrator Data</h3>
+						{selectedItem.orchestratorData ? (
+							<pre className="text-xs font-mono bg-slate-50 border rounded-md p-4 overflow-x-auto max-h-[500px] overflow-y-auto whitespace-pre-wrap">
+								{JSON.stringify(selectedItem.orchestratorData, null, 2)}
+							</pre>
+						) : (
+							<p className="text-sm text-muted-foreground">Không có dữ liệu orchestrator</p>
+						)}
+					</div>
+				);
+			case 'sqlGeneration':
+				return (
+					<div className="space-y-2">
+						<h3 className="text-sm font-semibold text-foreground">SQL Generation Attempts</h3>
+						{selectedItem.sqlGenerationAttempts && selectedItem.sqlGenerationAttempts.length > 0 ? (
+							<div className="space-y-3">
+								{selectedItem.sqlGenerationAttempts.map((attempt, index) => (
+									<div key={index} className="border rounded-md p-3 bg-slate-50">
+										<p className="text-xs font-semibold text-muted-foreground mb-2">Attempt #{index + 1}</p>
+										<pre className="text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+											{JSON.stringify(attempt, null, 2)}
+										</pre>
+									</div>
+								))}
+							</div>
+						) : (
+							<p className="text-sm text-muted-foreground">Không có dữ liệu SQL generation attempts</p>
+						)}
+					</div>
+				);
+			case 'validator':
+				return (
+					<div className="space-y-2">
+						<h3 className="text-sm font-semibold text-foreground">Validator Data</h3>
+						{selectedItem.validatorData ? (
+							<pre className="text-xs font-mono bg-slate-50 border rounded-md p-4 overflow-x-auto max-h-[500px] overflow-y-auto whitespace-pre-wrap">
+								{JSON.stringify(selectedItem.validatorData, null, 2)}
+							</pre>
+						) : (
+							<p className="text-sm text-muted-foreground">Không có dữ liệu validator</p>
+						)}
+					</div>
+				);
+			case 'ragContext':
+				return (
+					<div className="space-y-2">
+						<h3 className="text-sm font-semibold text-foreground">RAG Context</h3>
+						{selectedItem.ragContext ? (
+							<pre className="text-xs font-mono bg-slate-50 border rounded-md p-4 overflow-x-auto max-h-[500px] overflow-y-auto whitespace-pre-wrap">
+								{JSON.stringify(selectedItem.ragContext, null, 2)}
+							</pre>
+						) : (
+							<p className="text-sm text-muted-foreground">Không có RAG context</p>
+						)}
+					</div>
+				);
+			case 'tokenUsage':
+				return (
+					<div className="space-y-2">
+						<h3 className="text-sm font-semibold text-foreground">Token Usage</h3>
+						{selectedItem.tokenUsage ? (
+							<pre className="text-xs font-mono bg-slate-50 border rounded-md p-4 overflow-x-auto max-h-[500px] overflow-y-auto whitespace-pre-wrap">
+								{JSON.stringify(selectedItem.tokenUsage, null, 2)}
+							</pre>
+						) : (
+							<p className="text-sm text-muted-foreground">Không có dữ liệu token usage</p>
+						)}
+					</div>
+				);
+			case 'stepsLog':
+				return (
+					<div className="space-y-2">
+						<h3 className="text-sm font-semibold text-foreground">Steps Log</h3>
+						{selectedItem.stepsLog ? (
+							<pre className="text-xs font-mono bg-slate-50 border rounded-md p-4 overflow-x-auto max-h-[500px] overflow-y-auto whitespace-pre-wrap">
+								{selectedItem.stepsLog}
+							</pre>
+						) : (
+							<p className="text-sm text-muted-foreground">Không có steps log</p>
+						)}
+					</div>
+				);
 			default:
 				return null;
 		}
@@ -147,6 +520,12 @@ export function LogsPanel() {
 			error: 'Error',
 			duration: 'Duration',
 			created: 'Created At',
+			orchestrator: 'Orchestrator Data',
+			sqlGeneration: 'SQL Generation Attempts',
+			validator: 'Validator Data',
+			ragContext: 'RAG Context',
+			tokenUsage: 'Token Usage',
+			stepsLog: 'Steps Log',
 		};
 		return titles[selectedCell];
 	};
@@ -160,6 +539,12 @@ export function LogsPanel() {
 			error: 'Thông báo lỗi (nếu có)',
 			duration: 'Thời gian xử lý',
 			created: 'Thời gian tạo log',
+			orchestrator: 'Dữ liệu từ Orchestrator Agent',
+			sqlGeneration: 'Các lần thử generate SQL (có thể retry nhiều lần)',
+			validator: 'Dữ liệu từ Result Validator Agent',
+			ragContext: 'RAG Context từ vector DB',
+			tokenUsage: 'Token usage tổng hợp',
+			stepsLog: 'Log các bước xử lý (step-by-step)',
 		};
 		return descriptions[selectedCell];
 	};
@@ -246,6 +631,7 @@ export function LogsPanel() {
 									<TableHead>Error</TableHead>
 									<TableHead>Duration</TableHead>
 									<TableHead>Created</TableHead>
+									<TableHead className="w-32">Details</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -255,7 +641,7 @@ export function LogsPanel() {
 									errorMessage={error?.message}
 									empty={isEmpty}
 									emptyLabel="Chưa có log nào"
-									colSpan={6}
+									colSpan={7}
 								/>
 
 								{!isLoading &&
@@ -306,6 +692,21 @@ export function LogsPanel() {
 												onClick={() => handleCellClick(item, 'created')}
 											>
 												{formatDateTime(item.createdAt)}
+											</TableCell>
+											<TableCell className="w-32">
+												<Button
+													variant="outline"
+													size="sm"
+													className="h-8 w-full text-xs"
+													onClick={(e) => {
+														e.stopPropagation();
+														setSelectedItem(item);
+														setSelectedCell('question');
+														setDialogOpen(true);
+													}}
+												>
+													View All
+												</Button>
 											</TableCell>
 										</TableRow>
 									))}

@@ -29,6 +29,18 @@ export interface AILogEntry {
 	error?: string | null;
 	totalDuration?: number;
 	createdAt: string;
+	// Orchestrator Agent data
+	orchestratorData?: Record<string, unknown> | null;
+	// SQL Generation Agent data (array vì có thể retry nhiều lần)
+	sqlGenerationAttempts?: Record<string, unknown>[] | null;
+	// Result Validator Agent data
+	validatorData?: Record<string, unknown> | null;
+	// RAG Context từ vector DB
+	ragContext?: Record<string, unknown> | null;
+	// Token usage tổng hợp
+	tokenUsage?: Record<string, unknown> | null;
+	// Steps log - log các bước xử lý
+	stepsLog?: string | null;
 }
 
 export interface AdminAIPaginatedResponse<T> {

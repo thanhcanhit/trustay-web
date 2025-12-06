@@ -111,3 +111,41 @@ export const teachOrUpdateKnowledge = async (
 		throw new Error(extractErrorMessage(error, 'Could not update knowledge'));
 	}
 };
+
+export interface CanonicalChunkResponse {
+	chunkId: number;
+}
+
+export interface ChunkCanonicalResponse {
+	sqlQAId: number;
+}
+
+export const getCanonicalChunkId = async (
+	canonicalId: number,
+	token?: string,
+): Promise<CanonicalChunkResponse> => {
+	try {
+		return await apiCall<CanonicalChunkResponse>(
+			`${BASE_ENDPOINT}/canonical/${canonicalId}/chunk`,
+			{ method: 'GET' },
+			token,
+		);
+	} catch (error) {
+		throw new Error(extractErrorMessage(error, 'Could not load chunk ID for canonical'));
+	}
+};
+
+export const getChunkCanonicalId = async (
+	chunkId: number,
+	token?: string,
+): Promise<ChunkCanonicalResponse> => {
+	try {
+		return await apiCall<ChunkCanonicalResponse>(
+			`${BASE_ENDPOINT}/chunk/${chunkId}/canonical`,
+			{ method: 'GET' },
+			token,
+		);
+	} catch (error) {
+		throw new Error(extractErrorMessage(error, 'Could not load canonical ID for chunk'));
+	}
+};

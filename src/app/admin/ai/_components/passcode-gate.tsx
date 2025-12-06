@@ -47,7 +47,7 @@ export function PasscodeGate({ onVerified }: PasscodeGateProps) {
 						</div>
 						<div>
 							<CardTitle className="text-xl">Admin AI</CardTitle>
-							<CardDescription>Nhập passcode 6 số để tiếp tục (123123).</CardDescription>
+							<CardDescription>Nhập passcode 6 số để tiếp tục.</CardDescription>
 						</div>
 					</div>
 					<div className="text-xs text-muted-foreground flex items-center gap-2">

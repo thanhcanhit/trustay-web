@@ -23,6 +23,8 @@ import { ChunksPanel } from './_components/chunks-panel';
 import { LogsPanel } from './_components/logs-panel';
 import { PasscodeGate } from './_components/passcode-gate';
 import { TeachPanel } from './_components/teach-panel';
+import { getCanonicalChunkId, getChunkCanonicalId } from '@/actions/admin-ai.action';
+import { toast } from 'sonner';
 
 type PanelType = 'canonical' | 'chunks' | 'logs' | 'teach';
 
@@ -56,6 +58,8 @@ const menuItems = [
 export default function AdminAIPage() {
 	const [isVerified, setIsVerified] = useState(false);
 	const [activePanel, setActivePanel] = useState<PanelType>('canonical');
+	const [canonicalSearchId, setCanonicalSearchId] = useState<string>('');
+	const [chunksSearchId, setChunksSearchId] = useState<string>('');
 
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
@@ -69,18 +73,48 @@ export default function AdminAIPage() {
 		return <PasscodeGate onVerified={() => setIsVerified(true)} />;
 	}
 
+	const handleNavigateToChunks = async (canonicalId: number) => {
+		try {
+			const response = await getCanonicalChunkId(canonicalId);
+			if (response.chunkId) {
+				setChunksSearchId(response.chunkId.toString());
+				setActivePanel('chunks');
+			} else {
+				toast.error('Không tìm thấy chunk liên kết với canonical này');
+			}
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Không thể tải chunk ID';
+			toast.error(message);
+		}
+	};
+
+	const handleNavigateToCanonical = async (chunkId: number) => {
+		try {
+			const response = await getChunkCanonicalId(chunkId);
+			if (response.sqlQAId) {
+				setCanonicalSearchId(response.sqlQAId.toString());
+				setActivePanel('canonical');
+			} else {
+				toast.error('Không tìm thấy canonical liên kết với chunk này');
+			}
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Không thể tải canonical ID';
+			toast.error(message);
+		}
+	};
+
 	const renderPanel = () => {
 		switch (activePanel) {
 			case 'canonical':
-				return <CanonicalPanel />;
+				return <CanonicalPanel onNavigateToChunks={handleNavigateToChunks} initialSearchId={canonicalSearchId} onSearchIdCleared={() => setCanonicalSearchId('')} />;
 			case 'chunks':
-				return <ChunksPanel />;
+				return <ChunksPanel onNavigateToCanonical={handleNavigateToCanonical} initialSearchId={chunksSearchId} onSearchIdCleared={() => setChunksSearchId('')} />;
 			case 'logs':
 				return <LogsPanel />;
 			case 'teach':
 				return <TeachPanel />;
 			default:
-				return <CanonicalPanel />;
+				return <CanonicalPanel onNavigateToChunks={handleNavigateToChunks} initialSearchId={canonicalSearchId} onSearchIdCleared={() => setCanonicalSearchId('')} />;
 		}
 	};
 
