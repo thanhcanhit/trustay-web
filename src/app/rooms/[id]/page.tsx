@@ -47,7 +47,7 @@ export default function PropertyDetailPage() {
   const [messageToOwner, setMessageToOwner] = useState<string>("")
   const { create, submitting, submitError, clearErrors } = useBookingRequestStore()
   const { user, isAuthenticated } = useUserStore()
-  const { sendMessage: sendChatMessage } = useChatStore()
+  const { sendMessage: sendChatMessage, setCurrentUserId } = useChatStore()
 
   const {
     currentRoom: roomDetail,
@@ -67,6 +67,13 @@ export default function PropertyDetailPage() {
       setHasLoaded(true);
     }
   }, [roomId, hasLoaded, loadRoomDetail])
+
+  // Set current user ID in chat store when user is available
+  useEffect(() => {
+    if (user?.id) {
+      setCurrentUserId(user.id)
+    }
+  }, [user?.id, setCurrentUserId])
 
 
 
