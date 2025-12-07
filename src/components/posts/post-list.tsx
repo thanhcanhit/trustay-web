@@ -544,7 +544,7 @@ export function PostList({
 			<div className="flex items-center justify-between">
 				<h2 className="text-2xl font-bold">Bài đăng của tôi</h2>
 				{activeTab === 'room-seeking' && (
-					<Link href="/profile/posts/room-seeking/add">
+					<Link href="/post?type=room-seeking">
 						<Button>
 							<Plus className="h-4 w-4 mr-2" />
 							Tạo bài tìm trọ
@@ -552,7 +552,7 @@ export function PostList({
 					</Link>
 				)}
 				{activeTab === 'roommate' && (
-					<Link href="/profile/posts/roommate/add">
+					<Link href="/post?type=roommate-seeking">
 						<Button>
 							<Plus className="h-4 w-4 mr-2" />
 							Tạo bài tìm bạn cùng trọ
@@ -597,7 +597,7 @@ export function PostList({
 								</EmptyDescription>
 							</EmptyHeader>
 							<EmptyContent>
-								<Link href="/profile/posts/room-seeking/add">
+								<Link href="/post?type=room-seeking">
 									<Button>
 										<Plus className="h-4 w-4 mr-2" />
 										Tạo bài đăng tìm trọ
@@ -627,7 +627,7 @@ export function PostList({
 							</EmptyDescription>
 						</EmptyHeader>
 						<EmptyContent>
-							<Link href="/profile/posts/roommate/add">
+							<Link href="/post?type=roommate-seeking">
 								<Button>
 									<Plus className="h-4 w-4 mr-2" />
 									Tạo bài đăng tìm bạn cùng trọ

@@ -158,7 +158,7 @@ function RequestsContent() {
                     <div className="flex items-center space-x-2 text-sm">
                       <Square className="h-4 w-4 text-gray-400" />
                       <span className="text-gray-600">
-                        Diện tích: {req.room.areaSqm}m² • Tối đa {req.room.maxOccupancy} người
+                        Diện tích: {Number(req.room.areaSqm)}m² • Tối đa {req.room.maxOccupancy} người
                       </span>
                     </div>
                   )}
