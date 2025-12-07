@@ -15,7 +15,8 @@ export const ROOM_TYPE_TRANSLATIONS: Record<RoomType, string> = {
 /**
  * Convert English room type to Vietnamese display name
  */
-export function getRoomTypeDisplayName(roomType: string): string {
+export function getRoomTypeDisplayName(roomType: string | null | undefined): string {
+	if (!roomType) return 'Chưa xác định';
 	const normalizedType = roomType.toLowerCase() as RoomType;
 	return ROOM_TYPE_TRANSLATIONS[normalizedType] || roomType;
 }
