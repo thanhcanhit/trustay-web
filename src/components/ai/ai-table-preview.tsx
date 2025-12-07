@@ -83,13 +83,30 @@ export function AITablePreview({ columns, rows, previewLimit, onOpenFull }: AITa
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((row, rIdx) => (
-                    <tr key={rIdx} className="odd:bg-gray-50">
-                      {columns.map((col) => (
-                        <td key={col.key} className="px-3 py-2 border-b">{renderCell(row, col, false)}</td>
-                      ))}
-                    </tr>
-                  ))}
+                  {rows.map((row, rIdx) => {
+                    const rowPath = typeof row['path'] === 'string' ? String(row['path']) : undefined;
+                    const isExternal = rowPath?.startsWith('http');
+                    return (
+                      <tr 
+                        key={rIdx} 
+                        className="odd:bg-gray-50 hover:bg-blue-50 cursor-pointer transition-colors"
+                        onClick={(e) => {
+                          if (rowPath) {
+                            e.stopPropagation();
+                            if (isExternal) {
+                              window.open(rowPath, '_blank');
+                            } else {
+                              router.push(rowPath);
+                            }
+                          }
+                        }}
+                      >
+                        {columns.map((col) => (
+                          <td key={col.key} className="px-3 py-2 border-b">{renderCell(row, col, false)}</td>
+                        ))}
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>,
