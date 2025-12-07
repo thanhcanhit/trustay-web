@@ -46,10 +46,10 @@ export function RoomCard({
     }
 
     const electricityCost = room.costs.find((cost: RoomListing['costs'][number]) =>
-      cost.name.toLowerCase().includes('điện')
+      cost.name?.toLowerCase().includes('điện')
     );
     const waterCost = room.costs.find((cost: RoomListing['costs'][number]) =>
-      cost.name.toLowerCase().includes('nước')
+      cost.name?.toLowerCase().includes('nước')
     );
 
     return { electricityCost, waterCost };
@@ -62,8 +62,8 @@ export function RoomCard({
     }
 
     return room.amenities.some((amenity: RoomListing['amenities'][number]) =>
-      amenity.name.toLowerCase().includes('wifi') ||
-      amenity.name.toLowerCase().includes('internet')
+      amenity.name?.toLowerCase().includes('wifi') ||
+      amenity.name?.toLowerCase().includes('internet')
     );
   };
 

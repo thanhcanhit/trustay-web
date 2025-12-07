@@ -98,7 +98,7 @@ export function CostCheckboxSelector({
     }
 
     // Otherwise, determine by name
-    const nameLower = costType.name.toLowerCase();
+    const nameLower = costType.name?.toLowerCase() || '';
     
     // Metered costs (electricity, water)
     if (nameLower.includes('điện') || nameLower.includes('electric') || 
