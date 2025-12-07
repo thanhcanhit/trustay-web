@@ -42,50 +42,119 @@ interface ProcessStep {
 }
 
 function parseStepsLog(stepsLog: string | null | undefined): ProcessStep[] {
-	if (!stepsLog) return [];
+	if (!stepsLog || typeof stepsLog !== 'string') return [];
 
 	const steps: ProcessStep[] = [];
+	const trimmedLog = stepsLog.trim();
+	if (!trimmedLog) return [];
 	
-	// Hỗ trợ 2 format:
+	// Hỗ trợ nhiều format:
 	// 1. Format cũ: ===STEP 1===
-	// 2. Format mới: ## Step 1 - TITLE
-	const oldFormatRegex = /===STEP (\d+)===\s*([\s\S]*?)(?=\n===STEP|\n*$)/g;
-	const newFormatRegex = /## Step (\d+)\s*-\s*([^\n]+)\n([\s\S]*?)(?=\n## Step|\n*$)/g;
+	// 2. Format mới: ## Step 1 - TITLE (không có **)
+	// 3. Format mới: ## **STEP 1 - TITLE** (có **)
+	// 4. Format mới: ## STEP 1 - TITLE (uppercase STEP)
+	// 5. Format mới: ## step 1 - TITLE (lowercase step)
 	
-	// Thử format mới trước (## Step X - TITLE)
-	let match = newFormatRegex.exec(stepsLog);
-	if (match) {
-		// Reset regex để scan lại từ đầu
-		newFormatRegex.lastIndex = 0;
-		while ((match = newFormatRegex.exec(stepsLog)) !== null) {
-			const stepNumber = parseInt(match[1], 10);
-			const title = match[2].trim();
-			const content = match[3].trim();
-
-			steps.push({
-				stepNumber,
-				title,
-				content: content || title,
-			});
-		}
-	} else {
-		// Fallback về format cũ (===STEP X===)
-		while ((match = oldFormatRegex.exec(stepsLog)) !== null) {
-			const stepNumber = parseInt(match[1], 10);
-			const content = match[2].trim();
+	// Kiểm tra format cũ trước (===STEP X===)
+	const oldFormatRegex = /===STEP\s+(\d+)\s*===\s*\n?([\s\S]*?)(?=\n===STEP\s+\d+\s*===|$)/gi;
+	const oldFormatMatches: Array<{ stepNumber: number; content: string }> = [];
+	let oldMatch;
+	
+	// Reset regex
+	oldFormatRegex.lastIndex = 0;
+	while ((oldMatch = oldFormatRegex.exec(trimmedLog)) !== null) {
+		oldFormatMatches.push({
+			stepNumber: parseInt(oldMatch[1], 10),
+			content: oldMatch[2].trim(),
+		});
+	}
+	
+	// Nếu tìm thấy format cũ, sử dụng nó
+	if (oldFormatMatches.length > 0) {
+		for (const match of oldFormatMatches) {
+			const content = match.content;
 			const lines = content.split('\n').filter((line) => line.trim());
-			const title = lines[0] || `Step ${stepNumber}`;
+			const title = lines[0] || `Step ${match.stepNumber}`;
 			const fullContent = lines.slice(1).join('\n').trim() || title;
 
 			steps.push({
-				stepNumber,
+				stepNumber: match.stepNumber,
 				title,
 				content: fullContent,
 			});
 		}
+	} else {
+		// Format mới: ## [**]STEP/Step [số] - [title][**]
+		// Pattern linh hoạt: hỗ trợ cả STEP và Step, có hoặc không có **
+		// Regex cải thiện: match toàn bộ dòng title bao gồm cả ** ở cuối
+		// Pattern: ## [**]STEP [số] - [title có thể có **][**] [\n hoặc end]
+		// Sử dụng greedy match cho title để capture cả ** ở cuối nếu có
+		const stepMarkerRegex = /##\s*\**\s*STEP\s+(\d+)\s*-\s*([^\n]+)\s*(?:\n|$)/gi;
+		const stepMarkers: Array<{ index: number; endIndex: number; stepNumber: number; title: string }> = [];
+		
+		// Tìm tất cả step markers
+		let stepMatch;
+		stepMarkerRegex.lastIndex = 0;
+		while ((stepMatch = stepMarkerRegex.exec(trimmedLog)) !== null) {
+			const stepNumber = parseInt(stepMatch[1], 10);
+			if (isNaN(stepNumber) || stepNumber <= 0) continue;
+			
+			// Extract title và loại bỏ ** ở đầu và cuối nếu có
+			let title = stepMatch[2].trim();
+			// Loại bỏ ** ở đầu và cuối (có thể có nhiều **), nhưng giữ lại ** ở giữa
+			title = title.replace(/^\*\*+|\*\*+$/g, '').trim();
+			// Nếu title rỗng sau khi loại bỏ **, dùng default
+			if (!title) {
+				title = `Step ${stepNumber}`;
+			}
+			
+			// Tìm vị trí kết thúc của dòng title
+			// match[0] chứa toàn bộ match bao gồm cả \n
+			const matchEnd = stepMatch.index + stepMatch[0].length;
+			// Tìm \n trong match để xác định endIndex chính xác
+			const newlineInMatch = stepMatch[0].indexOf('\n');
+			const endIndex = newlineInMatch !== -1 
+				? stepMatch.index + newlineInMatch + 1 
+				: matchEnd;
+			
+			stepMarkers.push({
+				index: stepMatch.index,
+				endIndex: endIndex,
+				stepNumber,
+				title,
+			});
+		}
+		
+		// Nếu tìm thấy step markers, parse từng step
+		if (stepMarkers.length > 0) {
+			for (let i = 0; i < stepMarkers.length; i++) {
+				const currentMarker = stepMarkers[i];
+				const nextMarker = stepMarkers[i + 1];
+				
+				// Lấy content từ sau dòng title đến trước step tiếp theo hoặc đến cuối
+				const contentStart = currentMarker.endIndex;
+				const contentEnd = nextMarker ? nextMarker.index : trimmedLog.length;
+				let content = trimmedLog.substring(contentStart, contentEnd).trim();
+				
+				// Nếu không có content, dùng title làm content
+				if (!content) {
+					content = currentMarker.title;
+				}
+				
+				steps.push({
+					stepNumber: currentMarker.stepNumber,
+					title: currentMarker.title,
+					content,
+				});
+			}
+		}
 	}
 
-	return steps.sort((a, b) => a.stepNumber - b.stepNumber);
+	// Sort và validate steps
+	const sortedSteps = steps.sort((a, b) => a.stepNumber - b.stepNumber);
+	
+	// Validate: đảm bảo step numbers là hợp lệ
+	return sortedSteps.filter(step => !isNaN(step.stepNumber) && step.stepNumber > 0);
 }
 
 const nodeTypes = {
