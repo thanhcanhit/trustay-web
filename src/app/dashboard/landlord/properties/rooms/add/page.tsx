@@ -462,7 +462,7 @@ function AddRoomPageContent() {
         })) as unknown as RoomRuleCreate[],
         images: formData.images && formData.images.length > 0 ? {
           images: formData.images.map((img, index) => ({
-            url: img.url, // Use uploaded URL as path
+            path: img.url, // Use uploaded URL as path
             alt: img.altText || `Room image ${index + 1}`,
             isPrimary: index === 0,
             sortOrder: index,
