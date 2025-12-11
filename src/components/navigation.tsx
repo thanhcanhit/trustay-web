@@ -399,6 +399,12 @@ export function Navigation() {
                         <div className="space-y-3">
                           <div className="text-sm font-medium">Lọc theo khu vực</div>
                           <AddressSelector
+                            value={{
+                              street: '',
+                              ward: null,
+                              district: null,
+                              province: null
+                            }}
                             showStreetInput={false}
                             onChange={(addr) => {
                               setSelectedProvinceId(addr.province?.id || null)

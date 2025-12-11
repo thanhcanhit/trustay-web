@@ -239,7 +239,7 @@ export function AddressSelector({
             <SelectTrigger className="mt-1 w-full">
               <SelectValue placeholder={provincesLoading ? 'Đang tải...' : 'Chọn tỉnh/thành phố'} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[10001]">
               {provinces.map((province) => (
                 <SelectItem key={province.id} value={province.id.toString()}>
                   {province.name}
@@ -268,7 +268,7 @@ export function AddressSelector({
                   : 'Chọn quận/huyện'
               } />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[10001]">
               {availableDistricts.map((district) => (
                 <SelectItem key={district.id} value={district.id.toString()}>
                   {district.name}
@@ -300,7 +300,7 @@ export function AddressSelector({
                   : 'Chọn phường/xã'
               } />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[10001]">
               {availableWards.map((ward) => (
                 <SelectItem key={ward.id} value={ward.id.toString()}>
                   {ward.name}
