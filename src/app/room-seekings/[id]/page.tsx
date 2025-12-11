@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Loader2, Calendar as CalendarIcon, MapPin, Users, DollarSign, Info, ChevronDown, ChevronUp, CheckCircle, XCircle, Home, Star, Globe, TrendingUp, Heart, Share2, Flag, Mail, MessageCircle, Phone, Send } from 'lucide-react'
+import { Loader2, Calendar as CalendarIcon, MapPin, Users, DollarSign, Info, ChevronDown, ChevronUp, CheckCircle, XCircle, Home, Star, TrendingUp, Heart, Share2, Flag, Mail, MessageCircle, Phone, Send } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -498,81 +498,6 @@ export default function RoomSeekingDetailPage() {
 
                 {/* Divider */}
                 <div className="border-t border-gray-200 my-6"></div>
-
-                {/* Location */}
-                <div>
-                  <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
-                    <MapPin className="h-5 w-5 text-red-600" />
-                    Vị trí mong muốn
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="w-full h-80 bg-gray-200 rounded-xl overflow-hidden shadow-inner">
-                      {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
-                        <iframe
-                          width="100%"
-                          height="100%"
-                          className="rounded-xl border-0"
-                          src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(formatAddress())}&zoom=16`}
-                          allowFullScreen
-                          loading="lazy"
-                          referrerPolicy="no-referrer-when-downgrade"
-                          title="Vị trí mong muốn"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 rounded-xl">
-                          <MapPin className="h-16 w-16 text-gray-400 mb-4" />
-                          <p className="text-gray-500 text-center">
-                            Bản đồ chưa được cấu hình
-                            <br />
-                            <span className="text-sm">Vui lòng thêm Google Maps API key</span>
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 p-4 bg-gray-50 rounded-xl">
-                      <MapPin className="h-5 w-5 text-gray-500" />
-                      <span className="text-gray-700 font-medium">
-                        {formatAddress()}
-                      </span>
-                    </div>
-
-                    {/* Map Action Buttons */}
-                    <div className="flex gap-3">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatAddress())}`
-                          window.open(googleMapsUrl, '_blank')
-                        }}
-                        className="flex-1"
-                      >
-                        <Globe className="h-4 w-4 mr-2" />
-                        Mở Google Maps
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          const mapsUrl = `maps://maps.apple.com/?q=${encodeURIComponent(formatAddress())}`
-                          const fallbackUrl = `https://maps.apple.com/?q=${encodeURIComponent(formatAddress())}`
-
-                          if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-                            window.location.href = mapsUrl
-                            setTimeout(() => {
-                              window.open(fallbackUrl, '_blank')
-                            }, 1000)
-                          } else {
-                            window.open(fallbackUrl, '_blank')
-                          }
-                        }}
-                        className="flex-1"
-                      >
-                        <MapPin className="h-4 w-4 mr-2" />
-                        Apple Maps
-                      </Button>
-                    </div>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>
