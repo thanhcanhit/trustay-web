@@ -40,9 +40,9 @@ export function SortingTabs({ basePath = '/rooms' }: SortingTabsProps) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => handleSortChange('relevance', 'desc')}
+          onClick={() => handleSortChange('createdAt', 'desc')}
           className={`flex-shrink-0 h-10 px-4 rounded-none border-b-2 transition-colors ${
-            isActive('relevance', 'desc')
+            isActive('createdAt', 'desc')
               ? 'border-green-600 text-green-600 font-medium'
               : 'border-transparent text-gray-600 hover:text-gray-900'
           }`}
