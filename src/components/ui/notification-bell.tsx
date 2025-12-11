@@ -62,6 +62,7 @@ export function NotificationBell() {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'BOOKING_REQUEST':
+        return "📋"
       case 'booking_request':
         return "📋"
       case 'BOOKING_APPROVED':
@@ -113,6 +114,7 @@ export function NotificationBell() {
     // Fallback to type-based titles
     switch (notification.type) {
       case 'BOOKING_REQUEST':
+        return 'Yêu cầu đặt phòng mới'
       case 'booking_request':
         return 'Yêu cầu đặt phòng mới'
       case 'BOOKING_APPROVED':
@@ -215,6 +217,7 @@ export function NotificationBell() {
       console.log('📋 Handling booking notification, bookingId:', notificationData.bookingId)
       const isLandlord = notification.type === 'booking_request' || 
                          notification.type === 'BOOKING_REQUEST' ||
+                          notification.type === 'booking_request_created' ||
                          notification.type === 'booking_request_received'
       
       targetPath = isLandlord ? '/dashboard/landlord/requests' : '/dashboard/tenant/requests'

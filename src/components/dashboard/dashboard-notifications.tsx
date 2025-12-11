@@ -47,6 +47,8 @@ export function DashboardNotifications() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
+      case 'booking_request_created':
+        return <CalendarCheck2 className="h-4 w-4 text-green-500" />
       case 'booking_request_received':
         return <CalendarCheck2 className="h-4 w-4 text-blue-500" />
       case 'booking_request_cancelled':
