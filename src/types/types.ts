@@ -390,7 +390,9 @@ export interface RoomRuleCreate {
 }
 
 export interface RoomImageCreate {
-	path: string;
+	url: string;
+	path?: string;
+	imageUrl?: string;
 	alt?: string;
 	isPrimary?: boolean;
 	sortOrder?: number;

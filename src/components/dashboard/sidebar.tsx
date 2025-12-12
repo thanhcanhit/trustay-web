@@ -101,7 +101,13 @@ const tenantItems: SidebarItem[] = [
     href: "/dashboard/tenant/roommate-applications",
     icon: Users,
     disabled: false
-  }
+  },
+  {
+    title: "Đánh giá",
+    href: "/dashboard/tenant/reviews",
+    icon: Star,
+    disabled: false
+  },
 ]
 
 const landlordItems: SidebarItem[] = [

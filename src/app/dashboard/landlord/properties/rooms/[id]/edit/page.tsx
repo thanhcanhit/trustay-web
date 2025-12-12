@@ -267,10 +267,10 @@ export default function EditRoomPage() {
     
     return images.map((img, index) => {
       // Format URL using getImageUrl to handle relative paths
-      const formattedUrl = getImageUrl(img.path, { size: 'original' })
+      const formattedUrl = getImageUrl(img.url, { size: 'original' })
       
       return {
-        id: img.path || `existing-${index}`,
+        id: img.url || `existing-${index}`,
         url: formattedUrl,
         preview: formattedUrl,
         isPrimary: img.isPrimary,
@@ -283,6 +283,7 @@ export default function EditRoomPage() {
   // Helper to convert UploadedImage to RoomImageCreate
   const convertUploadedToRoomImages = (images: UploadedImage[]): RoomImageCreate[] => {
     return images.map((img) => ({
+      url: img.url,
       path: img.url,
       alt: img.altText
     }))

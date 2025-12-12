@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Star, MessageSquare, Calendar, MapPin, ThumbsUp, Reply, Loader2 } from "lucide-react"
+import { Search, Star, MessageSquare, Calendar, MapPin, ThumbsUp, Reply, Loader2, Link } from "lucide-react"
 import { useRatingStore } from "@/stores/ratingStore"
 import { useUserStore } from "@/stores/userStore"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
+import SizingImage from "@/components/sizing-image"
 
 const RATING_LABELS = {
   5: 'Xuất sắc',
@@ -21,7 +22,7 @@ const RATING_LABELS = {
   1: 'Rất kém'
 }
 
-export default function ReviewsPage() {
+export default function TenantReviewsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [ratingFilter, setRatingFilter] = useState('all')
   const { user } = useUserStore()
@@ -60,7 +61,7 @@ export default function ReviewsPage() {
 
   if (isLoading) {
     return (
-      <DashboardLayout userType="landlord">
+      <DashboardLayout userType="tenant">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-400" />
@@ -72,7 +73,7 @@ export default function ReviewsPage() {
   }
 
   return (
-    <DashboardLayout userType="landlord">
+    <DashboardLayout userType="tenant">
       <div className="px-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Đánh giá khách hàng</h1>
@@ -194,16 +195,28 @@ export default function ReviewsPage() {
                   <div className="space-y-3">
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src="" alt={reviewerName} />
-                        <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                          {reviewerName.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
+                        {rating.reviewer?.avatarUrl ? (
+                          <SizingImage src={rating.reviewer.avatarUrl} alt={reviewerName} className="rounded-full" />
+                        ) : (
+                          <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                            {reviewerName.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        )}
                       </Avatar>
                       <div>
                         <span className="font-medium text-sm">{reviewerName}</span>
                         <div className="flex items-center space-x-2 text-xs text-gray-500">
                           <MapPin className="h-3 w-3" />
-                          <span>{roomInfo}</span>
+                          {rating.targetType === 'room' ? (
+                            <div>
+                              <a href={`/rooms/${rating.targetId}`} className="underline hover:text-blue-600">
+                                Phòng trọ
+                              </a>
+                            </div>
+                            
+                          ) : (
+                            <span>{roomInfo}</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -253,7 +266,7 @@ export default function ReviewsPage() {
               </EmptyMedia>
               <EmptyTitle>Chưa có đánh giá</EmptyTitle>
               <EmptyDescription>
-                Bạn chưa nhận được đánh giá nào từ khách thuê. Đánh giá sẽ xuất hiện sau khi khách thuê hoàn tất thuê trọ và để lại đánh giá.
+                Bạn chưa đánh giá phòng/người nào.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
