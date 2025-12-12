@@ -213,15 +213,15 @@ export function Navigation() {
   const isAIOpen = useAIAssistantStore(s => s.isSidebarOpen)
 
   return (
-    <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-[9998] no-print" suppressHydrationWarning={true}>
+    <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-9998 no-print" suppressHydrationWarning={true}>
       {/* First Row: Logo, Search, Login/Signup */}
-      <div className={isAuthPage ? "" : "border-b border-gray-200 bg-gradient-to-r from-white to-gray-50"}>
+      <div className={isAuthPage ? "" : "border-b border-gray-200 bg-linear-to-r from-white to-gray-50"}>
         <div className="container mx-auto px-2 sm:px-4">
           <div className="flex h-14 lg:h-16 items-center justify-between lg:justify-start lg:gap-4 relative">
             {/* Logo - Always visible on desktop, hidden on mobile */}
-            <div className="hidden lg:flex items-center flex-shrink-0">
+            <div className="hidden lg:flex items-center shrink-0">
               <Link href="/" className="flex items-center space-x-2">
-                <Image src="/logo.png" alt="Trustay" width={100} height={40} className="w-[100px] h-[40px] object-contain"  />
+                <Image src="/logo.png" alt="Trustay" width={100} height={40} className="w-[100px] h-10 object-contain"  />
               </Link>
             </div>
 
@@ -234,7 +234,7 @@ export function Navigation() {
                     onClick={() => router.back()}
                     size="sm"
                     variant="ghost"
-                    className="h-9 w-9 p-0 flex-shrink-0"
+                    className="h-9 w-9 p-0 shrink-0"
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
@@ -253,7 +253,7 @@ export function Navigation() {
 
                   {/* Search Suggestions Dropdown */}
                   {showSearchSuggestions && searchQuery.length === 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-[9999] max-h-60 overflow-y-auto">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-9999 max-h-60 overflow-y-auto">
                       <div className="py-2">
                         <div className="px-3 py-1 text-xs text-gray-500 font-medium">Tìm kiếm phổ biến</div>
                         {searchSuggestions.map((suggestion, index) => (
@@ -277,7 +277,7 @@ export function Navigation() {
                 <Button
                   onClick={handleSearch}
                   size="sm"
-                  className="h-9 w-9 p-0 bg-green-600 hover:bg-green-700 text-white rounded-lg flex-shrink-0"
+                  className="h-9 w-9 p-0 bg-green-600 hover:bg-green-700 text-white rounded-lg shrink-0"
                 >
                   <Search className="h-4 w-4" />
                 </Button>
@@ -288,7 +288,7 @@ export function Navigation() {
                     onClick={() => setIsFilterOpen(true)}
                     size="sm"
                     variant="outline"
-                    className="h-9 w-9 p-0 flex-shrink-0"
+                    className="h-9 w-9 p-0 shrink-0"
                   >
                     <Funnel className="h-4 w-4" />
                   </Button>
@@ -314,7 +314,7 @@ export function Navigation() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuPortal>
-                        <DropdownMenuContent className="w-44 z-[10000]" align="start">
+                        <DropdownMenuContent className="w-44 z-10000" align="start">
                           <DropdownMenuGroup>
                             <DropdownMenuItem onClick={() => setSearchType('rooms')}>
                               <Home className="h-4 w-4 mr-2" />
@@ -361,7 +361,7 @@ export function Navigation() {
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
-                      <DialogHeader className="flex-shrink-0">
+                      <DialogHeader className="shrink-0">
                         <DialogTitle>Bộ lọc</DialogTitle>
                       </DialogHeader>
                       <div className="flex-1 overflow-y-auto space-y-6 py-2 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 scrollbar-thumb-rounded-full">
@@ -491,7 +491,7 @@ export function Navigation() {
                           />
                         </div>
                       </div>
-                      <DialogFooter className="flex-shrink-0 mt-4 pt-4 border-t">
+                      <DialogFooter className="shrink-0 mt-4 pt-4 border-t">
                         <div className="flex gap-2 w-full">
                           <Button
                             onClick={() => setIsFilterOpen(false)}
@@ -515,7 +515,7 @@ export function Navigation() {
             )}
 
             {/* Right Section - AI Button + Messages + Login/Signup or User Menu */}
-            <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 flex-shrink-0 lg:ml-auto">
+            <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 shrink-0 lg:ml-auto">
               <Button
                 variant="outline"
                 size="sm"
@@ -616,7 +616,7 @@ export function Navigation() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuPortal>
-                      <DropdownMenuContent className="w-56 z-[10000]" align="end" side="top">
+                      <DropdownMenuContent className="w-56 z-10000" align="end" side="top">
                         <DropdownMenuGroup>
                           <DropdownMenuItem>
                             <Link href="/post?type=room-seeking" className="select-none space-y-1 rounded-md px-3 py-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground">

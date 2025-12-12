@@ -25,6 +25,7 @@ import { useUserStore } from "@/stores/userStore"
 import { toast } from "sonner"
 import { MESSAGE_TYPES } from "@/constants/chat.constants"
 import { useChatStore } from "@/stores/chat.store"
+import { useChatBubbleStore } from "@/stores/chatBubbleStore"
 import { encodeStructuredMessage } from "@/lib/chat-message-encoder"
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination } from 'swiper/modules'
@@ -45,9 +46,13 @@ export default function PropertyDetailPage() {
   const [moveInDate, setMoveInDate] = useState<string>("")
   const [moveOutDate, setMoveOutDate] = useState<string>("")
   const [messageToOwner, setMessageToOwner] = useState<string>("")
-  const { create, submitting, submitError, clearErrors } = useBookingRequestStore()
+  const [hasExistingRequest, setHasExistingRequest] = useState<boolean>(false)
+  const [existingConversationId, setExistingConversationId] = useState<string | null>(null)
+  const { create, submitting, submitError, clearErrors, loadMine, mine } = useBookingRequestStore()
   const { user, isAuthenticated } = useUserStore()
-  const { sendMessage: sendChatMessage, setCurrentUserId } = useChatStore()
+  const { sendMessage: sendChatMessage, setCurrentUserId, loadConversations, conversations } = useChatStore()
+  const { openChat } = useChatBubbleStore()
+  
 
   const {
     currentRoom: roomDetail,
@@ -74,6 +79,50 @@ export default function PropertyDetailPage() {
       setCurrentUserId(user.id)
     }
   }, [user?.id, setCurrentUserId])
+
+  // Check if tenant has existing booking request for this room
+  useEffect(() => {
+    const checkExistingRequest = async () => {
+      if (user?.role === 'tenant' && roomId && isAuthenticated) {
+        // Load user's booking requests
+        await loadMine()
+      }
+    }
+    checkExistingRequest()
+  }, [user?.role, roomId, isAuthenticated, loadMine])
+
+  // Update hasExistingRequest when mine bookings change
+  useEffect(() => {
+    if (user?.role === 'tenant' && roomId && mine.length > 0) {
+      const existingRequest = mine.find(
+        (request) => request.room?.id === roomId && 
+        ['pending', 'confirmed', 'approved'].includes(request.status)
+      )
+      setHasExistingRequest(!!existingRequest)
+    }
+  }, [mine, roomId, user?.role])
+
+  // Load conversations to check if chat with owner exists
+  useEffect(() => {
+    const loadChats = async () => {
+      if (isAuthenticated && roomDetail?.owner?.id) {
+        await loadConversations()
+      }
+    }
+    loadChats()
+  }, [isAuthenticated, roomDetail?.owner?.id, loadConversations])
+
+  // Find conversation with owner when conversations are loaded
+  useEffect(() => {
+    if (roomDetail?.owner?.id && conversations) {
+      const conversationWithOwner = Object.values(conversations).find(
+        (conv) => conv.counterpart.id === roomDetail.owner.id
+      )
+      if (conversationWithOwner) {
+        setExistingConversationId(conversationWithOwner.conversationId)
+      }
+    }
+  }, [conversations, roomDetail?.owner?.id])
 
 
 
@@ -165,6 +214,32 @@ export default function PropertyDetailPage() {
     }
 
     openBookingDialog()
+  }
+  const handleChatClick = () => {
+    if (!isAuthenticated) {
+      toast.error('Bạn cần đăng nhập để bắt đầu trò chuyện')
+      return
+    }
+
+    // Check if user is the owner
+    if (user && roomDetail?.owner?.email && user.email === roomDetail.owner.email) {
+      toast.error('Bạn không thể trò chuyện với chính mình')
+      return
+    }
+
+    // If tenant and has existing request or conversation, open chat
+    if (user?.role === 'tenant' && (hasExistingRequest || existingConversationId)) {
+      if (existingConversationId) {
+        // Open chat bubble with conversation selected
+        openChat(existingConversationId)
+      } else {
+        // Has request but no conversation yet, just open chat
+        openChat()
+      }
+    } else {
+      // No request sent yet, show toast
+      toast.info('Gửi yêu cầu để mở cuộc trò chuyện')
+    }
   }
 
   const openBookingDialog = async () => {
@@ -296,7 +371,7 @@ export default function PropertyDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-3 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6">
         {/* Breadcrumb */}
         <div className="mb-2 sm:mb-4 md:mb-6 overflow-x-auto">
@@ -317,7 +392,7 @@ export default function PropertyDetailPage() {
               />
               {/* Premium Badge */}
               {roomDetail.isVerified && (
-                <div className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-2 py-1 sm:px-3 rounded-full text-xs sm:text-sm font-semibold shadow-lg flex items-center gap-1">
+                <div className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 bg-linear-to-br from-yellow-400 to-yellow-500 text-white px-2 py-1 sm:px-3 rounded-full text-xs sm:text-sm font-semibold shadow-lg flex items-center gap-1">
                   <Award className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="hidden xs:inline">ĐÃ XÁC MINH</span>
                   <span className="xs:hidden">XÁC MINH</span>
@@ -347,18 +422,18 @@ export default function PropertyDetailPage() {
                             Tầng {roomDetail.floorNumber}
                           </Badge>
                         </div>
-                        <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 md:mb-3 leading-tight break-words">
+                        <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 md:mb-3 leading-tight wrap-break-word">
                           {roomDetail.name}
                         </h1>
                         <div className="flex flex-col gap-1.5 sm:gap-2 text-[11px] sm:text-xs md:text-sm text-gray-600 mb-2 sm:mb-3 md:mb-4">
                           <div className="flex items-start gap-1">
-                            <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                            <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-gray-500 shrink-0 mt-0.5" />
                             <span className="line-clamp-2">
                               {roomDetail.address}, {roomDetail.location.wardName}, {roomDetail.location.districtName}, {roomDetail.location.provinceName}
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-gray-500 flex-shrink-0" />
+                            <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-gray-500 shrink-0" />
                             <span className="text-[11px] sm:text-xs md:text-sm truncate">Đăng lúc: {formatDate(roomDetail.lastUpdated)}</span>
                           </div>
                         </div>
@@ -376,9 +451,9 @@ export default function PropertyDetailPage() {
                     </div>
 
                     {/* Price Display */}
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between p-2.5 sm:p-3 md:p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-lg sm:rounded-xl border border-red-200 gap-2 sm:gap-3">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between p-2.5 sm:p-3 md:p-4 bg-linear-to-br from-red-50 to-orange-50 rounded-lg sm:rounded-xl border border-red-200 gap-2 sm:gap-3">
                       <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-                        <div className="p-1.5 sm:p-2 md:p-3 bg-red-500 rounded-md sm:rounded-lg flex-shrink-0">
+                        <div className="p-1.5 sm:p-2 md:p-3 bg-red-500 rounded-md sm:rounded-lg shrink-0">
                           <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
                         </div>
                         <div>
@@ -412,8 +487,8 @@ export default function PropertyDetailPage() {
                       Thông tin dãy trọ
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-                      <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 md:p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg sm:rounded-xl border border-blue-200">
-                        <div className="p-1.5 sm:p-2 bg-blue-500 rounded-md sm:rounded-lg flex-shrink-0">
+                      <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 md:p-4 bg-linear-to-br from-blue-50 to-blue-100 rounded-lg sm:rounded-xl border border-blue-200">
+                        <div className="p-1.5 sm:p-2 bg-blue-500 rounded-md sm:rounded-lg shrink-0">
                           <Building className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                         </div>
                         <div className="min-w-0">
@@ -422,12 +497,12 @@ export default function PropertyDetailPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 md:p-4 bg-gray-50 rounded-lg sm:rounded-xl">
-                        <div className="p-1.5 sm:p-2 bg-gray-500 rounded-md sm:rounded-lg flex-shrink-0">
+                        <div className="p-1.5 sm:p-2 bg-gray-500 rounded-md sm:rounded-lg shrink-0">
                           <Home className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-xs sm:text-sm text-gray-600 font-medium">Chi tiết dãy trọ</p>
-                          <p className="text-xs sm:text-sm text-gray-900 line-clamp-2 break-words overflow-hidden">
+                          <p className="text-xs sm:text-sm text-gray-900 line-clamp-2 wrap-break-word overflow-hidden">
                             {roomDetail.buildingDescription || 'Không có thông tin'}
                           </p>
                         </div>
@@ -462,7 +537,7 @@ export default function PropertyDetailPage() {
                     </h3>
                     <div className="space-y-3">
                       {/* Main Pricing */}
-                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
+                      <div className="bg-linear-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
                         <div className="flex items-center justify-between">
                           <div>
                             <h4 className="text-lg font-semibold text-gray-900 mb-2">Giá thuê cơ bản</h4>
@@ -653,11 +728,11 @@ export default function PropertyDetailPage() {
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-2 sm:space-y-3 md:space-y-4">
             {/* Owner Profile Section */}
-            <Card className="shadow-md sm:shadow-lg md:shadow-xl border-0 mb-2 sm:mb-3 md:mb-4 bg-gradient-to-br from-white to-gray-50">
+            <Card className="shadow-md sm:shadow-lg md:shadow-xl border-0 mb-2 sm:mb-3 md:mb-4 bg-linear-to-r from-white to-gray-50">
               <CardContent className="p-3 sm:p-4 md:p-6">
                 {/* Owner Profile */}
                 <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-3 md:mb-4">
-                  <div className="relative flex-shrink-0">
+                  <div className="relative shrink-0">
                     <Avatar className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 lg:h-16 lg:w-16 ring-2 md:ring-3 lg:ring-4 ring-yellow-200">
                       {roomDetail.owner?.avatarUrl && roomDetail.owner.avatarUrl.trim() !== '' ? (
                         <div className="w-full h-full relative">
@@ -670,7 +745,7 @@ export default function PropertyDetailPage() {
                           />
                         </div>
                       ) : (
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-base md:text-lg">
+                        <AvatarFallback className="bg-linear-to-r from-blue-500 to-purple-600 text-white font-bold text-base md:text-lg">
                           {(roomDetail.owner?.name?.charAt(0) || 'U').toUpperCase()}
                         </AvatarFallback>
                       )}
@@ -705,11 +780,11 @@ export default function PropertyDetailPage() {
                 {/* Contact Information */}
                 <div className="space-y-1.5 sm:space-y-2 mb-2 sm:mb-3 md:mb-4">
                   <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 p-1.5 sm:p-2 md:p-3 bg-gray-50 rounded-md sm:rounded-lg">
-                    <Phone className="h-3 w-3 md:h-4 md:w-4 text-gray-600 flex-shrink-0" />
+                    <Phone className="h-3 w-3 md:h-4 md:w-4 text-gray-600 shrink-0" />
                     <span className="text-[10px] sm:text-xs md:text-sm text-gray-700 truncate flex-1">
                       <span className="hidden sm:inline">Điện thoại: </span>{roomDetail.owner?.phone || 'Chưa cập nhật'}
                     </span>
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       {roomDetail.owner?.verifiedPhone ? (
                         <CheckCircle className="h-3 w-3 md:h-4 md:w-4 text-green-500" />
                       ) : (
@@ -719,11 +794,11 @@ export default function PropertyDetailPage() {
                   </div>
 
                   <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 p-1.5 sm:p-2 md:p-3 bg-gray-50 rounded-md sm:rounded-lg">
-                    <Mail className="h-3 w-3 md:h-4 md:w-4 text-gray-600 flex-shrink-0" />
+                    <Mail className="h-3 w-3 md:h-4 md:w-4 text-gray-600 shrink-0" />
                     <span className="text-[10px] sm:text-xs md:text-sm text-gray-700 truncate flex-1">
                       <span className="hidden sm:inline">Email: </span>{roomDetail.owner?.email || 'Chưa cập nhật'}
                     </span>
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       {roomDetail.owner?.verifiedEmail ? (
                         <CheckCircle className="h-3 w-3 md:h-4 md:w-4 text-green-500" />
                       ) : (
@@ -776,9 +851,15 @@ export default function PropertyDetailPage() {
                 <div className="grid grid-cols-2 gap-1.5 sm:gap-2 md:gap-3">
                   {/* Check if user is owner first */}
                   {user?.role === "landlord" ? (
-                    <Button className="bg-gray-400 hover:bg-gray-500 text-white cursor-not-allowed text-[10px] sm:text-xs md:text-sm h-9 sm:h-10 md:h-11" size="lg">
+                    <Button className="bg-gray-400 hover:bg-gray-500 text-white cursor-not-allowed text-[10px] sm:text-xs md:text-sm h-9 sm:h-10 md:h-11" size="lg" disabled>
                       <span className="hidden sm:inline">CT không thể thuê phòng</span>
                       <span className="sm:hidden">Không khả dụng</span>
+                    </Button>
+                  ) : user?.role === "tenant" && hasExistingRequest ? (
+                    <Button className="bg-gray-400 hover:bg-gray-400 text-white cursor-not-allowed text-[10px] sm:text-xs md:text-sm h-9 sm:h-10 md:h-11" size="lg" disabled>
+                      <Send className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                      <span className="hidden xs:inline">Đã gửi yêu cầu</span>
+                      <span className="xs:hidden">Đã gửi</span>
                     </Button>
                   ) : (
                     <Dialog open={isBookingOpen} onOpenChange={(open) => {
@@ -789,7 +870,7 @@ export default function PropertyDetailPage() {
                     }}>
                       <Button
                         onClick={handleRentalRequestClick}
-                        className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white cursor-pointer text-[10px] sm:text-xs md:text-sm h-9 sm:h-10 md:h-11"
+                        className="w-full bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white cursor-pointer text-[10px] sm:text-xs md:text-sm h-9 sm:h-10 md:h-11"
                         size="lg"
                       >
                         <Send className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
@@ -814,7 +895,7 @@ export default function PropertyDetailPage() {
                         </div>
                         <div className="space-y-1.5 sm:space-y-2">
                           <Label className="text-xs sm:text-sm">Lời nhắn cho chủ trọ (tuỳ chọn)</Label>
-                          <Textarea placeholder="Ví dụ: Em quan tâm phòng, có thể xem phòng tối nay không?" value={messageToOwner} onChange={(event) => setMessageToOwner(event.target.value)} className="min-h-[60px] sm:min-h-[80px] text-xs sm:text-sm" />
+                          <Textarea placeholder="Ví dụ: Em quan tâm phòng, có thể xem phòng tối nay không?" value={messageToOwner} onChange={(event) => setMessageToOwner(event.target.value)} className="min-h-[60px] sm:min-h-20 text-xs sm:text-sm" />
                         </div>
                       </div>
                       <DialogFooter className="gap-2 sm:gap-0">
@@ -831,7 +912,7 @@ export default function PropertyDetailPage() {
                     variant="outline"
                     className="border-gray-300 hover:bg-gray-50 cursor-pointer text-[10px] sm:text-xs md:text-sm h-9 sm:h-10 md:h-11"
                     size="lg"
-                    onClick={() => toast.info('Tính năng trò chuyện sẽ sớm ra mắt')}
+                    onClick={handleChatClick}
                   >
                     <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
                     <span className="hidden xs:inline">Trò chuyện ngay</span>
@@ -897,7 +978,7 @@ export default function PropertyDetailPage() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="p-2 sm:p-3 md:p-6">
+            <CardContent>
               {/* Similar posts content */}
               {getSimilarPosts().length > 0 ? (
                 <div className="relative">
@@ -947,7 +1028,7 @@ export default function PropertyDetailPage() {
                           isSaved={savedRooms.includes(room.id)}
                           onSaveToggle={toggleSaveRoom}
                           onClick={handleRoomClick}
-                          className="!shadow-md sm:!shadow-lg hover:shadow-xl transition-shadow duration-300 mb-1 sm:mb-2"
+                          className="shadow-md! sm:shadow-lg! hover:shadow-xl transition-shadow duration-300 mb-1 sm:mb-2"
                         />
                       </SwiperSlide>
                     ))}

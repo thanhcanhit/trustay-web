@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "sonner"
 import { ClickableUserAvatar } from "@/components/profile/clickable-user-avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useSearchParams, useRouter } from "next/navigation"
 
 function BookingStatusBadge({ status }: { status: 'pending' | 'awaiting_confirmation' | 'rejected' | 'cancelled' | 'accepted' | 'expired' }) {
   const map = {
@@ -27,7 +28,7 @@ function BookingStatusBadge({ status }: { status: 'pending' | 'awaiting_confirma
     expired: { label: 'Đã hết hạn', className: 'bg-gray-100 text-gray-800' },
     awaiting_confirmation: { label: 'Chờ xác nhận', className: 'bg-yellow-100 text-yellow-800' },
   } as const
-  const it = map[status]
+  const it = map[status] || { label: 'Không xác định', className: 'bg-gray-100 text-gray-800' }
   return <Badge className={it.className}>{it.label}</Badge>
 }
 
@@ -39,7 +40,7 @@ function InvitationStatusBadge({ status }: { status: 'pending' | 'accepted' | 'd
     expired: { label: 'Đã hết hạn', className: 'bg-gray-100 text-gray-800' },
     withdrawn: { label: 'Đã rút lại', className: 'bg-orange-100 text-orange-800' },
   } as const
-  const it = map[status]
+  const it = map[status] || { label: 'Không xác định', className: 'bg-gray-100 text-gray-800' }
   return <Badge className={it.className}>{it.label}</Badge>
 }
 
@@ -591,7 +592,16 @@ function InvitationsContent() {
 }
 
 function RequestsPageContent() {
-  const [activeTab, setActiveTab] = useState('sent')
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'sent')
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    const params = new URLSearchParams(searchParams)
+    params.set('tab', value)
+    router.push(`?${params.toString()}`)
+  }
 
   return (
     <DashboardLayout userType="tenant">
@@ -601,7 +611,7 @@ function RequestsPageContent() {
           <p className="text-gray-600">Quản lý các yêu cầu thuê và lời mời thuê</p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="mb-6 w-full grid grid-cols-2">
             <TabsTrigger value="sent">
               <Send className="h-4 w-4" />

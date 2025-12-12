@@ -2,6 +2,7 @@
 
 import { useUserStore } from '@/stores/userStore'
 import { useChatStore } from '@/stores/chat.store'
+import { useChatBubbleStore } from '@/stores/chatBubbleStore'
 import { MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ChatWindow } from "./chat-window";
@@ -11,9 +12,10 @@ import { useRouter } from "next/navigation";
 export function ChatBubble() {
   const router = useRouter();
   const { user, isAuthenticated } = useUserStore();
-  const [isChatOpen, setChatOpen] = useState(false);
+  const { isOpen: isChatOpen, closeChat, toggleChat, selectedConversationId } = useChatBubbleStore();
   const getUnreadConversationCount = useChatStore((state) => state.getUnreadConversationCount);
   const loadConversations = useChatStore((state) => state.loadConversations);
+  const setCurrentConversationId = useChatStore((state) => state.setCurrentConversationId);
   const conversations = useChatStore((state) => state.conversations);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
@@ -45,6 +47,13 @@ export function ChatBubble() {
     }
   }, [conversations, isAuthenticated, user, getUnreadConversationCount]);
 
+  // Set selected conversation when chat opens with a specific conversation
+  useEffect(() => {
+    if (isChatOpen && selectedConversationId) {
+      setCurrentConversationId(selectedConversationId);
+    }
+  }, [isChatOpen, selectedConversationId, setCurrentConversationId]);
+
   // Chỉ hiển thị khi đã đăng nhập
   if (!isAuthenticated || !user) {
     return null;
@@ -56,7 +65,7 @@ export function ChatBubble() {
       router.push('/messages');
     } else {
       // Toggle chat window on desktop
-      setChatOpen(!isChatOpen);
+      toggleChat();
     }
   };
 
@@ -84,7 +93,7 @@ export function ChatBubble() {
         </div>
       )}
       {/* Only show ChatWindow on desktop */}
-      {isChatOpen && !isMobile && <ChatWindow onClose={() => setChatOpen(false)} />}
+      {isChatOpen && !isMobile && <ChatWindow onClose={() => closeChat()} />}
     </>
   );
 }

@@ -104,7 +104,7 @@ export default function MessagesPage() {
               <div className="flex flex-col items-end text-xs text-gray-400 ml-2">
                 <p className="mb-1">{lastMessage?.sentAt ? format(new Date(lastMessage.sentAt), 'HH:mm') : ''}</p>
                 {convo.unreadCount && convo.unreadCount > 0 ? (
-                  <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-red-500 text-white rounded-full text-xs">
+                  <span className="flex items-center justify-center min-w-5 h-5 px-1.5 bg-red-500 text-white rounded-full text-xs">
                     {convo.unreadCount}
                   </span>
                 ) : null}
