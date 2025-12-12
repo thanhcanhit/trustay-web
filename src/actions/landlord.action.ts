@@ -1,4 +1,4 @@
-//'use server';
+'use server';
 
 import { createServerApiCall } from '@/lib/api-client';
 import type {
