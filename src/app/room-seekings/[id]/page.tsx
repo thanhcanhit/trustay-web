@@ -30,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MESSAGE_TYPES } from '@/constants/chat.constants'
 import { useChatStore } from '@/stores/chat.store'
 import { HTMLContent } from '@/components/ui/html-content'
+import { encodeStructuredMessage } from '@/lib/chat-message-encoder'
 
 export default function RoomSeekingDetailPage() {
   const params = useParams()
@@ -141,18 +142,54 @@ export default function RoomSeekingDetailPage() {
     if (success) {
       try {
         console.log('🚀 Starting to send invitation notification message')
+        
+        // Find the selected room details from buildingRooms
+        const selectedRoom = selectedBuildingRooms.find(room => room.id === selectedRoomId)
+        
+        if (!selectedRoom) {
+          console.error('❌ Selected room not found')
+          toast.error('Không tìm thấy thông tin phòng')
+          return
+        }
+        
+        // Find the building details
+        const selectedBuilding = buildings.find(b => b.id === selectedBuildingId)
+        
+        // Prepare room location
+        const roomLocation = [
+          selectedBuilding?.addressLine1,
+          selectedRoom.location?.wardName,
+          selectedRoom.location?.districtName,
+          selectedRoom.location?.provinceName
+        ].filter(Boolean).join(', ')
+        
+        // Prepare structured message with room information
+        const structuredContent = encodeStructuredMessage({
+          type: 'invitation',
+          room: {
+            roomId: selectedRoom.id,
+            roomSlug: selectedRoom.slug,
+            roomName: selectedRoom.name,
+            roomImage: selectedRoom.images?.[0]?.path,
+            roomPrice: selectedRoom.pricing?.basePriceMonthly,
+            roomLocation: roomLocation || undefined,
+          },
+          message: invitationMessage || 'Tôi nghĩ phòng này phù hợp với bạn. Bạn có quan tâm không?',
+        })
+        
         console.log('📝 Message payload:', {
           recipientId: requester.id,
-          content: invitationMessage || 'Tôi có phòng phù hợp với yêu cầu của bạn. Bạn có quan tâm không?',
+          content: structuredContent,
           type: MESSAGE_TYPES.INVITATION
         })
         console.log('👤 Current user:', user)
         console.log('🎯 Requester:', requester)
+        console.log('🏠 Selected room:', selectedRoom)
 
         // Send notification message to room seeker using chat store
         await sendChatMessage({
           recipientId: requester.id,
-          content: invitationMessage || 'Tôi có phòng phù hợp với yêu cầu của bạn. Bạn có quan tâm không?',
+          content: structuredContent,
           type: MESSAGE_TYPES.INVITATION
         })
 
@@ -163,7 +200,7 @@ export default function RoomSeekingDetailPage() {
           message: error instanceof Error ? error.message : 'Unknown error',
           stack: error instanceof Error ? error.stack : undefined,
           requesterId: requester.id,
-          messageContent: invitationMessage || 'Tôi có phòng phù hợp với yêu cầu của bạn. Bạn có quan tâm không?',
+          messageContent: invitationMessage || 'Tôi nghĩ phòng này phù hợp với bạn. Bạn có quan tâm không?',
           currentUser: user
         })
 
@@ -179,6 +216,7 @@ export default function RoomSeekingDetailPage() {
       setInvitationMessage('')
       setProposedRent('')
       setSelectedRoomId('')
+      setSelectedBuildingId('')
     } else {
       toast.error(invitationError || 'Không thể gửi lời mời')
     }
@@ -312,7 +350,7 @@ export default function RoomSeekingDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-6">
         {/* Breadcrumb */}
         <div className="mb-6">
@@ -337,12 +375,12 @@ export default function RoomSeekingDetailPage() {
                           {currentPost.occupancy} người
                         </Badge>
                         {/* Status Badge */}
-                        <Badge className="bg-gradient-to-r from-green-400 to-green-500 text-white">
+                        <Badge className="bg-linear-to-r from-green-400 to-green-500 text-white">
                           <CheckCircle className="h-3 w-3 mr-1" />
                           {STATUS_LABELS[currentPost.status]}
                         </Badge>
                       </div>
-                      <h1 className="text-3xl font-bold text-gray-900 mb-3 leading-tight break-words">
+                      <h1 className="text-3xl font-bold text-gray-900 mb-3 leading-tight wrap-break-words">
                         {currentPost.title}
                       </h1>
                       <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
@@ -369,7 +407,7 @@ export default function RoomSeekingDetailPage() {
                   </div>
 
                   {/* Budget Display */}
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border border-red-200">
+                  <div className="flex items-center justify-between p-4 bg-linear-to-br from-red-50 to-orange-50 rounded-xl border border-red-200">
                     <div className="flex items-center gap-4">
                       <div className="p-3 bg-red-500 rounded-lg">
                         <DollarSign className="h-6 w-6 text-white" />
@@ -400,7 +438,7 @@ export default function RoomSeekingDetailPage() {
                     Thông tin chi tiết
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                    <div className="flex items-center gap-3 p-4 bg-linear-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
                       <div className="p-2 bg-blue-500 rounded-lg">
                         <Home className="h-5 w-5 text-white" />
                       </div>
@@ -409,7 +447,7 @@ export default function RoomSeekingDetailPage() {
                         <p className="font-semibold text-gray-900 truncate">{getRoomTypeDisplayName(currentPost.preferredRoomType)}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+                    <div className="flex items-center gap-3 p-4 bg-linear-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
                       <div className="p-2 bg-green-500 rounded-lg">
                         <Users className="h-5 w-5 text-white" />
                       </div>
@@ -418,7 +456,7 @@ export default function RoomSeekingDetailPage() {
                         <p className="font-semibold text-gray-900">{currentPost.occupancy} người</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+                    <div className="flex items-center gap-3 p-4 bg-linear-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
                       <div className="p-2 bg-purple-500 rounded-lg">
                         <CalendarIcon className="h-5 w-5 text-white" />
                       </div>
@@ -427,7 +465,7 @@ export default function RoomSeekingDetailPage() {
                         <p className="font-semibold text-gray-900">{formatDate(currentPost.moveInDate)}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200">
+                    <div className="flex items-center gap-3 p-4 bg-linear-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200">
                       <div className="p-2 bg-orange-500 rounded-lg">
                         <MessageCircle className="h-5 w-5 text-white" />
                       </div>
@@ -505,7 +543,7 @@ export default function RoomSeekingDetailPage() {
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-1">
             {/* Requester Profile Section */}
-            <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-gray-50 mb-4">
+            <Card className="shadow-xl border-0 bg-linear-to-br from-white to-gray-50 mb-4">
               <CardContent className="pt-6">
                 {/* Requester Profile */}
                 {(() => {
@@ -538,7 +576,7 @@ export default function RoomSeekingDetailPage() {
                                 />
                               </div>
                             ) : (
-                              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-lg">
+                              <AvatarFallback className="bg-linear-to-br from-blue-500 to-purple-600 text-white font-bold text-lg">
                                 {(requester.name?.charAt(0) || 'U').toUpperCase()}
                               </AvatarFallback>
                             )}
@@ -648,7 +686,7 @@ export default function RoomSeekingDetailPage() {
                       }
                     }}>
                       <DialogTrigger asChild>
-                        <Button className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white" size="lg">
+                        <Button className="w-full bg-linear-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white" size="lg">
                           <Send className="h-4 w-4 mr-2" />
                           Gửi lời mời thuê
                         </Button>
@@ -671,10 +709,10 @@ export default function RoomSeekingDetailPage() {
                                 await loadRoomsByBuilding(value)
                               }}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className='w-full'>
                                 <SelectValue placeholder={buildingsLoading ? "Đang tải..." : "Chọn tòa nhà"} />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="z-10001">
                                 {buildings.map((building) => (
                                   <SelectItem key={building.id} value={building.id}>
                                     <div className="flex flex-col">
@@ -701,7 +739,7 @@ export default function RoomSeekingDetailPage() {
                               onValueChange={setSelectedRoomId}
                               disabled={!selectedBuildingId}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className='w-full'>
                                 <SelectValue placeholder={
                                   !selectedBuildingId 
                                     ? "Vui lòng chọn tòa nhà trước" 
@@ -710,7 +748,7 @@ export default function RoomSeekingDetailPage() {
                                     : "Chọn phòng"
                                 } />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="z-10001">
                                 {selectedBuildingRooms.map((room) => (
                                   <SelectItem key={room.id} value={room.id}>
                                     <div className="flex flex-col">
@@ -778,7 +816,7 @@ export default function RoomSeekingDetailPage() {
                             placeholder="Ví dụ: Tôi nghĩ phòng này phù hợp với bạn. Bạn có quan tâm không?" 
                             value={invitationMessage} 
                             onChange={(e) => setInvitationMessage(e.target.value)} 
-                            className="min-h-[80px]" 
+                            className="min-h-20" 
                           />
                         </div>
                         
@@ -822,7 +860,7 @@ export default function RoomSeekingDetailPage() {
                     </Button>
                   ) : (
                     <Button 
-                      className={`${canSendInvitation ? '' : 'col-span-2'} bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white`}
+                      className={`${canSendInvitation ? '' : 'col-span-2'} bg-linear-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white`}
                       size="lg"
                       onClick={() => toast.info('Tính năng trò chuyện sẽ sớm ra mắt')}
                       disabled={isOwnPost && !canSendInvitation}
@@ -873,7 +911,7 @@ export default function RoomSeekingDetailPage() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent >
               {/* Similar posts content */}
               {getSimilarPosts().length > 0 && (
                 <div className="relative">
@@ -908,7 +946,7 @@ export default function RoomSeekingDetailPage() {
                           <RoomSeekingCard
                             post={post}
                             asLink={false}
-                            className="!shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+                            className="shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer border border-gray-200"
                           />
                         </div>
                       </SwiperSlide>
