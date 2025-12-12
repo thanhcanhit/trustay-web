@@ -220,14 +220,14 @@ export function NotificationBell() {
                           notification.type === 'booking_request_created' ||
                          notification.type === 'booking_request_received'
       
-      targetPath = isLandlord ? '/dashboard/landlord/requests' : '/dashboard/tenant/requests'
+      targetPath = isLandlord ? '/dashboard/landlord/requests' : '/dashboard/tenant/requests?tab=sent'
     }
     // Handle invitation-related notifications
     else if (notification.type === 'ROOM_INVITATION' || 
              notification.type === 'room_invitation' ||
              notification.type === 'room_invitation_received') {
       console.log('📨 Handling invitation notification')
-      targetPath = '/dashboard/tenant/roommate-invitation'
+      targetPath = '/dashboard/tenant/requests?tab=received'
     }
     // Handle invitation acceptance/rejection (landlord)
     else if (notification.type === 'room_invitation_accepted' || 
@@ -296,7 +296,7 @@ export function NotificationBell() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-80 z-[10000]" align="end">
+      <DropdownMenuContent className="w-80 z-10000" align="end">
         <div className="flex items-center justify-between p-2">
           <DropdownMenuLabel className="p-0">Thông báo</DropdownMenuLabel>
           <div className="flex items-center gap-2">
@@ -358,7 +358,7 @@ export function NotificationBell() {
                   className={`flex items-start gap-3 p-3 w-full hover:bg-gray-50 cursor-pointer ${!notification.isRead ? 'bg-blue-50' : ''}`}
                   onClick={() => handleNotificationClick(notification)}
                 >
-                  <div className="text-lg flex-shrink-0 mt-0.5">
+                  <div className="text-lg shrink-0 mt-0.5">
                     {getNotificationIcon(notification.type)}
                   </div>
                   <div className="flex-1 min-w-0">

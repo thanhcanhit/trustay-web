@@ -43,7 +43,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     <>
       {/* Mobile Full Screen */}
       <div className="md:hidden fixed inset-0 z-50 bg-white">
-        <Card className="w-full h-full flex flex-col !rounded-none !p-0 !gap-0 border-0">
+        <Card className="w-full h-full flex flex-col rounded-none! p-0! gap-0! border-0">
           <CardHeader className="flex flex-row items-center justify-between px-3 py-3 bg-primary text-white shrink-0">
             {showMobileConversation && currentConversationId ? (
               <Button
@@ -79,7 +79,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
 
       {/* Desktop Popup */}
       <div className="hidden md:block fixed bottom-0 right-6 z-50">
-        <Card className="w-[700px] h-[500px] flex flex-col !rounded-none !p-0 !gap-0">
+        <Card className="w-[700px] h-[500px] flex flex-col rounded-none! p-0! gap-0!">
           <CardHeader className="flex flex-row items-center justify-between px-3 py-1 bg-primary text-white">
             <CardTitle className="text-lg">Tin nhắn</CardTitle>
             <Button variant="ghost" size="icon" onClick={onClose}>

@@ -13,8 +13,9 @@ import { MessageInput } from "./message-input";
 import { MessageAttachments } from "./message-attachments";
 import { getMessageMetadata } from "@/lib/message-metadata";
 import { decodeStructuredMessage } from "@/lib/chat-message-encoder";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 import { UserProfileModal } from "../profile/user-profile-modal";
+import { SizingImage } from "../sizing-image";
 
 export function ChatConversation() {
   const getConversation = useChatStore((state) => state.getConversation);
@@ -181,18 +182,23 @@ export function ChatConversation() {
                 <div className={`flex my-2 gap-2 ${isOwnMessage ? "justify-end" : ""}`}>
                   {!isOwnMessage && (
                     <div 
-                      className="flex-shrink-0 cursor-pointer"
+                      className="shrink-0 cursor-pointer"
                       onClick={() => {
                         setSelectedUserId(conversation.counterpart.id);
                         setProfileModalOpen(true);
                       }}
                     >
                       <Avatar className="rounded-lg hover:ring-2 hover:ring-primary transition-all">
-                        <AvatarImage
-                          src={conversation.counterpart.avatarUrl || ""}
-                          alt={conversation.counterpart.lastName}
-                        />
-                        <AvatarFallback>{conversation.counterpart.lastName.charAt(0)}{conversation.counterpart.firstName.charAt(0)}  </AvatarFallback>
+                        {conversation.counterpart.avatarUrl ? (
+                          <SizingImage
+                            src={conversation.counterpart.avatarUrl}
+                            alt={conversation.counterpart.firstName}
+                            width={40}
+                            height={40}
+                          />
+                        ) : (
+                          <AvatarFallback>{conversation.counterpart.firstName.charAt(0).toUpperCase()}</AvatarFallback>
+                        )}
                       </Avatar>
                     </div>
                   )}
@@ -207,12 +213,12 @@ export function ChatConversation() {
 
                     {msg.content && (
                       <div
-                        className={`p-2 rounded-lg break-words overflow-wrap-anywhere w-full ${
+                        className={`p-2 rounded-lg wrap-break-word overflow-wrap-anywhere w-full ${
                           isOwnMessage
                             ? "bg-primary text-white"
                             : "bg-gray-200"
                         }`}>
-                        <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere">
+                        <p className="whitespace-pre-wrap wrap-break-word overflow-wrap-anywhere">
                           {(() => {
                             // Try to decode structured message
                             const structuredData = decodeStructuredMessage(msg.content);
