@@ -1,4 +1,4 @@
-//'use server';
+'use server';
 
 import { MESSAGE_TYPES } from '../constants/chat.constants';
 import { createServerApiCall } from '../lib/api-client';
