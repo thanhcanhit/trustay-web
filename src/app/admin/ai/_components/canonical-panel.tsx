@@ -2,26 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { BookOpenCheck, RefreshCcw, Search, ExternalLink, Pencil, Trash2, Download } from 'lucide-react';
 
-import { getCanonicalEntries, deleteSQLQA, exportGoldenData } from '@/actions/admin-ai.action';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import type { AICanonicalEntry, AdminAIPaginatedResponse } from '@/types/admin-ai';
+import { getCanonicalEntries, deleteSQLQA, exportGoldenData, getCanonicalChunkId, getAIChunks } from '@/actions/admin-ai.action';
+import type { AICanonicalEntry, AdminAIPaginatedResponse, AIChunk } from '@/types/admin-ai';
 import { PaginationControls } from './pagination-controls';
-import { formatDateTime } from './utils';
-import { LoaderState } from './loader-state';
-import { CellDetailDialog } from './cell-detail-dialog';
-import { PasscodeConfirmDialog } from './passcode-confirm-dialog';
 import { toast } from 'sonner';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { CanonicalPanelHeader } from './canonical/canonical-panel-header';
+import { CanonicalPanelSearch } from './canonical/canonical-panel-search';
+import { CanonicalPanelTable } from './canonical/canonical-panel-table';
+import { CanonicalPanelDialogs } from './canonical/canonical-panel-dialogs';
 
 type CellType = 'id' | 'question' | 'sql' | 'created' | 'lastUsed';
 
@@ -45,6 +34,9 @@ export function CanonicalPanel({ onNavigateToChunks, onNavigateToUpdate, initial
 	const [sqlQAToDelete, setSqlQAToDelete] = useState<AICanonicalEntry | null>(null);
 	const [exportFormat, setExportFormat] = useState<'json' | 'csv'>('json');
 	const [isExporting, setIsExporting] = useState(false);
+	const [chunkDialogOpen, setChunkDialogOpen] = useState(false);
+	const [relatedChunk, setRelatedChunk] = useState<AIChunk | null>(null);
+	const [isLoadingChunk, setIsLoadingChunk] = useState(false);
 
 	useEffect(() => {
 		if (initialSearchId) {
@@ -118,11 +110,37 @@ export function CanonicalPanel({ onNavigateToChunks, onNavigateToUpdate, initial
 		}
 	};
 
-	const handleExport = async () => {
+	const handleViewChunks = async (item: AICanonicalEntry, e: React.MouseEvent) => {
+		e.stopPropagation();
+		setIsLoadingChunk(true);
+		setRelatedChunk(null);
+		try {
+			const response = await getCanonicalChunkId(item.id);
+			if (response.chunkId) {
+				// Fetch chunk details
+				const chunksResponse = await getAIChunks({ search: response.chunkId.toString(), limit: 1 });
+				if (chunksResponse.items.length > 0) {
+					setRelatedChunk(chunksResponse.items[0]);
+					setChunkDialogOpen(true);
+				} else {
+					toast.error('Không tìm thấy chunk với ID này');
+				}
+			} else {
+				toast.error('Canonical entry này chưa có chunk liên kết');
+			}
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Không thể tải chunk liên quan';
+			toast.error(message);
+		} finally {
+			setIsLoadingChunk(false);
+		}
+	};
+
+	const handleExport = async (format: 'json' | 'csv' = exportFormat) => {
 		setIsExporting(true);
 		try {
 			const blob = await exportGoldenData({
-				format: exportFormat,
+				format: format,
 				search: search || undefined,
 				limit: undefined, // Export all, không giới hạn
 			});
@@ -133,13 +151,14 @@ export function CanonicalPanel({ onNavigateToChunks, onNavigateToUpdate, initial
 			link.href = url;
 			const timestamp = new Date().toISOString().split('T')[0];
 			const searchSuffix = search ? `_${search.replace(/\s+/g, '_')}` : '';
-			link.download = `golden-data${searchSuffix}_${timestamp}.${exportFormat}`;
+			link.download = `golden-data${searchSuffix}_${timestamp}.${format}`;
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
 			window.URL.revokeObjectURL(url);
 
-			toast.success(`Đã export thành công (${exportFormat.toUpperCase()})`);
+			toast.success(`Đã export thành công (${format.toUpperCase()})`);
+			setExportFormat(format); // Update state for next time
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Không thể export golden data';
 			toast.error(message);
@@ -148,303 +167,40 @@ export function CanonicalPanel({ onNavigateToChunks, onNavigateToUpdate, initial
 		}
 	};
 
-	const getDialogContent = () => {
-		if (!selectedItem || !selectedCell) return null;
-
-		switch (selectedCell) {
-			case 'id':
-				return (
-					<div className="space-y-2">
-						<p className="text-2xl font-bold text-foreground">{selectedItem.id}</p>
-						<p className="text-sm text-muted-foreground">ID của canonical entry này</p>
-					</div>
-				);
-			case 'question':
-				return (
-					<div className="space-y-4">
-						<div className="space-y-2">
-							<h3 className="text-sm font-semibold text-foreground">Câu hỏi</h3>
-							<p className="text-sm text-foreground whitespace-pre-wrap bg-slate-50 border rounded-md p-4">
-								{selectedItem.question}
-							</p>
-						</div>
-						{selectedItem.parameters && Object.keys(selectedItem.parameters).length > 0 && (
-							<div className="space-y-2">
-								<h3 className="text-sm font-semibold text-foreground">Parameters</h3>
-								<pre className="text-xs font-mono bg-slate-50 border rounded-md p-4 overflow-x-auto">
-									{JSON.stringify(selectedItem.parameters, null, 2)}
-								</pre>
-							</div>
-						)}
-					</div>
-				);
-			case 'sql':
-				return (
-					<div className="space-y-4">
-						<div className="space-y-2">
-							<h3 className="text-sm font-semibold text-foreground">SQL Canonical</h3>
-							<pre className="text-xs font-mono bg-slate-50 border rounded-md p-4 overflow-x-auto whitespace-pre-wrap">
-								{selectedItem.sqlCanonical}
-							</pre>
-						</div>
-						{selectedItem.sqlTemplate && (
-							<div className="space-y-2">
-								<h3 className="text-sm font-semibold text-foreground">SQL Template</h3>
-								<pre className="text-xs font-mono bg-slate-50 border rounded-md p-4 overflow-x-auto whitespace-pre-wrap">
-									{selectedItem.sqlTemplate}
-								</pre>
-							</div>
-						)}
-					</div>
-				);
-			case 'created':
-				return (
-					<div className="space-y-2">
-						<h3 className="text-sm font-semibold text-foreground">Created At</h3>
-						<p className="text-lg text-foreground">{formatDateTime(selectedItem.createdAt)}</p>
-						<p className="text-sm text-muted-foreground">Thời gian tạo entry này</p>
-					</div>
-				);
-			case 'lastUsed':
-				return (
-					<div className="space-y-2">
-						<h3 className="text-sm font-semibold text-foreground">Last Used At</h3>
-						<p className="text-lg text-foreground">
-							{selectedItem.lastUsedAt ? formatDateTime(selectedItem.lastUsedAt) : 'Chưa dùng'}
-						</p>
-						<p className="text-sm text-muted-foreground">
-							{selectedItem.lastUsedAt ? 'Thời gian sử dụng lần cuối' : 'Entry này chưa được sử dụng'}
-						</p>
-					</div>
-				);
-			default:
-				return null;
-		}
-	};
-
-	const getDialogTitle = () => {
-		if (!selectedItem || !selectedCell) return '';
-		const titles: Record<CellType, string> = {
-			id: `ID - Entry #${selectedItem.id}`,
-			question: 'Câu hỏi',
-			sql: 'SQL Query',
-			created: 'Created At',
-			lastUsed: 'Last Used At',
-		};
-		return titles[selectedCell];
-	};
-
-	const getDialogDescription = () => {
-		if (!selectedCell) return '';
-		const descriptions: Record<CellType, string> = {
-			id: 'ID của canonical entry',
-			question: 'Câu hỏi và parameters',
-			sql: 'SQL canonical và template',
-			created: 'Thời gian tạo entry',
-			lastUsed: 'Thời gian sử dụng lần cuối',
-		};
-		return descriptions[selectedCell];
-	};
 
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-				<div className="flex items-center gap-2">
-					<div className="bg-emerald-50 text-emerald-700 p-2 rounded-lg border border-emerald-100">
-						<BookOpenCheck className="size-4" />
-					</div>
-					<div>
-						<h2 className="text-base sm:text-lg font-semibold">Canonical SQL QA</h2>
-						<p className="text-sm text-muted-foreground">Danh sách QA đã dạy, kèm SQL và parameters.</p>
-					</div>
-				</div>
-				<div className="flex items-center gap-2">
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button variant="outline" size="sm" disabled={isExporting}>
-								<Download className="size-4 mr-2" />
-								Export Golden Data
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							<DropdownMenuItem
-								onClick={() => {
-									setExportFormat('json');
-									void handleExport();
-								}}
-								disabled={isExporting}
-							>
-								Export Golden Data (JSON)
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								onClick={() => {
-									setExportFormat('csv');
-									void handleExport();
-								}}
-								disabled={isExporting}
-							>
-								Export Golden Data (CSV)
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
-					<Select
-						value={limit.toString()}
-						onValueChange={(value) => {
-							const parsed = Number(value);
-							setLimit(parsed);
-							setOffset(0);
-						}}
-					>
-						<SelectTrigger size="sm" className="w-[120px]">
-							<SelectValue placeholder="Số bản ghi" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="10">10 / trang</SelectItem>
-							<SelectItem value="20">20 / trang</SelectItem>
-							<SelectItem value="50">50 / trang</SelectItem>
-						</SelectContent>
-					</Select>
-					<Button variant="outline" size="icon" onClick={() => void refetch()}>
-						<RefreshCcw className="size-4" />
-					</Button>
-				</div>
-			</div>
-			<form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row sm:items-center">
-				<div className="flex-1 flex items-center gap-2">
-					<div className="relative w-full">
-						<Search className="size-4 text-muted-foreground absolute left-2.5 top-2.5" />
-						<Input
-							value={searchInput}
-							onChange={(event) => setSearchInput(event.target.value)}
-							placeholder="Tìm theo câu hỏi..."
-							className="pl-9"
-						/>
-					</div>
-					<Button type="submit" variant="default">
-						Tìm
-					</Button>
-					<Button type="button" variant="ghost" onClick={handleReset}>
-						Xóa
-					</Button>
-				</div>
-			</form>
-			<div className="rounded-lg border bg-white overflow-hidden">
-				<div className="overflow-x-auto w-full">
-					<Table className="min-w-[800px]">
-						<TableHeader>
-								<TableRow>
-									<TableHead className="w-16 min-w-[64px]">ID</TableHead>
-									<TableHead className="min-w-[200px]">Câu hỏi</TableHead>
-									<TableHead className="min-w-[300px]">SQL</TableHead>
-									<TableHead className="min-w-[150px]">Created</TableHead>
-									<TableHead className="min-w-[150px]">Last used</TableHead>
-									<TableHead className="w-24 min-w-[96px]">Actions</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-							<LoaderState
-								isLoading={isLoading}
-								isError={isError}
-								errorMessage={error?.message}
-								empty={isEmpty}
-								emptyLabel="Chưa có canonical nào"
-								colSpan={6}
-							/>
+			<CanonicalPanelHeader
+				limit={limit}
+				onLimitChange={(newLimit) => {
+					setLimit(newLimit);
+					setOffset(0);
+				}}
+				onRefresh={() => void refetch()}
+				onExport={handleExport}
+				isExporting={isExporting}
+			/>
 
-							{!isLoading &&
-								!isError &&
-								data?.items.map((item) => (
-									<TableRow key={item.id}>
-										<TableCell
-											className="font-semibold text-foreground cursor-pointer hover:bg-muted/50 transition-colors"
-											onClick={() => handleCellClick(item, 'id')}
-										>
-											{item.id}
-										</TableCell>
-										<TableCell
-											className="min-w-[200px] max-w-[250px] cursor-pointer hover:bg-muted/50 transition-colors"
-											onClick={() => handleCellClick(item, 'question')}
-										>
-											<p className="line-clamp-2 font-medium text-foreground break-words">{item.question}</p>
-											<p className="text-xs text-muted-foreground truncate">
-												Params: {item.parameters ? JSON.stringify(item.parameters) : 'N/A'}
-											</p>
-										</TableCell>
-										<TableCell
-											className="min-w-[300px] max-w-[400px] cursor-pointer hover:bg-muted/50 transition-colors"
-											onClick={() => handleCellClick(item, 'sql')}
-										>
-											<div className="text-xs font-mono bg-slate-50 border rounded-md p-2 leading-relaxed line-clamp-3 break-words">
-												{item.sqlCanonical}
-											</div>
-											{item.sqlTemplate && (
-												<p className="text-[11px] text-muted-foreground mt-1 line-clamp-2 truncate">
-													Template: {item.sqlTemplate}
-												</p>
-											)}
-										</TableCell>
-										<TableCell
-											className="text-sm text-muted-foreground min-w-[150px] whitespace-nowrap cursor-pointer hover:bg-muted/50 transition-colors"
-											onClick={() => handleCellClick(item, 'created')}
-										>
-											{formatDateTime(item.createdAt)}
-										</TableCell>
-										<TableCell
-											className="text-sm text-muted-foreground min-w-[150px] whitespace-nowrap cursor-pointer hover:bg-muted/50 transition-colors"
-											onClick={() => handleCellClick(item, 'lastUsed')}
-										>
-											{item.lastUsedAt ? formatDateTime(item.lastUsedAt) : 'Chưa dùng'}
-										</TableCell>
-										<TableCell className="w-32 min-w-[128px]">
-											<div className="flex gap-1">
-												{onNavigateToUpdate && (
-													<Button
-														variant="ghost"
-														size="sm"
-														className="h-8 flex-1"
-														onClick={(e) => {
-															e.stopPropagation();
-															onNavigateToUpdate(item);
-														}}
-														title="Cập nhật entry này"
-													>
-														<Pencil className="size-3.5 mr-1" />
-														Update
-													</Button>
-												)}
-												{onNavigateToChunks && (
-													<Button
-														variant="ghost"
-														size="sm"
-														className="h-8 flex-1"
-														onClick={async (e) => {
-															e.stopPropagation();
-															await onNavigateToChunks(item.id);
-														}}
-														title="Xem chunks liên quan"
-													>
-														<ExternalLink className="size-3.5 mr-1" />
-														Chunks
-													</Button>
-												)}
-												<Button
-													variant="ghost"
-													size="sm"
-													className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-													onClick={(e) => handleDeleteClick(item, e)}
-													title="Xóa SQL QA (sẽ xóa cả chunks liên kết)"
-													disabled={deleteMutation.isPending}
-												>
-													<Trash2 className="size-3.5" />
-												</Button>
-											</div>
-										</TableCell>
-									</TableRow>
-								))}
-						</TableBody>
-					</Table>
-				</div>
-			</div>
+			<CanonicalPanelSearch
+				searchInput={searchInput}
+				onSearchInputChange={setSearchInput}
+				onSearch={handleSearch}
+				onReset={handleReset}
+			/>
+
+			<CanonicalPanelTable
+				data={data?.items}
+				isLoading={isLoading}
+				isError={isError}
+				errorMessage={error?.message}
+				empty={isEmpty}
+				onCellClick={handleCellClick}
+				onNavigateToUpdate={onNavigateToUpdate}
+				onViewChunks={handleViewChunks}
+				onDelete={handleDeleteClick}
+				isLoadingChunk={isLoadingChunk}
+				isDeleting={deleteMutation.isPending}
+			/>
 
 			<PaginationControls
 				total={total}
@@ -455,21 +211,18 @@ export function CanonicalPanel({ onNavigateToChunks, onNavigateToUpdate, initial
 				isLoading={isFetching}
 			/>
 
-			<CellDetailDialog
-				open={dialogOpen}
-				onOpenChange={setDialogOpen}
-				title={getDialogTitle()}
-				description={getDialogDescription()}
-				content={getDialogContent()}
-			/>
-
-			<PasscodeConfirmDialog
-				open={deleteConfirmOpen}
-				onOpenChange={setDeleteConfirmOpen}
-				onConfirm={handleConfirmDelete}
-				title="Xóa SQL QA"
-				description={`Bạn có chắc chắn muốn xóa SQL QA ID ${sqlQAToDelete?.id}? Thao tác này sẽ xóa cả chunks liên kết và không thể hoàn tác.`}
-				dangerous={true}
+			<CanonicalPanelDialogs
+				cellDialogOpen={dialogOpen}
+				onCellDialogOpenChange={setDialogOpen}
+				selectedItem={selectedItem}
+				selectedCell={selectedCell}
+				deleteConfirmOpen={deleteConfirmOpen}
+				onDeleteConfirmOpenChange={setDeleteConfirmOpen}
+				sqlQAToDelete={sqlQAToDelete}
+				onConfirmDelete={handleConfirmDelete}
+				chunkDialogOpen={chunkDialogOpen}
+				onChunkDialogOpenChange={setChunkDialogOpen}
+				relatedChunk={relatedChunk}
 			/>
 		</div>
 	);

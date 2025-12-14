@@ -2,21 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Database, RefreshCcw, Search, ExternalLink, Trash2 } from 'lucide-react';
 
-import { getAIChunks, deleteChunk } from '@/actions/admin-ai.action';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import type { AIChunk, AICollection, AdminAIPaginatedResponse } from '@/types/admin-ai';
-import { CollectionBadge } from './badges';
-import { LoaderState } from './loader-state';
+import { getAIChunks, deleteChunk, getChunkCanonicalId, getCanonicalEntries } from '@/actions/admin-ai.action';
+import type { AIChunk, AICollection, AdminAIPaginatedResponse, AICanonicalEntry } from '@/types/admin-ai';
 import { PaginationControls } from './pagination-controls';
-import { formatDateTime } from './utils';
-import { CellDetailDialog } from './cell-detail-dialog';
-import { PasscodeConfirmDialog } from './passcode-confirm-dialog';
 import { toast } from 'sonner';
+import { ChunksPanelHeader } from './chunks/chunks-panel-header';
+import { ChunksPanelSearch } from './chunks/chunks-panel-search';
+import { ChunksPanelTable } from './chunks/chunks-panel-table';
+import { ChunksPanelDialogs } from './chunks/chunks-panel-dialogs';
 
 type ChunkCellType = 'id' | 'collection' | 'content' | 'created';
 
@@ -38,6 +32,9 @@ export function ChunksPanel({ onNavigateToCanonical, initialSearchId, onSearchId
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 	const [chunkToDelete, setChunkToDelete] = useState<AIChunk | null>(null);
+	const [canonicalDialogOpen, setCanonicalDialogOpen] = useState(false);
+	const [relatedCanonical, setRelatedCanonical] = useState<AICanonicalEntry | null>(null);
+	const [isLoadingCanonical, setIsLoadingCanonical] = useState(false);
 
 	useEffect(() => {
 		if (initialSearchId) {
@@ -112,232 +109,68 @@ export function ChunksPanel({ onNavigateToCanonical, initialSearchId, onSearchId
 		}
 	};
 
-	const getDialogContent = () => {
-		if (!selectedItem || !selectedCell) return null;
-
-		switch (selectedCell) {
-			case 'id':
-				return (
-					<div className="space-y-2">
-						<p className="text-2xl font-bold text-foreground">{selectedItem.id}</p>
-						<p className="text-sm text-muted-foreground">ID của chunk này</p>
-					</div>
-				);
-			case 'collection':
-				return (
-					<div className="space-y-2">
-						<h3 className="text-sm font-semibold text-foreground">Collection</h3>
-						<CollectionBadge collection={selectedItem.collection} />
-						<p className="text-sm text-muted-foreground mt-2">Loại collection của chunk này</p>
-					</div>
-				);
-			case 'content':
-				return (
-					<div className="space-y-2">
-						<h3 className="text-sm font-semibold text-foreground">Content</h3>
-						<div className="text-sm text-foreground whitespace-pre-wrap bg-slate-50 border rounded-md p-4 max-h-[500px] overflow-y-auto">
-							{selectedItem.content}
-						</div>
-					</div>
-				);
-			case 'created':
-				return (
-					<div className="space-y-2">
-						<h3 className="text-sm font-semibold text-foreground">Created At</h3>
-						<p className="text-lg text-foreground">{formatDateTime(selectedItem.createdAt)}</p>
-						<p className="text-sm text-muted-foreground">Thời gian tạo chunk này</p>
-						{selectedItem.updatedAt && (
-							<>
-								<h3 className="text-sm font-semibold text-foreground mt-4">Updated At</h3>
-								<p className="text-lg text-foreground">{formatDateTime(selectedItem.updatedAt)}</p>
-							</>
-						)}
-					</div>
-				);
-			default:
-				return null;
+	const handleViewCanonical = async (item: AIChunk, e: React.MouseEvent) => {
+		e.stopPropagation();
+		setIsLoadingCanonical(true);
+		setRelatedCanonical(null);
+		try {
+			const response = await getChunkCanonicalId(item.id);
+			if (response.sqlQAId) {
+				// Fetch canonical details
+				const canonicalResponse = await getCanonicalEntries({ search: response.sqlQAId.toString(), limit: 1 });
+				if (canonicalResponse.items.length > 0) {
+					setRelatedCanonical(canonicalResponse.items[0]);
+					setCanonicalDialogOpen(true);
+				} else {
+					toast.error('Không tìm thấy canonical entry với ID này');
+				}
+			} else {
+				toast.error('Chunk này chưa có canonical entry liên kết');
+			}
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Không thể tải canonical entry liên quan';
+			toast.error(message);
+		} finally {
+			setIsLoadingCanonical(false);
 		}
 	};
 
-	const getDialogTitle = () => {
-		if (!selectedItem || !selectedCell) return '';
-		const titles: Record<ChunkCellType, string> = {
-			id: `ID - Chunk #${selectedItem.id}`,
-			collection: 'Collection',
-			content: 'Content',
-			created: 'Timestamps',
-		};
-		return titles[selectedCell];
-	};
-
-	const getDialogDescription = () => {
-		if (!selectedCell) return '';
-		const descriptions: Record<ChunkCellType, string> = {
-			id: 'ID của chunk',
-			collection: 'Loại collection',
-			content: 'Nội dung của chunk',
-			created: 'Thời gian tạo và cập nhật',
-		};
-		return descriptions[selectedCell];
-	};
 
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-				<div className="flex items-center gap-2">
-					<div className="bg-blue-50 text-blue-700 p-2 rounded-lg border border-blue-100">
-						<Database className="size-4" />
-					</div>
-					<div>
-						<h2 className="text-base sm:text-lg font-semibold">Chunks (vector store)</h2>
-						<p className="text-sm text-muted-foreground">Tìm, lọc theo collection.</p>
-					</div>
-				</div>
-				<div className="flex items-center gap-2">
-					<Select
-						value={limit.toString()}
-						onValueChange={(value) => {
-							const parsed = Number(value);
-							setLimit(parsed);
-							setOffset(0);
-						}}
-					>
-						<SelectTrigger size="sm" className="w-[120px]">
-							<SelectValue placeholder="Số bản ghi" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="10">10 / trang</SelectItem>
-							<SelectItem value="20">20 / trang</SelectItem>
-							<SelectItem value="50">50 / trang</SelectItem>
-						</SelectContent>
-					</Select>
-					<Button variant="outline" size="icon" onClick={() => void refetch()}>
-						<RefreshCcw className="size-4" />
-					</Button>
-				</div>
-			</div>
-			<form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row sm:items-center">
-				<div className="flex flex-1 flex-wrap items-center gap-2">
-					<Select
-						value={collection}
-						onValueChange={(value) => {
-							setCollection(value as AICollection | 'all');
-							setOffset(0);
-						}}
-					>
-						<SelectTrigger size="sm" className="w-[160px]">
-							<SelectValue placeholder="Collection" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">Tất cả collections</SelectItem>
-							<SelectItem value="schema">schema</SelectItem>
-							<SelectItem value="qa">qa</SelectItem>
-							<SelectItem value="business">business</SelectItem>
-							<SelectItem value="docs">docs</SelectItem>
-						</SelectContent>
-					</Select>
-					<div className="relative flex-1 min-w-[200px]">
-						<Search className="size-4 text-muted-foreground absolute left-2.5 top-2.5" />
-						<Input
-							value={searchInput}
-							onChange={(event) => setSearchInput(event.target.value)}
-							placeholder="Tìm trong nội dung chunk..."
-							className="pl-9"
-						/>
-					</div>
-					<Button type="submit" variant="default">
-						Tìm
-					</Button>
-					<Button type="button" variant="ghost" onClick={handleReset}>
-						Xóa
-					</Button>
-				</div>
-			</form>
-			<div className="rounded-lg border bg-white overflow-hidden">
-				<div className="overflow-x-auto w-full">
-					<Table className="min-w-[600px]">
-						<TableHeader>
-							<TableRow>
-								<TableHead className="w-16">ID</TableHead>
-								<TableHead>Collection</TableHead>
-								<TableHead>Nội dung</TableHead>
-								<TableHead>Created</TableHead>
-								<TableHead className="w-24 min-w-[96px]">Actions</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							<LoaderState
-								isLoading={isLoading}
-								isError={isError}
-								errorMessage={error?.message}
-								empty={isEmpty}
-								emptyLabel="Chưa có chunk nào"
-								colSpan={5}
-							/>
+			<ChunksPanelHeader
+				limit={limit}
+				onLimitChange={(newLimit) => {
+					setLimit(newLimit);
+					setOffset(0);
+				}}
+				onRefresh={() => void refetch()}
+			/>
 
-							{!isLoading &&
-								!isError &&
-								data?.items.map((item) => (
-									<TableRow key={item.id}>
-										<TableCell
-											className="font-semibold text-foreground cursor-pointer hover:bg-muted/50 transition-colors"
-											onClick={() => handleCellClick(item, 'id')}
-										>
-											{item.id}
-										</TableCell>
-										<TableCell
-											className="cursor-pointer hover:bg-muted/50 transition-colors"
-											onClick={() => handleCellClick(item, 'collection')}
-										>
-											<CollectionBadge collection={item.collection} />
-										</TableCell>
-										<TableCell
-											className="max-w-3xl cursor-pointer hover:bg-muted/50 transition-colors"
-											onClick={() => handleCellClick(item, 'content')}
-										>
-											<p className="line-clamp-3 text-foreground">{item.content}</p>
-										</TableCell>
-										<TableCell
-											className="text-sm text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors"
-											onClick={() => handleCellClick(item, 'created')}
-										>
-											{formatDateTime(item.createdAt)}
-										</TableCell>
-										<TableCell className="w-32 min-w-[128px]">
-											<div className="flex items-center gap-1">
-												{onNavigateToCanonical && (
-													<Button
-														variant="ghost"
-														size="sm"
-														className="h-8 flex-1"
-														onClick={async (e) => {
-															e.stopPropagation();
-															await onNavigateToCanonical(item.id);
-														}}
-														title="Xem canonical liên quan"
-													>
-														<ExternalLink className="size-3.5 mr-1" />
-														Canonical
-													</Button>
-												)}
-												<Button
-													variant="ghost"
-													size="sm"
-													className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-													onClick={(e) => handleDeleteClick(item, e)}
-													title="Xóa chunk"
-													disabled={deleteMutation.isPending}
-												>
-													<Trash2 className="size-3.5" />
-												</Button>
-											</div>
-										</TableCell>
-									</TableRow>
-								))}
-						</TableBody>
-					</Table>
-				</div>
-			</div>
+			<ChunksPanelSearch
+				searchInput={searchInput}
+				onSearchInputChange={setSearchInput}
+				collection={collection}
+				onCollectionChange={(newCollection) => {
+					setCollection(newCollection);
+					setOffset(0);
+				}}
+				onSearch={handleSearch}
+				onReset={handleReset}
+			/>
+
+			<ChunksPanelTable
+				data={data?.items}
+				isLoading={isLoading}
+				isError={isError}
+				errorMessage={error?.message}
+				empty={isEmpty}
+				onCellClick={handleCellClick}
+				onViewCanonical={handleViewCanonical}
+				onDelete={handleDeleteClick}
+				isLoadingCanonical={isLoadingCanonical}
+				isDeleting={deleteMutation.isPending}
+			/>
 
 			<PaginationControls
 				total={total}
@@ -348,21 +181,18 @@ export function ChunksPanel({ onNavigateToCanonical, initialSearchId, onSearchId
 				isLoading={isFetching}
 			/>
 
-			<CellDetailDialog
-				open={dialogOpen}
-				onOpenChange={setDialogOpen}
-				title={getDialogTitle()}
-				description={getDialogDescription()}
-				content={getDialogContent()}
-			/>
-
-			<PasscodeConfirmDialog
-				open={deleteConfirmOpen}
-				onOpenChange={setDeleteConfirmOpen}
-				onConfirm={handleConfirmDelete}
-				title="Xóa Chunk"
-				description={`Bạn có chắc chắn muốn xóa chunk ID ${chunkToDelete?.id}? Thao tác này không thể hoàn tác.`}
-				dangerous={true}
+			<ChunksPanelDialogs
+				cellDialogOpen={dialogOpen}
+				onCellDialogOpenChange={setDialogOpen}
+				selectedItem={selectedItem}
+				selectedCell={selectedCell}
+				deleteConfirmOpen={deleteConfirmOpen}
+				onDeleteConfirmOpenChange={setDeleteConfirmOpen}
+				chunkToDelete={chunkToDelete}
+				onConfirmDelete={handleConfirmDelete}
+				canonicalDialogOpen={canonicalDialogOpen}
+				onCanonicalDialogOpenChange={setCanonicalDialogOpen}
+				relatedCanonical={relatedCanonical}
 			/>
 		</div>
 	);

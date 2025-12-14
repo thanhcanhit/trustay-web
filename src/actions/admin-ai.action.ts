@@ -136,11 +136,13 @@ export const teachOrUpdateKnowledge = async (
 };
 
 export interface CanonicalChunkResponse {
-	chunkId: number;
+	sqlQAId: number;
+	chunkId: number | null;
 }
 
 export interface ChunkCanonicalResponse {
-	sqlQAId: number;
+	chunkId: number;
+	sqlQAId: number | null;
 }
 
 export const getCanonicalChunkId = async (

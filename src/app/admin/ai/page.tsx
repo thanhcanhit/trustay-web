@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Brain, BookOpenCheck, Database, ListChecks, Wand2, Clock } from 'lucide-react';
+import { Brain, BookOpenCheck, Database, ListChecks, Wand2, Clock, CheckCircle2, GraduationCap, Gem, StepForward } from 'lucide-react';
 
 import {
 	Sidebar,
@@ -34,33 +34,33 @@ type PanelType = 'canonical' | 'chunks' | 'logs' | 'teach' | 'pending';
 const menuItems = [
 	{
 		value: 'canonical' as PanelType,
-		label: 'Canonical',
-		icon: BookOpenCheck,
+		label: 'Golden Data',
+		icon: Gem,
 		description: 'SQL QA entries',
 	},
 	{
-		value: 'chunks' as PanelType,
-		label: 'Chunks',
-		icon: Database,
-		description: 'Vector store content',
-	},
-	{
-		value: 'logs' as PanelType,
-		label: 'Logs',
-		icon: ListChecks,
-		description: 'Processing logs',
-	},
-	{
 		value: 'pending' as PanelType,
-		label: 'Pending Knowledge',
-		icon: Clock,
+		label: 'Knowledge Validation',
+		icon: CheckCircle2,
 		description: 'Verify and approve SQL',
 	},
 	{
+		value: 'logs' as PanelType,
+		label: 'AI Processing Logs',
+		icon: StepForward,
+		description: 'Processing logs',
+	},
+	{
 		value: 'teach' as PanelType,
-		label: 'Teach/Update',
-		icon: Wand2,
+		label: 'Teaching Knowledge',
+		icon: GraduationCap,
 		description: 'Add or update knowledge',
+	},
+	{
+		value: 'chunks' as PanelType,
+		label: 'Vector Store',
+		icon: Database,
+		description: 'Vector store content',
 	},
 ];
 
