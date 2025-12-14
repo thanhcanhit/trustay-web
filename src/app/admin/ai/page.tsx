@@ -27,6 +27,7 @@ import { TeachPanel } from './_components/teach-panel';
 import { PendingKnowledgePanel } from './_components/pending-knowledge-panel';
 import { getCanonicalChunkId, getChunkCanonicalId } from '@/actions/admin-ai.action';
 import { toast } from 'sonner';
+import type { AICanonicalEntry } from '@/types/admin-ai';
 
 type PanelType = 'canonical' | 'chunks' | 'logs' | 'teach' | 'pending';
 
@@ -72,6 +73,11 @@ function AdminAIPageContent() {
 	const [activePanel, setActivePanel] = useState<PanelType>('canonical');
 	const [canonicalSearchId, setCanonicalSearchId] = useState<string>('');
 	const [chunksSearchId, setChunksSearchId] = useState<string>('');
+	const [teachPanelInitialData, setTeachPanelInitialData] = useState<{
+		id: number;
+		question: string;
+		sql: string;
+	} | undefined>(undefined);
 
 	// Initialize from URL params
 	useEffect(() => {
@@ -174,10 +180,19 @@ function AdminAIPageContent() {
 		}
 	};
 
+	const handleNavigateToUpdate = (item: AICanonicalEntry) => {
+		setTeachPanelInitialData({
+			id: item.id,
+			question: item.question,
+			sql: item.sqlCanonical,
+		});
+		setActivePanel('teach');
+	};
+
 	const renderPanel = () => {
 		switch (activePanel) {
 			case 'canonical':
-				return <CanonicalPanel onNavigateToChunks={handleNavigateToChunks} initialSearchId={canonicalSearchId} onSearchIdCleared={() => setCanonicalSearchId('')} />;
+				return <CanonicalPanel onNavigateToChunks={handleNavigateToChunks} onNavigateToUpdate={handleNavigateToUpdate} initialSearchId={canonicalSearchId} onSearchIdCleared={() => setCanonicalSearchId('')} />;
 			case 'chunks':
 				return <ChunksPanel onNavigateToCanonical={handleNavigateToCanonical} initialSearchId={chunksSearchId} onSearchIdCleared={() => setChunksSearchId('')} />;
 			case 'logs':
@@ -185,9 +200,9 @@ function AdminAIPageContent() {
 			case 'pending':
 				return <PendingKnowledgePanel />;
 			case 'teach':
-				return <TeachPanel />;
+				return <TeachPanel initialData={teachPanelInitialData} />;
 			default:
-				return <CanonicalPanel onNavigateToChunks={handleNavigateToChunks} initialSearchId={canonicalSearchId} onSearchIdCleared={() => setCanonicalSearchId('')} />;
+				return <CanonicalPanel onNavigateToChunks={handleNavigateToChunks} onNavigateToUpdate={handleNavigateToUpdate} initialSearchId={canonicalSearchId} onSearchIdCleared={() => setCanonicalSearchId('')} />;
 		}
 	};
 
@@ -206,8 +221,8 @@ function AdminAIPageContent() {
 							</div>
 						</div>
 					</SidebarHeader>
-					<SidebarContent className='mt'>
-						<SidebarGroup>
+					<SidebarContent className="flex flex-col">
+						<SidebarGroup className="flex-1">
 							<SidebarGroupLabel>Navigation</SidebarGroupLabel>
 							<SidebarGroupContent>
 								<SidebarMenu>
@@ -229,6 +244,9 @@ function AdminAIPageContent() {
 								</SidebarMenu>
 							</SidebarGroupContent>
 						</SidebarGroup>
+						<div className="px-2 py-2 ">
+							<p className="text-xs text-muted-foreground text-center">From Zero to Golden </p>
+						</div>
 					</SidebarContent>
 				</Sidebar>
 				<SidebarInset>

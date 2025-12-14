@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ShieldCheck, TerminalSquare, Wand2, Upload, FileText, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -22,18 +22,38 @@ interface TeachFormState {
 	sql: string;
 }
 
-export function TeachPanel() {
+interface TeachPanelProps {
+	initialData?: {
+		id: number;
+		question: string;
+		sql: string;
+	};
+}
+
+export function TeachPanel({ initialData }: TeachPanelProps = {}) {
 	const queryClient = useQueryClient();
 	const [activeTab, setActiveTab] = useState<'single' | 'batch'>('single');
 	const [formData, setFormData] = useState<TeachFormState>({
-		id: '',
-		question: '',
-		sql: '',
+		id: initialData?.id.toString() || '',
+		question: initialData?.question || '',
+		sql: initialData?.sql || '',
 	});
 	const [jsonInput, setJsonInput] = useState('');
 	const [failFast, setFailFast] = useState(false);
 	const [batchResult, setBatchResult] = useState<TeachBatchResult | null>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	// Update form data when initialData changes
+	useEffect(() => {
+		if (initialData) {
+			setFormData({
+				id: initialData.id.toString(),
+				question: initialData.question,
+				sql: initialData.sql,
+			});
+			setActiveTab('single');
+		}
+	}, [initialData]);
 
 	const singleMutation = useMutation<TeachOrUpdateResult, Error>({
 		mutationFn: () =>

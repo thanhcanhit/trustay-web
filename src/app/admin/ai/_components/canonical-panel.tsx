@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpenCheck, RefreshCcw, Search, ExternalLink } from 'lucide-react';
+import { BookOpenCheck, RefreshCcw, Search, ExternalLink, Pencil } from 'lucide-react';
 
 import { getCanonicalEntries } from '@/actions/admin-ai.action';
 import { Button } from '@/components/ui/button';
@@ -19,11 +19,12 @@ type CellType = 'id' | 'question' | 'sql' | 'created' | 'lastUsed';
 
 interface CanonicalPanelProps {
 	onNavigateToChunks?: (canonicalId: number) => Promise<void>;
+	onNavigateToUpdate?: (item: AICanonicalEntry) => void;
 	initialSearchId?: string;
 	onSearchIdCleared?: () => void;
 }
 
-export function CanonicalPanel({ onNavigateToChunks, initialSearchId, onSearchIdCleared }: CanonicalPanelProps = {}) {
+export function CanonicalPanel({ onNavigateToChunks, onNavigateToUpdate, initialSearchId, onSearchIdCleared }: CanonicalPanelProps = {}) {
 	const [searchInput, setSearchInput] = useState('');
 	const [search, setSearch] = useState('');
 	const [limit, setLimit] = useState(20);
@@ -299,21 +300,38 @@ export function CanonicalPanel({ onNavigateToChunks, initialSearchId, onSearchId
 											{item.lastUsedAt ? formatDateTime(item.lastUsedAt) : 'Chưa dùng'}
 										</TableCell>
 										<TableCell className="w-24 min-w-[96px]">
-											{onNavigateToChunks && (
-												<Button
-													variant="ghost"
-													size="sm"
-													className="h-8 w-full"
-													onClick={async (e) => {
-														e.stopPropagation();
-														await onNavigateToChunks(item.id);
-													}}
-													title="Xem chunks liên quan"
-												>
-													<ExternalLink className="size-3.5 mr-1" />
-													Chunks
-												</Button>
-											)}
+											<div className="flex gap-1">
+												{onNavigateToUpdate && (
+													<Button
+														variant="ghost"
+														size="sm"
+														className="h-8 flex-1"
+														onClick={(e) => {
+															e.stopPropagation();
+															onNavigateToUpdate(item);
+														}}
+														title="Cập nhật entry này"
+													>
+														<Pencil className="size-3.5 mr-1" />
+														Update
+													</Button>
+												)}
+												{onNavigateToChunks && (
+													<Button
+														variant="ghost"
+														size="sm"
+														className="h-8 flex-1"
+														onClick={async (e) => {
+															e.stopPropagation();
+															await onNavigateToChunks(item.id);
+														}}
+														title="Xem chunks liên quan"
+													>
+														<ExternalLink className="size-3.5 mr-1" />
+														Chunks
+													</Button>
+												)}
+											</div>
 										</TableCell>
 									</TableRow>
 								))}
