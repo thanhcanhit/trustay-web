@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Clock, RefreshCcw, Search, CheckCircle2, XCircle, Eye } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Clock, RefreshCcw, Search, CheckCircle2, XCircle, Eye, FileText } from 'lucide-react';
 
 import {
 	getPendingKnowledge,
@@ -36,16 +37,15 @@ import { toast } from 'sonner';
 
 export function PendingKnowledgePanel() {
 	const queryClient = useQueryClient();
+	const router = useRouter();
 	const [searchInput, setSearchInput] = useState('');
 	const [search, setSearch] = useState('');
 	const [status, setStatus] = useState<PendingKnowledgeStatus | 'all'>('all');
 	const [limit, setLimit] = useState(20);
 	const [offset, setOffset] = useState(0);
 	const [selectedItem, setSelectedItem] = useState<PendingKnowledge | null>(null);
-	const [approveDialogOpen, setApproveDialogOpen] = useState(false);
-	const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-	const [approveNote, setApproveNote] = useState('');
-	const [rejectReason, setRejectReason] = useState('');
+	const [dialogOpen, setDialogOpen] = useState(false);
+	const [actionNote, setActionNote] = useState('');
 
 	const { data, isLoading, isFetching, isError, error, refetch } = useQuery<
 		AdminAIPaginatedResponse<PendingKnowledge>,
@@ -63,11 +63,11 @@ export function PendingKnowledgePanel() {
 	});
 
 	const approveMutation = useMutation({
-		mutationFn: (id: string) => approvePendingKnowledge(id, { note: approveNote || undefined }),
+		mutationFn: (id: string) => approvePendingKnowledge(id, { note: actionNote || undefined }),
 		onSuccess: () => {
 			toast.success('Đã approve thành công');
-			setApproveDialogOpen(false);
-			setApproveNote('');
+			setDialogOpen(false);
+			setActionNote('');
 			setSelectedItem(null);
 			void queryClient.invalidateQueries({ queryKey: ['admin-ai-pending-knowledge'] });
 		},
@@ -77,11 +77,11 @@ export function PendingKnowledgePanel() {
 	});
 
 	const rejectMutation = useMutation({
-		mutationFn: (id: string) => rejectPendingKnowledge(id, { reason: rejectReason }),
+		mutationFn: (id: string) => rejectPendingKnowledge(id, { reason: actionNote }),
 		onSuccess: () => {
 			toast.success('Đã reject thành công');
-			setRejectDialogOpen(false);
-			setRejectReason('');
+			setDialogOpen(false);
+			setActionNote('');
 			setSelectedItem(null);
 			void queryClient.invalidateQueries({ queryKey: ['admin-ai-pending-knowledge'] });
 		},
@@ -107,16 +107,10 @@ export function PendingKnowledgePanel() {
 		void refetch();
 	};
 
-	const handleApprove = (item: PendingKnowledge) => {
+	const handleOpenDialog = (item: PendingKnowledge) => {
 		setSelectedItem(item);
-		setApproveNote('');
-		setApproveDialogOpen(true);
-	};
-
-	const handleReject = (item: PendingKnowledge) => {
-		setSelectedItem(item);
-		setRejectReason('');
-		setRejectDialogOpen(true);
+		setActionNote('');
+		setDialogOpen(true);
 	};
 
 	const handleApproveSubmit = () => {
@@ -125,16 +119,11 @@ export function PendingKnowledgePanel() {
 	};
 
 	const handleRejectSubmit = () => {
-		if (!selectedItem || !rejectReason.trim()) {
+		if (!selectedItem || !actionNote.trim()) {
 			toast.error('Vui lòng nhập lý do reject');
 			return;
 		}
 		rejectMutation.mutate(selectedItem.id);
-	};
-
-	const handleViewDetails = (item: PendingKnowledge) => {
-		setSelectedItem(item);
-		setApproveDialogOpen(true);
 	};
 
 	return (
@@ -284,40 +273,16 @@ export function PendingKnowledgePanel() {
 											{formatDateTime(item.createdAt)}
 										</TableCell>
 										<TableCell className="w-32">
-											<div className="flex items-center gap-1">
-												<Button
-													variant="ghost"
-													size="sm"
-													className="h-8 px-2"
-													onClick={() => handleViewDetails(item)}
-													title="Xem chi tiết"
-												>
-													<Eye className="size-3.5" />
-												</Button>
-												{item.status === 'pending' && (
-													<>
-														<Button
-															variant="ghost"
-															size="sm"
-															className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
-															onClick={() => handleApprove(item)}
-															title="Approve"
-															disabled={!item.sql}
-														>
-															<CheckCircle2 className="size-3.5" />
-														</Button>
-														<Button
-															variant="ghost"
-															size="sm"
-															className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-															onClick={() => handleReject(item)}
-															title="Reject"
-														>
-															<XCircle className="size-3.5" />
-														</Button>
-													</>
-												)}
-											</div>
+											<Button
+												variant="ghost"
+												size="sm"
+												className="h-8 w-full"
+												onClick={() => handleOpenDialog(item)}
+												title="Xem chi tiết"
+											>
+												<Eye className="size-3.5 mr-1" />
+												Chi tiết
+											</Button>
 										</TableCell>
 									</TableRow>
 								))}
@@ -335,178 +300,260 @@ export function PendingKnowledgePanel() {
 				isLoading={isFetching}
 			/>
 
-			{/* Approve Dialog */}
-			<Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
-				<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-					<DialogHeader>
-						<DialogTitle>Approve Pending Knowledge</DialogTitle>
+			{/* Single Dialog for View, Approve, and Reject */}
+			<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+				<DialogContent className="w-[90vw] min-w-[80vw] max-h-[95vh] top-4 overflow-hidden flex flex-col">
+					<DialogHeader className="flex-shrink-0">
+						<DialogTitle>Chi tiết Pending Knowledge</DialogTitle>
 						<DialogDescription>
-							Xem chi tiết và approve câu SQL này để lưu vào vector DB.
+							Xem toàn bộ thông tin chi tiết và approve/reject entry này
 						</DialogDescription>
 					</DialogHeader>
 					{selectedItem && (
-						<div className="space-y-4">
-							<div className="space-y-2">
-								<Label>ID</Label>
-								<p className="text-sm font-mono text-foreground">{selectedItem.id}</p>
-							</div>
-							<div className="space-y-2">
-								<Label>Câu hỏi</Label>
-								<p className="text-sm text-foreground whitespace-pre-wrap bg-slate-50 border rounded-md p-3">
-									{selectedItem.question}
-								</p>
-							</div>
-							<div className="space-y-2">
-								<Label>SQL</Label>
-								{selectedItem.sql ? (
-									<pre className="text-xs font-mono bg-slate-50 border rounded-md p-3 overflow-x-auto whitespace-pre-wrap">
-										{selectedItem.sql}
-									</pre>
-								) : (
-									<p className="text-sm text-muted-foreground">Không có SQL</p>
-								)}
-							</div>
-							{selectedItem.evaluation && (
-								<div className="space-y-2">
-									<Label>Evaluation</Label>
-									<p className="text-sm text-foreground whitespace-pre-wrap bg-blue-50 border border-blue-200 rounded-md p-3">
-										{selectedItem.evaluation}
-									</p>
-								</div>
-							)}
-							{selectedItem.validatorData && (
-								<div className="space-y-2">
-									<Label>Validator Data</Label>
-									<div className="bg-amber-50 border border-amber-200 rounded-md p-3 space-y-2">
-										<div className="text-xs">
-											<span className="font-medium">Valid:</span>{' '}
-											<span
-												className={
-													selectedItem.validatorData.isValid
-														? 'text-green-600'
-														: 'text-red-600'
-												}
-											>
-												{String(selectedItem.validatorData.isValid)}
-											</span>
+						<div className="flex-1 overflow-y-auto space-y-4 pr-2">
+							{/* Session Information - Compact */}
+							<div className="bg-slate-50 border rounded-md p-4">
+								<div className="flex items-start justify-between gap-4">
+									<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-sm flex-1">
+										<div>
+											<span className="text-xs text-muted-foreground">ID:</span>
+											<p className="font-mono text-foreground mt-0.5">{selectedItem.id}</p>
 										</div>
-										{selectedItem.validatorData.reason && (
-											<div className="text-xs">
-												<span className="font-medium">Reason:</span>{' '}
-												{selectedItem.validatorData.reason}
+										<div>
+											<span className="text-xs text-muted-foreground">Status:</span>
+											<div className="mt-0.5">
+												<PendingKnowledgeStatusBadge status={selectedItem.status} />
+											</div>
+										</div>
+										<div>
+											<span className="text-xs text-muted-foreground">Created:</span>
+											<p className="text-foreground mt-0.5">{formatDateTime(selectedItem.createdAt)}</p>
+										</div>
+										<div>
+											<span className="text-xs text-muted-foreground">Updated:</span>
+											<p className="text-foreground mt-0.5">{formatDateTime(selectedItem.updatedAt)}</p>
+										</div>
+										{selectedItem.sessionId && (
+											<div>
+												<span className="text-xs text-muted-foreground">Session ID:</span>
+												<p className="text-xs font-mono text-foreground mt-0.5 break-all">{selectedItem.sessionId}</p>
 											</div>
 										)}
-										{selectedItem.validatorData.severity && (
-											<div className="text-xs">
-												<span className="font-medium">Severity:</span>{' '}
-												{selectedItem.validatorData.severity}
-											</div>
-										)}
-										{selectedItem.validatorData.violations &&
-											selectedItem.validatorData.violations.length > 0 && (
-												<div className="text-xs">
-													<span className="font-medium">Violations:</span>
-													<ul className="list-disc list-inside mt-1">
-														{selectedItem.validatorData.violations.map((v, idx) => (
-															<li key={idx}>{v}</li>
-														))}
-													</ul>
-												</div>
-											)}
-										{selectedItem.validatorData.tokenUsage && (
-											<div className="text-xs pt-2 border-t border-amber-300">
-												<span className="font-medium">Token Usage:</span>{' '}
-												{selectedItem.validatorData.tokenUsage.totalTokens} tokens
+										{selectedItem.userId && (
+											<div>
+												<span className="text-xs text-muted-foreground">User ID:</span>
+												<p className="text-xs font-mono text-foreground mt-0.5 break-all">{selectedItem.userId}</p>
 											</div>
 										)}
 									</div>
+									{selectedItem.processingLogId && (
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={() => router.push(`/admin/ai/process/${selectedItem.processingLogId}`)}
+											className="shrink-0"
+										>
+											<FileText className="size-4 mr-2" />
+											Xem Log
+										</Button>
+									)}
 								</div>
-							)}
-							<div className="space-y-2">
-								<Label htmlFor="approve-note">Note (optional)</Label>
-								<Textarea
-									id="approve-note"
-									value={approveNote}
-									onChange={(e) => setApproveNote(e.target.value)}
-									placeholder="Ghi chú khi approve..."
-									rows={3}
-									maxLength={500}
-								/>
-								<p className="text-xs text-muted-foreground">
-									{approveNote.length}/500 ký tự
-								</p>
 							</div>
-						</div>
-					)}
-					<DialogFooter>
-						<Button variant="outline" onClick={() => setApproveDialogOpen(false)}>
-							Hủy
-						</Button>
-						<Button
-							onClick={handleApproveSubmit}
-							disabled={!selectedItem?.sql || approveMutation.isPending}
-						>
-							{approveMutation.isPending ? 'Đang xử lý...' : 'Approve'}
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
 
-			{/* Reject Dialog */}
-			<Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-				<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-					<DialogHeader>
-						<DialogTitle>Reject Pending Knowledge</DialogTitle>
-						<DialogDescription>
-							Nhập lý do reject câu SQL này. Entry sẽ không được lưu vào vector DB.
-						</DialogDescription>
-					</DialogHeader>
-					{selectedItem && (
-						<div className="space-y-4">
-							<div className="space-y-2">
-								<Label>Câu hỏi</Label>
-								<p className="text-sm text-foreground whitespace-pre-wrap bg-slate-50 border rounded-md p-3">
-									{selectedItem.question}
-								</p>
+							{/* Main Content - Grid 2 columns */}
+							<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+								{/* Left Column */}
+								<div className="space-y-4">
+									<div className="space-y-2">
+										<Label className="text-sm font-semibold">Câu hỏi</Label>
+										<div className="text-sm text-foreground whitespace-pre-wrap bg-slate-50 border rounded-md p-4 max-h-[200px] overflow-y-auto">
+											{selectedItem.question}
+										</div>
+									</div>
+
+									<div className="space-y-2">
+										<Label className="text-sm font-semibold">SQL</Label>
+										{selectedItem.sql ? (
+											<pre className="text-xs font-mono bg-slate-50 border rounded-md p-4 overflow-x-auto whitespace-pre-wrap max-h-[400px] overflow-y-auto">
+												{selectedItem.sql}
+											</pre>
+										) : (
+											<p className="text-sm text-muted-foreground bg-slate-50 border rounded-md p-4">
+												Không có SQL
+											</p>
+										)}
+									</div>
+
+									{selectedItem.response && (
+										<div className="space-y-2">
+											<Label className="text-sm font-semibold">Response</Label>
+											<div className="text-sm text-foreground whitespace-pre-wrap bg-green-50 border border-green-200 rounded-md p-4 max-h-[300px] overflow-y-auto">
+												{selectedItem.response}
+											</div>
+										</div>
+									)}
+								</div>
+
+								{/* Right Column */}
+								<div className="space-y-4">
+									{selectedItem.evaluation && (
+										<div className="space-y-2">
+											<Label className="text-sm font-semibold">Evaluation</Label>
+											<div className="text-sm text-foreground whitespace-pre-wrap bg-blue-50 border border-blue-200 rounded-md p-4 max-h-[400px] overflow-y-auto">
+												{selectedItem.evaluation}
+											</div>
+										</div>
+									)}
+
+									{selectedItem.validatorData && (
+										<div className="space-y-2">
+											<Label className="text-sm font-semibold">Validator Data</Label>
+											<div className="bg-amber-50 border border-amber-200 rounded-md p-4 space-y-3 max-h-[400px] overflow-y-auto">
+												<div className="grid grid-cols-2 gap-4">
+													<div>
+														<span className="text-xs font-medium">Valid:</span>{' '}
+														<span
+															className={`text-xs font-semibold ${
+																selectedItem.validatorData.isValid
+																	? 'text-green-600'
+																	: 'text-red-600'
+															}`}
+														>
+															{String(selectedItem.validatorData.isValid)}
+														</span>
+													</div>
+													{selectedItem.validatorData.severity && (
+														<div>
+															<span className="text-xs font-medium">Severity:</span>{' '}
+															<span className="text-xs">{selectedItem.validatorData.severity}</span>
+														</div>
+													)}
+												</div>
+												{selectedItem.validatorData.reason && (
+													<div>
+														<span className="text-xs font-medium">Reason:</span>
+														<p className="text-xs mt-1 whitespace-pre-wrap">
+															{selectedItem.validatorData.reason}
+														</p>
+													</div>
+												)}
+												{selectedItem.validatorData.violations &&
+													selectedItem.validatorData.violations.length > 0 && (
+														<div>
+															<span className="text-xs font-medium">Violations:</span>
+															<ul className="list-disc list-inside mt-1 space-y-1">
+																{selectedItem.validatorData.violations.map((v, idx) => (
+																	<li key={idx} className="text-xs">
+																		{v}
+																	</li>
+																))}
+															</ul>
+														</div>
+													)}
+												{selectedItem.validatorData.tokenUsage && (
+													<div className="pt-2 border-t border-amber-300">
+														<span className="text-xs font-medium">Token Usage:</span>
+														<div className="text-xs mt-1 space-y-1">
+															<div>
+																Prompt: {selectedItem.validatorData.tokenUsage.promptTokens || 0}
+															</div>
+															<div>
+																Completion:{' '}
+																{selectedItem.validatorData.tokenUsage.completionTokens || 0}
+															</div>
+															<div className="font-semibold">
+																Total: {selectedItem.validatorData.tokenUsage.totalTokens || 0} tokens
+															</div>
+														</div>
+													</div>
+												)}
+											</div>
+										</div>
+									)}
+								</div>
 							</div>
-							{selectedItem.sql && (
+
+							{selectedItem.approvedAt && (
 								<div className="space-y-2">
-									<Label>SQL</Label>
-									<pre className="text-xs font-mono bg-slate-50 border rounded-md p-3 overflow-x-auto whitespace-pre-wrap">
-										{selectedItem.sql}
-									</pre>
+									<Label className="text-sm font-semibold">Approved At</Label>
+									<p className="text-sm text-foreground bg-green-50 border border-green-200 rounded-md p-3">
+										{formatDateTime(selectedItem.approvedAt)}
+										{selectedItem.approvedBy && (
+											<span className="text-muted-foreground ml-2">
+												by {selectedItem.approvedBy}
+											</span>
+										)}
+									</p>
 								</div>
 							)}
-							<div className="space-y-2">
-								<Label htmlFor="reject-reason">
-									Lý do reject <span className="text-red-500">*</span>
-								</Label>
-								<Textarea
-									id="reject-reason"
-									value={rejectReason}
-									onChange={(e) => setRejectReason(e.target.value)}
-									placeholder="Nhập lý do reject..."
-									rows={4}
-									maxLength={1000}
-									required
-								/>
-								<p className="text-xs text-muted-foreground">
-									{rejectReason.length}/1000 ký tự
-								</p>
-							</div>
+
+							{selectedItem.rejectedAt && (
+								<div className="space-y-2">
+									<Label className="text-sm font-semibold">Rejected At</Label>
+									<p className="text-sm text-foreground bg-red-50 border border-red-200 rounded-md p-3">
+										{formatDateTime(selectedItem.rejectedAt)}
+										{selectedItem.rejectedBy && (
+											<span className="text-muted-foreground ml-2">
+												by {selectedItem.rejectedBy}
+											</span>
+										)}
+									</p>
+									{selectedItem.rejectionReason && (
+										<div className="mt-2">
+											<Label className="text-sm font-semibold">Rejection Reason</Label>
+											<p className="text-sm text-foreground whitespace-pre-wrap bg-red-50 border border-red-200 rounded-md p-3 mt-1">
+												{selectedItem.rejectionReason}
+											</p>
+										</div>
+									)}
+								</div>
+							)}
+
+							{/* Action Form - Only show for pending status */}
+							{selectedItem.status === 'pending' && (
+								<div className="space-y-2 pt-4 border-t">
+									<Label htmlFor="action-note" className="text-sm font-semibold">
+										Note / Reason <span className="text-muted-foreground text-xs">(optional for approve, required for reject)</span>
+									</Label>
+									<Textarea
+										id="action-note"
+										value={actionNote}
+										onChange={(e) => setActionNote(e.target.value)}
+										placeholder="Nhập note khi approve hoặc lý do khi reject..."
+										rows={3}
+										maxLength={1000}
+									/>
+									<p className="text-xs text-muted-foreground">
+										{actionNote.length}/1000 ký tự
+									</p>
+								</div>
+							)}
 						</div>
 					)}
-					<DialogFooter>
-						<Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
-							Hủy
+					<DialogFooter className="flex-shrink-0">
+						<Button variant="outline" onClick={() => setDialogOpen(false)}>
+							Đóng
 						</Button>
-						<Button
-							onClick={handleRejectSubmit}
-							variant="destructive"
-							disabled={!rejectReason.trim() || rejectMutation.isPending}
-						>
-							{rejectMutation.isPending ? 'Đang xử lý...' : 'Reject'}
-						</Button>
+						{selectedItem?.status === 'pending' && (
+							<>
+								<Button
+									onClick={handleApproveSubmit}
+									disabled={!selectedItem.sql || approveMutation.isPending}
+									className="text-green-600 hover:text-green-700 hover:bg-green-50"
+								>
+									<CheckCircle2 className="size-4 mr-2" />
+									{approveMutation.isPending ? 'Đang xử lý...' : 'Accept'}
+								</Button>
+								<Button
+									onClick={handleRejectSubmit}
+									variant="destructive"
+									disabled={!actionNote.trim() || rejectMutation.isPending}
+								>
+									<XCircle className="size-4 mr-2" />
+									{rejectMutation.isPending ? 'Đang xử lý...' : 'Reject'}
+								</Button>
+							</>
+						)}
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>

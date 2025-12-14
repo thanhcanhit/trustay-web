@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { BookOpenCheck, RefreshCcw, Search, ExternalLink, Pencil } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { BookOpenCheck, RefreshCcw, Search, ExternalLink, Pencil, Trash2, Download } from 'lucide-react';
 
-import { getCanonicalEntries } from '@/actions/admin-ai.action';
+import { getCanonicalEntries, deleteSQLQA, exportGoldenData } from '@/actions/admin-ai.action';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,6 +14,14 @@ import { PaginationControls } from './pagination-controls';
 import { formatDateTime } from './utils';
 import { LoaderState } from './loader-state';
 import { CellDetailDialog } from './cell-detail-dialog';
+import { PasscodeConfirmDialog } from './passcode-confirm-dialog';
+import { toast } from 'sonner';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type CellType = 'id' | 'question' | 'sql' | 'created' | 'lastUsed';
 
@@ -25,6 +33,7 @@ interface CanonicalPanelProps {
 }
 
 export function CanonicalPanel({ onNavigateToChunks, onNavigateToUpdate, initialSearchId, onSearchIdCleared }: CanonicalPanelProps = {}) {
+	const queryClient = useQueryClient();
 	const [searchInput, setSearchInput] = useState('');
 	const [search, setSearch] = useState('');
 	const [limit, setLimit] = useState(20);
@@ -32,6 +41,10 @@ export function CanonicalPanel({ onNavigateToChunks, onNavigateToUpdate, initial
 	const [selectedItem, setSelectedItem] = useState<AICanonicalEntry | null>(null);
 	const [selectedCell, setSelectedCell] = useState<CellType | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
+	const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+	const [sqlQAToDelete, setSqlQAToDelete] = useState<AICanonicalEntry | null>(null);
+	const [exportFormat, setExportFormat] = useState<'json' | 'csv'>('json');
+	const [isExporting, setIsExporting] = useState(false);
 
 	useEffect(() => {
 		if (initialSearchId) {
@@ -78,6 +91,61 @@ export function CanonicalPanel({ onNavigateToChunks, onNavigateToUpdate, initial
 		setSelectedItem(item);
 		setSelectedCell(cellType);
 		setDialogOpen(true);
+	};
+
+	const deleteMutation = useMutation({
+		mutationFn: (sqlQAId: number) => deleteSQLQA(sqlQAId),
+		onSuccess: () => {
+			toast.success('Đã xóa SQL QA thành công (bao gồm cả chunks liên kết)');
+			void queryClient.invalidateQueries({ queryKey: ['admin-ai-canonical'] });
+			void queryClient.invalidateQueries({ queryKey: ['admin-ai-chunks'] });
+			setSqlQAToDelete(null);
+		},
+		onError: (error: Error) => {
+			toast.error(error.message || 'Không thể xóa SQL QA');
+		},
+	});
+
+	const handleDeleteClick = (item: AICanonicalEntry, e: React.MouseEvent) => {
+		e.stopPropagation();
+		setSqlQAToDelete(item);
+		setDeleteConfirmOpen(true);
+	};
+
+	const handleConfirmDelete = () => {
+		if (sqlQAToDelete) {
+			deleteMutation.mutate(sqlQAToDelete.id);
+		}
+	};
+
+	const handleExport = async () => {
+		setIsExporting(true);
+		try {
+			const blob = await exportGoldenData({
+				format: exportFormat,
+				search: search || undefined,
+				limit: undefined, // Export all, không giới hạn
+			});
+
+			// Create download link
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			const timestamp = new Date().toISOString().split('T')[0];
+			const searchSuffix = search ? `_${search.replace(/\s+/g, '_')}` : '';
+			link.download = `golden-data${searchSuffix}_${timestamp}.${exportFormat}`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(url);
+
+			toast.success(`Đã export thành công (${exportFormat.toUpperCase()})`);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Không thể export golden data';
+			toast.error(message);
+		} finally {
+			setIsExporting(false);
+		}
 	};
 
 	const getDialogContent = () => {
@@ -191,6 +259,34 @@ export function CanonicalPanel({ onNavigateToChunks, onNavigateToUpdate, initial
 					</div>
 				</div>
 				<div className="flex items-center gap-2">
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="outline" size="sm" disabled={isExporting}>
+								<Download className="size-4 mr-2" />
+								Export Golden Data
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							<DropdownMenuItem
+								onClick={() => {
+									setExportFormat('json');
+									void handleExport();
+								}}
+								disabled={isExporting}
+							>
+								Export Golden Data (JSON)
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => {
+									setExportFormat('csv');
+									void handleExport();
+								}}
+								disabled={isExporting}
+							>
+								Export Golden Data (CSV)
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
 					<Select
 						value={limit.toString()}
 						onValueChange={(value) => {
@@ -299,7 +395,7 @@ export function CanonicalPanel({ onNavigateToChunks, onNavigateToUpdate, initial
 										>
 											{item.lastUsedAt ? formatDateTime(item.lastUsedAt) : 'Chưa dùng'}
 										</TableCell>
-										<TableCell className="w-24 min-w-[96px]">
+										<TableCell className="w-32 min-w-[128px]">
 											<div className="flex gap-1">
 												{onNavigateToUpdate && (
 													<Button
@@ -331,6 +427,16 @@ export function CanonicalPanel({ onNavigateToChunks, onNavigateToUpdate, initial
 														Chunks
 													</Button>
 												)}
+												<Button
+													variant="ghost"
+													size="sm"
+													className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+													onClick={(e) => handleDeleteClick(item, e)}
+													title="Xóa SQL QA (sẽ xóa cả chunks liên kết)"
+													disabled={deleteMutation.isPending}
+												>
+													<Trash2 className="size-3.5" />
+												</Button>
 											</div>
 										</TableCell>
 									</TableRow>
@@ -355,6 +461,15 @@ export function CanonicalPanel({ onNavigateToChunks, onNavigateToUpdate, initial
 				title={getDialogTitle()}
 				description={getDialogDescription()}
 				content={getDialogContent()}
+			/>
+
+			<PasscodeConfirmDialog
+				open={deleteConfirmOpen}
+				onOpenChange={setDeleteConfirmOpen}
+				onConfirm={handleConfirmDelete}
+				title="Xóa SQL QA"
+				description={`Bạn có chắc chắn muốn xóa SQL QA ID ${sqlQAToDelete?.id}? Thao tác này sẽ xóa cả chunks liên kết và không thể hoàn tác.`}
+				dangerous={true}
 			/>
 		</div>
 	);

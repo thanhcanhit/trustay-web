@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Database, RefreshCcw, Search, ExternalLink } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Database, RefreshCcw, Search, ExternalLink, Trash2 } from 'lucide-react';
 
-import { getAIChunks } from '@/actions/admin-ai.action';
+import { getAIChunks, deleteChunk } from '@/actions/admin-ai.action';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,6 +15,8 @@ import { LoaderState } from './loader-state';
 import { PaginationControls } from './pagination-controls';
 import { formatDateTime } from './utils';
 import { CellDetailDialog } from './cell-detail-dialog';
+import { PasscodeConfirmDialog } from './passcode-confirm-dialog';
+import { toast } from 'sonner';
 
 type ChunkCellType = 'id' | 'collection' | 'content' | 'created';
 
@@ -25,6 +27,7 @@ interface ChunksPanelProps {
 }
 
 export function ChunksPanel({ onNavigateToCanonical, initialSearchId, onSearchIdCleared }: ChunksPanelProps = {}) {
+	const queryClient = useQueryClient();
 	const [searchInput, setSearchInput] = useState('');
 	const [search, setSearch] = useState('');
 	const [collection, setCollection] = useState<AICollection | 'all'>('all');
@@ -33,6 +36,8 @@ export function ChunksPanel({ onNavigateToCanonical, initialSearchId, onSearchId
 	const [selectedItem, setSelectedItem] = useState<AIChunk | null>(null);
 	const [selectedCell, setSelectedCell] = useState<ChunkCellType | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
+	const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+	const [chunkToDelete, setChunkToDelete] = useState<AIChunk | null>(null);
 
 	useEffect(() => {
 		if (initialSearchId) {
@@ -81,6 +86,30 @@ export function ChunksPanel({ onNavigateToCanonical, initialSearchId, onSearchId
 		setSelectedItem(item);
 		setSelectedCell(cellType);
 		setDialogOpen(true);
+	};
+
+	const deleteMutation = useMutation({
+		mutationFn: (chunkId: number) => deleteChunk(chunkId),
+		onSuccess: () => {
+			toast.success('Đã xóa chunk thành công');
+			void queryClient.invalidateQueries({ queryKey: ['admin-ai-chunks'] });
+			setChunkToDelete(null);
+		},
+		onError: (error: Error) => {
+			toast.error(error.message || 'Không thể xóa chunk');
+		},
+	});
+
+	const handleDeleteClick = (item: AIChunk, e: React.MouseEvent) => {
+		e.stopPropagation();
+		setChunkToDelete(item);
+		setDeleteConfirmOpen(true);
+	};
+
+	const handleConfirmDelete = () => {
+		if (chunkToDelete) {
+			deleteMutation.mutate(chunkToDelete.id);
+		}
 	};
 
 	const getDialogContent = () => {
@@ -274,22 +303,34 @@ export function ChunksPanel({ onNavigateToCanonical, initialSearchId, onSearchId
 										>
 											{formatDateTime(item.createdAt)}
 										</TableCell>
-										<TableCell className="w-24 min-w-[96px]">
-											{onNavigateToCanonical && (
+										<TableCell className="w-32 min-w-[128px]">
+											<div className="flex items-center gap-1">
+												{onNavigateToCanonical && (
+													<Button
+														variant="ghost"
+														size="sm"
+														className="h-8 flex-1"
+														onClick={async (e) => {
+															e.stopPropagation();
+															await onNavigateToCanonical(item.id);
+														}}
+														title="Xem canonical liên quan"
+													>
+														<ExternalLink className="size-3.5 mr-1" />
+														Canonical
+													</Button>
+												)}
 												<Button
 													variant="ghost"
 													size="sm"
-													className="h-8 w-full"
-													onClick={async (e) => {
-														e.stopPropagation();
-														await onNavigateToCanonical(item.id);
-													}}
-													title="Xem canonical liên quan"
+													className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+													onClick={(e) => handleDeleteClick(item, e)}
+													title="Xóa chunk"
+													disabled={deleteMutation.isPending}
 												>
-													<ExternalLink className="size-3.5 mr-1" />
-													Canonical
+													<Trash2 className="size-3.5" />
 												</Button>
-											)}
+											</div>
 										</TableCell>
 									</TableRow>
 								))}
@@ -313,6 +354,15 @@ export function ChunksPanel({ onNavigateToCanonical, initialSearchId, onSearchId
 				title={getDialogTitle()}
 				description={getDialogDescription()}
 				content={getDialogContent()}
+			/>
+
+			<PasscodeConfirmDialog
+				open={deleteConfirmOpen}
+				onOpenChange={setDeleteConfirmOpen}
+				onConfirm={handleConfirmDelete}
+				title="Xóa Chunk"
+				description={`Bạn có chắc chắn muốn xóa chunk ID ${chunkToDelete?.id}? Thao tác này không thể hoàn tác.`}
+				dangerous={true}
 			/>
 		</div>
 	);

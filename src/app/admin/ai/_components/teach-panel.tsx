@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ShieldCheck, TerminalSquare, Wand2, Upload, FileText, CheckCircle2, XCircle } from 'lucide-react';
+import { ShieldCheck, TerminalSquare, Wand2, Upload, FileText, CheckCircle2, XCircle, Database } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { teachOrUpdateKnowledge, teachBatchKnowledge } from '@/actions/admin-ai.action';
+import { teachOrUpdateKnowledge, teachBatchKnowledge, reEmbedSchema } from '@/actions/admin-ai.action';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { PasscodeConfirmDialog } from './passcode-confirm-dialog';
 import type { TeachOrUpdateResult, TeachBatchResult, TeachBatchItem, TeachBatchPayload } from '@/types/admin-ai';
 
 interface TeachFormState {
@@ -32,7 +33,7 @@ interface TeachPanelProps {
 
 export function TeachPanel({ initialData }: TeachPanelProps = {}) {
 	const queryClient = useQueryClient();
-	const [activeTab, setActiveTab] = useState<'single' | 'batch'>('single');
+	const [activeTab, setActiveTab] = useState<'single' | 'batch' | 'reembed'>('single');
 	const [formData, setFormData] = useState<TeachFormState>({
 		id: initialData?.id.toString() || '',
 		question: initialData?.question || '',
@@ -42,6 +43,14 @@ export function TeachPanel({ initialData }: TeachPanelProps = {}) {
 	const [failFast, setFailFast] = useState(false);
 	const [batchResult, setBatchResult] = useState<TeachBatchResult | null>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	
+	// Re-embed schema form
+	const [reEmbedForm, setReEmbedForm] = useState({
+		tenantId: '',
+		dbKey: 'default',
+		schemaName: 'public',
+	});
+	const [reEmbedConfirmOpen, setReEmbedConfirmOpen] = useState(false);
 
 	// Update form data when initialData changes
 	useEffect(() => {
@@ -92,6 +101,35 @@ export function TeachPanel({ initialData }: TeachPanelProps = {}) {
 			toast.error(message);
 		},
 	});
+
+	const reEmbedMutation = useMutation({
+		mutationFn: () => reEmbedSchema(reEmbedForm),
+		onSuccess: () => {
+			toast.success('Đã re-embed schema thành công');
+			void queryClient.invalidateQueries({ queryKey: ['admin-ai-chunks'] });
+			setReEmbedForm({
+				tenantId: '',
+				dbKey: 'default',
+				schemaName: 'public',
+			});
+		},
+		onError: (err) => {
+			const message = err instanceof Error ? err.message : 'Không thể re-embed schema';
+			toast.error(message);
+		},
+	});
+
+	const handleReEmbedSubmit = () => {
+		if (!reEmbedForm.tenantId.trim()) {
+			toast.error('Vui lòng nhập Tenant ID');
+			return;
+		}
+		setReEmbedConfirmOpen(true);
+	};
+
+	const handleConfirmReEmbed = () => {
+		reEmbedMutation.mutate();
+	};
 
 	const handleSingleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -204,10 +242,11 @@ export function TeachPanel({ initialData }: TeachPanelProps = {}) {
 				</div>
 			</div>
 
-			<Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'single' | 'batch')}>
-				<TabsList className="grid w-full grid-cols-2">
+			<Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'single' | 'batch' | 'reembed')}>
+				<TabsList className="grid w-full grid-cols-3">
 					<TabsTrigger value="single">Single</TabsTrigger>
 					<TabsTrigger value="batch">Batch (JSON)</TabsTrigger>
+					<TabsTrigger value="reembed">Re-embed Schema</TabsTrigger>
 				</TabsList>
 
 				<TabsContent value="single" className="flex flex-col gap-2">
@@ -376,7 +415,87 @@ export function TeachPanel({ initialData }: TeachPanelProps = {}) {
 						</Button>
 					</div>
 				</TabsContent>
+
+				<TabsContent value="reembed" className="flex flex-col gap-2">
+					<div className="bg-amber-50 border border-amber-200 rounded-md p-4">
+						<div className="flex items-start gap-2">
+							<ShieldCheck className="size-4 text-amber-700 mt-0.5" />
+							<div className="text-sm text-amber-800">
+								<strong>Thao tác nguy hiểm:</strong> Re-embed schema sẽ xóa và tạo lại toàn bộ embeddings cho schema được chỉ định. 
+								Thao tác này có thể mất thời gian và yêu cầu nhập passcode để xác nhận.
+							</div>
+						</div>
+					</div>
+
+					<div className="flex flex-col gap-4">
+						<div className="flex flex-col gap-2">
+							<Label htmlFor="tenant-id" className="text-sm font-medium text-foreground">
+								Tenant ID <span className="text-red-500">*</span>
+							</Label>
+							<Input
+								id="tenant-id"
+								value={reEmbedForm.tenantId}
+								onChange={(e) => setReEmbedForm((prev) => ({ ...prev, tenantId: e.target.value }))}
+								placeholder="Nhập Tenant ID..."
+								required
+							/>
+						</div>
+
+						<div className="flex flex-col gap-2">
+							<Label htmlFor="db-key" className="text-sm font-medium text-foreground">
+								Database Key
+							</Label>
+							<Input
+								id="db-key"
+								value={reEmbedForm.dbKey}
+								onChange={(e) => setReEmbedForm((prev) => ({ ...prev, dbKey: e.target.value }))}
+								placeholder="default"
+							/>
+							<p className="text-xs text-muted-foreground">Mặc định: default</p>
+						</div>
+
+						<div className="flex flex-col gap-2">
+							<Label htmlFor="schema-name" className="text-sm font-medium text-foreground">
+								Schema Name
+							</Label>
+							<Input
+								id="schema-name"
+								value={reEmbedForm.schemaName}
+								onChange={(e) => setReEmbedForm((prev) => ({ ...prev, schemaName: e.target.value }))}
+								placeholder="public"
+							/>
+							<p className="text-xs text-muted-foreground">Mặc định: public</p>
+						</div>
+
+						<Separator />
+
+						<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+							<div className="text-sm text-muted-foreground flex items-center gap-2">
+								<TerminalSquare className="size-4" />
+								Gửi tới endpoint <code>/api/ai/knowledge/re-embed-schema</code> (POST).
+							</div>
+							<Button
+								type="button"
+								onClick={handleReEmbedSubmit}
+								disabled={!reEmbedForm.tenantId.trim() || reEmbedMutation.isPending}
+								variant="destructive"
+							>
+								<Database className="size-4 mr-2" />
+								{reEmbedMutation.isPending ? 'Đang xử lý...' : 'Re-embed Schema'}
+							</Button>
+						</div>
+					</div>
+				</TabsContent>
 			</Tabs>
+
+			<PasscodeConfirmDialog
+				open={reEmbedConfirmOpen}
+				onOpenChange={setReEmbedConfirmOpen}
+				onConfirm={handleConfirmReEmbed}
+				title="Re-embed Schema"
+				description={`Bạn có chắc chắn muốn re-embed schema "${reEmbedForm.schemaName}" cho tenant "${reEmbedForm.tenantId}"? Thao tác này sẽ xóa và tạo lại toàn bộ embeddings và có thể mất thời gian.`}
+				dangerous={true}
+			/>
 		</div>
 	);
 }

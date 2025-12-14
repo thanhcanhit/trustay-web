@@ -112,6 +112,7 @@ export interface PendingKnowledge {
 	id: string;
 	question: string;
 	sql: string | null;
+	response: string | null;
 	evaluation: string | null;
 	status: PendingKnowledgeStatus;
 	validatorData: PendingKnowledgeValidatorData | null;

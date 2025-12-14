@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Loader2, Clock, Zap, Database, CheckCircle2, XCircle } from 'lucide-react';
@@ -169,13 +169,13 @@ const nodeTypes = {
 		const color = colors[(data.stepNumber - 1) % colors.length] || colors[0];
 
 		return (
-			<div className={`px-4 py-3 shadow-xl rounded-xl bg-white border-2 ${color.border} min-w-[320px] max-w-[450px] transition-shadow duration-300 hover:shadow-2xl relative`}>
+			<div className={`px-8 py-6 shadow-xl rounded-2xl bg-white border-4 ${color.border} min-w-[600px] max-w-[800px] transition-shadow duration-300 hover:shadow-2xl relative`}>
 				{/* Source handle - ở dưới node, chỉ để edges kết nối, không cho phép manual connect */}
 				<Handle
 					type="source"
 					position={Position.Bottom}
 					id={`source-${data.stepNumber}`}
-					style={{ background: '#6366f1', width: 12, height: 12 }}
+					style={{ background: '#6366f1', width: 14, height: 14 }}
 					isConnectable={false}
 				/>
 				{/* Target handle - ở trên node, chỉ để edges kết nối, không cho phép manual connect */}
@@ -183,45 +183,45 @@ const nodeTypes = {
 					type="target"
 					position={Position.Top}
 					id={`target-${data.stepNumber}`}
-					style={{ background: '#6366f1', width: 12, height: 12 }}
+					style={{ background: '#6366f1', width: 14, height: 14 }}
 					isConnectable={false}
 				/>
-				<div className="flex items-center gap-3 mb-3">
-					<div className={`${color.bg} text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-md`}>
+				<div className="flex items-center gap-5 mb-5">
+					<div className={`${color.bg} text-white rounded-full w-16 h-16 flex items-center justify-center text-lg font-bold shadow-md`}>
 						{data.stepNumber}
 					</div>
-					<div className={`font-semibold text-sm ${color.text} flex-1 text-left`}>{data.label}</div>
+					<div className={`font-semibold text-lg ${color.text} flex-1 text-left`}>{data.label}</div>
 				</div>
-				<div className={`text-xs text-gray-600 max-h-[180px] overflow-y-auto ${color.light} rounded-md p-2 border text-left prose prose-sm max-w-none`}>
+				<div className={`text-base text-gray-600 max-h-[350px] overflow-y-auto ${color.light} rounded-md p-4 border text-left prose prose-base max-w-none`}>
 					<ReactMarkdown
 						components={{
 							code: ({ className, children, ...props }) => {
 								const isInline = !className;
 								return isInline ? (
-									<code className="bg-gray-200 px-1 py-0.5 rounded text-xs" {...props}>
+									<code className="bg-gray-200 px-2 py-1 rounded text-base" {...props}>
 										{children}
 									</code>
 								) : (
-									<pre className="bg-gray-800 text-gray-100 p-2 rounded text-xs overflow-x-auto">
+									<pre className="bg-gray-800 text-gray-100 p-4 rounded text-base overflow-x-auto">
 										<code {...props}>{children}</code>
 									</pre>
 								);
 							},
-							p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
-							ul: ({ children }) => <ul className="list-disc list-inside mb-1 space-y-0.5">{children}</ul>,
-							ol: ({ children }) => <ol className="list-decimal list-inside mb-1 space-y-0.5">{children}</ol>,
-							li: ({ children }) => <li className="text-xs">{children}</li>,
+							p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
+							ul: ({ children }) => <ul className="list-disc list-inside mb-3 space-y-1.5">{children}</ul>,
+							ol: ({ children }) => <ol className="list-decimal list-inside mb-3 space-y-1.5">{children}</ol>,
+							li: ({ children }) => <li className="text-base">{children}</li>,
 							strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
 							em: ({ children }) => <em className="italic">{children}</em>,
-							h1: ({ children }) => <h1 className="text-sm font-bold mb-1">{children}</h1>,
-							h2: ({ children }) => <h2 className="text-xs font-bold mb-1">{children}</h2>,
-							h3: ({ children }) => <h3 className="text-xs font-semibold mb-0.5">{children}</h3>,
+							h1: ({ children }) => <h1 className="text-lg font-bold mb-3">{children}</h1>,
+							h2: ({ children }) => <h2 className="text-base font-bold mb-3">{children}</h2>,
+							h3: ({ children }) => <h3 className="text-base font-semibold mb-2">{children}</h3>,
 							blockquote: ({ children }) => (
-								<blockquote className="border-l-2 border-gray-300 pl-2 my-1 italic">{children}</blockquote>
+								<blockquote className="border-l-3 border-gray-300 pl-4 my-3 italic">{children}</blockquote>
 							),
 							table: ({ children }) => (
-								<div className="overflow-x-auto my-1">
-									<table className="min-w-full text-xs border-collapse border border-gray-300">
+								<div className="overflow-x-auto my-3">
+									<table className="min-w-full text-base border-collapse border border-gray-300">
 										{children}
 									</table>
 								</div>
@@ -230,9 +230,9 @@ const nodeTypes = {
 							tbody: ({ children }) => <tbody>{children}</tbody>,
 							tr: ({ children }) => <tr className="border-b border-gray-200">{children}</tr>,
 							th: ({ children }) => (
-								<th className="border border-gray-300 px-2 py-1 text-left font-semibold">{children}</th>
+								<th className="border border-gray-300 px-4 py-3 text-left font-semibold">{children}</th>
 							),
-							td: ({ children }) => <td className="border border-gray-300 px-2 py-1">{children}</td>,
+							td: ({ children }) => <td className="border border-gray-300 px-4 py-3">{children}</td>,
 						}}
 					>
 						{data.content}
@@ -276,14 +276,17 @@ function FlowContent({
 		});
 	}, [edges]);
 
-	// Auto fit view sau khi nodes được render
+	// Auto fit view chỉ khi nodes được load lần đầu, không auto-scroll khi user tương tác
+	const [hasInitialFit, setHasInitialFit] = useState(false);
+	
 	useEffect(() => {
-		if (nodes.length > 0 && filteredEdges.length > 0) {
+		if (nodes.length > 0 && filteredEdges.length > 0 && !hasInitialFit) {
 			setTimeout(() => {
 				fitView({ padding: 0.3, maxZoom: 1.2, duration: 300 });
+				setHasInitialFit(true);
 			}, 100);
 		}
-	}, [nodes, filteredEdges, fitView]);
+	}, [nodes, filteredEdges, fitView, hasInitialFit]);
 
 	return (
 		<ReactFlow
@@ -304,8 +307,6 @@ function FlowContent({
 			onConnect={onConnect}
 			connectionMode={ConnectionMode.Loose}
 			nodeTypes={nodeTypes}
-			fitView
-			fitViewOptions={{ padding: 0.3, maxZoom: 1.2 }}
 			defaultEdgeOptions={{
 				animated: true,
 				style: { strokeWidth: 3, stroke: '#6366f1' },
@@ -356,11 +357,11 @@ export default function ProcessDetailPage() {
 		if (steps.length === 0) return [];
 
 		// Auto layout - đối xứng trái phải, trên xuống (zigzag pattern)
-		const verticalSpacing = 280; // spacing giữa các nodes theo chiều dọc
-		const horizontalSpacing = 300; // spacing ngang để tạo đối xứng
+		const verticalSpacing = 450; // spacing giữa các nodes theo chiều dọc (tăng để phù hợp với node lớn hơn)
+		const horizontalSpacing = 550; // spacing ngang để tạo đối xứng (tăng để phù hợp với node lớn hơn)
 		
 		// Center X của canvas
-		const centerX = 500;
+		const centerX = 600;
 		// Offset trái phải
 		const leftOffset = -horizontalSpacing / 2;
 		const rightOffset = horizontalSpacing / 2;
