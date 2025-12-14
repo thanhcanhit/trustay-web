@@ -8,6 +8,12 @@ import type {
 	AICollection,
 	AILogEntry,
 	AILogStatus,
+	ApprovePendingKnowledgeRequest,
+	ApprovePendingKnowledgeResponse,
+	PendingKnowledge,
+	PendingKnowledgeStatus,
+	RejectPendingKnowledgeRequest,
+	RejectPendingKnowledgeResponse,
 	TeachBatchPayload,
 	TeachBatchResult,
 	TeachOrUpdatePayload,
@@ -34,6 +40,13 @@ export interface ChunkQuery {
 export interface LogQuery {
 	search?: string;
 	status?: AILogStatus;
+	limit?: number;
+	offset?: number;
+}
+
+export interface PendingKnowledgeQuery {
+	search?: string;
+	status?: PendingKnowledgeStatus;
 	limit?: number;
 	offset?: number;
 }
@@ -175,5 +188,76 @@ export const teachBatchKnowledge = async (
 		);
 	} catch (error) {
 		throw new Error(extractErrorMessage(error, 'Could not batch teach knowledge'));
+	}
+};
+
+export const getPendingKnowledge = async (
+	params?: PendingKnowledgeQuery,
+	token?: string,
+): Promise<AdminAIPaginatedResponse<PendingKnowledge>> => {
+	try {
+		const queryString = buildQueryString(params as Record<string, string | number | undefined>);
+		const endpoint = `${BASE_ENDPOINT}/pending-knowledge${queryString ? `?${queryString}` : ''}`;
+
+		return await apiCall<AdminAIPaginatedResponse<PendingKnowledge>>(
+			endpoint,
+			{ method: 'GET' },
+			token,
+		);
+	} catch (error) {
+		throw new Error(extractErrorMessage(error, 'Could not load pending knowledge'));
+	}
+};
+
+export const getPendingKnowledgeById = async (
+	id: string,
+	token?: string,
+): Promise<PendingKnowledge> => {
+	try {
+		return await apiCall<PendingKnowledge>(
+			`${BASE_ENDPOINT}/pending-knowledge/${id}`,
+			{ method: 'GET' },
+			token,
+		);
+	} catch (error) {
+		throw new Error(extractErrorMessage(error, 'Could not load pending knowledge'));
+	}
+};
+
+export const approvePendingKnowledge = async (
+	id: string,
+	payload?: ApprovePendingKnowledgeRequest,
+	token?: string,
+): Promise<ApprovePendingKnowledgeResponse> => {
+	try {
+		return await apiCall<ApprovePendingKnowledgeResponse>(
+			`${BASE_ENDPOINT}/pending-knowledge/${id}/approve`,
+			{
+				method: 'POST',
+				data: payload || {},
+			},
+			token,
+		);
+	} catch (error) {
+		throw new Error(extractErrorMessage(error, 'Could not approve pending knowledge'));
+	}
+};
+
+export const rejectPendingKnowledge = async (
+	id: string,
+	payload: RejectPendingKnowledgeRequest,
+	token?: string,
+): Promise<RejectPendingKnowledgeResponse> => {
+	try {
+		return await apiCall<RejectPendingKnowledgeResponse>(
+			`${BASE_ENDPOINT}/pending-knowledge/${id}/reject`,
+			{
+				method: 'POST',
+				data: payload,
+			},
+			token,
+		);
+	} catch (error) {
+		throw new Error(extractErrorMessage(error, 'Could not reject pending knowledge'));
 	}
 };

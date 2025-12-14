@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Brain, BookOpenCheck, Database, ListChecks, Wand2 } from 'lucide-react';
+import { Brain, BookOpenCheck, Database, ListChecks, Wand2, Clock } from 'lucide-react';
 
 import {
 	Sidebar,
@@ -24,10 +24,11 @@ import { ChunksPanel } from './_components/chunks-panel';
 import { LogsPanel } from './_components/logs-panel';
 import { PasscodeGate } from './_components/passcode-gate';
 import { TeachPanel } from './_components/teach-panel';
+import { PendingKnowledgePanel } from './_components/pending-knowledge-panel';
 import { getCanonicalChunkId, getChunkCanonicalId } from '@/actions/admin-ai.action';
 import { toast } from 'sonner';
 
-type PanelType = 'canonical' | 'chunks' | 'logs' | 'teach';
+type PanelType = 'canonical' | 'chunks' | 'logs' | 'teach' | 'pending';
 
 const menuItems = [
 	{
@@ -47,6 +48,12 @@ const menuItems = [
 		label: 'Logs',
 		icon: ListChecks,
 		description: 'Processing logs',
+	},
+	{
+		value: 'pending' as PanelType,
+		label: 'Pending Knowledge',
+		icon: Clock,
+		description: 'Verify and approve SQL',
 	},
 	{
 		value: 'teach' as PanelType,
@@ -76,7 +83,7 @@ function AdminAIPageContent() {
 
 		// Read panel from URL
 		const panelParam = searchParams.get('panel') as PanelType;
-		if (panelParam && ['canonical', 'chunks', 'logs', 'teach'].includes(panelParam)) {
+		if (panelParam && ['canonical', 'chunks', 'logs', 'teach', 'pending'].includes(panelParam)) {
 			setActivePanel(panelParam);
 		}
 
@@ -175,6 +182,8 @@ function AdminAIPageContent() {
 				return <ChunksPanel onNavigateToCanonical={handleNavigateToCanonical} initialSearchId={chunksSearchId} onSearchIdCleared={() => setChunksSearchId('')} />;
 			case 'logs':
 				return <LogsPanel />;
+			case 'pending':
+				return <PendingKnowledgePanel />;
 			case 'teach':
 				return <TeachPanel />;
 			default:
