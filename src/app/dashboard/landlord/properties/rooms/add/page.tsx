@@ -462,7 +462,8 @@ function AddRoomPageContent() {
         })) as unknown as RoomRuleCreate[],
         images: formData.images && formData.images.length > 0 ? {
           images: formData.images.map((img, index) => ({
-            url: img.url, // Use uploaded URL as path
+            path: img.url, // Use uploaded URL as path
+            url: img.url,
             alt: img.altText || `Room image ${index + 1}`,
             isPrimary: index === 0,
             sortOrder: index,
@@ -576,7 +577,7 @@ function AddRoomPageContent() {
             <Card>
               <CardContent className="p-4 md:p-6 space-y-4 md:space-y-6">
                 <div className="flex items-center space-x-2 mb-4">
-                  <BuildingIcon className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                  <BuildingIcon className="h-5 w-5 text-blue-600 shrink-0" />
                   <h3 className="text-base md:text-lg font-medium">Thông tin cơ bản</h3>
                 </div>
 
@@ -735,7 +736,7 @@ function AddRoomPageContent() {
             <Card>
               <CardContent className="p-4 md:p-6 space-y-6 md:space-y-8">
                 <div className="flex items-center space-x-2 mb-4">
-                  <DollarSign className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  <DollarSign className="h-5 w-5 text-green-600 shrink-0" />
                   <h3 className="text-base md:text-lg font-medium">Giá cả & Chi phí phát sinh</h3>
                 </div>
 
@@ -820,7 +821,7 @@ function AddRoomPageContent() {
             <Card>
               <CardContent className="p-4 md:p-6 space-y-6 md:space-y-8">
                 <div className="flex items-center space-x-2 mb-4">
-                  <Home className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                  <Home className="h-5 w-5 text-purple-600 shrink-0" />
                   <h3 className="text-base md:text-lg font-medium">Tiện nghi & Nội quy</h3>
                 </div>
 
@@ -865,7 +866,7 @@ function AddRoomPageContent() {
             <Card>
               <CardContent className="p-4 md:p-6 space-y-4 md:space-y-6">
                 <div className="flex items-center space-x-2 mb-4">
-                  <ImageIcon className="h-5 w-5 text-orange-600 flex-shrink-0" />
+                  <ImageIcon className="h-5 w-5 text-orange-600 shrink-0" />
                   <h3 className="text-base md:text-lg font-medium">Hình ảnh phòng</h3>
                 </div>
 

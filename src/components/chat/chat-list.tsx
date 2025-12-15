@@ -1,12 +1,13 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { useChatStore } from "@/stores/chat.store";
 import { useMemo, useEffect } from "react";
 import { format } from 'date-fns';
 import { MESSAGE_TYPES, MESSAGE_CONTENT_MAP } from '@/constants/chat.constants';
 import { Image as ImageIcon } from 'lucide-react';
+import SizingImage from "../sizing-image";
 
 // Helper to get preview text for last message
 function getMessagePreview(lastMessage: { content: string; type: string } | undefined): { text: string; icon?: React.ReactNode } {
@@ -82,8 +83,16 @@ export function ChatList({ onMobileSelect }: ChatListProps) {
               className={`flex items-center p-3 hover:bg-gray-100 cursor-pointer ${isSelected ? 'bg-gray-200' : ''}`}
               onClick={() => handleConversationClick(convo.conversationId)}>
               <Avatar className="h-12 w-12">
-                <AvatarImage src={counterpart.avatarUrl || undefined} />
-                <AvatarFallback>{counterpart.firstName.charAt(0).toUpperCase()}</AvatarFallback>
+                {counterpart.avatarUrl ? (
+                  <SizingImage
+                    src={counterpart.avatarUrl}
+                    alt={`${counterpart.firstName} ${counterpart.lastName}`}
+                    width={48}
+                    height={48}
+                  />
+                ) : (
+                  <AvatarFallback>{counterpart.firstName.charAt(0).toUpperCase()}</AvatarFallback>
+                )}
               </Avatar>
               <div className="ml-3 flex-1 line-clamp-1 min-w-0">
                 <p className={`font-semibold truncate ${convo.unreadCount && convo.unreadCount > 0 ? 'font-bold' : ''}`}>{displayName}</p>

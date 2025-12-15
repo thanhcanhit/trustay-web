@@ -283,8 +283,8 @@ export default function EditRoomPage() {
   // Helper to convert UploadedImage to RoomImageCreate
   const convertUploadedToRoomImages = (images: UploadedImage[]): RoomImageCreate[] => {
     return images.map((img) => ({
-      path: img.url,
       url: img.url,
+      path: img.url,
       alt: img.altText
     }))
   }

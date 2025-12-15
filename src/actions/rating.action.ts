@@ -67,30 +67,6 @@ export async function getRatings(
 		);
 		return response;
 	} catch (error: unknown) {
-		// If 404, return empty ratings instead of throwing
-		const axiosError = error as { response?: { status: number }; status?: number };
-		if (axiosError?.response?.status === 404 || axiosError?.status === 404) {
-			return {
-				data: [],
-				meta: {
-					page: 1,
-					limit: params?.limit || 10,
-					total: 0,
-					totalPages: 0,
-				},
-				stats: {
-					averageRating: 0,
-					totalRatings: 0,
-					distribution: {
-						'1': 0,
-						'2': 0,
-						'3': 0,
-						'4': 0,
-						'5': 0,
-					},
-				},
-			};
-		}
 		// Re-throw other errors
 		throw error;
 	}

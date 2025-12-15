@@ -70,7 +70,7 @@ export function AIListPreview({ items, onOpenFull }: AIListPreviewProps) {
                         {node}
                       </a>
                     ) : (
-                      <button key={i.id} type="button" onClick={() => onOpenFull(null)} className="block w-full text-left" aria-label={i.title}>
+                      <button key={i.id} type="button" onClick={() => router.push(href)} className="block w-full text-left cursor-pointer" aria-label={i.title}>
                         {node}
                       </button>
                     );

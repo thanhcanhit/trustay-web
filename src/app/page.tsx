@@ -101,7 +101,7 @@ export default function Home() {
                   </div>
                 </Link>
 
-                <Link href="/landlord/rentals" className="group">
+                <Link href="dashboard/landlord/rentals" className="group">
                   <div className="flex flex-col items-center p-2 rounded-lg hover:bg-gray-50 transition-all cursor-pointer w-[90px]">
                     <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
                       <FileText className="w-5 h-5 text-orange-600" />
@@ -196,7 +196,7 @@ export default function Home() {
                 </div>
               </Link>
 
-              <Link href="/landlord/rentals" className="group">
+              <Link href="dashboard/landlord/contracts" className="group">
                 <div className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-all cursor-pointer">
                   <div className="w-14 h-14 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                     <FileText className="w-6 h-6 text-orange-600" />

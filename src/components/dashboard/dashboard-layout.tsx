@@ -46,7 +46,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
     if (user.role !== userType) {
       console.log('Role mismatch, redirecting:', { userRole: user.role, expectedType: userType })
       if (user.role === 'tenant') {
-        router.push('/profile')
+        router.push('/dashboard/tenant')
       } else {
         router.push('/dashboard/landlord')
       }
