@@ -2,9 +2,7 @@
 
 import { Wand2, ShieldCheck } from 'lucide-react';
 
-interface TeachPanelHeaderProps {}
-
-export function TeachPanelHeader({}: TeachPanelHeaderProps) {
+export function TeachPanelHeader() {
 	return (
 		<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 			<div className="flex items-center gap-2">

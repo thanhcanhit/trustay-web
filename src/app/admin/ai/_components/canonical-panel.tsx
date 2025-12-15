@@ -21,7 +21,7 @@ interface CanonicalPanelProps {
 	onSearchIdCleared?: () => void;
 }
 
-export function CanonicalPanel({ onNavigateToChunks, onNavigateToUpdate, initialSearchId, onSearchIdCleared }: CanonicalPanelProps = {}) {
+export function CanonicalPanel({ onNavigateToUpdate, initialSearchId, onSearchIdCleared }: CanonicalPanelProps = {}) {
 	const queryClient = useQueryClient();
 	const [searchInput, setSearchInput] = useState('');
 	const [search, setSearch] = useState('');

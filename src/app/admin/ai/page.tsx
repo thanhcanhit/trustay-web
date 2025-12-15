@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Brain, BookOpenCheck, Database, ListChecks, Wand2, Clock, CheckCircle2, GraduationCap, Gem, StepForward } from 'lucide-react';
+import { Brain, Database, CheckCircle2, GraduationCap, Gem, StepForward } from 'lucide-react';
 
 import {
 	Sidebar,

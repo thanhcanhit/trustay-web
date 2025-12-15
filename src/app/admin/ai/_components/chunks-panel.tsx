@@ -20,7 +20,7 @@ interface ChunksPanelProps {
 	onSearchIdCleared?: () => void;
 }
 
-export function ChunksPanel({ onNavigateToCanonical, initialSearchId, onSearchIdCleared }: ChunksPanelProps = {}) {
+export function ChunksPanel({  initialSearchId, onSearchIdCleared }: ChunksPanelProps = {}) {
 	const queryClient = useQueryClient();
 	const [searchInput, setSearchInput] = useState('');
 	const [search, setSearch] = useState('');
