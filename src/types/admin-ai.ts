@@ -92,3 +92,61 @@ export interface TeachBatchResult {
 	failed: number;
 	results: TeachBatchItemResult[];
 }
+
+export type PendingKnowledgeStatus = 'pending' | 'approved' | 'rejected';
+
+export interface PendingKnowledgeValidatorData {
+	isValid: boolean;
+	reason?: string;
+	violations?: string[];
+	severity?: 'ERROR' | 'WARN';
+	evaluation?: string;
+	tokenUsage?: {
+		promptTokens: number;
+		completionTokens: number;
+		totalTokens: number;
+	};
+}
+
+export interface PendingKnowledge {
+	id: string;
+	question: string;
+	sql: string | null;
+	response: string | null;
+	evaluation: string | null;
+	status: PendingKnowledgeStatus;
+	validatorData: PendingKnowledgeValidatorData | null;
+	sessionId: string | null;
+	userId: string | null;
+	processingLogId: string | null;
+	approvedAt: string | null;
+	approvedBy: string | null;
+	rejectedAt: string | null;
+	rejectedBy: string | null;
+	rejectionReason: string | null;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface ApprovePendingKnowledgeRequest {
+	note?: string;
+}
+
+export interface ApprovePendingKnowledgeResponse {
+	success: boolean;
+	message: string;
+	pendingKnowledgeId: string;
+	chunkId?: number;
+	sqlQAId?: number;
+}
+
+export interface RejectPendingKnowledgeRequest {
+	reason: string;
+}
+
+export interface RejectPendingKnowledgeResponse {
+	success: boolean;
+	message: string;
+	pendingKnowledgeId: string;
+	status: 'rejected';
+}

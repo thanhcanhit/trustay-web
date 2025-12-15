@@ -1,13 +1,23 @@
 "use client";
 
 import { Badge } from '@/components/ui/badge';
-import type { AICollection, AILogStatus } from '@/types/admin-ai';
+import type { AICollection, AILogStatus, PendingKnowledgeStatus } from '@/types/admin-ai';
 
 export function StatusBadge({ status }: { status: AILogStatus }) {
 	const styles: Record<AILogStatus, string> = {
 		completed: 'bg-green-50 text-green-700 border-green-200',
 		failed: 'bg-red-50 text-red-700 border-red-200',
 		partial: 'bg-amber-50 text-amber-700 border-amber-200',
+	};
+
+	return <Badge className={styles[status]}>{status}</Badge>;
+}
+
+export function PendingKnowledgeStatusBadge({ status }: { status: PendingKnowledgeStatus }) {
+	const styles: Record<PendingKnowledgeStatus, string> = {
+		pending: 'bg-amber-50 text-amber-700 border-amber-200',
+		approved: 'bg-green-50 text-green-700 border-green-200',
+		rejected: 'bg-red-50 text-red-700 border-red-200',
 	};
 
 	return <Badge className={styles[status]}>{status}</Badge>;

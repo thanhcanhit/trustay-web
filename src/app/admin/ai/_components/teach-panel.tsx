@@ -1,20 +1,17 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ShieldCheck, TerminalSquare, Wand2, Upload, FileText, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { teachOrUpdateKnowledge, teachBatchKnowledge } from '@/actions/admin-ai.action';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
+import { teachOrUpdateKnowledge, teachBatchKnowledge, reEmbedSchema } from '@/actions/admin-ai.action';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { PasscodeConfirmDialog } from './passcode-confirm-dialog';
 import type { TeachOrUpdateResult, TeachBatchResult, TeachBatchItem, TeachBatchPayload } from '@/types/admin-ai';
+import { TeachPanelHeader } from './teach/teach-panel-header';
+import { TeachPanelSingleForm } from './teach/teach-panel-single-form';
+import { TeachPanelBatchForm } from './teach/teach-panel-batch-form';
+import { TeachPanelReembedForm } from './teach/teach-panel-reembed-form';
 
 interface TeachFormState {
 	id: string;
@@ -22,18 +19,46 @@ interface TeachFormState {
 	sql: string;
 }
 
-export function TeachPanel() {
+interface TeachPanelProps {
+	initialData?: {
+		id: number;
+		question: string;
+		sql: string;
+	};
+}
+
+export function TeachPanel({ initialData }: TeachPanelProps = {}) {
 	const queryClient = useQueryClient();
-	const [activeTab, setActiveTab] = useState<'single' | 'batch'>('single');
+	const [activeTab, setActiveTab] = useState<'single' | 'batch' | 'reembed'>('single');
 	const [formData, setFormData] = useState<TeachFormState>({
-		id: '',
-		question: '',
-		sql: '',
+		id: initialData?.id.toString() || '',
+		question: initialData?.question || '',
+		sql: initialData?.sql || '',
 	});
 	const [jsonInput, setJsonInput] = useState('');
 	const [failFast, setFailFast] = useState(false);
 	const [batchResult, setBatchResult] = useState<TeachBatchResult | null>(null);
-	const fileInputRef = useRef<HTMLInputElement>(null);
+	const fileInputRef = useRef<HTMLInputElement | null>(null);
+	
+	// Re-embed schema form
+	const [reEmbedForm, setReEmbedForm] = useState({
+		tenantId: '',
+		dbKey: 'default',
+		schemaName: 'public',
+	});
+	const [reEmbedConfirmOpen, setReEmbedConfirmOpen] = useState(false);
+
+	// Update form data when initialData changes
+	useEffect(() => {
+		if (initialData) {
+			setFormData({
+				id: initialData.id.toString(),
+				question: initialData.question,
+				sql: initialData.sql,
+			});
+			setActiveTab('single');
+		}
+	}, [initialData]);
 
 	const singleMutation = useMutation<TeachOrUpdateResult, Error>({
 		mutationFn: () =>
@@ -72,6 +97,35 @@ export function TeachPanel() {
 			toast.error(message);
 		},
 	});
+
+	const reEmbedMutation = useMutation({
+		mutationFn: () => reEmbedSchema(reEmbedForm),
+		onSuccess: () => {
+			toast.success('Đã re-embed schema thành công');
+			void queryClient.invalidateQueries({ queryKey: ['admin-ai-chunks'] });
+			setReEmbedForm({
+				tenantId: '',
+				dbKey: 'default',
+				schemaName: 'public',
+			});
+		},
+		onError: (err) => {
+			const message = err instanceof Error ? err.message : 'Không thể re-embed schema';
+			toast.error(message);
+		},
+	});
+
+	const handleReEmbedSubmit = () => {
+		if (!reEmbedForm.tenantId.trim()) {
+			toast.error('Vui lòng nhập Tenant ID');
+			return;
+		}
+		setReEmbedConfirmOpen(true);
+	};
+
+	const handleConfirmReEmbed = () => {
+		reEmbedMutation.mutate();
+	};
 
 	const handleSingleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -168,195 +222,58 @@ export function TeachPanel() {
 
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-				<div className="flex items-center gap-2">
-					<div className="bg-indigo-50 text-indigo-700 p-2 rounded-lg border border-indigo-100">
-						<Wand2 className="size-4" />
-					</div>
-					<div>
-						<h2 className="text-base sm:text-lg font-semibold">Teach / Update</h2>
-						<p className="text-sm text-muted-foreground">Thêm mới hoặc chỉnh sửa canonical SQL QA.</p>
-					</div>
-				</div>
-				<div className="flex items-center gap-2 text-xs text-muted-foreground">
-					<ShieldCheck className="size-4" />
-					Token JWT tự đính kèm qua TokenManager.
-				</div>
-			</div>
+			<TeachPanelHeader />
 
-			<Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'single' | 'batch')}>
-				<TabsList className="grid w-full grid-cols-2">
+			<Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'single' | 'batch' | 'reembed')}>
+				<TabsList className="grid w-full grid-cols-3">
 					<TabsTrigger value="single">Single</TabsTrigger>
 					<TabsTrigger value="batch">Batch (JSON)</TabsTrigger>
+					<TabsTrigger value="reembed">Re-embed Schema</TabsTrigger>
 				</TabsList>
 
 				<TabsContent value="single" className="flex flex-col gap-2">
-					<form onSubmit={handleSingleSubmit} className="flex flex-col gap-2">
-						<div className="flex flex-col gap-2">
-							<label className="text-sm font-medium text-foreground">ID (optional - update)</label>
-							<Input
-								type="number"
-								name="id"
-								value={formData.id}
-								onChange={handleChange}
-								placeholder="Nhập ID nếu muốn update"
-							/>
-						</div>
-
-						<div className="flex flex-col gap-2">
-							<label className="text-sm font-medium text-foreground">Question</label>
-							<Textarea
-								name="question"
-								value={formData.question}
-								onChange={handleChange}
-								placeholder="Câu hỏi tiếng Việt..."
-								className="min-h-[100px]"
-							/>
-						</div>
-						<div className="flex flex-col gap-2">
-							<label className="text-sm font-medium text-foreground flex items-center gap-2">
-								SQL
-								<Badge variant="outline" className="uppercase">
-									required
-								</Badge>
-							</label>
-							<Textarea
-								name="sql"
-								value={formData.sql}
-								onChange={handleChange}
-								placeholder="SQL canonical..."
-								className="font-mono text-sm min-h-[160px]"
-							/>
-						</div>
-						<Separator />
-						<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-							<div className="text-sm text-muted-foreground flex items-center gap-2">
-								<TerminalSquare className="size-4" />
-								Gửi tới endpoint <code>/api/admin/ai/teach-or-update</code> (POST).
-							</div>
-							<div className="flex items-center gap-2">
-								<Button type="button" variant="ghost" onClick={handleReset} disabled={singleMutation.isPending}>
-									Làm mới
-								</Button>
-								<Button type="submit" disabled={singleMutation.isPending}>
-									{singleMutation.isPending && <span className="mr-2">...</span>}
-									{formData.id ? 'Update' : 'Add new'}
-								</Button>
-							</div>
-						</div>
-					</form>
+					<TeachPanelSingleForm
+						formData={formData}
+						onChange={handleChange}
+						onSubmit={handleSingleSubmit}
+						onReset={handleReset}
+						isPending={singleMutation.isPending}
+					/>
 				</TabsContent>
 
 				<TabsContent value="batch" className="flex flex-col gap-2">
-					<div className="flex flex-col gap-2">
-						<div className="flex items-center gap-2">
-							<Label className="text-sm font-medium">JSON Input</Label>
-							<Badge variant="outline" className="uppercase text-xs">
-								Array or Single Object
-							</Badge>
-						</div>
-						<div className="flex flex-col gap-2 sm:flex-row">
-							<Button
-								type="button"
-								variant="outline"
-								size="sm"
-								onClick={() => fileInputRef.current?.click()}
-								className="sm:w-auto"
-							>
-								<Upload className="size-4 mr-2" />
-								Upload File
-							</Button>
-							<input
-								ref={fileInputRef}
-								type="file"
-								accept=".json,application/json"
-								onChange={handleFileUpload}
-								className="hidden"
-							/>
-							<Button
-								type="button"
-								variant="outline"
-								size="sm"
-								onClick={handlePasteExample}
-								className="sm:w-auto"
-							>
-								<FileText className="size-4 mr-2" />
-								Paste Example
-							</Button>
-						</div>
-						<Textarea
-							value={jsonInput}
-							onChange={(e) => setJsonInput(e.target.value)}
-							placeholder='[{"question": "...", "sql": "..."}, ...]'
-							className="font-mono text-sm min-h-[300px]"
-						/>
-					</div>
+					<TeachPanelBatchForm
+						jsonInput={jsonInput}
+						onJsonInputChange={setJsonInput}
+						failFast={failFast}
+						onFailFastChange={setFailFast}
+						onFileUpload={handleFileUpload}
+						onPasteExample={handlePasteExample}
+						onSubmit={handleBatchSubmit}
+						batchResult={batchResult}
+						isPending={batchMutation.isPending}
+						fileInputRef={fileInputRef}
+					/>
+				</TabsContent>
 
-					<div className="flex items-center gap-2">
-						<Checkbox
-							id="failFast"
-							checked={failFast}
-							onCheckedChange={(checked) => setFailFast(checked === true)}
-						/>
-						<Label htmlFor="failFast" className="text-sm cursor-pointer">
-							Fail Fast (dừng sớm khi gặp lỗi)
-						</Label>
-					</div>
-
-					<Separator />
-
-					{batchResult && (
-						<div className="flex flex-col gap-2 p-4 border rounded-lg bg-slate-50">
-							<div className="flex items-center justify-between">
-								<h3 className="text-sm font-semibold">Kết quả Batch</h3>
-								<div className="flex items-center gap-4 text-xs">
-									<span className="text-green-600">✓ {batchResult.successful}</span>
-									<span className="text-red-600">✗ {batchResult.failed}</span>
-									<span className="text-muted-foreground">Tổng: {batchResult.total}</span>
-								</div>
-							</div>
-							<div className="flex flex-col gap-1 max-h-[200px] overflow-y-auto">
-								{batchResult.results.map((result, idx) => (
-									<div
-										key={idx}
-										className={`flex items-center gap-2 p-2 rounded text-xs ${
-											result.success ? 'bg-green-50' : 'bg-red-50'
-										}`}
-									>
-										{result.success ? (
-											<CheckCircle2 className="size-4 text-green-600" />
-										) : (
-											<XCircle className="size-4 text-red-600" />
-										)}
-										<span className="font-medium">Item {result.index + 1}:</span>
-										<span className={result.success ? 'text-green-700' : 'text-red-700'}>
-											{result.message}
-										</span>
-										{result.error && (
-											<span className="text-red-600 ml-auto">({result.error})</span>
-										)}
-									</div>
-								))}
-							</div>
-						</div>
-					)}
-
-					<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-						<div className="text-sm text-muted-foreground flex items-center gap-2">
-							<TerminalSquare className="size-4" />
-							Gửi tới endpoint <code>/api/admin/ai/teach-json</code> (POST).
-						</div>
-						<Button
-							type="button"
-							onClick={handleBatchSubmit}
-							disabled={batchMutation.isPending || !jsonInput.trim()}
-						>
-							{batchMutation.isPending && <span className="mr-2">...</span>}
-							Submit Batch
-						</Button>
-					</div>
+				<TabsContent value="reembed" className="flex flex-col gap-2">
+					<TeachPanelReembedForm
+						form={reEmbedForm}
+						onFormChange={(field, value) => setReEmbedForm((prev) => ({ ...prev, [field]: value }))}
+						onSubmit={handleReEmbedSubmit}
+						isPending={reEmbedMutation.isPending}
+					/>
 				</TabsContent>
 			</Tabs>
+
+			<PasscodeConfirmDialog
+				open={reEmbedConfirmOpen}
+				onOpenChange={setReEmbedConfirmOpen}
+				onConfirm={handleConfirmReEmbed}
+				title="Re-embed Schema"
+				description={`Bạn có chắc chắn muốn re-embed schema "${reEmbedForm.schemaName}" cho tenant "${reEmbedForm.tenantId}"? Thao tác này sẽ xóa và tạo lại toàn bộ embeddings và có thể mất thời gian.`}
+				dangerous={true}
+			/>
 		</div>
 	);
 }
