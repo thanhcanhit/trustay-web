@@ -330,9 +330,9 @@ export const useConversationStore = create<ConversationStore>()(
 					const response = await getConversationMessages(conversationId, 100, token);
 
 					if (response.success && response.data) {
-						// Messages are returned DESC (newest first), reverse to show oldest first
+						// Messages are returned in correct order (oldest first)
 						// Convert and enrich messages
-						const messages = response.data.items.reverse().map((msg) => {
+						const messages = response.data.items.map((msg) => {
 							// If payload exists but hasn't been converted, convert it first
 							if (msg.metadata?.payload && 'mode' in msg.metadata.payload) {
 								const rawPayload = msg.metadata.payload as unknown as ChatResponseRawPayload;

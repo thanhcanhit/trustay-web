@@ -5,7 +5,7 @@ import { useConversationStore } from '@/stores/conversation.store';
 import { useUserStore } from '@/stores/userStore';
 import { AIInput } from './ai-input';
 import { cn } from '@/lib/utils';
-import { Loader2, ChevronDown, Home, MessageSquare, Plus, RefreshCw, Brain } from 'lucide-react';
+import { Loader2, ChevronDown, Home, MessageSquare, Plus, RefreshCw, Brain, History } from 'lucide-react';
 import type { AIHistoryMessage, ListItem, TableColumn, TableCell } from '@/types';
 import type { ContentPayload, DataPayload, ControlPayload } from '@/types/ai';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -53,48 +53,56 @@ export function AISidebar() {
   
   // Always use conversation messages
   const activeMessages = conversationMessages;
-  const activeLoading = conversationLoading || loadingMessages;
+  // Show loading UI when loading messages or creating conversation
+  const activeLoading = loadingMessages || conversationLoading;
   const activeSending = conversationSending;
   const activeError = conversationError;
-  const quickSuggestions: ReadonlyArray<string> = useMemo(
+  // Tenant suggestions (also used for guests)
+  const tenantSuggestions: ReadonlyArray<string> = useMemo(
     () => [
-      // --- Guest / Tìm phòng (không cần đăng nhập) ---
-      'Tìm phòng trọ có máy lạnh ở Gò Vấp dưới 5 triệu.',
-      'Có phòng trọ đầy đủ nội thất nào ở Quận 1 không?',
-      'Tìm phòng trọ gần trường IUH',
-  
-      // --- Tenant / Tài khoản & Quản lý ---
-      'Hóa đơn điện nước tháng này của tôi bao nhiêu?',
-      "Có hoá đơn nào chưa thanh toán không?",
-      'Hợp đồng thuê nhà của tôi khi nào hết hạn?',
-      'Lịch sử thanh toán 3 tháng qua của tôi.',
-  
-      // --- Tenant / Tìm bạn ở ghép ---
-      'Tìm người ở ghép nam cho phòng 2 người ở HCM.',
-      'Có bài đăng tìm bạn ở ghép nào ở Bình Thạnh không?',
-  
-      // --- Landlord / Thống kê & Doanh thu ---
-      'Thống kê doanh thu 6 tháng qua của tôi.',
-      'Tỷ lệ lấp đầy các phòng của tôi hiện tại bao nhiêu?',
-      'Danh sách các hóa đơn chưa thanh toán tháng này.',
-      'Có bao nhiêu phòng đang trống?',
-      'Tổng số tiền thu được tháng này là bao nhiêu?',
-      'Phòng nào đang có hợp đồng sắp hết hạn?',
-  
-      // --- Landlord / Quản lý phòng ---
-      'Danh sách tất cả phòng của tôi.',
-      'Có yêu cầu thuê phòng nào đang chờ duyệt không?',
-      'Thống kê số lượng phòng theo trạng thái.',
-      "Tôi muốn đăng tải phòng trọ của tôi",
-      "Tôi muốn đăng tải dãy trọ của tôi",
-  
-      // --- Phân tích phòng (khi đang xem trang phòng) ---
-      'Đánh giá phòng hiện tại.',
-      'Giá phòng hiện tại có hợp lý không?',
-      'Phân tích chi tiết phòng này.',
+      'Tìm trọ gần trường ĐH Công Nghiệp IUH',
+      'Tìm phòng trọ giá rẻ dưới 4 triệu ở Gò Vấp',
+      'Tìm phòng có máy lạnh và ban công',
+      'Tìm bài đăng tìm người ở ghép mới nhất',
+      'Hóa đơn tiền nhà tháng này bao nhiêu?',
+      'Tôi còn nợ tiền phòng tháng nào không?',
+      'Xem thông tin hợp đồng thuê của tôi',
+      'Các vấn đề/sự cố tôi đã báo cáo',
+      'Lấy thông tin liên lạc của chủ trọ',
+      'Xem chỉ số điện nước tháng vừa rồi',
     ],
     [],
   );
+
+  // Landlord suggestions
+  const landlordSuggestions: ReadonlyArray<string> = useMemo(
+    () => [
+      'Có bao nhiêu phòng đang còn trống?',
+      'Tổng doanh thu tháng trước',
+      'Các phòng chưa thanh toán đầy đủ tiền thuê tháng này',
+      'Các hợp đồng sắp hết hạn trong 30 ngày tới',
+      'Có bao nhiêu vấn đề mới chưa được xử lý?',
+      'Phòng nào sử dụng nhiều nước nhất tháng trước?',
+      'Tổng số người thuê đang hoạt động trên tất cả các tòa nhà',
+      'Có bao nhiêu người thuê đã dọn vào trong tháng này?',
+      'Tôi còn trống phòng nào có diện tích lớn hơn 25m không',
+      'Tỉ lệ nam nữ của dãy trọ',
+      'Có bao nhiêu hợp đồng đang chờ ký?',
+    ],
+    [],
+  );
+
+  // Select suggestions based on user role (guest uses tenant suggestions)
+  // Shuffle suggestions to show random order each time
+  const quickSuggestions: ReadonlyArray<string> = useMemo(() => {
+    const suggestions = isLandlord ? [...landlordSuggestions] : [...tenantSuggestions];
+    // Fisher-Yates shuffle algorithm
+    for (let i = suggestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [suggestions[i], suggestions[j]] = [suggestions[j], suggestions[i]];
+    }
+    return suggestions;
+  }, [isLandlord, landlordSuggestions, tenantSuggestions]);
   // dialog helpers handled inline where needed
 
 
@@ -102,6 +110,13 @@ export function AISidebar() {
   useEffect(() => {
     void loadConversations();
   }, [loadConversations]);
+
+  // Refresh conversations when opening the conversation list
+  useEffect(() => {
+    if (showConversationList) {
+      void loadConversations();
+    }
+  }, [showConversationList, loadConversations]);
 
   // Load messages when conversation is selected
   useEffect(() => {
@@ -216,13 +231,12 @@ export function AISidebar() {
   };
   
   const handleQuickSuggestion = async (suggestion: string) => {
-    // Create new conversation with the suggestion or send to current
-    const currentPage = typeof window !== 'undefined' ? window.location.pathname : undefined;
-    if (!currentConversationId) {
-      await createConversation(suggestion);
-    } else {
-      await sendConversationMessage(suggestion, currentPage);
+    // Always create a new conversation when clicking on suggestions
+    // Clear current conversation first to ensure fresh start
+    if (currentConversationId) {
+      clearCurrentConversation();
     }
+    await createConversation(suggestion);
   };
   
   const handleDeleteConversation = async (id: string) => {
@@ -284,29 +298,44 @@ export function AISidebar() {
         }}
       />
 
-      {/* Conversation List Toggle, New Chat & Refresh Button */}
+      {/* Post Room, New Chat, Refresh & Conversation List Toggle */}
       <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 border-b flex-shrink-0 bg-gray-50/50">
-        <Button
-          variant={showConversationList ? "secondary" : "ghost"}
-          size="sm"
-          onClick={() => setShowConversationList(!showConversationList)}
-          className={cn(
-            "h-8 px-2 text-xs transition-all duration-200 ease-in-out",
-            showConversationList && "bg-primary/10 text-primary"
-          )}
-        >
-          <MessageSquare className="h-4 w-4 mr-1 transition-transform duration-200" />
-          <span className="hidden sm:inline">Cuộc hội thoại</span>
-        </Button>
+        {/* Post Room Button for Landlords - First */}
+        {isLandlord && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (!isAuthenticated) {
+                toast.info('Đăng nhập để đăng tải phòng', {
+                  description: 'Bạn cần đăng nhập để sử dụng tính năng đăng tải phòng với AI. Hãy đăng nhập hoặc đăng ký tài khoản ngay!',
+                  action: {
+                    label: 'Đăng nhập',
+                    onClick: () => router.push('/login'),
+                  },
+                  duration: 5000,
+                });
+                return;
+              }
+              setPostRoomDialogOpen(true);
+            }}
+            className="h-8 px-2 text-xs hover:bg-primary/5"
+          >
+            <Home className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Đăng phòng</span>
+          </Button>
+        )}
+        {/* New Chat Button - Second */}
         <Button
           variant="ghost"
           size="sm"
           onClick={handleNewChat}
           className="h-8 px-2 text-xs flex-1 hover:bg-primary/5"
         >
-          <Plus className="h-4 w-4 mr-1" />
+          <MessageSquare className="h-4 w-4 mr-1" />
           <span>Cuộc trò chuyện mới</span>
         </Button>
+        {/* Refresh Button - Third */}
         {showConversationList && (
           <Button
             variant="ghost"
@@ -320,6 +349,26 @@ export function AISidebar() {
             <RefreshCw className={cn("h-4 w-4", conversationLoading && "animate-spin")} />
           </Button>
         )}
+        {/* Conversation List Toggle - Last */}
+        <Button
+          variant={showConversationList ? "secondary" : "ghost"}
+          size="sm"
+          onClick={() => {
+            const wasClosed = !showConversationList;
+            setShowConversationList(!showConversationList);
+            // Refresh conversations when opening the list
+            if (wasClosed) {
+              void loadConversations();
+            }
+          }}
+          className={cn(
+            "h-8 px-2 text-xs transition-all duration-200 ease-in-out",
+            showConversationList && "bg-primary/10 text-primary"
+          )}
+        >
+          <History className="h-4 w-4 mr-1 transition-transform duration-200" />
+          <span className="hidden sm:inline">Lịch sử</span>
+        </Button>
       </div>
 
       {/* Main Content Area - Show conversation list or messages */}
@@ -367,7 +416,8 @@ export function AISidebar() {
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {activeLoading && (
               <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 px-2 sm:px-3 py-2">
-                  <Loader2 className="animate-spin" size={16} /> Đang tải…
+                  <Loader2 className="animate-spin" size={16} /> 
+                  {conversationLoading ? 'Đang gửi tin nhắn...' : 'Đang tải...'}
                 </div>
               )}
             {activeError && (
@@ -379,36 +429,18 @@ export function AISidebar() {
                     <h2 className="text-lg sm:text-xl font-semibold text-gray-900">What can I help with?</h2>
                   </div>
                   <div className="grid grid-cols-1 gap-1.5 sm:gap-2">
-                    {/* Post Room Button for Landlords - Show at top */}
-                    {isLandlord && (
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          if (!isAuthenticated) {
-                            toast.info('Đăng nhập để đăng tải phòng', {
-                              description: 'Bạn cần đăng nhập để sử dụng tính năng đăng tải phòng với AI. Hãy đăng nhập hoặc đăng ký tài khoản ngay!',
-                              action: {
-                                label: 'Đăng nhập',
-                                onClick: () => router.push('/login'),
-                              },
-                              duration: 5000,
-                            });
-                            return;
-                          }
-                          setPostRoomDialogOpen(true);
-                        }}
-                        className="w-fit cursor-pointer justify-start px-3 sm:px-4 py-1.5 sm:py-2 h-auto rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm font-medium"
-                      >
-                        <Home size={14} className="sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
-                        Đăng tải phòng với Trustay AI
-                      </Button>
-                    )}
                     {quickSuggestions.slice(0, 5).map((q, idx) => (
                       <button
                         key={idx}
                         type="button"
-                      onClick={() => handleQuickSuggestion(q)}
-                      className="w-fit max-w-full px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-gray-100 text-gray-800 text-xs sm:text-sm hover:bg-gray-200 border text-left cursor-pointer transition-colors"
+                        onClick={() => handleQuickSuggestion(q)}
+                        disabled={activeLoading || activeSending}
+                        className={cn(
+                          "w-fit max-w-full px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm border text-left transition-colors",
+                          activeLoading || activeSending
+                            ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
+                            : "bg-gray-100 text-gray-800 hover:bg-gray-200 cursor-pointer"
+                        )}
                         aria-label={q}
                       >
                         {q}
@@ -439,11 +471,11 @@ export function AISidebar() {
       
       {/* Dialog moved outside of map to prevent re-renders */}
                   <Dialog open={tableDialogOpen} onOpenChange={setTableDialogOpen}>
-                    <DialogContent className="w-[95vw] max-w-3xl bg-white/95 backdrop:bg-black/20">
-                      <DialogHeader>
+                    <DialogContent className="w-[90vw] max-w-[90vw] sm:max-w-[90vw] h-[90vh] max-h-[90vh] bg-white/95 backdrop:bg-black/20 top-8 flex flex-col">
+                      <DialogHeader className="flex-shrink-0">
                         <DialogTitle className="text-sm sm:text-base">Xem bảng đầy đủ</DialogTitle>
                       </DialogHeader>
-                      <div className="overflow-x-auto">
+                      <div className="flex-1 overflow-auto w-full min-h-0">
                         {tableDialogContent}
                       </div>
                     </DialogContent>

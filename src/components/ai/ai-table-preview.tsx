@@ -13,10 +13,35 @@ interface AITablePreviewProps {
 
 const truncate = (t: string, max = 100) => (t?.length > max ? `${t.slice(0, max)}…` : t);
 
+/**
+ * Filter out columns that have no values in any row
+ */
+function filterColumnsWithValues(
+  columns: ReadonlyArray<TableColumn>,
+  rows: ReadonlyArray<Record<string, TableCell>>,
+): ReadonlyArray<TableColumn> {
+  if (rows.length === 0) return columns;
+  
+  return columns.filter((col) => {
+    // Check if at least one row has a non-null, non-undefined, non-empty value for this column
+    return rows.some((row) => {
+      const value = row[col.key];
+      // Consider null, undefined, empty string, and empty array as "no value"
+      if (value == null) return false;
+      if (typeof value === 'string' && value.trim() === '') return false;
+      if (Array.isArray(value) && value.length === 0) return false;
+      return true;
+    });
+  });
+}
+
 export function AITablePreview({ columns, rows, previewLimit, onOpenFull }: AITablePreviewProps) {
   const router = useRouter();
   const limit = Math.min(5, previewLimit ?? 5);
   const previewRows = rows.slice(0, limit);
+  
+  // Filter out columns without values
+  const filteredColumns = filterColumnsWithValues(columns, rows);
 
   const renderCell = (row: Record<string, TableCell>, col: TableColumn, compact = true) => {
     const cell = row[col.key];
@@ -77,7 +102,7 @@ export function AITablePreview({ columns, rows, previewLimit, onOpenFull }: AITa
               <table className="min-w-full text-sm border bg-white">
                 <thead className="bg-gray-50">
                   <tr>
-                    {columns.map((col) => (
+                    {filteredColumns.map((col) => (
                       <th key={col.key} className="text-left px-3 py-2 border-b">{col.label}</th>
                     ))}
                   </tr>
@@ -101,7 +126,7 @@ export function AITablePreview({ columns, rows, previewLimit, onOpenFull }: AITa
                           }
                         }}
                       >
-                        {columns.map((col) => (
+                        {filteredColumns.map((col) => (
                           <td key={col.key} className="px-3 py-2 border-b">{renderCell(row, col, false)}</td>
                         ))}
                       </tr>
@@ -115,7 +140,7 @@ export function AITablePreview({ columns, rows, previewLimit, onOpenFull }: AITa
       >
         <thead className="bg-gray-50">
           <tr>
-            {columns.map((col) => (
+            {filteredColumns.map((col) => (
               <th key={col.key} className="text-left px-2 py-1 border-b">{col.label}</th>
             ))}
           </tr>
@@ -123,7 +148,7 @@ export function AITablePreview({ columns, rows, previewLimit, onOpenFull }: AITa
         <tbody>
           {previewRows.map((row, rIdx) => (
             <tr key={rIdx} className="odd:bg-gray-50">
-              {columns.map((col) => (
+              {filteredColumns.map((col) => (
                 <td key={col.key} className="px-2 py-1 border-b">{renderCell(row, col, true)}</td>
               ))}
             </tr>
