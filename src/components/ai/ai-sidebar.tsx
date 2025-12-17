@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useConversationStore } from '@/stores/conversation.store';
 import { useUserStore } from '@/stores/userStore';
 import { AIInput } from './ai-input';
 import { cn } from '@/lib/utils';
-import { Loader2, ChevronDown, Home, MessageSquare, Plus, RefreshCw, Brain, History } from 'lucide-react';
+import { Loader2, Home, MessageSquare, RefreshCw, History } from 'lucide-react';
 import type { AIHistoryMessage, ListItem, TableColumn, TableCell } from '@/types';
 import type { ContentPayload, DataPayload, ControlPayload } from '@/types/ai';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -38,7 +38,6 @@ export function AISidebar() {
     sendMessage: sendConversationMessage,
     updateTitle,
     deleteConversation,
-    clearMessages,
     clearCurrentConversation,
   } = conversationStore;
   
@@ -51,8 +50,6 @@ export function AISidebar() {
   const [postRoomDialogOpen, setPostRoomDialogOpen] = useState(false);
   const [showConversationList, setShowConversationList] = useState(false);
   
-  // Always use conversation messages
-  const activeMessages = conversationMessages;
   // Show loading UI when loading messages or creating conversation
   const activeLoading = loadingMessages || conversationLoading;
   const activeSending = conversationSending;
@@ -254,20 +251,6 @@ export function AISidebar() {
       toast.success('Đã đổi tên cuộc hội thoại');
     } catch {
       toast.error('Không thể đổi tên cuộc hội thoại');
-    }
-  };
-  
-  const handleClearConversation = async () => {
-    if (currentConversationId) {
-      try {
-        await clearMessages(currentConversationId);
-        toast.success('Đã xóa tất cả tin nhắn');
-      } catch {
-        toast.error('Không thể xóa tin nhắn');
-      }
-    } else {
-      // If no conversation, just clear current state
-      clearCurrentConversation();
     }
   };
 

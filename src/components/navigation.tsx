@@ -210,8 +210,6 @@ export function Navigation() {
     }
   }, [])
 
-  const isAIOpen = useConversationStore(s => s.isSidebarOpen)
-
   return (
     <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-9998 no-print" suppressHydrationWarning={true}>
       {/* First Row: Logo, Search, Login/Signup */}

@@ -40,7 +40,6 @@ export function AIMessageList({ messages, onOpenTable, onAsk, shouldAutoScroll =
 	useEffect(() => {
 		if (!shouldAutoScrollRef.current || !messagesEndRef.current || !messagesContainerRef.current) return;
 
-		const container = messagesContainerRef.current;
 		const scrollToBottom = () => {
 			messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
 		};

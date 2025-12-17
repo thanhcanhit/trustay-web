@@ -5,10 +5,10 @@ import { Sparkles, X } from 'lucide-react';
 
 interface AIHeaderProps {
   onClose: () => void;
-  onPostRoom: () => void;
+  onPostRoom?: () => void;
 }
 
-export function AIHeader({ onClose, onPostRoom }: AIHeaderProps) {
+export function AIHeader({ onClose }: AIHeaderProps) {
   return (
     <div className="h-10 sm:h-10 py-1 pb-0 sm:pb-1 flex items-center justify-between px-2 sm:px-3 border-b flex-shrink-0">
       <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden">
