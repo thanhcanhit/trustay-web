@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react"
 import { usePathname, useRouter } from "next/navigation"
 // import { motion, AnimatePresence } from "motion/react"
 import { useUserStore } from "@/stores/userStore"
-import { useAIAssistantStore } from "@/stores/aiAssistant.store"
+import { useConversationStore } from "@/stores/conversation.store"
 import { useSearchFilters } from "@/hooks/use-search-filters"
 import { encodeSearchQuery } from "@/utils/search-params"
 import { Button } from "@/components/ui/button"
@@ -63,7 +63,7 @@ export function Navigation() {
   ])
   const mobileSearchRef = useRef<HTMLDivElement>(null)
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false)
-  const toggleAISidebar = useAIAssistantStore(s => s.toggleSidebar)
+  const toggleAISidebar = useConversationStore(s => s.toggleSidebar)
 
   useEffect(() => {
     setIsMounted(true)
@@ -210,7 +210,7 @@ export function Navigation() {
     }
   }, [])
 
-  const isAIOpen = useAIAssistantStore(s => s.isSidebarOpen)
+  const isAIOpen = useConversationStore(s => s.isSidebarOpen)
 
   return (
     <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-9998 no-print" suppressHydrationWarning={true}>
@@ -520,7 +520,7 @@ export function Navigation() {
                 variant="outline"
                 size="sm"
                 className="h-10 w-10 cursor-pointer rounded-full"
-                onClick={() => toggleAISidebar(!isAIOpen)}
+                onClick={() => toggleAISidebar()}
                 aria-label="Mở Trustay AI"
               >
                 <Sparkles className="h-4 w-4 text-green-600" />
