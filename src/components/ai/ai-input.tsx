@@ -146,12 +146,23 @@ export function AIInput({ onSend, disabled = false }: AIInputProps) {
       .filter(img => img.path && !img.isUploading && !img.uploadError)
       .map(img => img.path!);
 
-    await onSend(content, imagePaths.length > 0 ? imagePaths : undefined);
-    
-    // Clear input and images
+    // Store current images for cleanup
+    const imagesToCleanup = [...images];
+
+    // Clear input and images immediately (optimistic clear)
     setValue("");
-    images.forEach(img => URL.revokeObjectURL(img.preview));
+    imagesToCleanup.forEach(img => URL.revokeObjectURL(img.preview));
     setImages([]);
+
+    // Send message (don't await to clear immediately)
+    try {
+      await onSend(content, imagePaths.length > 0 ? imagePaths : undefined);
+    } catch (error) {
+      // If send fails, restore the content (optional - depends on UX preference)
+      console.error('Failed to send message:', error);
+      // Uncomment below if you want to restore content on error:
+      // setValue(content);
+    }
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
