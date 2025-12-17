@@ -90,7 +90,7 @@ export function ConversationItem({
 					)}
 					onClick={onSelect}
 				>
-					<div className="flex-1 min-w-0">
+					<div className="flex-1 min-w-0 overflow-hidden">
 						{isEditing ? (
 							<div className="flex items-center gap-1">
 								<Input
@@ -98,14 +98,14 @@ export function ConversationItem({
 									onChange={(e) => setEditTitle(e.target.value)}
 									onBlur={handleRename}
 									onKeyDown={handleKeyDown}
-									className="h-7 text-xs sm:text-sm"
+									className="h-7 text-xs sm:text-sm flex-1 min-w-0"
 									autoFocus
 									onClick={(e) => e.stopPropagation()}
 								/>
 								<Button
 									variant="ghost"
 									size="icon"
-									className="h-7 w-7"
+									className="h-7 w-7 flex-shrink-0"
 									onClick={(e) => {
 										e.stopPropagation();
 										handleRename();
@@ -118,9 +118,10 @@ export function ConversationItem({
 							<>
 								<div
 									className={cn(
-										'text-xs sm:text-sm font-medium truncate mb-0.5',
+										'text-xs sm:text-sm font-medium mb-0.5 break-words line-clamp-2',
 										isActive && 'text-primary',
 									)}
+									title={conversation.title}
 								>
 									{conversation.title}
 								</div>
@@ -133,6 +134,25 @@ export function ConversationItem({
 							</>
 						)}
 					</div>
+					
+					{!isEditing && (
+						<Button
+							variant="ghost"
+							size="icon"
+							className={cn(
+								'h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity',
+								'hover:bg-destructive/10 hover:text-destructive',
+								'flex-shrink-0'
+							)}
+							onClick={(e) => {
+								e.stopPropagation();
+								onDelete();
+							}}
+							aria-label="Xóa cuộc hội thoại"
+						>
+							<Trash2 className="h-3.5 w-3.5" />
+						</Button>
+					)}
 					
 					{!isEditing && (
 						<ContextMenuContent>
@@ -162,6 +182,9 @@ export function ConversationItem({
 		</ContextMenu>
 	);
 }
+
+
+
 
 
 

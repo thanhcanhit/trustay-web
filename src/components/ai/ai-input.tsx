@@ -148,7 +148,7 @@ export function AIInput({ onSend, disabled = false }: AIInputProps) {
 
     // Store current images for cleanup
     const imagesToCleanup = [...images];
-
+    
     // Clear input and images immediately (optimistic clear)
     setValue("");
     imagesToCleanup.forEach(img => URL.revokeObjectURL(img.preview));
@@ -247,7 +247,7 @@ export function AIInput({ onSend, disabled = false }: AIInputProps) {
         <div className="flex items-center gap-1.5 sm:gap-2 flex-1 bg-gray-50 border border-gray-200 rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 min-h-[2rem] sm:min-h-[2.5rem]">
           <Input
             type="text"
-            placeholder="Ask anything"
+            placeholder="Bạn đang muốn tìm kiếm thông tin gì..."
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={onKeyDown}

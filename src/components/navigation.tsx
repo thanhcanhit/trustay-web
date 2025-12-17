@@ -210,8 +210,6 @@ export function Navigation() {
     }
   }, [])
 
-  const isAIOpen = useConversationStore(s => s.isSidebarOpen)
-
   return (
     <nav className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-9998 no-print" suppressHydrationWarning={true}>
       {/* First Row: Logo, Search, Login/Signup */}
@@ -515,11 +513,11 @@ export function Navigation() {
             )}
 
             {/* Right Section - AI Button + Messages + Login/Signup or User Menu */}
-            <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 shrink-0 lg:ml-auto">
+            <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 shrink-0 lg:ml-auto flex-nowrap">
               <Button
                 variant="outline"
                 size="sm"
-                className="h-10 w-10 cursor-pointer rounded-full"
+                className="h-10 w-10 cursor-pointer rounded-full shrink-0"
                 onClick={() => toggleAISidebar()}
                 aria-label="Mở Trustay AI"
               >
@@ -528,18 +526,20 @@ export function Navigation() {
               {isAuthenticated && user ? (
                 <>
                 {/* Messages Button - Mobile Only */}
-                <Link href="/messages" className="lg:hidden">
+                <Link href="/messages" className="lg:hidden shrink-0">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-10 w-10 cursor-pointer rounded-full relative"
+                    className="h-10 w-10 cursor-pointer rounded-full relative shrink-0"
                     aria-label="Tin nhắn"
                   >
                     <MessageCircle className="h-4 w-4 text-green-600" />
                   </Button>
                 </Link>
-                <NotificationBell />
-                <div className="relative" ref={dropdownRef}>
+                <div className="shrink-0">
+                  <NotificationBell />
+                </div>
+                <div className="relative shrink-0" ref={dropdownRef}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -610,7 +610,7 @@ export function Navigation() {
                 {user?.role === 'tenant' && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-9 lg:h-10 text-white bg-green-600 hover:bg-green-700 font-medium cursor-pointer px-2 sm:px-4">
+                      <Button variant="outline" size="sm" className="h-9 lg:h-10 text-white bg-green-600 hover:bg-green-700 font-medium cursor-pointer px-2 sm:px-4 shrink-0">
                         <Plus className="h-4 w-4" />
                         <span className="hidden sm:inline ml-1">Đăng bài</span>
                       </Button>

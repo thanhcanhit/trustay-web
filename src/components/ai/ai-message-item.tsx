@@ -10,8 +10,6 @@ import { AITablePreview } from './ai-table-preview';
 import { AIControlBlock } from './ai-control-block';
 import { PhotoView } from 'react-photo-view';
 
-type AssistantResultMessage = AIHistoryMessage & { sql?: string; results?: Array<Record<string, unknown>>; count?: number };
-
 type AssistantEnrichedMessage = AIHistoryMessage & {
 	contentStats?: ReadonlyArray<{ label: string; value: number; unit?: string }>;
 	dataList?: { items: ReadonlyArray<ListItem>; total: number };
@@ -136,5 +134,8 @@ export function AIMessageItem({ message, onOpenTable, onAsk }: AIMessageItemProp
 		</div>
 	);
 }
+
+
+
 
 

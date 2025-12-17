@@ -13,20 +13,12 @@ export function AIControlBlock({ questions, errorCode, errorDetails, onAsk }: AI
   return (
     <>
       {hasClarify && (
-        <div className="mt-2 space-y-1">
-          <div className="text-xs text-gray-600 font-medium">Cần thông tin:</div>
-          <ul className="list-disc list-inside space-y-1">
-            {questions!.map((q, idx) => (
-              <li key={idx} className="text-xs text-gray-700">{q}</li>
-            ))}
-          </ul>
           <div className="mt-2 flex flex-wrap gap-2">
             {questions!.map((q, idx) => (
               <button key={idx} className="text-xs bg-white/70 border rounded px-2 py-1 hover:bg-white" onClick={() => onAsk(q)}>
                 {q}
               </button>
             ))}
-          </div>
         </div>
       )}
       {hasError && (
