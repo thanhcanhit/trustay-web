@@ -10,7 +10,12 @@ import {
 } from '@/actions/conversation.action';
 import { TokenManager } from '@/lib/api-client';
 import type { ContentPayload, ControlPayload, DataPayload } from '@/types/ai';
-import type { ChatResponse, Conversation, ConversationMessage } from '@/types/conversation';
+import type {
+	ChatResponse,
+	ChatResponseRawPayload,
+	Conversation,
+	ConversationMessage,
+} from '@/types/conversation';
 import { convertChatResponsePayload } from '@/utils/conversation-payload-converter';
 
 interface ConversationState {
@@ -326,7 +331,25 @@ export const useConversationStore = create<ConversationStore>()(
 
 					if (response.success && response.data) {
 						// Messages are returned DESC (newest first), reverse to show oldest first
-						const messages = response.data.items.reverse().map(enrichMessage);
+						// Convert and enrich messages
+						const messages = response.data.items.reverse().map((msg) => {
+							// If payload exists but hasn't been converted, convert it first
+							if (msg.metadata?.payload && 'mode' in msg.metadata.payload) {
+								const rawPayload = msg.metadata.payload as unknown as ChatResponseRawPayload;
+								// Check if payload needs conversion (has mode but structure might be raw)
+								const convertedPayload = convertChatResponsePayload(rawPayload);
+								if (convertedPayload) {
+									return enrichMessage({
+										...msg,
+										metadata: {
+											...msg.metadata,
+											payload: convertedPayload,
+										},
+									});
+								}
+							}
+							return enrichMessage(msg);
+						});
 						set({
 							messages,
 							loadingMessages: false,

@@ -135,6 +135,25 @@ export function ConversationItem({
 					</div>
 					
 					{!isEditing && (
+						<Button
+							variant="ghost"
+							size="icon"
+							className={cn(
+								'h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity',
+								'hover:bg-destructive/10 hover:text-destructive',
+								'flex-shrink-0'
+							)}
+							onClick={(e) => {
+								e.stopPropagation();
+								onDelete();
+							}}
+							aria-label="Xóa cuộc hội thoại"
+						>
+							<Trash2 className="h-3.5 w-3.5" />
+						</Button>
+					)}
+					
+					{!isEditing && (
 						<ContextMenuContent>
 							<ContextMenuItem
 								onClick={(e) => {

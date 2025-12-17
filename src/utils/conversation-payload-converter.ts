@@ -137,25 +137,62 @@ function convertDataPayload(
 		mode: mode === 'INSIGHT' ? 'CHART' : mode,
 	};
 
-	// Convert table data
-	if (rawPayload.columns && rawPayload.results) {
-		const columns = convertColumns(rawPayload.columns);
-		const rows = convertResultsToRows(rawPayload.results);
-
-		if (columns && rows) {
-			dataPayload.table = {
-				columns,
-				rows,
-				previewLimit: rawPayload.previewLimit as number | undefined,
-			};
+	// Handle LIST mode - check if list structure already exists
+	if (mode === 'LIST') {
+		if (rawPayload.list && typeof rawPayload.list === 'object' && 'items' in rawPayload.list) {
+			// List structure already exists, convert items to ListItem format
+			const listData = rawPayload.list as { items: unknown[]; total?: number };
+			const convertedItems = convertResultsToList(listData.items);
+			if (convertedItems) {
+				dataPayload.list = {
+					items: convertedItems.items,
+					total: listData.total ?? convertedItems.total,
+				};
+			}
+		} else if (rawPayload.results) {
+			// Convert from results array
+			const list = convertResultsToList(rawPayload.results);
+			if (list) {
+				dataPayload.list = list;
+			}
 		}
 	}
 
-	// Convert list data
-	if (mode === 'LIST' && rawPayload.results) {
-		const list = convertResultsToList(rawPayload.results);
-		if (list) {
-			dataPayload.list = list;
+	// Handle TABLE mode - check if table structure already exists
+	if (mode === 'TABLE') {
+		if (
+			rawPayload.table &&
+			typeof rawPayload.table === 'object' &&
+			'columns' in rawPayload.table &&
+			'rows' in rawPayload.table
+		) {
+			// Table structure already exists, use it directly
+			const tableData = rawPayload.table as {
+				columns: Array<{ key: string; label: string }>;
+				rows: unknown[];
+				previewLimit?: number;
+			};
+			const columns = convertColumns(tableData.columns);
+			const rows = convertResultsToRows(tableData.rows);
+			if (columns && rows) {
+				dataPayload.table = {
+					columns,
+					rows,
+					previewLimit: tableData.previewLimit,
+				};
+			}
+		} else if (rawPayload.columns && rawPayload.results) {
+			// Convert from columns and results
+			const columns = convertColumns(rawPayload.columns);
+			const rows = convertResultsToRows(rawPayload.results);
+
+			if (columns && rows) {
+				dataPayload.table = {
+					columns,
+					rows,
+					previewLimit: rawPayload.previewLimit as number | undefined,
+				};
+			}
 		}
 	}
 
@@ -186,12 +223,52 @@ function convertDataPayload(
 }
 
 /**
+ * Check if payload is already in converted format (has proper structure)
+ */
+function isAlreadyConverted(
+	payload: unknown,
+): payload is ContentPayload | DataPayload | ControlPayload {
+	if (!payload || typeof payload !== 'object') return false;
+
+	// Check if it has mode and proper structure
+	if ('mode' in payload) {
+		const mode = (payload as { mode: string }).mode;
+
+		// Check for DataPayload structure
+		if (mode === 'LIST' || mode === 'TABLE' || mode === 'CHART') {
+			const dataPayload = payload as DataPayload;
+			// If it already has list/table/chart structure, it's converted
+			return !!(dataPayload.list || dataPayload.table || dataPayload.chart);
+		}
+
+		// Check for ContentPayload structure
+		if (mode === 'CONTENT') {
+			const contentPayload = payload as ContentPayload;
+			return 'stats' in contentPayload;
+		}
+
+		// Check for ControlPayload structure
+		if (mode === 'CLARIFY' || mode === 'ERROR') {
+			const controlPayload = payload as ControlPayload;
+			return !!(controlPayload.questions || controlPayload.code || controlPayload.details);
+		}
+	}
+
+	return false;
+}
+
+/**
  * Convert ChatResponseRawPayload to ContentPayload | DataPayload | ControlPayload
  */
 export function convertChatResponsePayload(
 	rawPayload?: ChatResponseRawPayload,
 ): ContentPayload | DataPayload | ControlPayload | undefined {
 	if (!rawPayload || !rawPayload.mode) return undefined;
+
+	// If payload is already in converted format, return as-is
+	if (isAlreadyConverted(rawPayload)) {
+		return rawPayload as ContentPayload | DataPayload | ControlPayload;
+	}
 
 	const mode = rawPayload.mode;
 
