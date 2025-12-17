@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileText, CheckCircle2, XCircle } from 'lucide-react';
 import {
@@ -16,6 +17,10 @@ import { Label } from '@/components/ui/label';
 import type { PendingKnowledge } from '@/types/admin-ai';
 import { PendingKnowledgeStatusBadge } from '../badges';
 import { formatDateTime } from '../utils';
+import { AIMessageList } from '@/components/ai/ai-message-list';
+import type { AIHistoryMessage } from '@/types';
+import { convertChatResponsePayload } from '@/utils/conversation-payload-converter';
+import type { ChatResponseRawPayload } from '@/types/conversation';
 
 interface PendingKnowledgePanelDialogProps {
 	open: boolean;
@@ -41,6 +46,62 @@ export function PendingKnowledgePanelDialog({
 	isRejecting,
 }: PendingKnowledgePanelDialogProps) {
 	const router = useRouter();
+	const [tableDialogOpen, setTableDialogOpen] = useState(false);
+	const [tableDialogContent, setTableDialogContent] = useState<React.ReactNode>(null);
+
+	// Parse response JSON and create message objects
+	const conversationMessages = useMemo(() => {
+		if (!selectedItem) return [];
+		
+		const messages: AIHistoryMessage[] = [];
+		
+		// Add user message
+		if (selectedItem.question) {
+			messages.push({
+				id: `user-${selectedItem.id}`,
+				role: 'user',
+				content: selectedItem.question,
+				timestamp: selectedItem.createdAt,
+			});
+		}
+		
+		// Parse and add assistant message
+		if (selectedItem.response) {
+			try {
+				const responseObj = JSON.parse(selectedItem.response) as {
+					message?: string;
+					payload?: ChatResponseRawPayload;
+				};
+				
+				const messageContent = responseObj.message || selectedItem.response;
+				const rawPayload = responseObj.payload;
+				
+				// Convert payload to proper format
+				const payload = rawPayload ? convertChatResponsePayload(rawPayload) : undefined;
+				
+				messages.push({
+					id: `assistant-${selectedItem.id}`,
+					role: 'assistant',
+					content: messageContent,
+					timestamp: selectedItem.updatedAt,
+					kind: rawPayload?.mode === 'CONTENT' ? 'CONTENT' : 
+					      rawPayload?.mode === 'TABLE' || rawPayload?.mode === 'LIST' || rawPayload?.mode === 'CHART' || rawPayload?.mode === 'INSIGHT' ? 'DATA' :
+					      rawPayload?.mode === 'CLARIFY' || rawPayload?.mode === 'ERROR' ? 'CONTROL' : undefined,
+					payload,
+				});
+			} catch {
+				// If parsing fails, use response as-is
+				messages.push({
+					id: `assistant-${selectedItem.id}`,
+					role: 'assistant',
+					content: selectedItem.response,
+					timestamp: selectedItem.updatedAt,
+				});
+			}
+		}
+		
+		return messages;
+	}, [selectedItem]);
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -106,12 +167,23 @@ export function PendingKnowledgePanelDialog({
 						<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 							{/* Left Column */}
 							<div className="space-y-4">
-								<div className="space-y-2">
-									<Label className="text-sm font-semibold">Câu hỏi</Label>
-									<div className="text-sm text-foreground whitespace-pre-wrap bg-slate-50 border rounded-md p-4 max-h-[200px] overflow-y-auto">
-										{selectedItem.question}
+								{/* Conversation View */}
+								{conversationMessages.length > 0 && (
+									<div className="space-y-2">
+										<Label className="text-sm font-semibold">Cuộc hội thoại</Label>
+										<div className="bg-gray-50 border rounded-md p-3 max-h-[500px] overflow-hidden flex flex-col">
+											<AIMessageList
+												messages={conversationMessages}
+												onOpenTable={(node) => {
+													setTableDialogContent(node);
+													setTableDialogOpen(true);
+												}}
+												onAsk={() => {}}
+												shouldAutoScroll={false}
+											/>
+										</div>
 									</div>
-								</div>
+								)}
 
 								<div className="space-y-2">
 									<Label className="text-sm font-semibold">SQL</Label>
@@ -125,15 +197,6 @@ export function PendingKnowledgePanelDialog({
 										</p>
 									)}
 								</div>
-
-								{selectedItem.response && (
-									<div className="space-y-2">
-										<Label className="text-sm font-semibold">Response</Label>
-										<div className="text-sm text-foreground whitespace-pre-wrap bg-green-50 border border-green-200 rounded-md p-4 max-h-[300px] overflow-y-auto">
-											{selectedItem.response}
-										</div>
-									</div>
-								)}
 							</div>
 
 							{/* Right Column */}
@@ -272,6 +335,19 @@ export function PendingKnowledgePanelDialog({
 						)}
 					</div>
 				)}
+				
+				{/* Table Dialog */}
+				<Dialog open={tableDialogOpen} onOpenChange={setTableDialogOpen}>
+					<DialogContent className="w-[90vw] max-w-[90vw] sm:max-w-[90vw] h-[90vh] max-h-[90vh] bg-white/95 backdrop:bg-black/20 top-8 flex flex-col">
+						<DialogHeader className="flex-shrink-0">
+							<DialogTitle className="text-sm sm:text-base">Xem bảng đầy đủ</DialogTitle>
+						</DialogHeader>
+						<div className="flex-1 overflow-auto w-full min-h-0">
+							{tableDialogContent}
+						</div>
+					</DialogContent>
+				</Dialog>
+				
 				<DialogFooter className="flex-shrink-0">
 					<Button variant="outline" onClick={() => onOpenChange(false)}>
 						Đóng
