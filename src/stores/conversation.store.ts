@@ -37,7 +37,11 @@ interface ConversationActions {
 
 	// Conversation management
 	loadConversations: () => Promise<void>;
-	createConversation: (initialMessage?: string, title?: string) => Promise<string | null>;
+	createConversation: (
+		initialMessage?: string,
+		title?: string,
+		currentPage?: string,
+	) => Promise<string | null>;
 	selectConversation: (conversationId: string) => Promise<void>;
 	updateTitle: (conversationId: string, title: string) => Promise<void>;
 	deleteConversation: (conversationId: string) => Promise<void>;
@@ -53,31 +57,6 @@ interface ConversationActions {
 }
 
 type ConversationStore = ConversationState & ConversationActions;
-
-/**
- * Extract conversations array from API response
- * Handles both wrapped {success, data: {items}} and unwrapped {items} formats
- */
-function extractConversationsFromResponse(response: unknown): Conversation[] {
-	if (!response || typeof response !== 'object') {
-		return [];
-	}
-
-	// Standard format: {success: true, data: {items: [], total: 0}}
-	if ('success' in response && response.success === true && 'data' in response) {
-		const data = response.data;
-		if (data && typeof data === 'object' && 'items' in data && Array.isArray(data.items)) {
-			return data.items;
-		}
-	}
-
-	// Unwrapped format: {items: [], total: 0} (fallback)
-	if ('items' in response && Array.isArray(response.items)) {
-		return response.items;
-	}
-
-	return [];
-}
 
 /**
  * Convert ChatResponse to ConversationMessage format
@@ -266,12 +245,14 @@ export const useConversationStore = create<ConversationStore>()(
 					const token = TokenManager.getAccessToken();
 					const response = await listConversations(50, token);
 
-					const items = extractConversationsFromResponse(response);
-					set({
-						conversations: items,
-						loading: false,
-						error: null,
-					});
+					if (response.success && response.data) {
+						set({
+							conversations: response.data.items,
+							loading: false,
+						});
+					} else {
+						set({ loading: false, error: 'Failed to load conversations' });
+					}
 				} catch (error) {
 					console.error('[ConversationStore] loadConversations failed', error);
 					set({
@@ -286,29 +267,16 @@ export const useConversationStore = create<ConversationStore>()(
 					set({ loading: true, error: null });
 					const token = TokenManager.getAccessToken();
 
-					const requestData: { title?: string; initialMessage?: string } = {};
+					const currentPage = typeof window !== 'undefined' ? window.location.pathname : undefined;
+					const requestData: { title?: string; initialMessage?: string; currentPage?: string } = {};
 					if (title) requestData.title = title;
 					if (initialMessage) requestData.initialMessage = initialMessage;
+					if (currentPage) requestData.currentPage = currentPage;
 
 					const response = await createConversationAction(requestData, token);
 
-					console.log('[ConversationStore] createConversation response:', response);
-
-					// Check response format - handle both {success, data} and direct data formats
-					if (!response || typeof response !== 'object') {
-						set({ loading: false, error: 'Failed to create conversation: Invalid response' });
-						return null;
-					}
-
-					// Standard format: {success: true, data: {...}}
-					if ('success' in response) {
-						if (!response.success || !response.data) {
-							set({ loading: false, error: 'Failed to create conversation' });
-							return null;
-						}
-					} else {
-						// Unwrapped format (shouldn't happen but handle it)
-						set({ loading: false, error: 'Failed to create conversation: Unexpected format' });
+					if (!response.success || !response.data) {
+						set({ loading: false, error: 'Failed to create conversation' });
 						return null;
 					}
 
@@ -356,24 +324,15 @@ export const useConversationStore = create<ConversationStore>()(
 					const token = TokenManager.getAccessToken();
 					const response = await getConversationMessages(conversationId, 100, token);
 
-					// Check response format
-					if (response && typeof response === 'object' && 'success' in response) {
-						if (response.success && response.data && 'items' in response.data) {
-							// Messages are returned ASC (oldest first, newest last) - keep as-is
-							const items = Array.isArray(response.data.items) ? response.data.items : [];
-							const messages = items.map(enrichMessage);
-							set({
-								messages,
-								loadingMessages: false,
-							});
-						} else {
-							set({ loadingMessages: false, error: 'Failed to load messages' });
-						}
-					} else {
+					if (response.success && response.data) {
+						// Messages are returned DESC (newest first), reverse to show oldest first
+						const messages = response.data.items.reverse().map(enrichMessage);
 						set({
+							messages,
 							loadingMessages: false,
-							error: 'Failed to load messages: Invalid response format',
 						});
+					} else {
+						set({ loadingMessages: false, error: 'Failed to load messages' });
 					}
 				} catch (error) {
 					console.error('[ConversationStore] loadMessages failed', error);
@@ -386,12 +345,16 @@ export const useConversationStore = create<ConversationStore>()(
 
 			sendMessage: async (message: string, currentPage?: string) => {
 				// Note: images parameter is not yet supported by conversation API
+				// Get currentPage from window if not provided
+				const pageContext =
+					currentPage || (typeof window !== 'undefined' ? window.location.pathname : undefined);
+
 				const state = get();
 				let conversationId = state.currentConversationId;
 
 				// Create conversation if none exists
 				if (!conversationId) {
-					conversationId = await get().createConversation(message);
+					conversationId = await get().createConversation(message, undefined, pageContext);
 					if (!conversationId) {
 						set({ error: 'Failed to create conversation' });
 						return;
@@ -438,36 +401,31 @@ export const useConversationStore = create<ConversationStore>()(
 					const token = TokenManager.getAccessToken();
 					const response = await sendConversationMessage(
 						conversationId,
-						{ message, currentPage },
+						{ message, currentPage: pageContext },
 						token,
 					);
 
-					// Check response format
-					if (response && typeof response === 'object' && 'success' in response) {
-						if (response.success && response.data) {
-							const chatResponse = response.data;
-							const assistantMessage = chatResponseToMessage(
-								chatResponse,
-								conversationId,
-								state.messages.length + 2,
-							);
+					if (response.success && response.data) {
+						const chatResponse = response.data;
+						const assistantMessage = chatResponseToMessage(
+							chatResponse,
+							conversationId,
+							state.messages.length + 2,
+						);
 
-							// Remove typing indicator and add real response
-							set((s) => ({
-								messages: [
-									...s.messages.filter((m) => m.id !== 'typing'),
-									enrichMessage(assistantMessage),
-								],
-								sending: false,
-							}));
+						// Remove typing indicator and add real response
+						set((s) => ({
+							messages: [
+								...s.messages.filter((m) => m.id !== 'typing'),
+								enrichMessage(assistantMessage),
+							],
+							sending: false,
+						}));
 
-							// Refresh conversation list to update lastMessageAt
-							await get().loadConversations();
-						} else {
-							throw new Error('Failed to send message: Invalid response');
-						}
+						// Refresh conversation list to update lastMessageAt
+						await get().loadConversations();
 					} else {
-						throw new Error('Failed to send message: Invalid response format');
+						throw new Error('Failed to send message');
 					}
 				} catch (error) {
 					console.error('[ConversationStore] sendMessage failed', error);

@@ -148,7 +148,7 @@ export function AIInput({ onSend, disabled = false }: AIInputProps) {
 
     // Store current images for cleanup
     const imagesToCleanup = [...images];
-
+    
     // Clear input and images immediately (optimistic clear)
     setValue("");
     imagesToCleanup.forEach(img => URL.revokeObjectURL(img.preview));

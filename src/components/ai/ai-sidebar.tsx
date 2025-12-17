@@ -102,7 +102,7 @@ export function AISidebar() {
   useEffect(() => {
     void loadConversations();
   }, [loadConversations]);
-  
+
   // Load messages when conversation is selected
   useEffect(() => {
     if (currentConversationId && !showConversationList) {
@@ -201,8 +201,8 @@ export function AISidebar() {
     // Always use conversation API
     // If no conversation exists, createConversation will be called automatically in sendMessage
     const currentPage = typeof window !== 'undefined' ? window.location.pathname : undefined;
-    await sendConversationMessage(content, currentPage);
-    // Note: images parameter is not yet supported by conversation API
+    await sendConversationMessage(content, currentPage, images);
+    // Note: images parameter is not yet supported by conversation API, but kept for compatibility
   };
   
   const handleNewChat = async () => {
@@ -217,10 +217,11 @@ export function AISidebar() {
   
   const handleQuickSuggestion = async (suggestion: string) => {
     // Create new conversation with the suggestion or send to current
+    const currentPage = typeof window !== 'undefined' ? window.location.pathname : undefined;
     if (!currentConversationId) {
       await createConversation(suggestion);
     } else {
-      await sendConversationMessage(suggestion);
+      await sendConversationMessage(suggestion, currentPage);
     }
   };
   
@@ -366,73 +367,73 @@ export function AISidebar() {
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {activeLoading && (
               <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 px-2 sm:px-3 py-2">
-                <Loader2 className="animate-spin" size={16} /> Đang tải…
-              </div>
-            )}
+                  <Loader2 className="animate-spin" size={16} /> Đang tải…
+                </div>
+              )}
             {activeError && (
               <div className="text-xs sm:text-sm text-red-600 px-2 sm:px-3 py-2">{activeError}</div>
-            )}
+              )}
             {messageList.length === 0 && !activeLoading && (
-              <div className="px-1 sm:px-2 py-3 sm:py-4">
-                <div className="text-center mb-3 sm:mb-4">
-                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900">What can I help with?</h2>
-                </div>
-                <div className="grid grid-cols-1 gap-1.5 sm:gap-2">
-                  {/* Post Room Button for Landlords - Show at top */}
-                  {isLandlord && (
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        if (!isAuthenticated) {
-                          toast.info('Đăng nhập để đăng tải phòng', {
-                            description: 'Bạn cần đăng nhập để sử dụng tính năng đăng tải phòng với AI. Hãy đăng nhập hoặc đăng ký tài khoản ngay!',
-                            action: {
-                              label: 'Đăng nhập',
-                              onClick: () => router.push('/login'),
-                            },
-                            duration: 5000,
-                          });
-                          return;
-                        }
-                        setPostRoomDialogOpen(true);
-                      }}
-                      className="w-fit cursor-pointer justify-start px-3 sm:px-4 py-1.5 sm:py-2 h-auto rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm font-medium"
-                    >
-                      <Home size={14} className="sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
-                      Đăng tải phòng với Trustay AI
-                    </Button>
-                  )}
-                  {quickSuggestions.slice(0, 5).map((q, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
+                <div className="px-1 sm:px-2 py-3 sm:py-4">
+                  <div className="text-center mb-3 sm:mb-4">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900">What can I help with?</h2>
+                  </div>
+                  <div className="grid grid-cols-1 gap-1.5 sm:gap-2">
+                    {/* Post Room Button for Landlords - Show at top */}
+                    {isLandlord && (
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            toast.info('Đăng nhập để đăng tải phòng', {
+                              description: 'Bạn cần đăng nhập để sử dụng tính năng đăng tải phòng với AI. Hãy đăng nhập hoặc đăng ký tài khoản ngay!',
+                              action: {
+                                label: 'Đăng nhập',
+                                onClick: () => router.push('/login'),
+                              },
+                              duration: 5000,
+                            });
+                            return;
+                          }
+                          setPostRoomDialogOpen(true);
+                        }}
+                        className="w-fit cursor-pointer justify-start px-3 sm:px-4 py-1.5 sm:py-2 h-auto rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm font-medium"
+                      >
+                        <Home size={14} className="sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+                        Đăng tải phòng với Trustay AI
+                      </Button>
+                    )}
+                    {quickSuggestions.slice(0, 5).map((q, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
                       onClick={() => handleQuickSuggestion(q)}
                       className="w-fit max-w-full px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-gray-100 text-gray-800 text-xs sm:text-sm hover:bg-gray-200 border text-left cursor-pointer transition-colors"
-                      aria-label={q}
-                    >
-                      {q}
-                    </button>
-                  ))}
+                        aria-label={q}
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-3 sm:mt-4 text-center text-[10px] sm:text-xs text-gray-500">
+                    Gợi ý: Bạn có thể hỏi về phòng trọ, dãy trọ, người ở ghép…
+                  </div>
                 </div>
-                <div className="mt-3 sm:mt-4 text-center text-[10px] sm:text-xs text-gray-500">
-                  Gợi ý: Bạn có thể hỏi về phòng trọ, dãy trọ, người ở ghép…
-                </div>
-              </div>
-            )}
+              )}
             {messageList.length > 0 && (
               <AIMessageList
                 messages={messageList}
-                onOpenTable={(node) => {
-                  setTableDialogContent(node);
-                  setTableDialogOpen(true);
-                }}
+                            onOpenTable={(node) => {
+                              setTableDialogContent(node);
+                              setTableDialogOpen(true);
+                            }}
                 onAsk={handleQuickSuggestion}
-              />
-            )}
-          </div>
+                          />
+                        )}
+                      </div>
           <div className="flex-shrink-0 border-t bg-white">
             <AIInput onSend={onSend} disabled={activeSending} />
-          </div>
+        </div>
         </div>
       </div>
       

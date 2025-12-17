@@ -71,6 +71,7 @@ export interface ChatResponse {
 export interface CreateConversationRequest {
 	title?: string; // Optional: Custom title
 	initialMessage?: string; // Optional: First message
+	currentPage?: string; // Optional: Current page for context
 }
 
 /**
