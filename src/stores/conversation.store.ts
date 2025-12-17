@@ -94,6 +94,36 @@ function chatResponseToMessage(
 }
 
 /**
+ * Create optimistic messages for UI (user message + typing indicator)
+ */
+function createOptimisticMessages(
+	conversationId: string,
+	initialMessage: string,
+): ConversationMessage[] {
+	const optimisticUserMessage: ConversationMessage = {
+		id: `temp-user-${Date.now()}`,
+		sessionId: conversationId,
+		role: 'user',
+		content: initialMessage,
+		sequenceNumber: 1,
+		createdAt: new Date().toISOString(),
+		metadata: null,
+	};
+
+	const typingMessage: ConversationMessage = {
+		id: 'typing',
+		sessionId: conversationId,
+		role: 'assistant',
+		content: '...',
+		sequenceNumber: 2,
+		createdAt: new Date().toISOString(),
+		metadata: null,
+	};
+
+	return [optimisticUserMessage, typingMessage];
+}
+
+/**
  * Create initial messages from conversation response
  */
 function createInitialMessages(
@@ -269,7 +299,7 @@ export const useConversationStore = create<ConversationStore>()(
 
 			createConversation: async (initialMessage?: string, title?: string) => {
 				try {
-					set({ loading: true, error: null });
+					set({ loading: true, sending: true, error: null });
 					const token = TokenManager.getAccessToken();
 
 					const currentPage = typeof window !== 'undefined' ? window.location.pathname : undefined;
@@ -278,10 +308,23 @@ export const useConversationStore = create<ConversationStore>()(
 					if (initialMessage) requestData.initialMessage = initialMessage;
 					if (currentPage) requestData.currentPage = currentPage;
 
+					// If there's an initial message, add optimistic user message and typing indicator
+					const tempConversationId = initialMessage ? `temp-${Date.now()}` : null;
+					if (initialMessage && tempConversationId) {
+						const optimisticMessages = createOptimisticMessages(tempConversationId, initialMessage);
+						set({
+							messages: optimisticMessages,
+							currentConversationId: tempConversationId,
+						});
+					}
+
 					const response = await createConversationAction(requestData, token);
 
 					if (!response.success || !response.data) {
-						set({ loading: false, error: 'Failed to create conversation' });
+						set({ loading: false, sending: false, error: 'Failed to create conversation' });
+						if (tempConversationId) {
+							set({ messages: [], currentConversationId: null });
+						}
 						return null;
 					}
 
@@ -291,20 +334,25 @@ export const useConversationStore = create<ConversationStore>()(
 							? createInitialMessages(response.data.response, newConversation.id, initialMessage)
 							: [];
 
-					set((state) => ({
-						conversations: [newConversation, ...state.conversations],
+					set({
+						conversations: [newConversation, ...get().conversations],
 						currentConversationId: newConversation.id,
-						messages,
+						messages: initialMessage && messages.length > 0 ? messages : [],
 						loading: false,
-					}));
+						sending: false,
+					});
 
 					return newConversation.id;
 				} catch (error) {
 					console.error('[ConversationStore] createConversation failed', error);
 					set({
 						loading: false,
+						sending: false,
 						error: (error as Error).message || 'Failed to create conversation',
 					});
+					if (initialMessage) {
+						set({ messages: [], currentConversationId: null });
+					}
 					return null;
 				}
 			},

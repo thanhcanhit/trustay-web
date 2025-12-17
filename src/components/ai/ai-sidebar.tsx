@@ -414,7 +414,7 @@ export function AISidebar() {
           }}
         >
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            {activeLoading && (
+            {activeLoading && messageList.length === 0 && (
               <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 px-2 sm:px-3 py-2">
                   <Loader2 className="animate-spin" size={16} /> 
                   {conversationLoading ? 'Đang gửi tin nhắn...' : 'Đang tải...'}
