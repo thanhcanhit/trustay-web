@@ -22,11 +22,15 @@ export function AIControlBlock({ questions, errorCode, errorDetails, onAsk }: AI
         </div>
       )}
       {hasError && (
-        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm">
-          <div className="text-red-800 font-medium mb-1">Đã xảy ra lỗi</div>
-          {errorDetails && <div className="text-red-700 text-xs mb-2">{errorDetails}</div>}
-          {errorCode && <div className="text-red-600 text-xs font-mono mb-2">Mã lỗi: {errorCode}</div>}
-        </div>
+        <details className="mt-2 text-[11px] sm:text-xs text-red-700">
+          <summary className="cursor-pointer inline-flex items-center gap-1 text-red-600 hover:underline">
+            Đã xảy ra lỗi (bấm để xem chi tiết)
+          </summary>
+          <div className="mt-1 p-2 bg-red-50 border border-red-200 rounded">
+            {errorDetails && <div className="text-red-700 text-xs mb-1">{errorDetails}</div>}
+            {errorCode && <div className="text-red-600 text-xs font-mono">Mã lỗi: {errorCode}</div>}
+          </div>
+        </details>
       )}
     </>
   );
