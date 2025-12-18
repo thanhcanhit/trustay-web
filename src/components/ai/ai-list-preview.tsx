@@ -13,7 +13,19 @@ const truncate = (t: string, max = 100) => (t?.length > max ? `${t.slice(0, max)
 
 export function AIListPreview({ items, onOpenFull }: AIListPreviewProps) {
   const router = useRouter();
-  const preview = items.slice(0, 5);
+  // Filter out items that don't have a meaningful title to avoid showing
+  // generic placeholders like "Untitled" in the UI.
+  const meaningfulItems = items.filter((item) => {
+    const title = item.title?.trim();
+    if (!title) return false;
+    return title.toLowerCase() !== 'untitled';
+  });
+
+  if (meaningfulItems.length === 0) {
+    return null;
+  }
+
+  const preview = meaningfulItems.slice(0, 5);
 
   const Card = (item: ListItem, compact = true) => (
     <div className={`flex items-center gap-2 ${compact ? 'p-1' : 'p-2'} rounded border bg-white`} aria-label={item.title}>
@@ -53,14 +65,14 @@ export function AIListPreview({ items, onOpenFull }: AIListPreviewProps) {
   return (
     <div className="mt-3 space-y-1">
       {preview.map((i) => renderLink(i, Card(i, true)))}
-      {items.length > 5 && (
+      {meaningfulItems.length > 5 && (
         <div className="pt-1">
           <button
             className="text-xs text-blue-700 hover:underline"
             onClick={() =>
               onOpenFull(
                 <div className="overflow-auto max-h-[70vh] space-y-2">
-                  {items.map((i) => {
+                  {meaningfulItems.map((i) => {
                     const node = Card(i, false);
                     const href = i.path || i.externalUrl || '';
                     const isExternal = href.startsWith('http');
@@ -79,7 +91,7 @@ export function AIListPreview({ items, onOpenFull }: AIListPreviewProps) {
               )
             }
           >
-            Xem tất cả ({items.length})
+            Xem tất cả ({meaningfulItems.length})
           </button>
         </div>
       )}
